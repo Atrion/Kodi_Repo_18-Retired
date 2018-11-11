@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<addon id="plugin.program.carpc-xtouch" name="X-Touch Helper" version="0.1.2" provider-name="Marc Hillesheim">
+    <requires>
+        <import addon="xbmc.python" version="2.1.0"/>
+    </requires>
+    <extension point="xbmc.python.pluginsource" library="addon.py">
+        <provides>executable</provides>
+    </extension>
+    <extension point="xbmc.service" library="service.py" start="start"/>
+    <extension point="xbmc.addon.metadata">
+        <platform>all</platform>
+        <summary lang="en">X-Touch Helper plugin</summary>
+        <description lang="en">X-Touch Helper plugin for Jacks X-Touch Skin</description>
+        <license>GNU GENERAL PUBLIC LICENSE. Version 2, June 1991</license>
+        <forum></forum>
+        <email>hawkeyexp@gmail.com</email>
+    </extension>
+</addon>

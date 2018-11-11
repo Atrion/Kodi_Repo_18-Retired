@@ -1,0 +1,69 @@
+# Kodi Media Center language file
+# Addon Name: X-Touch Helper
+# Addon id: plugin.program.carpc-xtouch
+# Addon Provider: Marc Hillesheim
+msgid ""
+msgstr ""
+"Project-Id-Version: Kodi Addons\n"
+"Report-Msgid-Bugs-To: alanwww1@xbmc.org\n"
+"POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: Kodi Translation Team\n"
+"Language-Team: English (http://www.transifex.com/projects/p/xbmc-addons/language/en/)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: en\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgctxt "#30000"
+msgid "Automated switch between day and night settings of skin"
+msgstr "Automatisch Umschalten zwischen Tag- und Nacht-Einsellungen des Skin"
+
+msgctxt "#30001"
+msgid "Day start"
+msgstr "Start Tag"
+
+msgctxt "#30002"
+msgid "Night start"
+msgstr "Start Nacht"
+
+msgctxt "#30003"
+msgid "Load Day"
+msgstr "Lade Tag"
+
+msgctxt "#30004"
+msgid "Load Night"
+msgstr "Lade Nacht"
+
+msgctxt "#30005"
+msgid "Save Day"
+msgstr "Sichere Tag"
+
+msgctxt "#30006"
+msgid "Save Night"
+msgstr "Sichere Nacht"
+
+msgctxt "#30007"
+msgid "Skin settings will be updated. Please wait..."
+msgstr "Skin-Einstellungen werden aktualisiert. Bitte warten..."
+
+msgctxt "#30008"
+msgid "Skin settings will be saved. Please wait..."
+msgstr "Skin-Einstellungen werden gesichert. Bitte warten..."
+
+msgctxt "#30009"
+msgid "The addon can't work with this skin.\n skin.carpc-xtouch is required!"
+msgstr "Das Addon funktioniert nicht mit diesem Skin.\n skin.carpc-xtouch ist erforderlich!"
+
+msgctxt "#30010"
+msgid "Enable bightness control for RPi Display"
+msgstr "Aktiviere Helligkeitssteuerung für RPi-Display"
+
+msgctxt "#30011"
+msgid "Bightness day (0-255)"
+msgstr "Helligkeit Tag (0-255)"
+
+msgctxt "#30012"
+msgid "Bightness night (0-255)"
+msgstr "Helligkeit Nacht (0-255)"

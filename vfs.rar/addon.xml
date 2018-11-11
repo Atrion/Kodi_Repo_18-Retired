@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<addon
+  id="vfs.rar"
+  version="2.0.5"
+  name="RAR archive support"
+  provider-name="spiff">
+  <requires>
+<import addon="kodi.binary.global.main" version="1.0.13"/>
+<import addon="kodi.binary.global.general" version="1.0.3"/>
+<import addon="kodi.binary.instance.vfs" version="2.0.0"/></requires>
+  <extension
+    point="kodi.vfs"
+    protocols="rar"
+    extensions=".rar|.001|.cbr"
+    files="true"
+    directories="true"
+    filedirectories="true"
+    encodedhostname="true"
+    library_windows="vfs.rar.dll" />
+  <extension point="xbmc.addon.metadata">
+    <summary lang="en">RAR archive support</summary>
+    <description lang="en">RAR archive support</description>
+    <platform>windows-x86_64</platform>
+  </extension>
+</addon>

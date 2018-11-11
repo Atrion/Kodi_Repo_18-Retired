@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+    <addon id="repository.Atrion18" name="Atrions Repo" version="0.0.2" provider-name="AtrionDarnay">
+        <requires>
+            <import addon="xbmc.addon" version="12.0.0"/>
+        </requires>
+        <extension point="xbmc.addon.repository" name="Atrions Repo">
+            <info compressed="false">http://macarthurhouse.ddns.net/Kodi_Repo_18/_repo/addons.xml</info>
+            <checksum>http://macarthurhouse.ddns.net/Kodi_Repo_18/_repo/addons.xml.md5</checksum>
+            <datadir zip="true">http://macarthurhouse.ddns.net/Kodi_Repo_18/_repo/</datadir>
+            <hashes>false</hashes>
+        </extension>
+        <extension point="xbmc.addon.metadata">
+            <summary>Atrions Repository</summary>
+            <description>Atrions Repository of Common Addons</description>
+            <platform>all</platform>
+    </extension>
+</addon>

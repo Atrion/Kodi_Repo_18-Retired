@@ -1,0 +1,281 @@
+<window id="1200">
+	<defaultcontrol always="true">9000</defaultcontrol>
+	<controls>
+	    <include>Window_OpenClose_Animation_Zoom</include>
+	    <include>CommonBackground</include>
+	    <control type="button" id="1203">
+		    <description>Dummy Focus Button</description>
+		    <posx>-1</posx>
+		    <posy>-1</posy>
+		    <width>1</width>
+		    <height>1</height>
+		    <font>-</font>
+		    <texturenofocus border="5">xtouch_overlay.png</texturenofocus>
+		    <texturefocus border="5">xtouch_overlay.png</texturefocus>
+	    </control>
+
+	    <control type="group">
+		<include>Window_OpenClose_Animation_Slide_Down</include>
+		<posx>0</posx>
+		<posy>0</posy>
+		<include>VisibleFadeEffect</include>
+		<control type="button" id="1201">
+			<description>Home Button</description>
+			<posx>0</posx>
+			<posy>0</posy>
+			<width>75</width>
+			<height>75</height>
+			<font>-</font>
+			<texturenofocus border="5" colordiffuse="$VAR[CustomColorNofocus]">xtouch_icon_home.png</texturenofocus>
+			<texturefocus border="5" colordiffuse="$VAR[CustomColorFocus]">xtouch_icon_home.png</texturefocus>
+			<onclick>ActivateWindow(Home)</onclick>
+		</control>
+		<control type="label">
+			<description>Title</description>
+			<posx>100</posx>
+			<posy>0</posy>
+			<width>350</width>
+			<font>font30_title</font>
+			<height>80</height>
+			<aligny>center</aligny>
+			<label>X-Touch Helper</label>
+		</control>
+	    </control>
+
+	    <control type="group">
+		<include>Window_OpenClose_Animation_Slide_Up</include>
+		<posx>180r</posx>
+		<posy>90r</posy>
+		<include>VisibleFadeEffect</include>
+		<control type="button" id="1202">
+			<description>Back Button</description>
+			<posx>90</posx>
+			<posy>0</posy>
+			<width>75</width>
+			<height>75</height>
+			<font>-</font>
+			<texturenofocus border="5" colordiffuse="$VAR[CustomColorNofocus]">xtouch_icon_back_w.png</texturenofocus>
+			<texturefocus border="5" colordiffuse="$VAR[CustomColorFocus]">xtouch_icon_back_w.png</texturefocus>
+			<onclick>ParentDir</onclick>
+		</control>
+	    </control>
+
+	    <control type="group">
+		<include>Window_OpenClose_Animation_Slide_Up</include>
+		<posx>15</posx>
+		<posy>90r</posy>
+		<include>VisibleFadeEffect</include>
+		<control type="button" id="1204">
+			<description>Settings Button</description>
+			<posx>0</posx>
+			<posy>0</posy>
+			<width>75</width>
+			<height>75</height>
+			<font>-</font>
+			<texturenofocus border="5" colordiffuse="$VAR[CustomColorNofocus]">xtouch_icon_settings_w.png</texturenofocus>
+			<texturefocus border="5" colordiffuse="$VAR[CustomColorFocus]">xtouch_icon_settings_w.png</texturefocus>
+		</control>
+	    </control>
+
+	    <control type="group">
+		<description>UpdateDialog</description>
+		<include>Window_OpenClose_Animation_Zoom</include>
+		<posx>0</posx>
+		<posy>335</posy>
+		<visible>substring(Window(Home).Property(xtouch.updating),true)</visible>
+		<control type="label">
+			<description>Title</description>
+			<posx>0</posx>
+			<posy>0</posy>
+			<width>1280</width>
+			<font>font30</font>
+			<height>120</height>
+			<align>center</align>
+			<label>[B]$ADDON[plugin.program.carpc-xtouch 30007][/B]</label>
+		</control>
+	    </control>
+
+	    <control type="group">
+		<description>SaveDialog</description>
+		<include>Window_OpenClose_Animation_Zoom</include>
+		<posx>0</posx>
+		<posy>335</posy>
+		<visible>substring(Window(Home).Property(xtouch.saving),true)</visible>
+		<control type="label">
+			<description>Title</description>
+			<posx>0</posx>
+			<posy>0</posy>
+			<width>1280</width>
+			<font>font30</font>
+			<height>120</height>
+			<align>center</align>
+			<label>[B]$ADDON[plugin.program.carpc-xtouch 30008][/B]</label>
+		</control>
+	    </control>
+
+	    <control type="group">
+		<description>WarningDialog</description>
+		<include>Window_OpenClose_Animation_Zoom</include>
+		<posx>0</posx>
+		<posy>335</posy>
+		<visible>substring(Window(Home).Property(xtouch.warning),true)</visible>
+		<control type="label">
+			<description>Title</description>
+			<posx>0</posx>
+			<posy>0</posy>
+			<width>1280</width>
+			<font>font30</font>
+			<height>120</height>
+			<align>center</align>
+			<label>[B]$ADDON[plugin.program.carpc-xtouch 30009][/B]</label>
+		</control>
+	    </control>
+
+	    <control type="group">
+		<description>Field1</description>
+		<include>Window_OpenClose_Animation_Zoom</include>
+		<posx>105</posx>
+		<posy>235</posy>
+		<visible>substring(Window(Home).Property(xtouch.updating),false) + substring(Window(Home).Property(xtouch.saving),false) + substring(Window(Home).Property(xtouch.warning),false)</visible>
+		<control type="image">
+			<description>Background</description>
+			<posx>0</posx>
+			<posy>0</posy>
+			<width>250</width>
+			<height>250</height>
+			<texture colordiffuse="$VAR[CustomColorNofocus]">xtouch_bg.png</texture>
+		</control>
+		<control type="button" id="1205">
+			<description>Button</description>
+			<posx>50</posx>
+			<posy>50</posy>
+			<width>150</width>
+			<height>150</height>
+			<texturenofocus colordiffuse="$VAR[CustomColorNofocus]">xtouch_load.png</texturenofocus>
+			<texturefocus colordiffuse="$VAR[CustomColorFocus]">xtouch_load.png</texturefocus>
+			<onclick>setFocus(1203)</onclick>
+		</control>
+		<control type="label">
+			<description>Title</description>
+			<posx>0</posx>
+			<posy>205</posy>
+			<width>250</width>
+			<font>font20</font>
+			<height>80</height>
+			<align>center</align>
+			<label>[B]$ADDON[plugin.program.carpc-xtouch 30003][/B]</label>
+		</control>
+	    </control>
+
+	    <control type="group">
+		<description>Field2</description>
+		<include>Window_OpenClose_Animation_Zoom</include>
+		<posx>365</posx>
+		<posy>235</posy>
+		<visible>substring(Window(Home).Property(xtouch.updating),false) + substring(Window(Home).Property(xtouch.saving),false) + substring(Window(Home).Property(xtouch.warning),false)</visible>
+		<control type="image">
+			<description>Background</description>
+			<posx>0</posx>
+			<posy>0</posy>
+			<width>250</width>
+			<height>250</height>
+			<texture colordiffuse="$VAR[CustomColorNofocus]">xtouch_bg.png</texture>
+		</control>
+		<control type="button" id="1206">
+			<description>Button</description>
+			<posx>50</posx>
+			<posy>50</posy>
+			<width>150</width>
+			<height>150</height>
+			<texturenofocus colordiffuse="$VAR[CustomColorNofocus]">xtouch_load.png</texturenofocus>
+			<texturefocus colordiffuse="$VAR[CustomColorFocus]">xtouch_load.png</texturefocus>
+			<onclick>setFocus(1203)</onclick>
+		</control>
+		<control type="label">
+			<description>Title</description>
+			<posx>0</posx>
+			<posy>205</posy>
+			<width>250</width>
+			<font>font20</font>
+			<height>80</height>
+			<align>center</align>
+			<label>[B]$ADDON[plugin.program.carpc-xtouch 30004][/B]</label>
+		</control>
+	    </control>
+
+	    <control type="group">
+		<description>Field3</description>
+		<include>Window_OpenClose_Animation_Zoom</include>
+		<posx>685</posx>
+		<posy>235</posy>
+		<visible>substring(Window(Home).Property(xtouch.updating),false) + substring(Window(Home).Property(xtouch.saving),false) + substring(Window(Home).Property(xtouch.warning),false)</visible>
+		<control type="image">
+			<description>Background</description>
+			<posx>0</posx>
+			<posy>0</posy>
+			<width>250</width>
+			<height>250</height>
+			<texture colordiffuse="$VAR[CustomColorNofocus]">xtouch_bg.png</texture>
+		</control>
+		<control type="button" id="1207">
+			<description>Button</description>
+			<posx>50</posx>
+			<posy>50</posy>
+			<width>150</width>
+			<height>150</height>
+			<texturenofocus colordiffuse="$VAR[CustomColorNofocus]">xtouch_save.png</texturenofocus>
+			<texturefocus colordiffuse="$VAR[CustomColorFocus]">xtouch_save.png</texturefocus>
+			<onclick>setFocus(1203)</onclick>
+		</control>
+		<control type="label">
+			<description>Title</description>
+			<posx>0</posx>
+			<posy>205</posy>
+			<width>250</width>
+			<font>font20</font>
+			<height>80</height>
+			<align>center</align>
+			<label>[B]$ADDON[plugin.program.carpc-xtouch 30005][/B]</label>
+		</control>
+	    </control>
+
+	    <control type="group">
+		<description>Field4</description>
+		<include>Window_OpenClose_Animation_Zoom</include>
+		<posx>945</posx>
+		<posy>235</posy>
+		<visible>substring(Window(Home).Property(xtouch.updating),false) + substring(Window(Home).Property(xtouch.saving),false) + substring(Window(Home).Property(xtouch.warning),false)</visible>
+		<control type="image">
+			<description>Background</description>
+			<posx>0</posx>
+			<posy>0</posy>
+			<width>250</width>
+			<height>250</height>
+			<texture colordiffuse="$VAR[CustomColorNofocus]">xtouch_bg.png</texture>
+		</control>
+		<control type="button" id="1208">
+			<description>Button</description>
+			<posx>50</posx>
+			<posy>50</posy>
+			<width>150</width>
+			<height>150</height>
+			<texturenofocus colordiffuse="$VAR[CustomColorNofocus]">xtouch_save.png</texturenofocus>
+			<texturefocus colordiffuse="$VAR[CustomColorFocus]">xtouch_save.png</texturefocus>
+			<onclick>setFocus(1203)</onclick>
+		</control>
+		<control type="label">
+			<description>Title</description>
+			<posx>0</posx>
+			<posy>205</posy>
+			<width>250</width>
+			<font>font20</font>
+			<height>80</height>
+			<align>center</align>
+			<label>[B]$ADDON[plugin.program.carpc-xtouch 30006][/B]</label>
+		</control>
+	    </control>
+
+	</controls>
+</window>
+
+

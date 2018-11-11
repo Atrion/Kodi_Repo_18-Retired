@@ -1,0 +1,35 @@
+[B]0.1.0[/B] (2017-10-08)
+- Update for Skin 3.0 and up
+
+[B]0.1.0[/B] (2017-03-18)
+- Update for Skin 2.4.2 and up
+
+[B]0.1.0[/B] (2017-02-10)
+- Update for Skin 2.4.1 and up
+
+[B]0.0.9[/B] (2017-01-06)
+- Update for Skin 2.4.0 and up
+
+[B]0.0.8[/B] (2016-12-06)
+- Update for Skin 2.3.0 and up
+
+[B]0.0.7[/B] (2016-11-16)
+- Change gui style for jack's skin / brightness control for RPi Display
+
+[B]0.0.6[/B] (2016-10-21)
+- Better interaction with skin (2.1.2 and up)
+
+[B]0.0.5[/B] (2016-10-14)
+- Defaultvalues added / failsave on missing time for day / night
+
+[B]0.0.4[/B] (2016-09-15)
+- Service added for autoswitch day/night
+
+[B]0.0.3[/B] (2016-09-14)
+- Disable buttons in other (incompatible) skins
+
+[B]0.0.2[/B] (2016-09-14)
+- Test release
+
+[B]0.0.1[/B] (2016-09-07)
+- First release
