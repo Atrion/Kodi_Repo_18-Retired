@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-    <addon id="repository.Atrion18" name="[COLOR maroon]Atrion's Repo for Kodi 18.x[/COLOR]" version="0.0.5" provider-name="Atrion Darnay">
+    <addon id="repository.Atrion18B" name="[COLOR maroon]Atrion's Repo for Kodi 18.x Backup[/COLOR]" version="0.0.5" provider-name="Atrion Darnay">
         <requires>
             <import addon="xbmc.addon" version="12.0.0"/>
         </requires>
         <extension point="xbmc.addon.repository" name="Atrions Repo">
-            <info compressed="false">http://macarthurhouse.ddns.net/Kodi_Repo_18/_repo/addons.xml</info>
-            <checksum>http://macarthurhouse.ddns.net/Kodi_Repo_18/_repo/addons.xml.md5</checksum>
-            <datadir zip="true">http://macarthurhouse.ddns.net/Kodi_Repo_18/_repo/</datadir>
+            <info compressed="false">https://raw.githubusercontent.com/Atrion/Kodi_Repo_18/master/_repo/addons.xml</info>
+            <checksum>https://raw.githubusercontent.com/Atrion/Kodi_Repo_18/master/_repo/addons.xml.md5</checksum>
+            <datadir zip="true">https://raw.githubusercontent.com/Atrion/Kodi_Repo_18/master/_repo/</datadir>
             <hashes>false</hashes>
         </extension>
         <extension point="xbmc.addon.metadata">
