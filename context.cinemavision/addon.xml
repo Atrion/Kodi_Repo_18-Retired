@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="context.cinemavision" name="CinemaVision Launcher" version="1.0.0" provider-name="CinemaVision">
+<addon id="context.cinemavision" name="CinemaVision Launcher" version="1.0.1a1" provider-name="CinemaVision">
   <requires>
     <import addon="xbmc.python" version="2.20.0"/>
     <import addon="script.cinemavision" version="1.0.0"/>
@@ -7,15 +7,24 @@
   <extension point="kodi.context.item" library="addon.py">
     <item>
       <label>32000</label>
-      <visible>Container.Content(movies)</visible>
+      <visible>Container.Container(sets) | Container.Content(movies) | Container.Content(episodes) | Container.Content(seasons) | Container.Content(tvshows) | Container.Content(playlists) + !ListItem.IsFolder</visible>
     </item>
   </extension>
   <extension point="kodi.addon.metadata">
     <platform>all</platform>
-    <summary lang="en">Run the CinemaVision experience from your video library.</summary>
+    <summary lang="en">Run the CinemaVision experience directly from content in your video library.</summary>
+    <summary lang="es">Ejecutar la experiencia CinemaVision directamente de contenido en su videoteca.</summary>
+    <summary lang="de">Führen Sie das Cinema Erfahrung direkt von Inhalten in Ihrer Videothek.</summary>
+    <summary lang="pt-br">Execute a experiência CinemaVision diretamente do conteúdo de sua biblioteca de vídeo.</summary>
     <description lang="en">Easily play your movies using the CinemaVision add-on! Launch directly into the CinemaVision theater experience from the context menu in your library.</description>
-    <disclaimer lang="en">This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License. Visit the website for details.</disclaimer>
-    <license>Creative Commons Attribution-ShareAlike 4.0 International</license>
+    <description lang="es">Jugar fácilmente sus películas usando la CinemaVision add-on! Lanzamiento directamente en la experiencia de cine en CinemaVision en el menú contextual en su biblioteca.</description>
+    <description lang="de">Leicht zu spielen Ihre Filme mit dem Cinema Add-On! Starten Sie direkt in das Cinemakino -Erlebnis aus dem Kontextmenü in Ihrer Bibliothek.</description>
+    <description lang="pt-br">Facilmente jogar seus filmes usando o CinemaVision add-on! Lançar diretamente na experiência do teatro CinemaVision no menu de contexto na sua biblioteca.</description>
+    <disclaimer lang="en">This work is licensed under a Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License. Visit the website for details.</disclaimer>
+    <disclaimer lang="es">Esta obra está bajo una licencia internacional Creative Commons Attribution-NonCommercial-ShareAlike 4.0. Visite el sitio web para más detalles.</disclaimer>
+    <disclaimer lang="de">Diese Seite ist unter einer Creative Commons Attribution-NonCommercial-ShareAlike 4.0 Internationale lizensiert. Besuchen Sie die Website für weitere Details.</disclaimer>
+    <disclaimer lang="pt-br">Esta obra está licenciada sob uma Licença Internacional Creative Commons Attribution-Noncommercial-Share Alike 4.0. Visite o site para mais detalhes.</disclaimer>
+    <license>Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International</license>
     <forum>http://www.cinemavision.tv/forums/</forum>
     <website>http://www.cinemavision.tv/</website>
     <source>https://github.com/CinemaVision/context.cinemavision</source>

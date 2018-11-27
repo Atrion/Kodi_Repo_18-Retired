@@ -1,5 +1,11 @@
 Changelog for CinemaVision Launcher
 
+[- 1.0.1 -]
+
+- fix:     Was showing on parent folder
+- change:  Updated icon
+- add:     Added support for playlists, tvshows, episodes and seasons
+
 [- 1.0.0 -]
 
 Initial release

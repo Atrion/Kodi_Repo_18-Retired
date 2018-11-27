@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<addon id="service.cinemavision" name="CinemaVision Service" version="0.0.1" provider-name="CinemaVision">
+  <requires>
+    <import addon="xbmc.python" version="2.25.0" />
+    <import addon="script.cinemavision" version="1.0.0" />
+  </requires>
+  <extension point="xbmc.service" library="lib/service.py" start="login" />
+  <extension point="kodi.addon.metadata">
+    <platform>all</platform>
+    <summary lang="en">Enhance your experience by adding functionality to CinemaVision.</summary>
+    <summary lang="es">Mejora tu experiencia añadiendo funcionalidad a CinemaVision.</summary>
+    <summary lang="de">Verbessern Sie Ihre Erfahrungen, indem Sie Funktionen für CinemaVision.</summary>
+    <summary lang="pt-br">Melhore a sua experiência adicionando funcionalidade para CinemaVision.</summary>
+    <description lang="en">Enhance your experience by adding scheduling, automatic content update, and other functionality to CinemaVision.</description>
+    <description lang="es">Mejora tu experiencia añadiendo programación, actualización automática de contenidos y otras funcionalidades de CinemaVision.</description>
+    <description lang="de">Verbessern Sie Ihre Erfahrungen, indem Sie Terminplanung, automatische Content-Update, und andere Funktionen, um CinemaVision.</description>
+    <description lang="pt-br">Melhore a sua experiência adicionando agendamento, atualização automática de conteúdo, e outras funcionalidades para CinemaVision.</description>
+    <disclaimer lang="en">This work is licensed under a Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License. Visit the website for details.</disclaimer>
+    <disclaimer lang="es">Esta obra está bajo una licencia internacional Creative Commons Attribution-NonCommercial-ShareAlike 4.0. Visite el sitio web para más detalles.</disclaimer>
+    <disclaimer lang="de">Diese Seite ist unter einer Creative Commons Attribution-NonCommercial-ShareAlike 4.0 Internationale lizensiert. Besuchen Sie die Website für weitere Details.</disclaimer>
+    <disclaimer lang="pt-br">Esta obra está licenciada sob uma Licença Internacional Creative Commons Attribution-Noncommercial-Share Alike 4.0. Visite o site para mais detalhes.</disclaimer>
+    <license>Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International</license>
+    <forum>http://www.cinemavision.tv/forums/</forum>
+    <website>http://www.cinemavision.tv/</website>
+    <source>https://github.com/CinemaVision/service.cinemavision</source>
+  </extension>
+</addon>
