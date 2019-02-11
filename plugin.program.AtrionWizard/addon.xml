@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.program.AtrionWizard" name="Atrions Wizard" version="0.0.7" provider-name="Atrion Darnay">
+<addon id="plugin.program.AtrionWizard" name="Atrions Wizard" version="0.0.8" provider-name="Atrion Darnay">
   <requires>
     <import addon="xbmc.python" version="2.1.0"/>
   </requires>

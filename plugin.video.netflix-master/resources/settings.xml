@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<settings>
+  <category label="30014">
+    <setting id="email" type="text" visible="false" default=""/>
+    <setting id="password" type="text" visible="false" default=""/>
+    <setting id="switch_account" type="action" label="30059c" action="RunPlugin(plugin://plugin.video.netflix/?action=switch_account)" option="close"/>
+    <setting id="logout" type="action" label="30017" action="RunPlugin(plugin://plugin.video.netflix/?action=logout)" option="close"/>
+    <setting id="adultpin_enable" type="action" label="30062" default="False" action="RunPlugin(plugin://plugin.video.netflix/?action=toggle_adult_pin)"/>
+    <setting type="sep"/>
+    <setting id="is_settings" type="action" label="30035" action="RunPlugin(plugin://plugin.video.netflix/?mode=openSettings&url=is)" enable="System.HasAddon(inputstream.adaptive)" option="close"/>
+  </category>
+  <category label="30025">
+    <setting id="enablelibraryfolder" type="bool" label="30026" default="false"/>
+    <setting id="customlibraryfolder" type="folder" label="30027" enable="eq(-1,true)" default="special://profile/addon_data/plugin.video.netflix" source="auto" option="writeable" subsetting="true"/>
+    <setting id="customexportname" type="bool" label="30036" default="false"/>
+    <setting label="30065" type="lsep"/>
+    <setting id="auto_update" type="enum" label="30064" lvalues="30066|30067|30068|30069|30070" default="0"/>
+    <setting id="update_time" type="time" label="30071" visible="gt(-1,0)" default="00:00" subsetting="true"/>
+    <setting id="wait_idle" type="bool" label="30072" visible="gt(-2,0)" default="false" subsetting="true"/>
+    <setting id="schedule_check_interval" type="slider" label="30073" option="int" range="1,30" visible="gt(-3,0)" default="5" subsetting="true"/>
+    <setting id="last_update" type="text" visible="false" default="1970-01-01"/>
+    <setting id="update_running" type="text" visible="false" default="false"/>
+  </category>
+  <category label="30037">
+    <setting id="customview" type="bool" label="30038" default="false"/>
+    <setting id="viewmodelogin" type="number" label="30044" enable="eq(-1,true)" default="501" visible="false"/>
+    <setting id="viewmodefolder" type="number" label="30039" enable="eq(-2,true)" default="501"/>
+    <setting id="viewmodemovie" type="number" label="30040" enable="eq(-3,true)" default="504"/>
+    <setting id="viewmodeshow" type="number" label="30041" enable="eq(-4,true)" default="504"/>
+    <setting id="viewmodeseason" type="number" label="30042" enable="eq(-5,true)" default="504"/>
+    <setting id="viewmodeepisode" type="number" label="30043" enable="eq(-6,true)" default="55"/>
+    <setting id="viewmodeexported" type="number" label="30074" enable="eq(-7,true)" default="504"/>
+  </category>
+  <category label="30078">
+    <setting id="BookmarkManager_enabled" type="bool" label="30083" default="true"/>
+    <setting id="StreamContinuityManager_enabled" type="bool" label="30082" default="true"/>
+    <setting id="SectionSkipper_enabled" type="bool" label="30075" default="true"/>
+    <setting id="auto_skip_credits" type="bool" label="30079" default="false" visible="eq(-1,true)" subsetting="true"/>
+    <setting id="pause_on_skip" type="bool" label="30080" default="false" visible="eq(-1,true)" subsetting="true"/>
+  </category>
+  <category label="30023">
+    <setting id="enable_dolby_sound" type="bool" label="30033" default="true"/>
+    <setting id="enable_hevc_profiles" type="bool" label="30060" default="false"/>
+    <setting id="enable_hdr_profiles" type="bool" label="30084" default="false" visible="eq(-1,true)" subsetting="true"/>
+    <setting id="enable_dolbyvision_profiles" type="bool" label="30085" default="false" visible="eq(-2,true)" subsetting="true"/>
+    <setting id="enable_vp9_profiles" type="bool" label="30086" default="false"/>
+    <setting id="ssl_verification" type="bool" label="30024" default="true"/>
+    <setting id="enable_tracking" type="bool" label="30032" default="true"/>
+    <setting id="esn" type="text" label="30034" value="" default=""/>
+    <setting id="hidden_esn" visible="false" value="" />
+    <setting id="tracking_id" value="" visible="false"/>
+    <setting id="locale_id" visible="false" value="en-US" />
+    <setting id="msl_service_port" value="8000" visible="false"/>
+    <setting id="netflix_service_port" value="8001" visible="false"/>
+    <setting id="show_update_db" type="bool" default="false" visible="false"/>
+  </category>
+  <category label="30053">
+    <setting id="autologin_enable" type="bool" label="30054" default="false"/>
+    <setting id="autologin_user" type="text" label="30055" default="" enable="false" visible="eq(-1,true)" subsetting="true"/>
+    <setting id="autologin_id" type="text" label="30056" default="" enable="false" visible="eq(-2,true)" subsetting="true"/>
+    <setting id="info" type="text" label="30057" default="" enable="false" visible="eq(-3,true)"/>
+  </category>
+</settings>

@@ -1,0 +1,3 @@
+Exodus Redux Repo Changelog:
+1.0.7 - Added icon
+1.0.6 - Moved zip folder location
