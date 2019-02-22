@@ -1,3 +1,23 @@
+Version 3.4.0 released 2014-04-02
+
+* Native setuptools support re-introduced
+  https://github.com/simplejson/simplejson/pull/92
+
+Version 3.3.3 released 2014-02-14
+
+* Improve test suite's Python 3.4 compatibility
+  https://github.com/simplejson/simplejson/issues/87
+
+Version 3.3.2 released 2014-01-06
+
+* Docstring fix for decoded string types
+  https://github.com/simplejson/simplejson/pull/82
+
+Version 3.3.1 released 2013-10-05
+
+* JSONDecodeError exceptions can now be pickled
+  https://github.com/simplejson/simplejson/pull/78
+
 Version 3.3.0 released 2013-05-07
 
 * Unpaired surrogates once again pass through the decoder, to match older
