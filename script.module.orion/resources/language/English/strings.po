@@ -1,0 +1,1258 @@
+##############################################################################
+# ORION
+# https://orionoid.com
+##############################################################################
+
+# Addon Name: Orion
+# Addon Id: script.module.orion
+# Addon Provider: Orion
+msgid ""
+msgstr ""
+
+##############################################################################
+# GENERAL
+##############################################################################
+
+msgctxt "#32001"
+msgid "Orion"
+msgstr ""
+
+msgctxt "#32002"
+msgid "Apps"
+msgstr ""
+
+msgctxt "#32003"
+msgid "App"
+msgstr ""
+
+msgctxt "#32004"
+msgid "Tools"
+msgstr ""
+
+msgctxt "#32005"
+msgid "Settings"
+msgstr ""
+
+msgctxt "#32006"
+msgid "Clean"
+msgstr ""
+
+msgctxt "#32007"
+msgid "Website"
+msgstr ""
+
+msgctxt "#32008"
+msgid "About"
+msgstr ""
+
+msgctxt "#32009"
+msgid "General"
+msgstr ""
+
+msgctxt "#32010"
+msgid "Details"
+msgstr ""
+
+msgctxt "#32011"
+msgid "Name"
+msgstr ""
+
+msgctxt "#32012"
+msgid "Description"
+msgstr ""
+
+msgctxt "#32013"
+msgid "Type"
+msgstr ""
+
+msgctxt "#32014"
+msgid "Status"
+msgstr ""
+
+msgctxt "#32015"
+msgid "Popularity"
+msgstr ""
+
+msgctxt "#32016"
+msgid "Created"
+msgstr ""
+
+msgctxt "#32017"
+msgid "Account"
+msgstr ""
+
+msgctxt "#32018"
+msgid "Key"
+msgstr ""
+
+msgctxt "#32019"
+msgid "User"
+msgstr ""
+
+msgctxt "#32020"
+msgid "Email"
+msgstr ""
+
+msgctxt "#32021"
+msgid "Registered"
+msgstr ""
+
+msgctxt "#32022"
+msgid "Subscription"
+msgstr ""
+
+msgctxt "#32023"
+msgid "Package"
+msgstr ""
+
+msgctxt "#32024"
+msgid "Started"
+msgstr ""
+
+msgctxt "#32025"
+msgid "Expiration"
+msgstr ""
+
+msgctxt "#32026"
+msgid "Limit"
+msgstr ""
+
+msgctxt "#32027"
+msgid "Total"
+msgstr ""
+
+msgctxt "#32028"
+msgid "Used"
+msgstr ""
+
+msgctxt "#32029"
+msgid "Remaining"
+msgstr ""
+
+msgctxt "#32030"
+msgid "Unlimited"
+msgstr ""
+
+msgctxt "#32031"
+msgid "Requests"
+msgstr ""
+
+msgctxt "#32032"
+msgid "of"
+msgstr ""
+
+msgctxt "#32033"
+msgid "Invalid"
+msgstr ""
+
+msgctxt "#32034"
+msgid "API"
+msgstr ""
+
+msgctxt "#32035"
+msgid "Days"
+msgstr ""
+
+msgctxt "#32036"
+msgid "Default"
+msgstr ""
+
+msgctxt "#32037"
+msgid "Location"
+msgstr ""
+
+msgctxt "#32038"
+msgid "Refresh"
+msgstr ""
+
+msgctxt "#32039"
+msgid "Interface"
+msgstr ""
+
+msgctxt "#32040"
+msgid "Background"
+msgstr ""
+
+msgctxt "#32041"
+msgid "Theme"
+msgstr ""
+
+msgctxt "#32042"
+msgid "Light"
+msgstr ""
+
+msgctxt "#32043"
+msgid "Dark"
+msgstr ""
+
+msgctxt "#32044"
+msgid "Premium"
+msgstr ""
+
+msgctxt "#32045"
+msgid "Version"
+msgstr ""
+
+msgctxt "#32046"
+msgid "Disclaimer"
+msgstr ""
+
+msgctxt "#32047"
+msgid "Cache"
+msgstr ""
+
+msgctxt "#32048"
+msgid "Error"
+msgstr ""
+
+msgctxt "#32049"
+msgid "Scraping"
+msgstr ""
+
+msgctxt "#32050"
+msgid "Scraping Mode"
+msgstr ""
+
+msgctxt "#32051"
+msgid "Scraping Timeout"
+msgstr ""
+
+msgctxt "#32052"
+msgid "Minimum Streams"
+msgstr ""
+
+msgctxt "#32053"
+msgid "Exclusive"
+msgstr ""
+
+msgctxt "#32054"
+msgid "Sequential"
+msgstr ""
+
+msgctxt "#32055"
+msgid "Parallel"
+msgstr ""
+
+msgctxt "#32056"
+msgid "Notifications"
+msgstr ""
+
+msgctxt "#32057"
+msgid "Disabled"
+msgstr ""
+
+msgctxt "#32058"
+msgid "Essential"
+msgstr ""
+
+msgctxt "#32059"
+msgid "All"
+msgstr ""
+
+msgctxt "#32060"
+msgid "Streams Found"
+msgstr ""
+
+msgctxt "#32061"
+msgid "Exception"
+msgstr ""
+
+msgctxt "#32062"
+msgid "Streams Available"
+msgstr ""
+
+msgctxt "#32063"
+msgid "Streams Returned"
+msgstr ""
+
+msgctxt "#32064"
+msgid "Temporary Problems"
+msgstr ""
+
+msgctxt "#32065"
+msgid "Settings Help"
+msgstr ""
+
+msgctxt "#32066"
+msgid "Help"
+msgstr ""
+
+msgctxt "#32067"
+msgid "Filters"
+msgstr ""
+
+msgctxt "#32068"
+msgid "Sorting"
+msgstr ""
+
+msgctxt "#32069"
+msgid "Sort Value"
+msgstr ""
+
+msgctxt "#32070"
+msgid "Sort Order"
+msgstr ""
+
+msgctxt "#32071"
+msgid "User Popularity"
+msgstr ""
+
+msgctxt "#32072"
+msgid "Time Added"
+msgstr ""
+
+msgctxt "#32073"
+msgid "Time Updated"
+msgstr ""
+
+msgctxt "#32074"
+msgid "Video Quality"
+msgstr ""
+
+msgctxt "#32075"
+msgid "Audio Channels"
+msgstr ""
+
+msgctxt "#32076"
+msgid "File Size"
+msgstr ""
+
+msgctxt "#32077"
+msgid "Torrent Seeds"
+msgstr ""
+
+msgctxt "#32078"
+msgid "Usenet Age"
+msgstr ""
+
+msgctxt "#32079"
+msgid "Ascending"
+msgstr ""
+
+msgctxt "#32080"
+msgid "Descending"
+msgstr ""
+
+msgctxt "#32081"
+msgid "Limits"
+msgstr ""
+
+msgctxt "#32082"
+msgid "Link Limit"
+msgstr ""
+
+msgctxt "#32083"
+msgid "Retry Limit"
+msgstr ""
+
+msgctxt "#32084"
+msgid "Settings Help"
+msgstr ""
+
+msgctxt "#32085"
+msgid "Minimum Popularity"
+msgstr ""
+
+msgctxt "#32086"
+msgid "Streams"
+msgstr ""
+
+msgctxt "#32087"
+msgid "Maximum Age"
+msgstr ""
+
+msgctxt "#32088"
+msgid "Torrents"
+msgstr ""
+
+msgctxt "#32089"
+msgid "Usenet"
+msgstr ""
+
+msgctxt "#32090"
+msgid "Hosters"
+msgstr ""
+
+msgctxt "#32091"
+msgid "Torrents • Usenet"
+msgstr ""
+
+msgctxt "#32092"
+msgid "Torrents • Hosters"
+msgstr ""
+
+msgctxt "#32093"
+msgid "Usenet • Hosters"
+msgstr ""
+
+msgctxt "#32094"
+msgid "Stream Source"
+msgstr ""
+
+msgctxt "#32095"
+msgid "Video"
+msgstr ""
+
+msgctxt "#32096"
+msgid "Enabled"
+msgstr ""
+
+msgctxt "#32097"
+msgid "Torrent"
+msgstr ""
+
+msgctxt "#32098"
+msgid "Hoster"
+msgstr ""
+
+msgctxt "#32099"
+msgid "Stream Types"
+msgstr ""
+
+msgctxt "#32100"
+msgid "Direct"
+msgstr ""
+
+msgctxt "#32101"
+msgid "Include"
+msgstr ""
+
+msgctxt "#32102"
+msgid "Exclude"
+msgstr ""
+
+msgctxt "#32103"
+msgid "Require"
+msgstr ""
+
+msgctxt "#32104"
+msgid "Minimum Seeds"
+msgstr ""
+
+msgctxt "#32105"
+msgid "Stream Access"
+msgstr ""
+
+msgctxt "#32106"
+msgid "Sources"
+msgstr ""
+
+msgctxt "#32107"
+msgid "Premiumize Cached"
+msgstr ""
+
+msgctxt "#32108"
+msgid "OffCloud Cached"
+msgstr ""
+
+msgctxt "#32109"
+msgid "RealDebrid Cached"
+msgstr ""
+
+msgctxt "#32110"
+msgid "Season Pack"
+msgstr ""
+
+msgctxt "#32111"
+msgid "Minimum Size"
+msgstr ""
+
+msgctxt "#32112"
+msgid "Maximum Size"
+msgstr ""
+
+msgctxt "#32113"
+msgid "Metadata"
+msgstr ""
+
+msgctxt "#32114"
+msgid "Release"
+msgstr ""
+
+msgctxt "#32115"
+msgid "Uploader"
+msgstr ""
+
+msgctxt "#32116"
+msgid "Edition"
+msgstr ""
+
+msgctxt "#32117"
+msgid "Minimum Quality"
+msgstr ""
+
+msgctxt "#32118"
+msgid "Maximum Quality"
+msgstr ""
+
+msgctxt "#32119"
+msgid "Cached"
+msgstr ""
+
+msgctxt "#32120"
+msgid "None"
+msgstr ""
+
+msgctxt "#32121"
+msgid "CAM"
+msgstr ""
+
+msgctxt "#32122"
+msgid "CAM720"
+msgstr ""
+
+msgctxt "#32123"
+msgid "CAM1080"
+msgstr ""
+
+msgctxt "#32124"
+msgid "SCR"
+msgstr ""
+
+msgctxt "#32125"
+msgid "SCR720"
+msgstr ""
+
+msgctxt "#32126"
+msgid "SCR1080"
+msgstr ""
+
+msgctxt "#32127"
+msgid "SD"
+msgstr ""
+
+msgctxt "#32128"
+msgid "HD720"
+msgstr ""
+
+msgctxt "#32129"
+msgid "HD1080"
+msgstr ""
+
+msgctxt "#32130"
+msgid "HD2K"
+msgstr ""
+
+msgctxt "#32131"
+msgid "HD4K"
+msgstr ""
+
+msgctxt "#32132"
+msgid "HD6K"
+msgstr ""
+
+msgctxt "#32133"
+msgid "HD8K"
+msgstr ""
+
+msgctxt "#32134"
+msgid "Video Codec"
+msgstr ""
+
+msgctxt "#32135"
+msgid "Video 3D"
+msgstr ""
+
+msgctxt "#32136"
+msgid "Audio"
+msgstr ""
+
+msgctxt "#32137"
+msgid "Audio Type"
+msgstr ""
+
+msgctxt "#32138"
+msgid "Audio Channels"
+msgstr ""
+
+msgctxt "#32139"
+msgid "Minimum Channels"
+msgstr ""
+
+msgctxt "#32140"
+msgid "Maximum Channels"
+msgstr ""
+
+msgctxt "#32141"
+msgid "1CH"
+msgstr ""
+
+msgctxt "#32142"
+msgid "2CH"
+msgstr ""
+
+msgctxt "#32143"
+msgid "4CH"
+msgstr ""
+
+msgctxt "#32144"
+msgid "6CH"
+msgstr ""
+
+msgctxt "#32145"
+msgid "8CH"
+msgstr ""
+
+msgctxt "#32146"
+msgid "10CH"
+msgstr ""
+
+msgctxt "#32147"
+msgid "Audio Codec"
+msgstr ""
+
+msgctxt "#32148"
+msgid "Audio Languages"
+msgstr ""
+
+msgctxt "#32149"
+msgid "Enable All"
+msgstr ""
+
+msgctxt "#32150"
+msgid "Disable All"
+msgstr ""
+
+msgctxt "#32151"
+msgid "Close"
+msgstr ""
+
+msgctxt "#32152"
+msgid "Subtitle"
+msgstr ""
+
+msgctxt "#32153"
+msgid "Subtitle Type"
+msgstr ""
+
+msgctxt "#32154"
+msgid "Subtitle Languages"
+msgstr ""
+
+msgctxt "#32155"
+msgid "Cached • Direct"
+msgstr ""
+
+msgctxt "#32156"
+msgid "Server"
+msgstr ""
+
+msgctxt "#32157"
+msgid "Notification"
+msgstr ""
+
+msgctxt "#32158"
+msgid "API Notifications"
+msgstr ""
+
+msgctxt "#32159"
+msgid "News Notifications"
+msgstr ""
+
+msgctxt "#32160"
+msgid "Time"
+msgstr ""
+
+msgctxt "#32161"
+msgid "Message"
+msgstr ""
+
+msgctxt "#32162"
+msgid "Resources"
+msgstr ""
+
+msgctxt "#32163"
+msgid "Usage"
+msgstr ""
+
+msgctxt "#32164"
+msgid "Random Shuffle"
+msgstr ""
+
+msgctxt "#32165"
+msgid "Cached • Indirect"
+msgstr ""
+
+msgctxt "#32166"
+msgid "Cached • Direct • Indirect"
+msgstr ""
+
+msgctxt "#32167"
+msgid "Login"
+msgstr ""
+
+msgctxt "#32168"
+msgid "Password"
+msgstr ""
+
+msgctxt "#32169"
+msgid "Authenticated"
+msgstr ""
+
+msgctxt "#32170"
+msgid "Backup"
+msgstr ""
+
+msgctxt "#32171"
+msgid "Import"
+msgstr ""
+
+msgctxt "#32172"
+msgid "Export"
+msgstr ""
+
+msgctxt "#32173"
+msgid "Stream Hoster"
+msgstr ""
+
+msgctxt "#32174"
+msgid "Integration"
+msgstr ""
+
+msgctxt "#32175"
+msgid "Integration Failed"
+msgstr ""
+
+msgctxt "#32176"
+msgid "Integration Succeeded"
+msgstr ""
+
+msgctxt "#32177"
+msgid "Cleanup Succeeded"
+msgstr ""
+
+msgctxt "#32178"
+msgid "Integrate"
+msgstr ""
+
+msgctxt "#32179"
+msgid "Integrate Orion into the addon"
+msgstr ""
+
+msgctxt "#32180"
+msgid "Remove Orion from the addon"
+msgstr ""
+
+msgctxt "#32181"
+msgid "Launch"
+msgstr ""
+
+msgctxt "#32182"
+msgid "Launch the addon"
+msgstr ""
+
+msgctxt "#32183"
+msgid "Custom Settings"
+msgstr ""
+
+msgctxt "#32184"
+msgid "Unknown Size"
+msgstr ""
+
+msgctxt "#32185"
+msgid "Settings Backup"
+msgstr ""
+
+msgctxt "#32186"
+msgid "Advanced"
+msgstr ""
+
+msgctxt "#32187"
+msgid "Server Connection"
+msgstr ""
+
+msgctxt "#32188"
+msgid "Main Domain Name"
+msgstr ""
+
+msgctxt "#32189"
+msgid "Main IP Address"
+msgstr ""
+
+msgctxt "#32190"
+msgid "Custom Domain Name"
+msgstr ""
+
+msgctxt "#32191"
+msgid "Custom IP Address"
+msgstr ""
+
+msgctxt "#32192"
+msgid "Domain Name"
+msgstr ""
+
+msgctxt "#32193"
+msgid "IP Address"
+msgstr ""
+
+msgctxt "#32194"
+msgid "Settings Cache"
+msgstr ""
+
+msgctxt "#32195"
+msgid "Promotion Start"
+msgstr ""
+
+msgctxt "#32196"
+msgid "Promotion End"
+msgstr ""
+
+msgctxt "#32197"
+msgid "Promotion Offer"
+msgstr ""
+
+msgctxt "#32198"
+msgid "Limit Multiplier"
+msgstr ""
+
+msgctxt "#32199"
+msgid "Infinite"
+msgstr ""
+
+msgctxt "#32200"
+msgid "Audio System"
+msgstr ""
+
+msgctxt "#32201"
+msgid "Stream Origin"
+msgstr ""
+
+msgctxt "#32202"
+msgid "Vote Cast"
+msgstr ""
+
+msgctxt "#32203"
+msgid "Removal Requested"
+msgstr ""
+
+msgctxt "#32204"
+msgid "HTTP • HTTPS • FTP • FTPS"
+msgstr ""
+
+msgctxt "#32205"
+msgid "MAGNET • HTTP • HTTPS"
+msgstr ""
+
+msgctxt "#32206"
+msgid "MAGNET • FTP • FTPS"
+msgstr ""
+
+msgctxt "#32207"
+msgid "MAGNET • HTTP • FTP"
+msgstr ""
+
+msgctxt "#32208"
+msgid "MAGNET • HTTPS • FTPS"
+msgstr ""
+
+msgctxt "#32209"
+msgid "HTTP • HTTPS"
+msgstr ""
+
+msgctxt "#32210"
+msgid "HTTP • FTP"
+msgstr ""
+
+msgctxt "#32211"
+msgid "HTTPS • FTPS"
+msgstr ""
+
+msgctxt "#32212"
+msgid "FTP • FTPS"
+msgstr ""
+
+msgctxt "#32213"
+msgid "HTTP"
+msgstr ""
+
+msgctxt "#32214"
+msgid "HTTPS"
+msgstr ""
+
+msgctxt "#32215"
+msgid "FTP"
+msgstr ""
+
+msgctxt "#32216"
+msgid "FTPS"
+msgstr ""
+
+msgctxt "#32217"
+msgid "MAGNET"
+msgstr ""
+
+msgctxt "#32218"
+msgid "Torrent Protocol"
+msgstr ""
+
+msgctxt "#32219"
+msgid "Usenet Protocol"
+msgstr ""
+
+msgctxt "#32220"
+msgid "Hoster Protocol"
+msgstr ""
+
+##############################################################################
+# MESSAGES
+##############################################################################
+
+msgctxt "#33001"
+msgid "No account was setup yet. Do you want to activate an Orion account now?"
+msgstr ""
+
+msgctxt "#33002"
+msgid "Visit the Orion website for specials, upgrades, and support."
+msgstr ""
+
+msgctxt "#33003"
+msgid "Are you sure you want to clear your account and filter settings?"
+msgstr ""
+
+msgctxt "#33004"
+msgid "Orion settings cleared."
+msgstr ""
+
+msgctxt "#33005"
+msgid "Orion cache cleared."
+msgstr ""
+
+msgctxt "#33006"
+msgid "Unknown error detected. Check your log."
+msgstr ""
+
+msgctxt "#33007"
+msgid "Orion is temporarily unreachable. Try again later."
+msgstr ""
+
+msgctxt "#33008"
+msgid "This setting is dynamically updated with new options from API searches. If a new option arrives, it is automatically enabled and added to the list. You can manually disable these options, but do it sparingly, since changed options slow down the search."
+msgstr ""
+
+msgctxt "#33009"
+msgid "No notifications are currently listed."
+msgstr ""
+
+msgctxt "#33010"
+msgid "Do you want to login with your API key or your email address and password?"
+msgstr ""
+
+msgctxt "#33011"
+msgid "Account Successfully Authenticated"
+msgstr ""
+
+msgctxt "#33012"
+msgid "Do you want to import an existing backup, or do you want export your current settings?"
+msgstr ""
+
+msgctxt "#33013"
+msgid "Settings Backup Successfully Exported"
+msgstr ""
+
+msgctxt "#33014"
+msgid "Settings Backup Successfully Imported"
+msgstr ""
+
+msgctxt "#33015"
+msgid "Settings Backup Export Failed"
+msgstr ""
+
+msgctxt "#33016"
+msgid "Settings Backup Import Failed"
+msgstr ""
+
+msgctxt "#33017"
+msgid "Addon Code Integration Failed"
+msgstr ""
+
+msgctxt "#33018"
+msgid "Addon Code Integration Successful"
+msgstr ""
+
+msgctxt "#33019"
+msgid "Addon Code Cleanup Successful"
+msgstr ""
+
+msgctxt "#33020"
+msgid "Do you want to integrate Orion into the %s addon? If something goes wrong, an attempt will be made to undo the integration, but in the worst case you might have to reinstall %s."
+msgstr ""
+
+msgctxt "#33021"
+msgid "Do you want to remove Orion from the %s addon and cleanup the integration?"
+msgstr ""
+
+msgctxt "#33022"
+msgid "Do you want to automatically reintegrate Orion if %s is updated in the future? If not, you will have to execute this function manually every time %s is updated."
+msgstr ""
+
+msgctxt "#33023"
+msgid "%s uses third-party scrapers from %s. Do you want to continue with the %s integration?"
+msgstr ""
+
+msgctxt "#33024"
+msgid "Gaia supports Orion natively so there is no need for integration."
+msgstr ""
+
+msgctxt "#33025"
+msgid "Orion was successfully integrated into %s."
+msgstr ""
+
+msgctxt "#33026"
+msgid "Please restart Kodi for the integration to take effect."
+msgstr ""
+
+msgctxt "#33027"
+msgid "Addon Not Installed Or Enabled"
+msgstr ""
+
+msgctxt "#33028"
+msgid "This feature will integrate Orion by inserting code into an addon of your choice. Do not continue if you do not want Orion to insert code into other addons. Do you want to continue?"
+msgstr ""
+
+msgctxt "#33029"
+msgid "The vote was successfully cast."
+msgstr ""
+
+msgctxt "#33029"
+msgid "Stream Vote Cast Successful"
+msgstr ""
+
+msgctxt "#33030"
+msgid "Stream Removal Requested Successful"
+msgstr ""
+
+##############################################################################
+# HELP
+##############################################################################
+
+msgctxt "#34001"
+msgid "The fanart used for the background. If enabled, the Orion fanart is used, otherwise the default skin background is shown."
+msgstr ""
+
+msgctxt "#34002"
+msgid "The icon theme used for the Orion menus."
+msgstr ""
+
+msgctxt "#34003"
+msgid "The notifications shown for the API status and errors. Hide all, show all, or only display essential API messages."
+msgstr ""
+
+msgctxt "#34004"
+msgid "The number of seconds to wait for the Orion API to respond. Do not set the timeout too low, as movies and shows with many streams can take a while to filter and return."
+msgstr ""
+
+msgctxt "#34005"
+msgid "The order in which providers should be scraped. Query Orion alone, in parallel with other providers, or first check Orion and if not enough links were returned, scrape the other providers. The addon calling Orion must have implemented this feature for the setting to work."
+msgstr ""
+
+msgctxt "#34006"
+msgid "The minimum number of streams that must be returned from Orion in order to skip the scraping of other providers. The addon calling Orion must have implemented this feature for the setting to work."
+msgstr ""
+
+msgctxt "#34007"
+msgid "The Orion API key. The key can be found under the account section of registered users on the Orion website."
+msgstr ""
+
+msgctxt "#34008"
+msgid "The Orion server to use for API requests. If set to default, the closest and fastest server will automatically be detected."
+msgstr ""
+
+msgctxt "#34009"
+msgid "The maximum number of streams to retrieve per requests. Set the limit to your package's daily limit divided by the number of movies or shows you watch per day."
+msgstr ""
+
+msgctxt "#34010"
+msgid "If your filters are too restrictive, no results might be returned. In such a case, the API can immediately run a second search without any filters, ensuring that at least some streams are returned, even if they do not adhere to the given filters. A custom stream limit for retries can be set with this option. Set the value to 0 to disable any retries."
+msgstr ""
+
+msgctxt "#34011"
+msgid "The attribute to sort streams by. Results can also be randomly shuffled. The popularity is the frequency at which streams are accessed by users. The added and updated time is when the stream was first added to Orion and the last time it was updated by a user, respectively."
+msgstr ""
+
+msgctxt "#34012"
+msgid "The order to sort streams by. The order can either be in increasing or decreasing order."
+msgstr ""
+
+msgctxt "#34013"
+msgid "The minimum popularity percentage of streams. Popularity is determined by the number of users who access a specific stream. Higher percentages indicates that the stream is more popular amongst the community. Set the value to 0 to disable the popularity threshold."
+msgstr ""
+
+msgctxt "#34014"
+msgid "The maximum number of days since the stream was last updated. Streams that have not been updated in a while can have inaccurate metadata, such as the cached status or torrent seeds, and hoster links can even be completely down. Old streams can therefore be excluded from the results. Set the value to 0 to disable and ignore the age."
+msgstr ""
+
+msgctxt "#34015"
+msgid "The type of the streams to return. Types include torrents, usenet, and hoster links."
+msgstr ""
+
+msgctxt "#34016"
+msgid "The source the stream comes from. Sources are dynamically added by API requests and can be individually enabled and disabled."
+msgstr ""
+
+msgctxt "#34017"
+msgid "The notifications for news and updates shown at startup."
+msgstr ""
+
+msgctxt "#34018"
+msgid "The minimum number of torrent seeds. Torrents with less seeds are excluded from the results. Set the value to 0 to disable and ignore the number of seeds. The seed count might be inaccurate if the stream was not updated in a long time."
+msgstr ""
+
+msgctxt "#34019"
+msgid "The maximum number of days since the usenet NZB was created. Set the value to 0 to disable and ignore the age."
+msgstr ""
+
+msgctxt "#34020"
+msgid "The availability of the stream, either in the debrid cache, directly accessible without an account, or otherwise indirectly accessible hoster links. The cached status might be incorrect if the stream was not updated in a long time. Some hosters have direct links that can be immediately played without going through a URL resolver or premium service. Indirect links are all other hoster links which might require a premium service, URL resolver, or captcha input."
+msgstr ""
+
+msgctxt "#34021"
+msgid "The cached status of the stream on Premiumize. Only enable this option if you have a Premiumize account."
+msgstr ""
+
+msgctxt "#34022"
+msgid "The cached status of the stream on OffCloud. Only enable this option if you have an OffCloud account."
+msgstr ""
+
+msgctxt "#34023"
+msgid "The cached status of the stream on RealDebrid. Only enable this option if you have a RealDebrid account."
+msgstr ""
+
+msgctxt "#34024"
+msgid "The streams that are part of a season pack. Set this option to [I]include[/I] to return all links, [I]exclude[/I] to ignore season packs, and [I]require[/I] to only return season packs."
+msgstr ""
+
+msgctxt "#34025"
+msgid "The file size range of the stream."
+msgstr ""
+
+msgctxt "#34026"
+msgid "The minimum file size of the stream in megabytes (MB). Set the value to 0 to ignore the lower bound."
+msgstr ""
+
+msgctxt "#34027"
+msgid "The maximum file size of the stream in megabytes (MB). Set the value to 0 to ignore the upper bound."
+msgstr ""
+
+msgctxt "#34028"
+msgid "The release type of the stream. Releases are dynamically added by API requests and can be individually enabled and disabled."
+msgstr ""
+
+msgctxt "#34029"
+msgid "The upload user of the stream. Uploaders are dynamically added by API requests and can be individually enabled and disabled."
+msgstr ""
+
+msgctxt "#34030"
+msgid "The edition of the stream. Editions are dynamically added by API requests and can be individually enabled and disabled."
+msgstr ""
+
+msgctxt "#34031"
+msgid "The video quality of the stream."
+msgstr ""
+
+msgctxt "#34032"
+msgid "The minimum video quality of the stream. Only streams with the given or higher quality will be returned."
+msgstr ""
+
+msgctxt "#34033"
+msgid "The maximum video quality of the stream. Only streams with the given or lower quality will be returned."
+msgstr ""
+
+msgctxt "#34034"
+msgid "The video codec of the stream. Codecs are dynamically added by API requests and can be individually enabled and disabled."
+msgstr ""
+
+msgctxt "#34035"
+msgid "The 3D capabilities of the stream. Specialized hardware is required to watch 3D videos."
+msgstr ""
+
+msgctxt "#34036"
+msgid "The audio type of the stream."
+msgstr ""
+
+msgctxt "#34037"
+msgid "The number of audio channels of the stream. The subwoofer counts as a separate channel, hence a 5.1 sound system has 6 channels."
+msgstr ""
+
+msgctxt "#34038"
+msgid "The minimum number of audio channels of the stream. Only streams with the given or greater number of channels will be returned."
+msgstr ""
+
+msgctxt "#34039"
+msgid "The maximum number of audio channels of the stream. Only streams with the given or lower number of channels will be returned."
+msgstr ""
+
+msgctxt "#34040"
+msgid "The audio codec of the stream. Codecs are dynamically added by API requests and can be individually enabled and disabled."
+msgstr ""
+
+msgctxt "#34041"
+msgid "The audio language of the stream."
+msgstr ""
+
+msgctxt "#34042"
+msgid "The subtitle type of the stream."
+msgstr ""
+
+msgctxt "#34043"
+msgid "The subtitle language of the stream."
+msgstr ""
+
+msgctxt "#34044"
+msgid "The file hoster the stream is hosted on. Hosters are dynamically added by API requests and can be individually enabled and disabled. This setting only applies to hoster links."
+msgstr ""
+
+msgctxt "#34045"
+msgid "The minimum video quality of streams that must be returned from Orion in order to skip the scraping of other providers. The addon calling Orion must have implemented this feature for the setting to work."
+msgstr ""
+
+msgctxt "#34046"
+msgid "Use custom settings for the addon instead of using the default universal settings."
+msgstr ""
+
+msgctxt "#34047"
+msgid "Include streams with an unknown file size."
+msgstr ""
+
+msgctxt "#34048"
+msgid "Automatically backup the addon settings and restore them if they become corrupt."
+msgstr ""
+
+msgctxt "#34049"
+msgid "This section is for advanced users only. Use these options if you know what you are doing, since changing them might cause the addon to stop working."
+msgstr ""
+
+msgctxt "#34050"
+msgid "The manner in which the connection is established to the API. This can be useful if your VPN, ISP, or DNS is blocking the Orion domain. Connect via the main domain name or IP address, or by specifying a custom location."
+msgstr ""
+
+msgctxt "#34051"
+msgid "The domain name of the server."
+msgstr ""
+
+msgctxt "#34052"
+msgid "The IP address of the server."
+msgstr ""
+
+msgctxt "#34053"
+msgid "Cache the addon settings to allow for faster settings access. Toggle this option if the addon keeps resetting."
+msgstr ""
+
+msgctxt "#34054"
+msgid "The audio system of the stream. Codecs are dynamically added by API requests and can be individually enabled and disabled."
+msgstr ""
+
+msgctxt "#34055"
+msgid "The origin addon or app the stream comes from. Origins are dynamically added by API requests and can be individually enabled and disabled."
+msgstr ""
+
+msgctxt "#34056"
+msgid "The protocol of torrent links. Torrents can use a MAGNET link or the torrent file can be retrieved over HTTP(S) or FTP(S)."
+msgstr ""
+
+msgctxt "#34057"
+msgid "The protocol of usenet links. NZB files are retrieved over HTTP(S) or FTP(S)."
+msgstr ""
+
+msgctxt "#34058"
+msgid "The protocol of hoster links. Hoster files are retrieved over HTTP(S) or FTP(S)."
+msgstr ""

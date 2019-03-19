@@ -1,449 +1,280 @@
-# -*- coding: utf8 -*-
+import os, shutil
+import xbmc, xbmcgui, xbmcplugin
+from resources.lib import Utils
+from resources.lib import local_db
+from resources.lib import TheMovieDB
+from resources.lib.WindowManager import wm
+from resources.lib.VideoPlayer import PLAYER
 
-# Copyright (C) 2015 - Philipp Temminghoff <phil65@kodi.tv>
-# This program is Free Software see LICENSE file for details
+def start_info_actions(infos, params):
+	if 'imdbid' in params and 'imdb_id' not in params:
+		params['imdb_id'] = params['imdbid']
+	for info in infos:
+		data = [], ''
+		if info == 'libraryallmovies':
+			return local_db.get_db_movies('"sort": {"order": "descending", "method": "dateadded"}')
 
-from __future__ import unicode_literals
+		elif info == 'libraryalltvshows':
+			return local_db.get_db_tvshows('"sort": {"order": "descending", "method": "dateadded"}')
 
-import time
-import os
-import shutil
+		elif info == 'popularmovies':
+			return TheMovieDB.get_tmdb_movies('popular')
 
-import xbmc
-import xbmcgui
-import xbmcplugin
+		elif info == 'topratedmovies':
+			return TheMovieDB.get_tmdb_movies('top_rated')
 
-import Trakt
-import LastFM
-import TheAudioDB as AudioDB
-import TheMovieDB as tmdb
-from WindowManager import wm
+		elif info == 'incinemamovies':
+			return TheMovieDB.get_tmdb_movies('now_playing')
 
-from kodi65 import youtube
-from kodi65 import local_db
-from kodi65 import addon
-from kodi65 import utils
-from kodi65 import busy
-from kodi65 import kodijson
-from kodi65 import favs
+		elif info == 'upcomingmovies':
+			return TheMovieDB.get_tmdb_movies('upcoming')
 
+		elif info == 'populartvshows':
+			return TheMovieDB.get_tmdb_shows('popular')
 
-def start_info_actions(info, params):
-    if "artistname" in params:
-        params["artistname"] = params.get("artistname", "").split(" feat. ")[0].strip()
-        if not params.get("artist_mbid"):
-            params["artist_mbid"] = utils.fetch_musicbrainz_id(params["artistname"])
-    utils.log(info)
-    utils.pp(params)
-    if "prefix" in params and not params["prefix"].endswith('.'):
-        params["prefix"] = params["prefix"] + '.'
+		elif info == 'topratedtvshows':
+			return TheMovieDB.get_tmdb_shows('top_rated')
 
-    # Audio
-    if info == 'discography':
-        discography = AudioDB.get_artist_discography(params["artistname"])
-        if not discography:
-            discography = LastFM.get_artist_albums(params.get("artist_mbid"))
-        return discography
-    elif info == 'mostlovedtracks':
-        return AudioDB.get_most_loved_tracks(params["artistname"])
-    elif info == 'trackdetails':
-        return AudioDB.get_track_details(params.get("id", ""))
-    elif info == 'topartists':
-        return LastFM.get_top_artists()
-    #  The MovieDB
-    elif info == 'incinemamovies':
-        return tmdb.get_movies("now_playing")
-    elif info == 'upcomingmovies':
-        return tmdb.get_movies("upcoming")
-    elif info == 'topratedmovies':
-        return tmdb.get_movies("top_rated")
-    elif info == 'popularmovies':
-        return tmdb.get_movies("popular")
-    elif info == 'ratedmovies':
-        return tmdb.get_rated_media_items("movies")
-    elif info == 'starredmovies':
-        return tmdb.get_fav_items("movies")
-    elif info == 'accountlists':
-        account_lists = tmdb.handle_lists(tmdb.get_account_lists())
-        for item in account_lists:
-            item.set_property("directory", True)
-        return account_lists
-    elif info == 'listmovies':
-        return tmdb.get_movies_from_list(params["id"])
-    elif info == 'airingtodaytvshows':
-        return tmdb.get_tvshows("airing_today")
-    elif info == 'onairtvshows':
-        return tmdb.get_tvshows("on_the_air")
-    elif info == 'topratedtvshows':
-        return tmdb.get_tvshows("top_rated")
-    elif info == 'populartvshows':
-        return tmdb.get_tvshows("popular")
-    elif info == 'ratedtvshows':
-        return tmdb.get_rated_media_items("tv")
-    elif info == 'ratedepisodes':
-        return tmdb.get_rated_media_items("tv/episodes")
-    elif info == 'starredtvshows':
-        return tmdb.get_fav_items("tv")
-    elif info == 'similarmovies':
-        movie_id = params.get("id")
-        if not movie_id:
-            movie_id = tmdb.get_movie_tmdb_id(imdb_id=params.get("imdb_id"),
-                                              dbid=params.get("dbid"))
-        if movie_id:
-            return tmdb.get_similar_movies(movie_id)
-    elif info == 'similartvshows':
-        tvshow_id = None
-        dbid = params.get("dbid")
-        name = params.get("name")
-        tmdb_id = params.get("tmdb_id")
-        tvdb_id = params.get("tvdb_id")
-        imdb_id = params.get("imdb_id")
-        if tmdb_id:
-            tvshow_id = tmdb_id
-        elif dbid and int(dbid) > 0:
-            tvdb_id = local_db.get_imdb_id("tvshow", dbid)
-            if tvdb_id:
-                tvshow_id = tmdb.get_show_tmdb_id(tvdb_id)
-        elif tvdb_id:
-            tvshow_id = tmdb.get_show_tmdb_id(tvdb_id)
-        elif imdb_id:
-            tvshow_id = tmdb.get_show_tmdb_id(imdb_id, "imdb_id")
-        elif name:
-            tvshow_id = tmdb.search_media(media_name=name,
-                                          year="",
-                                          media_type="tv")
-        if tvshow_id:
-            return tmdb.get_similar_tvshows(tvshow_id)
-    elif info == 'studio':
-        if params.get("id"):
-            return tmdb.get_company_data(params["id"])
-        elif params.get("studio"):
-            company_data = tmdb.search_companies(params["studio"])
-            if company_data:
-                return tmdb.get_company_data(company_data[0]["id"])
-    elif info == 'set':
-        if params.get("dbid"):
-            name = local_db.get_set_name(params["dbid"])
-            if name:
-                params["setid"] = tmdb.get_set_id(name)
-        if params.get("setid"):
-            set_data, _ = tmdb.get_set_movies(params["setid"])
-            return set_data
-    elif info == 'movielists':
-        movie_id = params.get("id")
-        if not movie_id:
-            movie_id = tmdb.get_movie_tmdb_id(imdb_id=params.get("imdb_id"),
-                                              dbid=params.get("dbid"))
-        if movie_id:
-            return tmdb.get_movie_lists(movie_id)
-    elif info == 'keywords':
-        movie_id = params.get("id")
-        if not movie_id:
-            movie_id = tmdb.get_movie_tmdb_id(imdb_id=params.get("imdb_id"),
-                                              dbid=params.get("dbid"))
-        if movie_id:
-            return tmdb.get_keywords(movie_id)
-    elif info == 'trailers':
-        movie_id = params.get("id")
-        if not movie_id:
-            movie_id = tmdb.get_movie_tmdb_id(imdb_id=params.get("imdb_id"),
-                                              dbid=params.get("dbid"))
-        if movie_id:
-            return tmdb.handle_videos(tmdb.get_movie_videos(movie_id))
-    elif info == 'popularpeople':
-        return tmdb.get_popular_actors()
-    elif info == 'personmovies':
-        person = tmdb.get_person_info(person_label=params.get("person"),
-                                      skip_dialog=True)
-        if person and person.get("id"):
-            movies = tmdb.get_person_movies(person["id"])
-            if not movies:
-                return None
-            for item in movies:
-                del item["credit_id"]
-            return movies.reduce(key="department")
-    elif info == 'traktsimilarmovies':
-        if params.get("id") or params.get("dbid"):
-            if params.get("dbid"):
-                movie_id = local_db.get_imdb_id("movie", params["dbid"])
-            else:
-                movie_id = params["id"]
-            return Trakt.get_similar("movie", movie_id)
-    elif info == 'traktsimilartvshows':
-        if params.get("id") or params.get("dbid"):
-            if params.get("dbid"):
-                if params.get("type") == "episode":
-                    tvshow_id = local_db.get_tvshow_id_by_episode(params["dbid"])
-                else:
-                    tvshow_id = local_db.get_imdb_id(media_type="tvshow",
-                                                     dbid=params["dbid"])
-            else:
-                tvshow_id = params["id"]
-            return Trakt.get_similar("show", tvshow_id)
-    elif info == 'airingepisodes':
-        return Trakt.get_episodes("shows")
-    elif info == 'premiereepisodes':
-        return Trakt.get_episodes("premieres")
-    elif info == 'trendingshows':
-        return Trakt.get_shows("trending")
-    elif info == 'popularshows':
-        return Trakt.get_shows("popular")
-    elif info == 'anticipatedshows':
-        return Trakt.get_shows("anticipated")
-    elif info == 'mostcollectedshows':
-        return Trakt.get_shows_from_time("collected")
-    elif info == 'mostplayedshows':
-        return Trakt.get_shows_from_time("played")
-    elif info == 'mostwatchedshows':
-        return Trakt.get_shows_from_time("watched")
-    elif info == 'trendingmovies':
-        return Trakt.get_movies("trending")
-    elif info == 'traktpopularmovies':
-        return Trakt.get_movies("popular")
-    elif info == 'mostplayedmovies':
-        return Trakt.get_movies_from_time("played")
-    elif info == 'mostwatchedmovies':
-        return Trakt.get_movies_from_time("watched")
-    elif info == 'mostcollectedmovies':
-        return Trakt.get_movies_from_time("collected")
-    elif info == 'mostanticipatedmovies':
-        return Trakt.get_movies("anticipated")
-    elif info == 'traktboxofficemovies':
-        return Trakt.get_movies("boxoffice")
-    elif info == 'similarartistsinlibrary':
-        return local_db.get_similar_artists(params.get("artist_mbid"))
-    elif info == 'trackinfo':
-        addon.clear_global('%sSummary' % params.get("prefix", ""))
-        if params["artistname"] and params["trackname"]:
-            track_info = LastFM.get_track_info(artist_name=params["artistname"],
-                                               track=params["trackname"])
-            addon.set_global('%sSummary' % params.get("prefix", ""), track_info["summary"])
-    elif info == 'topartistsnearevents':
-        artists = local_db.get_artists()
-        import BandsInTown
-        return BandsInTown.get_near_events(artists[0:49])
-    elif info == 'youtubesearchvideos':
-        addon.set_global('%sSearchValue' % params.get("prefix", ""), params.get("id", ""))
-        if params.get("id"):
-            return youtube.search(search_str=params.get("id", ""),
-                                  hd=params.get("hd"),
-                                  orderby=params.get("orderby", "relevance"))
-    elif info == 'youtubeplaylistvideos':
-        return youtube.get_playlist_videos(params.get("id", ""))
-    elif info == 'youtubeusersearchvideos':
-        user_name = params.get("id")
-        if user_name:
-            playlists = youtube.get_user_playlists(user_name)
-            return youtube.get_playlist_videos(playlists["uploads"])
-    elif info == 'favourites':
-        if params.get("id"):
-            items = favs.get_favs_by_type(params["id"])
-        else:
-            items = favs.get_favs()
-            addon.set_global('favourite.count', str(len(items)))
-            if items:
-                addon.set_global('favourite.1.name', items[-1]["label"])
-        return items
-    elif info == "addonsbyauthor":
-        items = favs.get_addons_by_author(params.get("id"))
-    elif info == 'similarlocalmovies' and "dbid" in params:
-        return local_db.get_similar_movies(params["dbid"])
-    elif info == 'iconpanel':
-        return favs.get_icon_panel(int(params["id"])), "IconPanel" + str(params["id"])
-    # ACTIONS
-    if params.get("handle"):
-        xbmcplugin.setResolvedUrl(handle=int(params.get("handle")),
-                                  succeeded=False,
-                                  listitem=xbmcgui.ListItem())
-    if info in ['playmovie', 'playepisode', 'playmusicvideo', 'playalbum', 'playsong']:
-        kodijson.play_media(media_type=info.replace("play", ""),
-                            dbid=params.get("dbid"),
-                            resume=params.get("resume", "true"))
-    elif info == "openinfodialog":
-        if xbmc.getCondVisibility("System.HasActiveModalDialog"):
-            container_id = ""
-        else:
-            container_id = "Container(%s)" % utils.get_infolabel("System.CurrentControlId")
-        dbid = utils.get_infolabel("%sListItem.DBID" % container_id)
-        db_type = utils.get_infolabel("%sListItem.DBType" % container_id)
-        if db_type == "movie":
-            params = {"dbid": dbid,
-                      "id": utils.get_infolabel("%sListItem.Property(id)" % container_id),
-                      "name": utils.get_infolabel("%sListItem.Title" % container_id)}
-            start_info_actions("extendedinfo", params)
-        elif db_type == "tvshow":
-            params = {"dbid": dbid,
-                      "tvdb_id": utils.get_infolabel("%sListItem.Property(tvdb_id)" % container_id),
-                      "id": utils.get_infolabel("%sListItem.Property(id)" % container_id),
-                      "name": utils.get_infolabel("%sListItem.Title" % container_id)}
-            start_info_actions("extendedtvinfo", params)
-        elif db_type == "season":
-            params = {"tvshow": utils.get_infolabel("%sListItem.TVShowTitle" % container_id),
-                      "season": utils.get_infolabel("%sListItem.Season" % container_id)}
-            start_info_actions("seasoninfo", params)
-        elif db_type == "episode":
-            params = {"tvshow": utils.get_infolabel("%sListItem.TVShowTitle" % container_id),
-                      "season": utils.get_infolabel("%sListItem.Season" % container_id),
-                      "episode": utils.get_infolabel("%sListItem.Episode" % container_id)}
-            start_info_actions("extendedepisodeinfo", params)
-        elif db_type in ["actor", "director"]:
-            params = {"name": utils.get_infolabel("%sListItem.Label" % container_id)}
-            start_info_actions("extendedactorinfo", params)
-        else:
-            utils.notify("Error", "Could not find valid content type")
-    elif info == "ratedialog":
-        if xbmc.getCondVisibility("System.HasModalDialog"):
-            container_id = ""
-        else:
-            container_id = "Container(%s)" % utils.get_infolabel("System.CurrentControlId")
-        dbid = utils.get_infolabel("%sListItem.DBID" % container_id)
-        db_type = utils.get_infolabel("%sListItem.DBType" % container_id)
-        if db_type == "movie":
-            params = {"dbid": dbid,
-                      "id": utils.get_infolabel("%sListItem.Property(id)" % container_id),
-                      "type": "movie"}
-            start_info_actions("ratemedia", params)
-        elif db_type == "tvshow":
-            params = {"dbid": dbid,
-                      "id": utils.get_infolabel("%sListItem.Property(id)" % container_id),
-                      "type": "tv"}
-            start_info_actions("ratemedia", params)
-        if db_type == "episode":
-            params = {"tvshow": utils.get_infolabel("%sListItem.TVShowTitle" % container_id),
-                      "season": utils.get_infolabel("%sListItem.Season" % container_id),
-                      "type": "episode"}
-            start_info_actions("ratemedia", params)
-    elif info == 'youtubebrowser':
-        wm.open_youtube_list(search_str=params.get("id", ""))
-    elif info == 'moviedbbrowser':
-        if addon.get_global('infodialogs.active'):
-            return None
-        addon.set_global('infodialogs.active', "true")
-        search_str = params.get("id", "")
-        if not search_str and params.get("search"):
-            result = xbmcgui.Dialog().input(heading=addon.LANG(16017),
-                                            type=xbmcgui.INPUT_ALPHANUM)
-            if result and result > -1:
-                search_str = result
-            else:
-                addon.clear_global('infodialogs.active')
-                return None
-        wm.open_video_list(search_str=search_str,
-                           mode="search")
-        addon.clear_global('infodialogs.active')
-    elif info == 'extendedinfo':
-        if addon.get_global('infodialogs.active'):
-            return None
-        addon.set_global('infodialogs.active', "true")
-        wm.open_movie_info(movie_id=params.get("id"),
-                           dbid=params.get("dbid"),
-                           imdb_id=params.get("imdb_id"),
-                           name=params.get("name"))
-        addon.clear_global('infodialogs.active')
-    elif info == 'extendedactorinfo':
-        if addon.get_global('infodialogs.active'):
-            return None
-        addon.set_global('infodialogs.active', "true")
-        wm.open_actor_info(actor_id=params.get("id"),
-                           name=params.get("name"))
-        addon.clear_global('infodialogs.active')
-    elif info == 'extendedtvinfo':
-        if addon.get_global('infodialogs.active'):
-            return None
-        addon.set_global('infodialogs.active', "true")
-        wm.open_tvshow_info(tmdb_id=params.get("id"),
-                            tvdb_id=params.get("tvdb_id"),
-                            dbid=params.get("dbid"),
-                            imdb_id=params.get("imdb_id"),
-                            name=params.get("name"))
-        addon.clear_global('infodialogs.active')
-    elif info == 'seasoninfo':
-        if addon.get_global('infodialogs.active'):
-            return None
-        addon.set_global('infodialogs.active', "true")
-        wm.open_season_info(tvshow=params.get("tvshow"),
-                            dbid=params.get("dbid"),
-                            season=params.get("season"))
-        addon.clear_global('infodialogs.active')
-    elif info == 'extendedepisodeinfo':
-        if addon.get_global('infodialogs.active'):
-            return None
-        addon.set_global('infodialogs.active', "true")
-        wm.open_episode_info(tvshow=params.get("tvshow"),
-                             tvshow_id=params.get("tvshow_id"),
-                             dbid=params.get("dbid"),
-                             episode=params.get("episode"),
-                             season=params.get("season"))
-        addon.clear_global('infodialogs.active')
-    elif info == 'albuminfo':
-        if params.get("id"):
-            album_details = AudioDB.get_album_details(params.get("id"))
-            utils.dict_to_windowprops(album_details, params.get("prefix", ""))
-    elif info == 'artistdetails':
-        artist_details = AudioDB.get_artist_details(params["artistname"])
-        utils.dict_to_windowprops(artist_details, params.get("prefix", ""))
-    elif info == 'ratemedia':
-        media_type = params.get("type")
-        if not media_type:
-            return None
-        if params.get("id"):
-            tmdb_id = params["id"]
-        elif media_type == "movie":
-            tmdb_id = tmdb.get_movie_tmdb_id(imdb_id=params.get("imdb_id"),
-                                             dbid=params.get("dbid"),
-                                             name=params.get("name"))
-        elif media_type == "tv" and params.get("dbid"):
-            tvdb_id = local_db.get_imdb_id(media_type="tvshow",
-                                           dbid=params["dbid"])
-            tmdb_id = tmdb.get_show_tmdb_id(tvdb_id=tvdb_id)
-        else:
-            return False
-        rating = utils.input_userrating()
-        if rating == -1:
-            return None
-        tmdb.set_rating(media_type=media_type,
-                        media_id=tmdb_id,
-                        rating=rating,
-                        dbid=params.get("dbid"))
-    elif info == 'action':
-        for builtin in params.get("id", "").split("$$"):
-            xbmc.executebuiltin(builtin)
-    elif info == "youtubevideo":
-        xbmc.executebuiltin("Dialog.Close(all,true)")
-        wm.play_youtube_video(params.get("id", ""))
-    elif info == 'playtrailer':
-        busy.show_busy()
-        if params.get("id"):
-            movie_id = params["id"]
-        elif int(params.get("dbid", -1)) > 0:
-            movie_id = local_db.get_imdb_id(media_type="movie",
-                                            dbid=params["dbid"])
-        elif params.get("imdb_id"):
-            movie_id = tmdb.get_movie_tmdb_id(params["imdb_id"])
-        else:
-            movie_id = ""
-        if movie_id:
-            trailers = tmdb.get_movie_videos(movie_id)
-            busy.hide_busy()
-            time.sleep(0.1)
-            if trailers:
-                wm.play_youtube_video(trailers[0]["key"])
-            elif params.get("title"):
-                wm.open_youtube_list(search_str=params["title"])
-            else:
-                busy.hide_busy()
-    elif info == 'deletecache':
-        addon.clear_globals()
-        for rel_path in os.listdir(addon.DATA_PATH):
-            path = os.path.join(addon.DATA_PATH, rel_path)
-            try:
-                if os.path.isdir(path):
-                    shutil.rmtree(path)
-            except Exception as e:
-                utils.log(e)
-        utils.notify("Cache deleted")
-    elif info == 'tmdbpassword':
-        addon.set_password_prompt("tmdb_password")
-    elif info == 'syncwatchlist':
-        pass
+		elif info == 'onairtvshows':
+			return TheMovieDB.get_tmdb_shows('on_the_air')
 
+		elif info == 'airingtodaytvshows':
+			return TheMovieDB.get_tmdb_shows('airing_today')
+
+		elif info == 'allmovies':
+			wm.open_video_list(media_type='movie',mode='filter')
+
+		elif info == 'alltvshows':
+			wm.open_video_list(media_type='tv',mode='filter')
+
+		elif info == 'search_menu':
+			search_str = xbmcgui.Dialog().input(heading='Enter search string', type=xbmcgui.INPUT_ALPHANUM)
+			return wm.open_video_list(search_str=search_str, mode='search')
+
+		elif info == 'studio':
+			if 'id' in params and params['id']:
+				return wm.open_video_list(media_type='tv', mode='filter', listitems=TheMovieDB.get_company_data(params['id']))
+			elif 'studio' in params and params['studio']:
+				company_data = TheMovieDB.search_company(params['studio'])
+				if company_data:
+					return TheMovieDB.get_company_data(company_data[0]['id'])
+
+		elif info == 'set':
+			if params.get('dbid') and 'show' not in str(params.get('type', '')):
+				name = local_db.get_set_name_from_db(params['dbid'])
+				if name:
+					params['setid'] = TheMovieDB.get_set_id(name)
+			if params.get('setid'):
+				set_data, _ = TheMovieDB.get_set_movies(params['setid'])
+				return set_data
+
+		elif info == 'keywords':
+			movie_id = params.get('id', False)
+			if not movie_id:
+				movie_id = TheMovieDB.get_movie_tmdb_id(imdb_id=params.get('imdb_id'), dbid=params.get('dbid'))
+			if movie_id:
+				return TheMovieDB.get_keywords(movie_id)
+
+		elif info == 'directormovies':
+			if params.get('director'):
+				director_info = TheMovieDB.get_person_info(person_label=params['director'])
+				if director_info and director_info.get('id'):
+					movies = TheMovieDB.get_person_movies(director_info['id'])
+					for item in movies:
+						del item['credit_id']
+					return Utils.merge_dict_lists(movies, key='department')
+
+		elif info == 'writermovies':
+			if params.get('writer') and not params['writer'].split(' / ')[0] == params.get('director', '').split(' / ')[0]:
+				writer_info = TheMovieDB.get_person_info(person_label=params['writer'])
+				if writer_info and writer_info.get('id'):
+					movies = TheMovieDB.get_person_movies(writer_info['id'])
+					for item in movies:
+						del item['credit_id']                    
+					return Utils.merge_dict_lists(movies, key='department')
+
+		elif info == 'afteradd':
+			return Utils.after_add(params.get('type'))
+
+		elif info == 'moviedbbrowser':
+			if xbmcgui.Window(10000).getProperty('infodialogs.active'):
+				return None
+			xbmcgui.Window(10000).setProperty('infodialogs.active', 'true')
+			search_str = params.get('id', '')
+			if not search_str and params.get('search'):
+				result = xbmcgui.Dialog().input(heading='Enter search string', type=xbmcgui.INPUT_ALPHANUM)
+				if result and result > -1:
+					search_str = result
+				else:
+					xbmcgui.Window(10000).clearProperty('infodialogs.active')
+					return None
+			return wm.open_video_list(search_str=search_str, mode='search')
+			xbmcgui.Window(10000).clearProperty('infodialogs.active')
+
+		elif info == 'playmovie':
+			resolve_url(params.get('handle'))
+			Utils.get_kodi_json(method='Player.Open', params='{"item": {"movieid": %s}, "options": {"resume": true}}' % params.get('dbid'))
+
+		elif info == 'playepisode':
+			resolve_url(params.get('handle'))
+			Utils.get_kodi_json(method='Player.Open', params='{"item": {"episodeid": %s}, "options": {"resume": true}}' % params.get('dbid'))
+
+		elif info == 'playmusicvideo':
+			resolve_url(params.get('handle'))
+			Utils.get_kodi_json(method='Player.Open', params='{"item": {"musicvideoid": %s}}' % params.get('dbid'))
+
+		elif info == 'playalbum':
+			resolve_url(params.get('handle'))
+			Utils.get_kodi_json(method='Player.Open', params='{"item": {"albumid": %s}}' % params.get('dbid'))
+
+		elif info == 'playsong':
+			resolve_url(params.get('handle'))
+			Utils.get_kodi_json(method='Player.Open', params='{"item": {"songid": %s}}' % params.get('dbid'))
+
+		elif info == 'openinfodialog':
+			resolve_url(params.get('handle'))
+			if xbmc.getCondVisibility('System.HasActiveModalDialog | System.HasModalDialog'):
+				container_id = ''
+			else:
+				container_id = xbmc.getInfoLabel('Container(%s).ListItem.label' % xbmc.getInfoLabel('System.CurrentControlID'))
+			dbid = xbmc.getInfoLabel('%sListItem.DBID' % container_id)
+			if not dbid:
+				dbid = xbmc.getInfoLabel('%sListItem.Property(dbid)' % container_id)
+			db_type = xbmc.getInfoLabel('%sListItem.DBType' % container_id)
+			if db_type == 'movie':
+				xbmc.executebuiltin('RunScript(script.extendedinfo,info=extendedinfo,dbid=%s,id=%s,imdb_id=%s,name=%s)' % (dbid, xbmc.getInfoLabel('ListItem.Property(id)'), xbmc.getInfoLabel('ListItem.IMDBNumber'), xbmc.getInfoLabel('ListItem.Title')))
+			elif db_type == 'tvshow':
+				xbmc.executebuiltin('RunScript(script.extendedinfo,info=extendedtvinfo,dbid=%s,id=%s,tvdb_id=%s,name=%s)' % (dbid, xbmc.getInfoLabel('ListItem.Property(id)'), xbmc.getInfoLabel('ListItem.Property(tvdb_id)'), xbmc.getInfoLabel('ListItem.Title')))
+			elif db_type == 'season':
+				xbmc.executebuiltin('RunScript(script.extendedinfo,info=seasoninfo,tvshow=%s,season=%s)' % (xbmc.getInfoLabel('ListItem.TVShowTitle'), xbmc.getInfoLabel('ListItem.Season')))
+			elif db_type == 'episode':
+				xbmc.executebuiltin('RunScript(script.extendedinfo,info=extendedepisodeinfo,tvshow=%s,season=%s,episode=%s)' % (xbmc.getInfoLabel('ListItem.TVShowTitle'), xbmc.getInfoLabel('ListItem.Season'), xbmc.getInfoLabel('ListItem.Episode')))
+			elif db_type in ['actor', 'director']:
+				xbmc.executebuiltin('RunScript(script.extendedinfo,info=extendedactorinfo,name=%s)' % xbmc.getInfoLabel('ListItem.Label'))
+			else:
+				Utils.notify('Error', 'Could not find valid content type')
+
+		elif info == 'extendedinfo':
+			resolve_url(params.get('handle'))
+			xbmcgui.Window(10000).setProperty('infodialogs.active', 'true')
+			wm.open_movie_info(movie_id=params.get('id'), dbid=params.get('dbid'), imdb_id=params.get('imdb_id'), name=params.get('name'))
+			xbmcgui.Window(10000).clearProperty('infodialogs.active')
+
+		elif info == 'extendedactorinfo':
+			resolve_url(params.get('handle'))
+			xbmcgui.Window(10000).setProperty('infodialogs.active', 'true')
+			wm.open_actor_info(actor_id=params.get('id'), name=params.get('name'))
+			xbmcgui.Window(10000).clearProperty('infodialogs.active')
+
+		elif info == 'extendedtvinfo':
+			resolve_url(params.get('handle'))
+			xbmcgui.Window(10000).setProperty('infodialogs.active', 'true')
+			wm.open_tvshow_info(tmdb_id=params.get('id'), tvdb_id=params.get('tvdb_id'), dbid=params.get('dbid'), imdb_id=params.get('imdb_id'), name=params.get('name'))
+			xbmcgui.Window(10000).clearProperty('infodialogs.active')
+
+		elif info == 'seasoninfo':
+			resolve_url(params.get('handle'))
+			xbmcgui.Window(10000).setProperty('infodialogs.active', 'true')
+			wm.open_season_info(tvshow=params.get('tvshow'), tvshow_id=params.get('tvshow_id'), dbid=params.get('dbid'), season=params.get('season'))
+			xbmcgui.Window(10000).clearProperty('infodialogs.active')
+
+		elif info == 'extendedepisodeinfo':
+			resolve_url(params.get('handle'))
+			xbmcgui.Window(10000).setProperty('infodialogs.active', 'true')
+			wm.open_episode_info(tvshow=params.get('tvshow'), tvshow_id=params.get('tvshow_id'), dbid=params.get('dbid'), season=params.get('season'), episode=params.get('episode'))
+			xbmcgui.Window(10000).clearProperty('infodialogs.active')
+
+		elif info == 'albuminfo':
+			resolve_url(params.get('handle'))
+			if params.get('id', ''):
+				album_details = get_album_details(params.get('id', ''))
+				Utils.pass_dict_to_skin(album_details, params.get('prefix', ''))
+
+		elif info == 'artistdetails':
+			resolve_url(params.get('handle'))
+			artist_details = get_artist_details(params['artistname'])
+			Utils.pass_dict_to_skin(artist_details, params.get('prefix', ''))
+
+		elif info == 'setfocus':
+			resolve_url(params.get('handle'))
+			xbmc.executebuiltin('SetFocus(22222)')
+
+		elif info == 'slideshow':
+			resolve_url(params.get('handle'))
+			window_id = xbmcgui.getCurrentwindow_id()
+			window = xbmcgui.Window(window_id)
+			itemlist = window.getFocus()
+			num_items = itemlist.getSelectedPosition()
+			for i in range(0, num_items):
+				Utils.notify(item.getProperty('Image'))
+
+		elif info == 'action':
+			resolve_url(params.get('handle'))
+			for builtin in params.get('id', '').split('$$'):
+				xbmc.executebuiltin(builtin)
+
+		elif info == 'youtubevideo':
+			resolve_url(params.get('handle'))
+			xbmc.executebuiltin('Dialog.Close(all,true)')
+			PLAYER.playtube(params.get('id', ''))
+
+		elif info == 'playtrailer':
+			resolve_url(params.get('handle'))
+			if params.get('id'):
+				movie_id = params['id']
+			elif int(params.get('dbid', -1)) > 0:
+				movie_id = local_db.get_imdb_id_from_db(media_type='movie', dbid=params['dbid'])
+			elif params.get('imdb_id'):
+				movie_id = TheMovieDB.get_movie_tmdb_id(params['imdb_id'])
+			else:
+				movie_id = ''
+			if movie_id:
+				TheMovieDB.play_movie_trailer_fullscreen(movie_id)
+
+		elif info == 'playtvtrailer':
+			resolve_url(params.get('handle'))
+			if params.get('id'):
+				tvshow_id = params['id']
+			elif int(params.get('dbid', -1)) > 0:
+				tvshow_id = local_db.get_imdb_id_from_db(media_type='show', dbid=params['dbid'])
+			elif params.get('tvdb_id'):
+				tvshow_id = TheMovieDB.get_movie_tmdb_id(params['tvdb_id'])
+			else:
+				tvshow_id = ''
+			if tvshow_id:
+				TheMovieDB.play_tv_trailer_fullscreen(tvshow_id)
+
+		elif info == 'string':
+			resolve_url(params.get('handle'))
+			xbmcgui.Window(10000).setProperty('infodialogs.active', 'true')
+			dialog = xbmcgui.Dialog()
+			if params.get('type', '') == 'movie':
+				moviesearch = dialog.input('MovieSearch')
+				xbmc.executebuiltin('Skin.SetString(MovieSearch,%s)' % moviesearch)
+				xbmc.executebuiltin('Container.Refresh')
+			elif params.get('type', '') == 'tv':
+				showsearch = dialog.input('ShowSearch')
+				xbmc.executebuiltin('Skin.SetString(ShowSearch,%s)' % showsearch)
+				xbmc.executebuiltin('Container.Refresh')
+			elif params.get('type', '') == 'youtube':
+				youtubesearch = dialog.input('YoutubeSearch')
+				xbmc.executebuiltin('Skin.SetString(YoutubeSearch,%s)' % youtubesearch)
+				xbmc.executebuiltin('Container.Refresh')
+			xbmcgui.Window(10000).clearProperty('infodialogs.active')
+
+		elif info == 'deletecache':
+			resolve_url(params.get('handle'))
+			xbmcgui.Window(10000).clearProperty('infodialogs.active')
+			xbmcgui.Window(10000).clearProperty('extendedinfo_running')
+			for rel_path in os.listdir(Utils.ADDON_DATA_PATH):
+				path = os.path.join(Utils.ADDON_DATA_PATH, rel_path)
+				try:
+					if os.path.isdir(path):
+						shutil.rmtree(path)
+				except Exception as e:
+					Utils.log(e)
+			Utils.notify('Cache deleted')
+
+def resolve_url(handle):
+	if handle:
+		xbmcplugin.setResolvedUrl(handle=int(handle), succeeded=False, listitem=xbmcgui.ListItem())

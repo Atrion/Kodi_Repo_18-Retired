@@ -1,3 +1,13 @@
+# -*- coding: utf-8 -*-
+"""
+
+    Copyright (C) 2014-2016 bromix (plugin.video.youtube)
+    Copyright (C) 2016-2018 plugin.video.youtube
+
+    SPDX-License-Identifier: GPL-2.0-only
+    See LICENSES/GPL-2.0-only for more information.
+"""
+
 from six.moves import urllib
 
 import datetime
@@ -8,9 +18,9 @@ import weakref
 
 import xbmc
 import xbmcaddon
-
 import xbmcplugin
 import xbmcvfs
+
 from ..abstract_context import AbstractContext
 from .xbmc_plugin_settings import XbmcPluginSettings
 from .xbmc_context_ui import XbmcContextUI
@@ -20,7 +30,7 @@ from ... import utils
 
 
 class XbmcContext(AbstractContext):
-    def __init__(self, path='/', params=None, plugin_name=u'', plugin_id=u'', override=True):
+    def __init__(self, path='/', params=None, plugin_name='', plugin_id='', override=True):
         AbstractContext.__init__(self, path, params, plugin_name, plugin_id)
 
         if plugin_id:
@@ -74,6 +84,15 @@ class XbmcContext(AbstractContext):
         if not xbmcvfs.exists(self._data_path):
             xbmcvfs.mkdir(self._data_path)
 
+    def get_region(self):
+        pass  # implement from abstract
+
+    def addon(self):
+        return self._addon
+
+    def is_plugin_path(self, uri, uri_path):
+        return uri.startswith('plugin://%s/%s/' % (self.get_id(), uri_path))
+
     def format_date_short(self, date_obj):
         date_format = xbmc.getRegion('dateshort')
         _date_obj = date_obj
@@ -94,9 +113,8 @@ class XbmcContext(AbstractContext):
         """
         The xbmc.getLanguage() method is fucked up!!! We always return 'en-US' for now
         """
-        return 'en-US'
 
-        """
+        '''
         if self.get_system_version().get_release_name() == 'Frodo':
             return 'en-US'
 
@@ -108,7 +126,9 @@ class XbmcContext(AbstractContext):
         except Exception, ex:
             self.log_error('Failed to get system language (%s)', ex.__str__())
             return 'en-US'
-        """
+        '''
+
+        return 'en-US'
 
     def get_video_playlist(self):
         if not self._video_playlist:
@@ -155,6 +175,7 @@ class XbmcContext(AbstractContext):
         return self._settings
 
     def localize(self, text_id, default_text=u''):
+        result = None
         if isinstance(text_id, int):
             """
             We want to use all localization strings!
@@ -164,13 +185,20 @@ class XbmcContext(AbstractContext):
             if text_id >= 0 and (text_id < 30000 or text_id > 30999):
                 result = xbmc.getLocalizedString(text_id)
                 if result is not None and result:
-                    return utils.to_unicode(result)
+                    result = utils.to_unicode(result)
 
-        result = self._addon.getLocalizedString(int(text_id))
-        if result is not None and result:
-            return utils.to_unicode(result)
+        if not result:
+            try:
+                result = self._addon.getLocalizedString(int(text_id))
+                if result is not None and result:
+                    result = utils.to_unicode(result)
+            except ValueError:
+                pass
 
-        return utils.to_unicode(default_text)
+        if not result:
+            result = default_text
+
+        return result
 
     def set_content_type(self, content_type):
         self.log_debug('Setting content-type: "%s" for "%s"' % (content_type, self.get_path()))
@@ -262,32 +290,37 @@ class XbmcContext(AbstractContext):
     def inputstream_adaptive_capabilities(self, capability=None):
         # return a list inputstream.adaptive capabilities, if capability set return version required
 
+        capabilities = []
+
         use_dash = self.use_inputstream_adaptive()
-        if not use_dash and capability is not None:
-            return None
-        if not use_dash and capability is None:
-            return []
+        try:
+            inputstream_version = xbmcaddon.Addon('inputstream.adaptive').getAddonInfo('version')
+        except RuntimeError:
+            inputstream_version = ''
+
+        if not use_dash or not inputstream_version:
+            return None if capability is not None else capabilities
+
+        capability_map = {
+            'live': '2.0.12',
+            'drm': '2.2.12',
+            'vp9': '2.3.14',
+            'vp9.2': '2.3.14',
+            'vorbis': None,
+            'opus': None,
+            'av1': None,
+        }
 
         if capability is None:
-            try:
-                inputstream_version = xbmcaddon.Addon('inputstream.adaptive').getAddonInfo('version')
-            except RuntimeError:
-                return []
-
-            capabilities = []
             ia_loose_version = utils.loose_version(inputstream_version)
-            if ia_loose_version >= utils.loose_version('2.0.12'):
-                capabilities.append('live')
-            if ia_loose_version >= utils.loose_version('2.2.12'):
-                capabilities.append('drm')
-            if ia_loose_version >= utils.loose_version('9999.9.9'):
-                capabilities.append('webm')
+
+            for key in list(capability_map.keys()):
+                if capability_map[key] and (ia_loose_version >= utils.loose_version(capability_map[key])):
+                    capabilities.append(key)
+
             return capabilities
-        elif capability == 'live':
-            return '2.0.12'
-        elif capability == 'drm':
-            return '2.2.12'
-        elif capability == 'webm':
-            return '9999.9.9'  # can be included, but currently unsupported
         else:
-            return None
+            return capability_map[capability] if capability_map.get(capability) else None
+
+    def abort_requested(self):
+        return str(self.get_ui().get_home_window_property('abort_requested')).lower() == 'true'

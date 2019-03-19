@@ -1,0 +1,7 @@
+Get here:
+https://www.tvaddons.ag/kodi-addons/show/script.module.beautifulsoup4/
+
+Git Bash replace:
+
+find ./ -type f -exec sed -i -e 's/bs4./resources.lib.externals.beautifulsoup./g' {} \;
+find ./ -type f -exec sed -i -e 's/import html5lib/from resources.lib.externals import html5lib/g' {} \;

@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<settings>
+	<category label = "32009">
+
+		<setting id="internal.backup" type="bool" default="false" visible="false" />
+
+		<setting id="internal.link" type="text" default="https://orionoid.com" visible="false" />
+		<setting id="internal.domain" type="text" default="orionoid.com" visible="false" />
+		<setting id="internal.ip" type="text" default="188.241.58.223" visible="false" />
+
+		<setting id="internal.api.orion" type="text" default="PUFGVkNaa1ZycDFiWFprVVdaMWFXeEdWc3AwVlZwV1U0SmxWYWRVWUdoV1ZXWmxXR3BWVjFNbFZzbEVNTlZsVlhKVmJvbGxWR1oxVlNkbFZQVkZiYU5sVEVaa1JXdG1XdmRsUlNabFZzWlZV" visible="false" />
+		<setting id="internal.api.access" type="text" default="" visible="false" />
+		<setting id="internal.api.user" type="text" default="" visible="false" />
+		<setting id="internal.api.user" type="text" default="" visible="false" />
+		<setting id="internal.api.apps" type="text" default="" visible="false" />
+		<setting id="internal.api.notification" type="text" default="" visible="false" />
+
+		<setting type="lsep" label="[UPPERCASE][B]$ADDON[script.module.orion 32065][/B][/UPPERCASE]" />
+		<setting type="sep" />
+			<setting id="help.enabled.general" type="bool" default="false" visible="false" />
+		<setting id="help.enable.general" type="action" default="[B][COLOR FF47CAE9]$ADDON[script.module.orion 32096][/COLOR][/B]" label="[B][COLOR FF47CAE9]$ADDON[script.module.orion 32084][/COLOR][/B]" option="close" action="RunPlugin(plugin://script.module.orion/?action=settingsHelp&type=0)" visible="eq(-1,true)" />
+		<setting id="help.disable.general" type="action" default="[B][COLOR FF47CAE9]$ADDON[script.module.orion 32057][/COLOR][/B]" label="[B][COLOR FF47CAE9]$ADDON[script.module.orion 32084][/COLOR][/B]" option="close" action="RunPlugin(plugin://script.module.orion/?action=settingsHelp&type=0)" visible="eq(-2,false)" />
+		<setting type="lsep" label="" />
+
+		<setting type="lsep" label="[UPPERCASE][B]$ADDON[script.module.orion 32039][/B][/UPPERCASE]" />
+		<setting type="sep" />
+		<setting id="general.interface.background" label="32040" type="bool" default="true" />
+			<setting id="help.general.interface.background" type="action" default="[B][COLOR FF47CAE9]$ADDON[script.module.orion 32066][/COLOR][/B]" label="  [B][COLOR FF47CAE9]•[/COLOR][/B] [LIGHT]$ADDON[script.module.orion 34001]  [/LIGHT]" visible="eq(-7,true)" />
+		<setting id="general.interface.theme" label="32041" type="enum" lvalues="32042|32043" default="0" />
+			<setting id="help.general.interface.theme" type="action" default="[B][COLOR FF47CAE9]$ADDON[script.module.orion 32066][/COLOR][/B]" label="  [B][COLOR FF47CAE9]•[/COLOR][/B] [LIGHT]$ADDON[script.module.orion 34002]  [/LIGHT]" visible="eq(-9,true)" />
+
+		<setting type="lsep" label="[UPPERCASE][B]$ADDON[script.module.orion 32056][/B][/UPPERCASE]" />
+		<setting type="sep" />
+		<setting id="general.notifications.api" label="32158" type="enum" lvalues="32057|32058|32059" default="2" />
+			<setting id="help.general.notifications.api" type="action" default="[B][COLOR FF47CAE9]$ADDON[script.module.orion 32066][/COLOR][/B]" label="  [B][COLOR FF47CAE9]•[/COLOR][/B] [LIGHT]$ADDON[script.module.orion 34003]  [/LIGHT]" visible="eq(-13,true)" />
+		<setting id="general.notifications.news" label="32159" type="bool" default="true" />
+			<setting id="help.general.notifications.news" type="action" default="[B][COLOR FF47CAE9]$ADDON[script.module.orion 32066][/COLOR][/B]" label="  [B][COLOR FF47CAE9]•[/COLOR][/B] [LIGHT]$ADDON[script.module.orion 34017]  [/LIGHT]" visible="eq(-15,true)" />
+
+		<setting type="lsep" label="[UPPERCASE][B]$ADDON[script.module.orion 32049][/B][/UPPERCASE]" />
+		<setting type="sep" />
+		<setting id="general.scraping.timeout" label="32051" type="slider" range="20,300" option="int" default="40" />
+			<setting id="help.general.scraping.timeout" type="action" default="[B][COLOR FF47CAE9]$ADDON[script.module.orion 32066][/COLOR][/B]" label="  [B][COLOR FF47CAE9]•[/COLOR][/B] [LIGHT]$ADDON[script.module.orion 34004]  [/LIGHT]" visible="eq(-19,true)" />
+		<setting id="general.scraping.mode" label="32050" type="enum" lvalues="32053|32054|32055" default="2" />
+			<setting id="help.general.scraping.mode" type="action" default="[B][COLOR FF47CAE9]$ADDON[script.module.orion 32066][/COLOR][/B]" label="  [B][COLOR FF47CAE9]•[/COLOR][/B] [LIGHT]$ADDON[script.module.orion 34005]  [/LIGHT]" visible="eq(-21,true)" />
+		<setting id="general.scraping.count" label="32052" type="number" default="5" subsetting="true" visible="eq(-2,1)" />
+			<setting id="help.general.scraping.count" type="action" default="[B][COLOR FF47CAE9]$ADDON[script.module.orion 32066][/COLOR][/B]" label="  [B][COLOR FF47CAE9]•[/COLOR][/B] [LIGHT]$ADDON[script.module.orion 34006]  [/LIGHT]" visible="eq(-3,1) + eq(-23,true)" />
+		<setting id="general.scraping.quality" label="32117" type="enum" lvalues="32120|32121|32122|32123|32124|32125|32126|32127|32128|32129|32130|32131|32132|32133" default="0" subsetting="true" visible="eq(-4,1)" />
+			<setting id="help.general.scraping.quality" type="action" default="[B][COLOR FF47CAE9]$ADDON[script.module.orion 32066][/COLOR][/B]" label="  [B][COLOR FF47CAE9]•[/COLOR][/B] [LIGHT]$ADDON[script.module.orion 34045]  [/LIGHT]" visible="eq(-5,1) + eq(-25,true)" />
+
+		<setting type="lsep" label="[UPPERCASE][B]$ADDON[script.module.orion 32005][/B][/UPPERCASE]" />
+		<setting type="sep" />
+		<setting id="general.settings.cache" label="32194" type="bool" default="true" />
+			<setting id="help.general.settings.cache" type="action" default="[B][COLOR FF47CAE9]$ADDON[script.module.orion 32066][/COLOR][/B]" label="  [B][COLOR FF47CAE9]•[/COLOR][/B] [LIGHT]$ADDON[script.module.orion 34053]  [/LIGHT]" visible="eq(-29,true)" />
+		<setting id="general.settings.backup" label="32185" type="bool" default="true" />
+			<setting id="help.general.settings.backup" type="action" default="[B][COLOR FF47CAE9]$ADDON[script.module.orion 32066][/COLOR][/B]" label="  [B][COLOR FF47CAE9]•[/COLOR][/B] [LIGHT]$ADDON[script.module.orion 34048]  [/LIGHT]" visible="eq(-31,true)" />
+
+		<setting type="lsep" label="[UPPERCASE][B]$ADDON[script.module.orion 32186][/B][/UPPERCASE]" />
+		<setting type="sep" />
+		<setting id="general.advanced.enabled" label="32096" type="bool" default="false" />
+			<setting id="help.general.advanced.enabled" type="action" default="[B][COLOR FF47CAE9]$ADDON[script.module.orion 32066][/COLOR][/B]" label="  [B][COLOR FF47CAE9]•[/COLOR][/B] [LIGHT]$ADDON[script.module.orion 34049]  [/LIGHT]" visible="eq(-35,true)" />
+		<setting id="general.advanced.connection" label="32187" type="enum" lvalues="32188|32189|32190|32191" default="0" visible="eq(-2,true)" />
+			<setting id="help.general.advanced.connection" type="action" default="[B][COLOR FF47CAE9]$ADDON[script.module.orion 32066][/COLOR][/B]" label="  [B][COLOR FF47CAE9]•[/COLOR][/B] [LIGHT]$ADDON[script.module.orion 34050]  [/LIGHT]" visible="eq(-3,true) + eq(-37,true)" />
+		<setting id="general.advanced.connection.domain" label="32192" type="text" default="orionoid.com" subsetting="true" visible="eq(-4,true) + eq(-2,2)" />
+			<setting id="help.general.advanced.connection.domain" type="action" default="[B][COLOR FF47CAE9]$ADDON[script.module.orion 32066][/COLOR][/B]" label="  [B][COLOR FF47CAE9]•[/COLOR][/B] [LIGHT]$ADDON[script.module.orion 34051]  [/LIGHT]" visible="eq(-5,true) + eq(-3,2) + eq(-39,true)" />
+		<setting id="general.advanced.connection.ip" label="32193" type="ipaddress" default="188.241.58.223" subsetting="true" visible="eq(-6,true) + eq(-4,3)" />
+			<setting id="help.general.advanced.connection.ip" type="action" default="[B][COLOR FF47CAE9]$ADDON[script.module.orion 32066][/COLOR][/B]" label="  [B][COLOR FF47CAE9]•[/COLOR][/B] [LIGHT]$ADDON[script.module.orion 34052]  [/LIGHT]" visible="eq(-7,true) + eq(-5,3) + eq(-41,true)" />
+
+		<setting type="sep" />
+		<setting type="bool" visible="false" />
+	</category>
+	<category label = "32017">
+
+		<setting id="account.key" type="text" default="" visible="false" />
+		<setting id="account.valid" type="bool" default="false" visible="false" />
+
+		<setting type="lsep" label="[UPPERCASE][B]$ADDON[script.module.orion 32065][/B][/UPPERCASE]" />
+		<setting type="sep" />
+			<setting id="help.enabled.account" type="bool" default="false" visible="false" />
+		<setting id="help.enable.account" type="action" default="[B][COLOR FF47CAE9]$ADDON[script.module.orion 32096][/COLOR][/B]" label="[B][COLOR FF47CAE9]$ADDON[script.module.orion 32084][/COLOR][/B]" option="close" action="RunPlugin(plugin://script.module.orion/?action=settingsHelp&type=1)" visible="eq(-1,true)" />
+		<setting id="help.disable.account" type="action" default="[B][COLOR FF47CAE9]$ADDON[script.module.orion 32057][/COLOR][/B]" label="[B][COLOR FF47CAE9]$ADDON[script.module.orion 32084][/COLOR][/B]" option="close" action="RunPlugin(plugin://script.module.orion/?action=settingsHelp&type=1)" visible="eq(-2,false)" />
+		<setting type="lsep" label="" />
+
+		<setting type="lsep" label="[UPPERCASE][B]$ADDON[script.module.orion 32034][/B][/UPPERCASE]" />
+		<setting type="sep" />
+		<setting id="account.label.api" label="32018" type="action" option="close" action="RunPlugin(plugin://script.module.orion/?action=settingsAccountLogin)" />
+			<setting id="help.account.label.api" type="action" default="[B][COLOR FF47CAE9]$ADDON[script.module.orion 32066][/COLOR][/B]" label="  [B][COLOR FF47CAE9]•[/COLOR][/B] [LIGHT]$ADDON[script.module.orion 34007]  [/LIGHT]" visible="eq(-7,true)" />
+		<setting id="account.location" label="32037" type="enum" lvalues="32036" default="0" />
+			<setting id="help.account.location" type="action" default="[B][COLOR FF47CAE9]$ADDON[script.module.orion 32066][/COLOR][/B]" label="  [B][COLOR FF47CAE9]•[/COLOR][/B] [LIGHT]$ADDON[script.module.orion 34008]  [/LIGHT]" visible="eq(-9,true)" />
+
+		<setting type="lsep" label="[UPPERCASE][B]$ADDON[script.module.orion 32017][/B][/UPPERCASE]" visible="!eq(-14,)" />
+		<setting type="sep" visible="!eq(-15,)" />
+		<setting id="account.label.refresh" label="32038" type="action" option="close" action="RunPlugin(plugin://script.module.orion/?action=settingsAccountRefresh)" visible="eq(-15,true)" />
+		<setting id="account.label.status" label="32014" type="action" option="close" action="RunPlugin(plugin://script.module.orion/?action=settingsAccountRefresh)" visible="!eq(-17,)" />
+		<setting id="account.label.email" label="32020" type="action" option="close" action="RunPlugin(plugin://script.module.orion/?action=settingsAccountRefresh)" visible="eq(-17,true)" />
+		<setting id="account.label.package" label="32023" type="action" option="close" action="RunPlugin(plugin://script.module.orion/?action=settingsAccountRefresh)" visible="eq(-18,true)" />
+		<setting id="account.label.time" label="32029" type="action" option="close" action="RunPlugin(plugin://script.module.orion/?action=settingsAccountRefresh)" visible="eq(-19,true)" />
+		<setting id="account.label.limit" label="32026" type="action" option="close" action="RunPlugin(plugin://script.module.orion/?action=settingsAccountRefresh)" visible="eq(-20,true)" />
+
+		<setting type="sep" />
+		<setting type="bool" visible="false" />
+	</category>
+	<category label = "32067">
+		<!-- ORION FILTERS - UNIVERSAL START -->
+
+		<setting id="filters.integration" type="text" default="" visible="false" />
+
+		<setting type="lsep" label="[UPPERCASE][B]$ADDON[script.module.orion 32065][/B][/UPPERCASE]" />
+		<setting type="sep" />
+			<setting id="help.enabled.filters" type="bool" default="false" visible="false" />
+		<setting id="help.enable.filters" type="action" default="[B][COLOR FF47CAE9]$ADDON[script.module.orion 32096][/COLOR][/B]" label="[B][COLOR FF47CAE9]$ADDON[script.module.orion 32084][/COLOR][/B]" option="close" action="RunPlugin(plugin://script.module.orion/?action=settingsHelp&type=2)" visible="eq(-1,true)" />
+		<setting id="help.disable.filters" type="action" default="[B][COLOR FF47CAE9]$ADDON[script.module.orion 32057][/COLOR][/B]" label="[B][COLOR FF47CAE9]$ADDON[script.module.orion 32084][/COLOR][/B]" option="close" action="RunPlugin(plugin://script.module.orion/?action=settingsHelp&type=2)" visible="eq(-2,false)" />
+		<setting type="lsep" label="" />
+
+		<setting id="filters.app" type="bool" default="false" visible="false" />
+		<setting type="lsep" label="[UPPERCASE][B]$ADDON[script.module.orion 32183][/B][/UPPERCASE]" visible="eq(-1,true)" />
+		<setting type="sep" visible="eq(-2,true)" />
+		<setting id="filters.enabled" label="32096" type="bool" default="true" visible="eq(-3,true)" />
+			<setting id="help.filters.enabled" type="action" default="[B][COLOR FF47CAE9]$ADDON[script.module.orion 32066][/COLOR][/B]" label="  [B][COLOR FF47CAE9]•[/COLOR][/B] [LIGHT]$ADDON[script.module.orion 34046]  [/LIGHT]" visible="eq(-4,true) + eq(-8,true)" />
+
+		<setting type="lsep" label="[UPPERCASE][B]$ADDON[script.module.orion 32081][/B][/UPPERCASE]" visible="eq(-2,true)" />
+		<setting type="sep" visible="eq(-3,true)" />
+		<setting id="filters.limit.count" label="32082" type="number" default="200" visible="eq(-4,true)" />
+		<setting id="filters.limit.retry" label="32083" type="number" default="0" visible="eq(-5,true)" />
+		<setting id="filters.limit.popularity" label="32085" type="slider" range="0,100" option="percent" default="0" visible="eq(-6,true)" />
+		<setting id="filters.limit.age" label="32087" type="number" default="0" visible="eq(-7,true)" />
+
+		<setting type="lsep" label="[UPPERCASE][B]$ADDON[script.module.orion 32068][/B][/UPPERCASE]" visible="eq(-8,true)" />
+		<setting type="sep" visible="eq(-9,true)" />
+		<setting id="filters.sort.value" label="32069" type="enum" lvalues="32057|32164|32071|32072|32073|32074|32075|32076|32077|32078" default="0" visible="eq(-10,true)" />
+		<setting id="filters.sort.order" label="32070" type="enum" lvalues="32079|32080" default="1" subsetting="true" visible="eq(-11,true) + !eq(-1,0)" />
+
+		<setting type="lsep" label="[UPPERCASE][B]$ADDON[script.module.orion 32086][/B][/UPPERCASE]" visible="eq(-12,true)" />
+		<setting type="sep" visible="eq(-13,true)" />
+		<setting id="filters.stream.type" label="32099" type="enum" lvalues="32059|32091|32092|32093|32088|32089|32090" default="0" visible="eq(-14,true)" />
+		<setting id="filters.stream.protocol.torrent" label="32218" type="enum" lvalues="32059|32204|32205|32206|32207|32208|32209|32210|32211|32212|32213|32214|32215|32216|32217" default="0" subsetting="true" visible="eq(-15,true) + !eq(-1,3) + !eq(-1,5) + !eq(-1,6)" />
+		<setting id="filters.stream.protocol.usenet" label="32219" type="enum" lvalues="32059|32204|32209|32210|32211|32212|32213|32214|32215|32216" default="0" subsetting="true" visible="eq(-16,true) + !eq(-2,2) + !eq(-2,4) + !eq(-2,6)" />
+		<setting id="filters.stream.protocol.hoster" label="32220" type="enum" lvalues="32059|32204|32209|32210|32211|32212|32213|32214|32215|32216" default="0" subsetting="true" visible="eq(-17,true) + !eq(-3,1) + !eq(-3,4) + !eq(-3,5)" />
+		<setting id="filters.stream.seeds" label="32104" type="number" default="0" subsetting="true" visible="eq(-18,true) + !eq(-4,3) + !eq(-4,5) + !eq(-4,6)" />
+		<setting id="filters.stream.age" label="32087" type="number" default="0" subsetting="true" visible="eq(-19,true) + !eq(-5,2) + !eq(-5,4) + !eq(-5,6)" />
+		<setting id="filters.stream.access" type="enum" label="32105" lvalues="32059|32155|32119|32100|32165|32166" default="0" visible="eq(-20,true)" />
+		<setting id="filters.stream.access.premiumize" label="32107" type="enum" lvalues="32057|32059|32091|32092|32093|32088|32089|32090" default="1" subsetting="true" visible="eq(-21,true) + !eq(-1,0) + !eq(-1,3)" />
+		<setting id="filters.stream.access.offcloud" label="32108" type="enum" lvalues="32057|32059|32091|32092|32093|32088|32089|32090" default="1" subsetting="true" visible="eq(-22,true) + !eq(-2,0) + !eq(-2,3)" />
+		<setting id="filters.stream.access.realdebrid" label="32109" type="enum" lvalues="32057|32059|32091|32092|32093|32088|32089|32090" default="1" subsetting="true" visible="eq(-23,true) + !eq(-3,0) + !eq(-3,3)" />
+		<setting id="filters.stream.origin.label" label="32201" type="action" option="close" default="255 $ADDON[script.module.orion 32096]" action="RunPlugin(plugin://script.module.orion/?action=settingsFiltersStreamOrigin&type=universal)" visible="eq(-24,true)" />
+			<setting id="filters.stream.origin" type="text" default="" visible="false" />
+		<setting id="filters.stream.source.label" label="32094" type="action" option="close" default="253 $ADDON[script.module.orion 32096]" action="RunPlugin(plugin://script.module.orion/?action=settingsFiltersStreamSource&type=universal)" visible="eq(-26,true)" />
+			<setting id="filters.stream.source" type="text" default="" visible="false" />
+		<setting id="filters.stream.hoster.label" label="32173" type="action" option="close" default="449 $ADDON[script.module.orion 32096]" action="RunPlugin(plugin://script.module.orion/?action=settingsFiltersStreamHoster&type=universal)" visible="eq(-28,true)" />
+			<setting id="filters.stream.hoster" type="text" default="" visible="false" />
+		<setting id="filters.stream.pack" label="32110" type="enum" lvalues="32101|32102|32103" default="0" visible="eq(-30,true)" />
+		<setting id="filters.stream.size" label="32076" type="bool" default="false" visible="eq(-31,true)" />
+		<setting id="filters.stream.size.minimum" label="32111" type="number" default="200" subsetting="true" visible="eq(-32,true) + eq(-1,true)" />
+		<setting id="filters.stream.size.maximum" label="32112" type="number" default="5000" subsetting="true" visible="eq(-33,true) + eq(-2,true)" />
+		<setting id="filters.stream.unknown" label="32184" type="bool" default="true" subsetting="true" visible="eq(-34,true) + eq(-3,true)" />
+
+		<setting type="lsep" label="[UPPERCASE][B]$ADDON[script.module.orion 32113][/B][/UPPERCASE]" visible="eq(-35,true)" />
+		<setting type="sep" visible="eq(-36,true)" />
+		<setting id="filters.meta.release.label" label="32114" type="action" option="close" default="27 $ADDON[script.module.orion 32096]" action="RunPlugin(plugin://script.module.orion/?action=settingsFiltersMetaRelease&type=universal)" visible="eq(-37,true)" />
+			<setting id="filters.meta.release" type="text" default="" visible="false" />
+		<setting id="filters.meta.uploader.label" label="32115" type="action" option="close" default="278 $ADDON[script.module.orion 32096]" action="RunPlugin(plugin://script.module.orion/?action=settingsFiltersMetaUploader&type=universal)" visible="eq(-39,true)" />
+			<setting id="filters.meta.uploader" type="text" default="" visible="false" />
+		<setting id="filters.meta.edition.label" label="32116" type="action" option="close" default="2 $ADDON[script.module.orion 32096]" action="RunPlugin(plugin://script.module.orion/?action=settingsFiltersMetaEdition&type=universal)" visible="eq(-41,true)" />
+			<setting id="filters.meta.edition" type="text" default="" visible="false" />
+
+		<setting type="lsep" label="[UPPERCASE][B]$ADDON[script.module.orion 32095][/B][/UPPERCASE]" visible="eq(-43,true)" />
+		<setting type="sep" visible="eq(-44,true)" />
+		<setting id="filters.video.quality" label="32074" type="bool" default="false" visible="eq(-45,true)" />
+		<setting id="filters.video.quality.minimum" label="32117" type="enum" lvalues="32120|32121|32122|32123|32124|32125|32126|32127|32128|32129|32130|32131|32132|32133" default="7" subsetting="true" visible="eq(-46,true) + eq(-1,true)" />
+		<setting id="filters.video.quality.maximum" label="32118" type="enum" lvalues="32120|32121|32122|32123|32124|32125|32126|32127|32128|32129|32130|32131|32132|32133" default="11" subsetting="true" visible="eq(-47,true) + eq(-2,true)" />
+		<setting id="filters.video.codec.label" label="32134" type="action" option="close" default="14 $ADDON[script.module.orion 32096]" action="RunPlugin(plugin://script.module.orion/?action=settingsFiltersVideoCodec&type=universal)" visible="eq(-48,true)" />
+			<setting id="filters.video.codec" type="text" default="" visible="false" />
+		<setting id="filters.video.3d" label="32135" type="enum" lvalues="32101|32102|32103" default="0" visible="eq(-50,true)" />
+
+		<setting type="lsep" label="[UPPERCASE][B]$ADDON[script.module.orion 32136][/B][/UPPERCASE]" visible="eq(-51,true)" />
+		<setting type="sep" visible="eq(-52,true)" />
+		<setting id="filters.audio.type.label" label="32137" type="action" option="close" default="2 $ADDON[script.module.orion 32096]" action="RunPlugin(plugin://script.module.orion/?action=settingsFiltersAudioType&type=universal)" visible="eq(-53,true)" />
+			<setting id="filters.audio.type" type="text" default="" visible="false" />
+		<setting id="filters.audio.channels" label="32138" type="bool" default="false" visible="eq(-55,true)" />
+		<setting id="filters.audio.channels.minimum" label="32139" type="enum" lvalues="32120|32141|32142|32143|32144|32145|32146" default="2" subsetting="true" visible="eq(-56,true) + eq(-1,true)" />
+		<setting id="filters.audio.channels.maximum" label="32140" type="enum" lvalues="32120|32141|32142|32143|32144|32145|32146" default="5" subsetting="true" visible="eq(-57,true) + eq(-2,true)" />
+		<setting id="filters.audio.system.label" label="32200" type="action" option="close" default="7 $ADDON[script.module.orion 32096]" action="RunPlugin(plugin://script.module.orion/?action=settingsFiltersAudioSystem&type=universal)" visible="eq(-58,true)" />
+			<setting id="filters.audio.system" type="text" default="" visible="false" />
+		<setting id="filters.audio.codec.label" label="32147" type="action" option="close" default="36 $ADDON[script.module.orion 32096]" action="RunPlugin(plugin://script.module.orion/?action=settingsFiltersAudioCodec&type=universal)" visible="eq(-60,true)" />
+			<setting id="filters.audio.codec" type="text" default="" visible="false" />
+		<setting id="filters.audio.languages.label" label="32148" type="action" option="close" default="184 $ADDON[script.module.orion 32096]" action="RunPlugin(plugin://script.module.orion/?action=settingsFiltersAudioLanguages&type=universal)" visible="eq(-62,true)" />
+			<setting id="filters.audio.languages" type="text" default="" visible="false" />
+
+		<setting type="lsep" label="[UPPERCASE][B]$ADDON[script.module.orion 32152][/B][/UPPERCASE]" visible="eq(-64,true)" />
+		<setting type="sep" visible="eq(-65,true)" />
+		<setting id="filters.subtitle.type.label" label="32153" type="action" option="close" default="2 $ADDON[script.module.orion 32096]" action="RunPlugin(plugin://script.module.orion/?action=settingsFiltersSubtitleType&type=universal)" visible="eq(-66,true)" />
+			<setting id="filters.subtitle.type" type="text" default="" visible="false" />
+		<setting id="filters.subtitle.languages.label" label="32154" type="action" option="close" default="184 $ADDON[script.module.orion 32096]" action="RunPlugin(plugin://script.module.orion/?action=settingsFiltersSubtitleLanguages&type=universal)" visible="eq(-68,true)" />
+			<setting id="filters.subtitle.languages" type="text" default="" visible="false" />
+
+		<setting type="sep" />
+		<setting type="bool" visible="false" />
+
+		<!-- ORION FILTERS - UNIVERSAL END -->
+	</category>
+
+</settings>

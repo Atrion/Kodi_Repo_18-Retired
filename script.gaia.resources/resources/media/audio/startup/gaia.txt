@@ -1,0 +1,2 @@
+These are short MP3s without an extension.
+Keep the stucture and names, so that the Kodi player shows a nice file name, instead of something weird lik startupsound1.mp3
