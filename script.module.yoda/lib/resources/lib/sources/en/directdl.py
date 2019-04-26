@@ -26,7 +26,6 @@ class source:
         self.language = ['en']
         self.domains = ['directdownload.tv']
         self.base_link = 'https://directdownload.tv'
-        #self.search_link = 'L2FwaT9rZXk9NEIwQkI4NjJGMjRDOEEyOSZxdWFsaXR5W109SERUViZxdWFsaXR5W109RFZEUklQJnF1YWxpdHlbXT03MjBQJnF1YWxpdHlbXT1XRUJETCZxdWFsaXR5W109V0VCREwxMDgwUCZxdWFsaXR5W109MTA4MFAtWDI2NSZsaW1pdD0yMCZrZXl3b3JkPQ=='
         self.search_link = base64.b64decode('L2FwaT9rZXk9NEIwQkI4NjJGMjRDOEEyOSZrZXl3b3JkPQ==')
         self.b_link = 'aHR0cDovL2lwdjYuaWNlZmlsbXMuaW5mbw=='
         self.u_link = 'aHR0cDovL2lwdjYuaWNlZmlsbXMuaW5mby9tZW1iZXJzb25seS9jb21wb25lbnRzL2NvbV9pY2VwbGF5ZXIvdmlkZW8ucGhwP2g9Mzc0Jnc9NjMxJnZpZD0lcyZpbWc9'
@@ -150,7 +149,6 @@ class source:
                     else: quality = 'SD'
 
                     url = i['links']
-                    #for x in url.keys(): links.append({'url': url[x], 'quality': quality, 'info': info})
 
                     links = []
                     
@@ -160,8 +158,6 @@ class source:
                         try:
                             url = link['url']
                             quality2 = link['quality']
-                            #url = url[1]
-                            #url = link
                             if len(url) > 1: raise Exception()
                             url = url[0].encode('utf-8')
                             

@@ -41,6 +41,14 @@ class OrionUser:
 	KeyLength = 32
 	PackageFree = 'free'
 
+	# Add 1 day because none-full days are not counted in the notification.
+	# Order is important.
+	SubscriptionIntervals = [
+		172800, # 2 Days
+		345600, # 4 Days
+		691200, # 8 Days
+	]
+
 	##############################################################################
 	# CONSTRUCTOR
 	##############################################################################
@@ -184,9 +192,24 @@ class OrionUser:
 		try: return self.mData['subscription']['time']['expiration']
 		except: return default
 
-	def subscriptionTimeExpiration(self, default = None):
-		try: return self.mData['subscription']['time']['expiration']
-		except: return default
+	def subscriptionCheck(self):
+		if self.subscriptionPackagePremium():
+			expiration = self.subscriptionTimeExpiration()
+			if expiration:
+				remaining = expiration - OrionTools.timestamp()
+				if remaining > 0:
+					notification = False
+					settings = OrionSettings.getInteger('internal.api.subscription')
+					if settings == None or remaining > OrionUser.SubscriptionIntervals[-1]:
+						settings = 0
+					for interval in OrionUser.SubscriptionIntervals:
+						if remaining < interval and (settings == 0 or interval < settings):
+							settings = interval
+							notification = True
+					OrionSettings.set('internal.api.subscription', settings)
+					if notification:
+						message = OrionTools.translate(33031) % OrionTools.timeDays(timeTo = self.subscriptionTimeExpiration(0), format = True)
+						OrionInterface.dialogNotification(title = 32035, message = message, icon = OrionInterface.IconWarning, time = 10000)
 
 	##############################################################################
 	# REQUESTS
@@ -307,7 +330,10 @@ class OrionUser:
 				if not result:
 					self._settingsUpdate(False)
 					return False
+				premium = self.subscriptionPackagePremium()
 				self.mData = api.data()
+				if premium and self.subscriptionPackageFree():
+					OrionInterface.dialogNotification(title = 32035, message = 33032, icon = OrionInterface.IconWarning, time = 10000)
 				self._settingsUpdate(True)
 				return True
 		except:
@@ -328,7 +354,7 @@ class OrionUser:
 					[
 						{'title' : 32014, 'value' : self.status('').capitalize()},
 						{'title' : 32020, 'value' : self.email('')},
-						{'title' : 32021, 'value' : OrionTools.timeFormat(self.timeAdded(''), format = OrionTools.FormatDate)},
+						{'title' : 32021, 'value' : OrionTools.timeFormat(self.timeAdded(), format = OrionTools.FormatDate)},
 					],
 				},
 				{
@@ -338,8 +364,8 @@ class OrionUser:
 						{'title' : 32023, 'value' : self.subscriptionPackageName('')},
 						{'title' : 32026, 'value' : str(self.subscriptionPackageLimit(OrionTools.translate(32030)))},
 						{'title' : 32029, 'value' : OrionTools.timeDays(timeTo = self.subscriptionTimeExpiration(0), format = True)},
-						{'title' : 32024, 'value' : OrionTools.timeFormat(self.subscriptionTimeStarted(''), format = OrionTools.FormatDate)},
-						{'title' : 32025, 'value' : OrionTools.timeFormat(self.subscriptionTimeExpiration(''), format = OrionTools.FormatDate)},
+						{'title' : 32024, 'value' : OrionTools.timeFormat(self.subscriptionTimeStarted(), format = OrionTools.FormatDate)},
+						{'title' : 32025, 'value' : OrionTools.timeFormat(self.subscriptionTimeExpiration(), format = OrionTools.FormatDate, default = 32120)},
 					],
 				},
 				{

@@ -10,7 +10,7 @@ if __name__ == '__main__':
     item = sys.listitem
     message = item.getLabel()
     path = item.getPath()
-    print(path)
+
     plugin = 'plugin://plugin.video.seren/'
     args = path.split(plugin, 1)
 
@@ -29,7 +29,9 @@ if __name__ == '__main__':
 
     elif 'seasonInfo' in actionArgs:
         trakt_object['seasons'] = [{}]
+        trakt_object['show_id'] = actionArgs['showInfo']['ids']['trakt']
         trakt_object['seasons'][0]['ids'] = {'trakt': actionArgs['seasonInfo']['ids']['trakt']}
+        trakt_object['seasons'][0]['number'] = actionArgs['seasonInfo']['info']['season']
         pass
 
     elif 'info' in actionArgs:

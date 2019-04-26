@@ -678,9 +678,9 @@
 			
 			<control type="image">
                 <width min="20" max="120">auto</width>
-                <height>68</height>
+                <height>64</height>
                 <centertop>50%</centertop>
-                <texture colordiffuse="Dark1" fallback="flags/fallback.png">$INFO[ListItem.MPAA,flags2/mpaa/,.png]</texture>
+                <texture colordiffuse="Dark1" fallback="flags/fallback.png">$VAR[RatingFlagVar]</texture>
                 <aspectratio align="center">keep</aspectratio>
                 <visible>Skin.HasSetting(furniture.flagicons) + !String.IsEmpty(ListItem.MPAA) + !Skin.HasSetting(furniture.coloredicons)</visible>
             </control>
@@ -958,14 +958,14 @@
                 <width>64</width>
                 <height>64</height>
                 <centertop>50%</centertop>
-                <texture colordiffuse="ColoredStars">flags/$VAR[Flagstar1].png</texture>
+                <texture colordiffuse="$VAR[ColorStars]">flags/$VAR[Flagstar1].png</texture>
             </control>
             <control type="image">
                 <posx>-38</posx>
                 <width>64</width>
                 <height>64</height>
                 <centertop>50%</centertop>
-                <texture colordiffuse="ColoredStars">flags/$VAR[Flagstar2].png</texture>
+                <texture colordiffuse="$VAR[ColorStars]">flags/$VAR[Flagstar2].png</texture>
                 <visible>!Skin.HasSetting(furniture.numericrating)</visible>
             </control>
             <control type="image">
@@ -973,7 +973,7 @@
                 <width>64</width>
                 <height>64</height>
                 <centertop>50%</centertop>
-                <texture colordiffuse="ColoredStars">flags/$VAR[Flagstar3].png</texture>
+                <texture colordiffuse="$VAR[ColorStars]">flags/$VAR[Flagstar3].png</texture>
                 <visible>!Skin.HasSetting(furniture.numericrating)</visible>
             </control>
             <control type="image">
@@ -981,7 +981,7 @@
                 <width>64</width>
                 <height>64</height>
                 <centertop>50%</centertop>
-                <texture colordiffuse="ColoredStars">flags/$VAR[Flagstar4].png</texture>
+                <texture colordiffuse="$VAR[ColorStars]">flags/$VAR[Flagstar4].png</texture>
                 <visible>!Skin.HasSetting(furniture.numericrating)</visible>
             </control>
             <control type="image">
@@ -989,7 +989,7 @@
                 <width>64</width>
                 <height>64</height>
                 <centertop>50%</centertop>
-                <texture colordiffuse="ColoredStars">flags/$VAR[Flagstar5].png</texture>
+                <texture colordiffuse="$VAR[ColorStars]">flags/$VAR[Flagstar5].png</texture>
                 <visible>!Skin.HasSetting(furniture.numericrating)</visible>
             </control>
             <control type="label">
@@ -1100,12 +1100,12 @@
                 <textcolor>Dark1</textcolor>
                 <visible>!Skin.HasSetting(furniture.flagicons) + !String.IsEmpty(ListItem.AudioCodec)</visible>
             </control>
-			
+				
 			<control type="image">
                 <width min="20" max="120">auto</width>
                 <height>64</height>
                 <centertop>50%</centertop>
-                <texture colordiffuse="FF4E77FE" fallback="flags/fallback.png">$INFO[ListItem.MPAA,flags2/mpaa/,.png]</texture>
+                <texture colordiffuse="FF4E77FE" fallback="flags/fallback.png">$VAR[RatingFlagVar]</texture>
                 <aspectratio align="center">keep</aspectratio>
                 <visible>Skin.HasSetting(furniture.flagicons) + !String.IsEmpty(ListItem.MPAA) + Skin.HasSetting(furniture.coloredicons)</visible>
             </control>
@@ -1723,14 +1723,14 @@
                 <width>64</width>
                 <height>64</height>
                 <centertop>50%</centertop>
-                <texture colordiffuse="ColoredStars">flags/$VAR[HubFlagstar1].png</texture>
+                <texture colordiffuse="$VAR[ColorStars]">flags/$VAR[HubFlagstar1].png</texture>
             </control>
             <control type="image">
                <posx>-38</posx>
                 <width>64</width>
                 <height>64</height>
                 <centertop>50%</centertop>
-                <texture colordiffuse="ColoredStars">flags/$VAR[HubFlagstar2].png</texture>
+                <texture colordiffuse="$VAR[ColorStars]">flags/$VAR[HubFlagstar2].png</texture>
                 <visible>!Skin.HasSetting(furniture.numericrating)</visible>
             </control>
             <control type="image">
@@ -1738,7 +1738,7 @@
                 <width>64</width>
                 <height>64</height>
                 <centertop>50%</centertop>
-                <texture colordiffuse="ColoredStars">flags/$VAR[HubFlagstar3].png</texture>
+                <texture colordiffuse="$VAR[ColorStars]">flags/$VAR[HubFlagstar3].png</texture>
                 <visible>!Skin.HasSetting(furniture.numericrating)</visible>
             </control>
             <control type="image">
@@ -1746,7 +1746,7 @@
                 <width>64</width>
                 <height>64</height>
                 <centertop>50%</centertop>
-                <texture colordiffuse="ColoredStars">flags/$VAR[HubFlagstar4].png</texture>
+                <texture colordiffuse="$VAR[ColorStars]">flags/$VAR[HubFlagstar4].png</texture>
                 <visible>!Skin.HasSetting(furniture.numericrating)</visible>
             </control>
             <control type="image">
@@ -1754,7 +1754,7 @@
                 <width>64</width>
                 <height>64</height>
                 <centertop>50%</centertop>
-                <texture colordiffuse="ColoredStars">flags/$VAR[HubFlagstar5].png</texture>
+                <texture colordiffuse="$VAR[ColorStars]">flags/$VAR[HubFlagstar5].png</texture>
                 <visible>!Skin.HasSetting(furniture.numericrating)</visible>
             </control>
             <control type="label">
@@ -2398,11 +2398,10 @@
                     <left>-14</left>
                     <width>108</width>
                     <height>108</height>
-                    <texture colordiffuse="PanelWhite100" border="8">$VAR[HeaderIcon]</texture>
-					
+                    <texture colordiffuse="PanelWhite100" border="8">$VAR[HeaderIcon]</texture>					
                     <visible>!Container.Scrolling</visible>
                     <visible>!Skin.HasSetting(hide.busydialog) | !Window.IsVisible(DialogBusy.xml)</visible>
-                    <animation effect="fade" start="0" end="100" time="150">VisibleChange</animation>
+                    <include>Animation.FurnitureIcon</include>
                 </control>
                 <control type="label">
                     <centertop>39</centertop>
@@ -2416,7 +2415,7 @@
                     <textcolor>PanelWhite100</textcolor>
                     <visible>Container.Scrolling</visible>
                     <visible>!Skin.HasSetting(hide.busydialog) | !Window.IsVisible(DialogBusy.xml)</visible>
-                    <animation effect="fade" start="0" end="100" time="150">VisibleChange</animation>
+                    <include>Animation.FurnitureIcon</include>
                 </control>
                 <control type="image">
                     <description>Busy animation</description>
@@ -2446,7 +2445,7 @@
                     <centertop>24</centertop>
                     <include condition="Skin.HasSetting(furniture.logo) + !Window.IsVisible(home) + !Window.IsVisible(settings) + !Window.IsVisible(skinsettings) + !Window.IsVisible(SettingsCategory.xml) + !Window.IsVisible(tvchannels) + !Window.IsVisible(tvrecordings) + !Window.IsVisible(tvguide) + !Window.IsVisible(tvsearch) + !Window.IsVisible(tvtimers)">HeaderLabelWidthLogo</include>
                     <width>auto</width>
-                    <font>MediumBold</font>
+                    <font>HeaderLabel</font>
                     <textcolor>Dark1</textcolor>
                     <label>$VAR[MainHeaderLabel]</label>
                 </control>
@@ -2506,7 +2505,7 @@
 					<control type="label">				
 						<centertop>28</centertop>
 						<width>auto</width>
-						<font>MediumBold</font>
+						<font>Name1</font>
 						<align>right</align>				
 						<textcolor>Dark2</textcolor>
 						<label>$INFO[Weather.Temperature]</label>
@@ -2570,7 +2569,7 @@
 					<control type="label">				
 						<centertop>28</centertop>
 						<width>auto</width>
-						<font>MediumBold</font>
+						<font>Name1</font>
 						<align>right</align>				
 						<textcolor>Dark2</textcolor>
 						<label>$INFO[Weather.Temperature]</label>
@@ -2681,7 +2680,7 @@
                 <control type="label">
                     <centertop>24</centertop>
                     <width>auto</width>
-                    <font>MediumBold</font>
+                    <font>NotificationBold</font>
                     <align>right</align>
                     <textcolor>Dark1</textcolor>
                     <label>$INFO[Weather.Temperature]</label>
@@ -2735,7 +2734,7 @@
                 <control type="label">
                     <centertop>24</centertop>
                     <width>auto</width>
-                    <font>MediumBold</font>
+                    <font>NotificationBold</font>
                     <align>right</align>
                     <textcolor>Dark1</textcolor>
                     <label>$INFO[Player.Title]</label>
@@ -2854,7 +2853,7 @@
                 <left>60</left>
                 <right>60</right>
                 <posy>60</posy>
-                <font>EpisodeNumber</font>
+                <font>EpisodeNumberNew</font>
                 <textcolor>Dark1</textcolor>
                 <height>45</height>
                 <label>$VAR[LabelOverlayTitle]</label>
@@ -3040,14 +3039,14 @@
                 <width>64</width>
                 <height>64</height>
                 <centertop>50%</centertop>
-                <texture colordiffuse="ColoredStars">flags/$VAR[FlagstarSong1].png</texture>
+                <texture colordiffuse="$VAR[ColorStars]">flags/$VAR[FlagstarSong1].png</texture>
             </control>
             <control type="image">
                 <posx>-38</posx>
                 <width>64</width>
                 <height>64</height>
                 <centertop>50%</centertop>
-                <texture colordiffuse="ColoredStars">flags/$VAR[FlagstarSong2].png</texture>
+                <texture colordiffuse="$VAR[ColorStars]">flags/$VAR[FlagstarSong2].png</texture>
                 <visible>!Skin.HasSetting(furniture.numericrating)</visible>
             </control>
             <control type="image">
@@ -3055,7 +3054,7 @@
                 <width>64</width>
                 <height>64</height>
                 <centertop>50%</centertop>
-                <texture colordiffuse="ColoredStars">flags/$VAR[FlagstarSong3].png</texture>
+                <texture colordiffuse="$VAR[ColorStars]">flags/$VAR[FlagstarSong3].png</texture>
                 <visible>!Skin.HasSetting(furniture.numericrating)</visible>
             </control>
             <control type="image">
@@ -3063,7 +3062,7 @@
                 <width>64</width>
                 <height>64</height>
                 <centertop>50%</centertop>
-                <texture colordiffuse="ColoredStars">flags/$VAR[FlagstarSong4].png</texture>
+                <texture colordiffuse="$VAR[ColorStars]">flags/$VAR[FlagstarSong4].png</texture>
                 <visible>!Skin.HasSetting(furniture.numericrating)</visible>
             </control>
             <control type="image">
@@ -3071,7 +3070,7 @@
                 <width>64</width>
                 <height>64</height>
                 <centertop>50%</centertop>
-                <texture colordiffuse="ColoredStars">flags/$VAR[FlagstarSong5].png</texture>
+                <texture colordiffuse="$VAR[ColorStars]">flags/$VAR[FlagstarSong5].png</texture>
                 <visible>!Skin.HasSetting(furniture.numericrating)</visible>
             </control>
             <control type="label">

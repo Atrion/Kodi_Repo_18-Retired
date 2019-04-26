@@ -1,10 +1,6 @@
-# -*- coding: UTF-8 -*-
-#######################################################################
-
 # Addon Name: Yoda
 # Addon id: plugin.video.Yoda
 # Addon Provider: Supremacy
-
 
 import re
 import traceback
@@ -18,7 +14,7 @@ class source:
     def __init__(self):
         self.priority = 1
         self.language = ['en']
-        self.domains = ['thepiratebay.org', 'm.thepiratebay.org', 'thepiratebay.fun', 'tpb.cool', 'thepiratebay.asia']
+        self.domains = ['pirateproxy.live', 'thepiratebay.org', 'thepiratebay.fun', 'thepiratebay.asia', 'tpb.party', 'thepiratebay3.org', 'thepiratebayz.org', 'thehiddenbay.com', 'piratebay.live', 'thepiratebay.zone']
         self._base_link = None
         self.search_link = '/s/?q=%s&page=0&&video=on&orderby=99'
         self.min_seeders = int(control.setting('torrent.min.seeders'))
@@ -111,7 +107,6 @@ class source:
                     try:
                         name = re.findall('class="detLink" title=".+?">(.+?)</a>', entry, re.DOTALL)[0]
                         name = client.replaceHTMLCodes(name)
-                        # t = re.sub('(\.|\(|\[|\s)(\d{4}|S\d*E\d*|S\d*|3D)(\.|\)|\]|\s|)(.+|)', '', name, flags=re.I)
                         if not cleantitle.get(title) in cleantitle.get(name):
                             continue
                     except Exception:

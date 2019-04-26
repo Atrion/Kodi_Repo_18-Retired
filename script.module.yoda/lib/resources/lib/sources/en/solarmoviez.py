@@ -125,10 +125,17 @@ class source:
                     if self.matchAlias(i[1], aliases) and (year == y):
                         url = i[0]
                         break
+                    #results.append([i[0], i[1], re.findall('<div\s+class="jt-info">(\d{4})', info)[0]])
                 except:
                     url = None
                     pass
 
+            #try:
+            #    r = [(i[0], i[1], i[2][0]) for i in results if len(i[2]) > 0]
+            #    url = [i[0] for i in r if self.matchAlias(i[1], aliases) and (year == i[2])][0]
+            #except:
+            #    url = None
+            #    pass
 
             if (url == None):
                 url = [i[0] for i in results if self.matchAlias(i[1], aliases)][0]

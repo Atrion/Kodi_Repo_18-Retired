@@ -12,14 +12,8 @@
 # Addon id: plugin.video.Yoda
 # Addon Provider: Supremacy
 
-import re, urlparse, urllib, base64
-
-from resources.lib.modules import cleantitle
-from resources.lib.modules import client
-from resources.lib.modules import cache
-from resources.lib.modules import dom_parser2
-
-import requests
+import re,urlparse,urllib,base64
+from resources.lib.modules import cleantitle,client,dom_parser2,cfscrape
 
 
 class source:
@@ -29,12 +23,14 @@ class source:
         self.domains = ['kat.tv']
         self.base_link = 'http://www1.kat.tv'
         self.search_link = '/search-movies/%s.html'
+        self.scraper = cfscrape.create_scraper()
+
 
     def movie(self, imdb, title, localtitle, aliases, year):
         try:
             clean_title = cleantitle.geturl(title)
             search_url = urlparse.urljoin(self.base_link, self.search_link % clean_title.replace('-', '+'))
-            r = cache.get(client.request, 1, search_url)
+            r = self.scraper.get(search_url).content
             r = dom_parser2.parse_dom(r, 'li', {'class': 'item'})
             r = [(dom_parser2.parse_dom(i, 'a', attrs={'class': 'title'}),
                   re.findall('status-year">(\d{4})</div', i.content, re.DOTALL)[0]) for i in r if i]
@@ -45,6 +41,7 @@ class source:
         except Exception:
             return
 
+
     def tvshow(self, imdb, tvdb, tvshowtitle, localtvshowtitle, aliases, year):
         try:
             url = {'imdb': imdb, 'tvdb': tvdb, 'tvshowtitle': tvshowtitle, 'year': year}
@@ -53,17 +50,17 @@ class source:
         except:
             return
 
+
     def episode(self, url, imdb, tvdb, title, premiered, season, episode):
         try:
             if url == None: return
-
             url = urlparse.parse_qs(url)
             url = dict([(i, url[i][0]) if url[i] else (i, '') for i in url])
             url['premiered'], url['season'], url['episode'] = premiered, season, episode
             try:
                 clean_title = cleantitle.geturl(url['tvshowtitle'])+'-season-%d' % int(season)
                 search_url = urlparse.urljoin(self.base_link, self.search_link % clean_title.replace('-', '+'))
-                r = cache.get(client.request, 1, search_url)
+                r = self.scraper.get(search_url).content
                 r = dom_parser2.parse_dom(r, 'li', {'class': 'item'})
                 r = [(dom_parser2.parse_dom(i, 'a', attrs={'class': 'title'}),
                       dom_parser2.parse_dom(i, 'div', attrs={'class':'status'})[0]) for i in r if i]
@@ -74,19 +71,19 @@ class source:
                 url = r[0][0]
             except:
                 pass
-            data = client.request(url)
+            data = self.scraper.get(url).content
             data = client.parseDOM(data, 'div', attrs={'id': 'details'})
             data = zip(client.parseDOM(data, 'a'), client.parseDOM(data, 'a', ret='href'))
             url = [(i[0], i[1]) for i in data if i[0] == str(int(episode))]
-
             return url[0][1]
         except:
             return
 
+
     def sources(self, url, hostDict, hostprDict):
         try:
             sources = []
-            r = cache.get(client.request, 1, url)
+            r = self.scraper.get(url).content
             try:
                 v = re.findall('document.write\(Base64.decode\("(.+?)"\)', r)[0]
                 b64 = base64.b64decode(v)
@@ -111,36 +108,37 @@ class source:
             r = [(client.parseDOM(i, 'a', ret='href')[0], client.parseDOM(i, 'p', attrs={'class': 'server_servername'})[0]) for i in r]
             if r:
                 for i in r:
-                    try:
-                        host = re.sub('Server|Link\s*\d+', '', i[1]).lower()
-                        url = i[0]
-                        host = client.replaceHTMLCodes(host)
-                        host = host.encode('utf-8')
-                        if 'other'in host: continue
-                        sources.append({
-                            'source': host,
-                            'quality': 'SD',
-                            'language': 'en',
-                            'url': url.replace('\/', '/'),
-                            'direct': False,
-                            'debridonly': False
-                        })
-                    except:
-                        pass
+            try:
+                host = re.sub('Server|Link\s*\d+', '', i[1]).lower()
+                url = i[0]
+                host = client.replaceHTMLCodes(host)
+                host = host.encode('utf-8')
+            if 'other'in host: continue
+                sources.append({
+                'source': host,
+                'quality': 'SD',
+                'language': 'en',
+                'url': url.replace('\/', '/'),
+                'direct': False,
+                'debridonly': False
+            })
+                except:
+                     pass
             return sources
         except Exception:
             return
 
+
     def resolve(self, url):
         if self.base_link in url:
             try:
-                r = client.request(url)
+                r = self.scraper.get(url).content
                 v = re.findall('document.write\(Base64.decode\("(.+?)"\)', r)[0]
                 b64 = base64.b64decode(v)
                 url = client.parseDOM(b64, 'iframe', ret='src')[0]
             except:
-                r = client.request(url)
+                r = self.scraper.get(url).content
                 r = client.parseDOM(r, 'div', attrs={'class':'player'})
                 url = client.parseDOM(r, 'a', ret='href')[0]
-
         return url
+

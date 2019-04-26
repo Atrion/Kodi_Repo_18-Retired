@@ -4,6 +4,8 @@
         <property name="content" tag="property" attribute="name|widgetPath" />
         <property name="content">$VAR[DefWidgetContent]</property>
         <property name="target" tag="property" attribute="name|widgetTarget" />
+		<property name="sortby" tag="property" attribute="name|widgetSortby" />
+		<property name="sort" tag="property" attribute="name|widgetSort" />
 
         <controls>
             <control type="list" id="301">
@@ -66,7 +68,7 @@
                         <top>3</top>
                         <right>3</right>
                         <bottom>3</bottom>
-                        <texture colordiffuse="$VAR[ColorHighlight]" border="20">common/selectbox.png</texture>
+                        <texture colordiffuse="$VAR[ColorSquares]" border="20">common/selectbox.png</texture>
                         <animation type="Focus">
                             <effect type="zoom" start="90" end="100" time="150" tween="sine" easing="inout" center="auto" />
                             <effect type="fade" start="0" end="100" time="150" tween="sine" easing="in" />
@@ -118,7 +120,7 @@
                         <top>3</top>
                         <right>3</right>
                         <bottom>3</bottom>
-                        <texture colordiffuse="$VAR[ColorHighlight]" border="20">common/selectbox.png</texture>
+                        <texture colordiffuse="$VAR[ColorSquares]" border="20">common/selectbox.png</texture>
                         <animation type="Focus">
                             <effect type="zoom" start="90" end="100" time="150" tween="sine" easing="inout" center="auto" />
                             <effect type="fade" start="0" end="100" time="150" tween="sine" easing="in" />
@@ -170,7 +172,7 @@
                         <top>3</top>
                         <right>3</right>
                         <bottom>3</bottom>
-                        <texture colordiffuse="$VAR[ColorHighlight]" border="20">common/selectbox.png</texture>
+                        <texture colordiffuse="$VAR[ColorSquares]" border="20">common/selectbox.png</texture>
                         <animation type="Focus">
                             <effect type="zoom" start="90" end="100" time="150" tween="sine" easing="inout" center="auto" />
                             <effect type="fade" start="0" end="100" time="150" tween="sine" easing="in" />
@@ -181,7 +183,7 @@
                         </animation>
                     </control>
                 </focusedlayout>
-                <content limit="$VAR[DefWidgetLimit]" target="$SKINSHORTCUTS[target]">$SKINSHORTCUTS[content]</content>
+                <content limit="$VAR[DefWidgetLimit]" target="$SKINSHORTCUTS[target]" sortby="$SKINSHORTCUTS[sortby]" sortorder="$SKINSHORTCUTS[sort]">$SKINSHORTCUTS[content]</content>
             </control>
         </controls>
     </other>
@@ -189,8 +191,10 @@
         <property name="content" tag="property" attribute="name|widgetPath" />
         <property name="content">$VAR[DefWidgetContent]</property>
         <property name="target" tag="property" attribute="name|widgetTarget" />
+		<property name="sortby" tag="property" attribute="name|widgetSortby" />
+		<property name="sort" tag="property" attribute="name|widgetSort" />
         <controls>
-            <control type="wraplist" id="301">
+			<control type="wraplist" id="301">
                 <skinshortcuts>visibility</skinshortcuts>
                 <description>Widget</description>
                 <width>1</width>
@@ -213,7 +217,7 @@
                 </itemlayout>
                 <focusedlayout width="1" height="1">
                 </focusedlayout>
-                <content limit="$VAR[DefWidgetLimit]" target="$SKINSHORTCUTS[target]">$SKINSHORTCUTS[content]</content>
+                <content limit="$VAR[DefWidgetLimit]" target="$SKINSHORTCUTS[target]" sortby="$SKINSHORTCUTS[sortby]" sortorder="$SKINSHORTCUTS[sort]">$SKINSHORTCUTS[content]</content>
             </control>
         </controls>
     </other>
@@ -221,6 +225,8 @@
         <property name="content" tag="property" attribute="name|widgetPath" />
         <property name="content">$VAR[DefWidgetContent]</property>
         <property name="target" tag="property" attribute="name|widgetTarget" />
+		<property name="sortby" tag="property" attribute="name|widgetSortby" />
+		<property name="sort" tag="property" attribute="name|widgetSort" />
         <controls>
             <control type="list" id="301">
                 <skinshortcuts>visibility</skinshortcuts>
@@ -393,7 +399,7 @@
                         <top>3</top>
                         <right>3</right>
                         <bottom>3</bottom>
-                        <texture colordiffuse="$VAR[ColorHighlight]" border="20">common/selectbox.png</texture>
+                        <texture colordiffuse="$VAR[ColorSquares]" border="20">common/selectbox.png</texture>
                         <visible>Control.HasFocus(301)</visible>
                         <animation type="Focus">
                             <effect type="zoom" start="90" end="100" time="150" tween="sine" easing="inout" center="auto" />
@@ -445,7 +451,7 @@
                         <top>3</top>
                         <right>3</right>
                         <bottom>3</bottom>
-                        <texture colordiffuse="$VAR[ColorHighlight]" border="20">common/selectbox.png</texture>
+                        <texture colordiffuse="$VAR[ColorSquares]" border="20">common/selectbox.png</texture>
                         <visible>Control.HasFocus(301)</visible>
                         <animation type="Focus">
                             <effect type="zoom" start="90" end="100" time="150" tween="sine" easing="inout" center="auto" />
@@ -497,7 +503,7 @@
                         <top>3</top>
                         <right>3</right>
                         <bottom>3</bottom>
-                        <texture colordiffuse="$VAR[ColorHighlight]" border="20">common/selectbox.png</texture>
+                        <texture colordiffuse="$VAR[ColorSquares]" border="20">common/selectbox.png</texture>
                         <visible>Control.HasFocus(301)</visible>
                         <animation type="Focus">
                             <effect type="zoom" start="90" end="100" time="150" tween="sine" easing="inout" center="auto" />
@@ -510,7 +516,7 @@
                     </control>
                       
                 </focusedlayout>
-                <content limit="$VAR[DefWidgetLimit]" target="$SKINSHORTCUTS[target]">$SKINSHORTCUTS[content]</content>
+                <content limit="$VAR[DefWidgetLimit]" target="$SKINSHORTCUTS[target]" sortby="$SKINSHORTCUTS[sortby]" sortorder="$SKINSHORTCUTS[sort]">$SKINSHORTCUTS[content]</content>
             </control>
         </controls>
     </other>

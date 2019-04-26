@@ -454,23 +454,39 @@ class Hash(object):
 
 	@classmethod
 	def sha1(self, data):
-		return hashlib.sha1(data).hexdigest().upper()
+		return hashlib.sha1(data.encode('utf-8')).hexdigest().upper()
 
 	@classmethod
 	def sha256(self, data):
-		return hashlib.sha256(data).hexdigest().upper()
+		return hashlib.sha256(data.encode('utf-8')).hexdigest().upper()
 
 	@classmethod
 	def sha512(self, data):
-		return hashlib.sha512(data).hexdigest().upper()
+		return hashlib.sha512(data.encode('utf-8')).hexdigest().upper()
 
 	@classmethod
 	def md5(self, data):
-		return hashlib.md5(data).hexdigest().upper()
+		return hashlib.md5(data.encode('utf-8')).hexdigest().upper()
+
+	@classmethod
+	def file(self, path):
+		return self.fileSha256(path)
 
 	@classmethod
 	def fileSha1(self, path):
-		return hashlib.sha1(File.readNow(path)).hexdigest().upper()
+		return self.sha1(File.readNow(path))
+
+	@classmethod
+	def fileSha256(self, path):
+		return self.sha256(File.readNow(path))
+
+	@classmethod
+	def fileSha512(self, path):
+		return self.sha512(File.readNow(path))
+
+	@classmethod
+	def fileMd5(self, path):
+		return self.md5(File.readNow(path))
 
 	@classmethod
 	def valid(self, hash, length = 40):
@@ -1544,8 +1560,12 @@ class System(object):
 			from resources.lib.extensions import provider
 			from resources.lib.extensions import window
 			from resources.lib.extensions import library
+			from resources.lib.extensions import settings
 			from resources.lib.extensions import vpn
 			from resources.lib.modules import control
+
+			# Adapt settings
+			settings.Adaption.adapt()
 
 			# Version
 			try:
@@ -3392,6 +3412,7 @@ class Extensions(object):
 	IdGaiaAeonNox = 'skin.gaia.aeon.nox' if System.versionKodi() < 18 else 'skin.gaia.aeon.nox.18'
 	IdResolveUrl = 'script.module.resolveurl'
 	IdUrlResolver = 'script.module.urlresolver'
+	IdOpeScrapers = 'script.module.openscrapers'
 	IdLamScrapers = 'script.module.lambdascrapers'
 	IdCivScrapers = 'script.module.civitasscrapers'
 	IdGloScrapers = 'script.module.globalscrapers'
@@ -3544,6 +3565,13 @@ class Extensions(object):
 				'icon' : 'extensionsorion.png',
 			},
 			{
+				'id' : Extensions.IdOpeScrapers,
+				'name' : 'Open Scrapers',
+				'type' : Extensions.TypeRecommended,
+				'description' : 33963,
+				'icon' : 'extensionsopescrapers.png',
+			},
+			{
 				'id' : Extensions.IdLamScrapers,
 				'name' : 'Lambda Scrapers',
 				'type' : Extensions.TypeRecommended,
@@ -3567,7 +3595,7 @@ class Extensions(object):
 			{
 				'id' : Extensions.IdUniScrapers,
 				'name' : 'Universal Scrapers',
-				'type' : Extensions.TypeRecommended,
+				'type' : Extensions.TypeOptional,
 				'description' : 33963,
 				'icon' : 'extensionsuniscrapers.png',
 			},
@@ -3686,6 +3714,7 @@ class Extensions(object):
 								self.enable(dependency, refresh = True)
 						self.enable(extension['id'], refresh = True)
 
+					OpeScrapers.check()
 					LamScrapers.check()
 					CivScrapers.check()
 					GloScrapers.check()
@@ -3932,6 +3961,44 @@ class UrlResolver(object):
 	@classmethod
 	def disable(self, refresh = False):
 		return Extensions.disable(id = UrlResolver.Id, refresh = refresh)
+
+###################################################################
+# OPESCRAPERS
+###################################################################
+
+class OpeScrapers(object):
+
+	Id = Extensions.IdOpeScrapers
+
+	@classmethod
+	def settings(self):
+		Extensions.settings(id = OpeScrapers.Id)
+
+	@classmethod
+	def providers(self, settings = True):
+		from resources.lib.providers.external.universal.open import opescrapersx
+		opescrapersx.source.instancesSettings()
+		if settings: Settings.launch(Settings.CategoryProviders)
+
+	@classmethod
+	def check(self):
+		Settings.set('providers.external.universal.open.opescrapersx.installed', self.installed())
+
+	@classmethod
+	def installed(self):
+		return Extensions.installed(id = OpeScrapers.Id)
+
+	@classmethod
+	def enable(self, refresh = False):
+		result = Extensions.enable(id = OpeScrapers.Id, refresh = refresh)
+		self.check()
+		return result
+
+	@classmethod
+	def disable(self, refresh = False):
+		result = Extensions.disable(id = OpeScrapers.Id, refresh = refresh)
+		self.check()
+		return result
 
 ###################################################################
 # LAMSCRAPERS

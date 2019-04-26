@@ -126,28 +126,28 @@
                 <control type="button" id="302" description="Delete">
                     <width>64</width>
                     <height>64</height>
-                    <font>-</font>
+                    <font>Null</font>
                     <texturenofocus colordiffuse="Black30">buttons/delete.png</texturenofocus>
                     <texturefocus colordiffuse="Selected">buttons/delete.png</texturefocus>
                 </control>
                 <control type="button" id="301" description="Add">
                     <width>64</width>
                     <height>64</height>
-                    <font>-</font>
+                    <font>Null</font>
                     <texturenofocus colordiffuse="Black30">buttons/add.png</texturenofocus>
                     <texturefocus colordiffuse="Selected">buttons/add.png</texturefocus>
                 </control>
                 <control type="button" id="303" description="Up">
                     <width>64</width>
                     <height>64</height>
-                    <font>-</font>
+                    <font>Null</font>
                     <texturenofocus colordiffuse="Black30">buttons/moveup.png</texturenofocus>
                     <texturefocus colordiffuse="Selected">buttons/moveup.png</texturefocus>
                 </control>
                 <control type="button" id="304" description="Down">
                     <width>64</width>
                     <height>64</height>
-                    <font>-</font>
+                    <font>Null</font>
                     <texturenofocus colordiffuse="Black30" flipy="true">buttons/moveup.png</texturenofocus>
                     <texturefocus colordiffuse="Selected" flipy="true">buttons/moveup.png</texturefocus>
                 </control>
@@ -222,6 +222,28 @@
                     <onclick condition="String.IsEqual(Container(211).ListItem.Property(widgetaspect),Thumbnail)">SetProperty(customValue,Poster)</onclick>
                     <onclick>SendClick(404)</onclick>
                 </control>
+				
+				<control type="button" id="9402" description="Widget Aspect">
+                    <width>100%</width>
+                    <height>66</height>
+                    <label>581</label>
+                    <label2>$VAR[LabelSortBy]</label2>
+                    <visible>String.IsEqual(Window.Property(groupname),mainmenu)</visible>
+                    <texturenofocus colordiffuse="Black12" border="5">common/box.png</texturenofocus>
+                    <align>left</align>
+                    <include>DefDialogButtons</include>
+                </control>
+				<control type="button" id="9403">
+					<description>Change widget 1 sort order</description>
+					<width>100%</width>
+                    <height>66</height>
+					<include>DefDialogButtons</include>
+					<visible>String.IsEqual(Window.Property(groupname),mainmenu)</visible>
+					<texturenofocus colordiffuse="Black12" border="5">common/box.png</texturenofocus>
+                    <align>left</align>
+					<label>580</label>
+					<label2>$VAR[LabelSort]</label2>
+				</control>
                 <control type="button" id="310" description="Background">
                     <width>100%</width>
                     <height>66</height>

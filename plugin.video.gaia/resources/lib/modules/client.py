@@ -18,7 +18,6 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
-
 import re,sys,cookielib,urllib,urllib2,urlparse,gzip,StringIO,HTMLParser,time,random,base64
 
 from resources.lib.modules import cache
@@ -26,19 +25,16 @@ from resources.lib.modules import workers
 from resources.lib.modules import dom_parser
 from resources.lib.modules import log_utils
 
-
 def request(url, close=True, redirect=True, error=False, proxy=None, post=None, headers=None, mobile=False, XHR=False, limit=None, referer=None, cookie=None, compression=True, output='', timeout='30', ignoreSsl = False, flare = True, ignoreErrors = None):
 	try:
 		# Gaia
 		if url == None: return None
-
 		handlers = []
 
 		if not proxy == None:
 			handlers += [urllib2.ProxyHandler({'http':'%s' % (proxy)}), urllib2.HTTPHandler]
 			opener = urllib2.build_opener(*handlers)
 			opener = urllib2.install_opener(opener)
-
 
 		if output == 'cookie' or output == 'extended' or not close == True:
 			cookies = cookielib.LWPCookieJar()
@@ -87,7 +83,6 @@ def request(url, close=True, redirect=True, error=False, proxy=None, post=None, 
 		elif compression and limit is None:
 			headers['Accept-Encoding'] = 'gzip'
 
-
 		if redirect == False:
 
 			class NoRedirection(urllib2.HTTPErrorProcessor):
@@ -111,7 +106,6 @@ def request(url, close=True, redirect=True, error=False, proxy=None, post=None, 
 
 		request = urllib2.Request(url, data=post)
 		_add_request_header(request, headers)
-
 
 		try:
 			response = urllib2.urlopen(request, timeout=int(timeout))

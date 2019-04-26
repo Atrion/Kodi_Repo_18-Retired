@@ -12,6 +12,7 @@
 # Addon id: plugin.video.Yoda
 # Addon Provider: Supremacy
 
+
 import re,urlparse,json,base64
 
 from resources.lib.modules import cache
@@ -35,7 +36,7 @@ class source:
         self.password = control.setting('ororo.pass')
         self.headers = {
         'Authorization': 'Basic %s' % base64.b64encode('%s:%s' % (self.user, self.password)),
-        'User-Agent': 'fantastic for Kodi'
+        'User-Agent': 'Placenta for Kodi'
         }
 
 

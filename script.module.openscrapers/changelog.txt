@@ -1,7 +1,23 @@
 OpenScrapers Module Changelog:
+0.0.0.8
+- cfscrape updates
+
+0.0.0.7
+- Settings improvements
+- Disabled malfunctioning scrapers
+- Updated cfscrape to latest
+- Scraper updates
+
+0.0.0.5
+- Scraper updates
+- Settings updates
+- Added MagentDL scraper
+
 0.0.0.4
-- Scraper tester added
-- Lots of refactoring of existing scrapers
+- Scraper updates
+- Settings updates
+- updated Client.py to one from overeasy for torrent support
+- removed dead scrapers from pl language
 
 0.0.0.3
 - Label changes

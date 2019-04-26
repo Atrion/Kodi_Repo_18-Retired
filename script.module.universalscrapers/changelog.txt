@@ -1,3 +1,13 @@
+15/04/2019 v1.1.6
+fixed scrapers:
+piratebay
+twoddl
+changed cfscrape.py
+
+28/03/2109 v1.1.5.a
+cf scrape update 
+
+
 28/02/2019 v.1.1.5
 fixed scrapers:
 releasebb

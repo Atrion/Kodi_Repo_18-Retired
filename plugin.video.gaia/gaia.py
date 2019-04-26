@@ -1076,6 +1076,25 @@ elif action.startswith('urlresolver'):
 		tools.UrlResolver.enable(refresh = True)
 
 ####################################################
+# OPECRAPERS
+####################################################
+
+elif action.startswith('opescrapers'):
+
+	if action == 'opescrapersNavigator':
+		from resources.lib.indexers import navigator
+		navigator.navigator(type = type, kids = kids).opescrapersNavigator()
+
+	elif action == 'opescrapersSettings':
+		tools.OpeScrapers.settings()
+
+	elif action == 'opescrapersProviders':
+		tools.OpeScrapers.providers()
+
+	elif action == 'opescrapersInstall':
+		tools.OpeScrapers.enable(refresh = True)
+
+####################################################
 # LAMSCRAPERS
 ####################################################
 
@@ -1808,7 +1827,8 @@ elif action.startswith('streams'):
 		initial = tools.Converter.boolean(params.get('initial'))
 		new = tools.Converter.boolean(params.get('new'))
 		add = tools.Converter.boolean(params.get('add'))
-		core.Core(type = type, kids = kids).showStreams(direct = direct, filter = filter, autoplay = autoplay, library = library, initial = initial, new = new, add = add)
+		process = tools.Converter.boolean(params.get('process'))
+		core.Core(type = type, kids = kids).showStreams(direct = direct, filter = filter, autoplay = autoplay, library = library, initial = initial, new = new, add = add, process = process)
 
 	elif action == 'streamsFilter':
 		from resources.lib.extensions import core

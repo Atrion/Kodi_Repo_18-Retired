@@ -12,9 +12,8 @@
 # Addon id: plugin.video.Yoda
 # Addon Provider: Supremacy
 
-import re
-from resources.lib.modules import cleantitle
-from resources.lib.modules import cfscrape
+import re,urllib,urlparse
+from resources.lib.modules import cleantitle,client,source_utils,proxy,cfscrape
 
 
 class source:
@@ -25,25 +24,33 @@ class source:
         self.base_link = 'https://hdm.to'
         self.scraper = cfscrape.create_scraper()
 
+
     def movie(self, imdb, title, localtitle, aliases, year):
         try:
-            url = cleantitle.geturl(title)
+            tit = cleantitle.geturl(title)
+            url = '%s/%s/' % (self.base_link,tit)
             return url
         except:
             return
 
+
     def sources(self, url, hostDict, hostprDict):
         try:
             sources = []
-            url = '%s/%s/' % (self.base_link, url)
             r = self.scraper.get(url).content
-            match = re.compile('<iframe.+?src="(.+?)"').findall(r)
-            for url in match:
-                sources.append({'source': 'Openload.co', 'quality': '1080p', 'language': 'en',
-                                'url': url, 'direct': False, 'debridonly': False})
+            try:
+                match = re.compile('<iframe.+?src="(.+?)"').findall(r)
+                for url in match:
+                    valid, host = source_utils.is_host_valid(url, hostDict)
+                    if valid:
+                        sources.append({'source': host, 'quality': 'HD', 'language': 'en', 'url': url, 'direct': False, 'debridonly': False}) 
+            except:
+                return
         except Exception:
             return
         return sources
 
+
     def resolve(self, url):
         return url
+

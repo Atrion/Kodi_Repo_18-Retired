@@ -2,7 +2,18 @@
 <includes>
 
 
-	<!-- &#63346; Kreis -->
+	<variable name="ColorStarsLabel">
+		<value condition="String.IsEqual(Skin.String(starscolor.name),none)">ffd402aa</value>
+        <value condition="!String.IsEmpty(Skin.String(starscolor.name))">$INFO[Skin.String(starscolor.name)]</value>
+        <value>ffd402aa</value>
+    </variable>
+	
+	<variable name="ColorSquareLabel">
+		<value condition="String.IsEqual(Skin.String(squarecolor.name),none)">$INFO[Skin.String(focuscolor.name)]</value>
+        <value condition="!String.IsEmpty(Skin.String(squarecolor.name))">$INFO[Skin.String(squarecolor.name)]</value>
+        <value>$INFO[Skin.String(focuscolor.name)]</value>
+    </variable>
+	
     <variable name="LabelWidgetShortcutsName">
         <value condition="!String.IsEmpty(Container(211).ListItem.Property(widgetName))">$INFO[Container(211).ListItem.Property(widgetName)]</value>
         <value condition="!String.IsEmpty(Container(211).ListItem.Property(background))">$LOCALIZE[31110]</value>
@@ -24,10 +35,41 @@
 		<value condition="String.Contains(ListItem.PercentPlayed,0) + String.Contains(ListItem.Overlay,OverlayUnwatched.png)">0%</value>
     </variable>
 	
+	<variable name="504_Row_1">
+		<value condition="Container.Content(tvshows) | Container.Content(seasons)">$LOCALIZE[29909]: $INFO[ListItem.Studio]</value>
+		<value condition="ListItem.IsCollection">$LOCALIZE[515]: $INFO[Window(Home).Property(SkinHelper.ListItem.Genre)]</value>
+        <value>$LOCALIZE[515]: $INFO[ListItem.Genre]</value>
+    </variable>
+	<variable name="504_Row_2">
+		<value condition="Container.Content(tvshows) | Container.Content(seasons)">$LOCALIZE[20352]: $INFO[ListItem.Property(TotalEpisodes),, $LOCALIZE[20360]] $INFO[ListItem.Property(UnWatchedEpisodes),  •  , $LOCALIZE[16101]]</value>
+		<value condition="ListItem.IsCollection">$LOCALIZE[20339]: $INFO[Window(Home).Property(SkinHelper.ListItem.Director)]</value>
+        <value>$LOCALIZE[20339]: $INFO[ListItem.Director]</value>
+    </variable>
+	<variable name="504_Row_3">
+		<value condition="Container.Content(tvshows) | Container.Content(seasons)">$LOCALIZE[563]: $INFO[ListItem.MPAA]</value>
+		<value condition="ListItem.IsCollection">$LOCALIZE[2050]: $INFO[Window(Home).Property(SkinHelper.ListItem.Duration.Hours),, h ]$INFO[Window(Home).Property(SkinHelper.ListItem.Duration.Minutes),, $LOCALIZE[31102]]</value>
+        <value>$LOCALIZE[2050]: $INFO[ListItem.Duration(mins),, $LOCALIZE[31102]]</value>
+    </variable>
+	
+	<variable name="509_Row_1">
+		<value condition="Container.Content(tvshows) | Container.Content(seasons)">$INFO[ListItem.Year,,  •  ]$INFO[ListItem.Property(TotalEpisodes),, $LOCALIZE[20360]] $INFO[ListItem.Property(UnWatchedEpisodes),  •  , $LOCALIZE[16101]]</value>
+		<value condition="ListItem.IsCollection">$INFO[Window(Home).Property(SkinHelper.ListItem.Year]  •  $INFO[Window(Home).Property(SkinHelper.ListItem.Duration.Hours),, h ]$INFO[Window(Home).Property(SkinHelper.ListItem.Duration.Minutes),, $LOCALIZE[31102],  •  , $LOCALIZE[31102]]$INFO[ListItem.Rating,  •  ,]</value>
+        <value>$INFO[ListItem.Year]$INFO[ListItem.Duration(mins),  •  , $LOCALIZE[31102]]$INFO[ListItem.Rating,  •  ,]</value>
+    </variable>
+	<variable name="509_Row_2">
+		<value condition="Container.Content(tvshows) | Container.Content(seasons)">$INFO[ListItem.Studio]</value>
+		<value condition="ListItem.IsCollection">$INFO[Window(Home).Property(SkinHelper.ListItem.Studio)]</value>
+        <value>$INFO[ListItem.Studio]</value>
+    </variable>
+	<variable name="509_Row_3">
+		<value condition="ListItem.IsCollection">$INFO[Window(Home).Property(SkinHelper.ListItem.Genre)]</value>
+        <value>$INFO[ListItem.Genre]</value>
+    </variable>
+	
 	
 	<variable name="LabelPercentWatched9500">
 		<value condition="Container(9500).ListItem.IsResumable">&#62251;</value>
-		<value condition="ListItem.IsPlaying">[COLOR=FF888888]&#62811;[/COLOR]</value>
+		<value condition="ListItem.IsPlaying">[COLOR=WatchedIcons]&#62811;[/COLOR]</value>
 		<value condition="[String.Contains(Container(9500).ListItem.Overlay,OverlayUnwatched.png) + [String.IsEqual(Window(Home).Property(LatestMovie.1.Title),Container(9500).ListItem.Label) | String.IsEqual(Window(Home).Property(LatestMovie.2.Title),Container(9500).ListItem.Label) | String.IsEqual(Window(Home).Property(LatestMovie.3.Title),Container(9500).ListItem.Label) | String.IsEqual(Window(Home).Property(LatestMovie.4.Title),Container(9500).ListItem.Label) | String.IsEqual(Window(Home).Property(LatestMovie.5.Title),Container(9500).ListItem.Label) | String.IsEqual(Window(Home).Property(LatestMovie.6.Title),Container(9500).ListItem.Label) | String.IsEqual(Window(Home).Property(LatestMovie.7.Title),Container(9500).ListItem.Label) | String.IsEqual(Window(Home).Property(LatestMovie.8.Title),Container(9500).ListItem.Label) | String.IsEqual(Window(Home).Property(LatestMovie.9.Title),Container(9500).ListItem.Label) | String.IsEqual(Window(Home).Property(LatestMovie.10.Title),Container(9500).ListItem.Label)]] | [String.Contains(Container(9500).ListItem.Overlay,OverlayUnwatched.png) +[String.IsEqual(Window(Home).Property(LatestEpisode.1.ShowTitle),Container(9500).ListItem.TvShowTitle) | String.IsEqual(Window(Home).Property(LatestEpisode.2.ShowTitle),Container(9500).ListItem.TvShowTitle) | String.IsEqual(Window(Home).Property(LatestEpisode.3.ShowTitle),Container(9500).ListItem.TvShowTitle) | String.IsEqual(Window(Home).Property(LatestEpisode.4.ShowTitle),Container(9500).ListItem.TvShowTitle) | String.IsEqual(Window(Home).Property(LatestEpisode.5.ShowTitle),Container(9500).ListItem.TvShowTitle) | String.IsEqual(Window(Home).Property(LatestEpisode.6.ShowTitle),Container(9500).ListItem.TvShowTitle) | String.IsEqual(Window(Home).Property(LatestEpisode.7.ShowTitle),Container(9500).ListItem.TvShowTitle) | String.IsEqual(Window(Home).Property(LatestEpisode.8.ShowTitle),Container(9500).ListItem.TvShowTitle) | String.IsEqual(Window(Home).Property(LatestEpisode.9.ShowTitle),Container(9500).ListItem.TvShowTitle) | String.IsEqual(Window(Home).Property(LatestEpisode.10.ShowTitle),Container(9500).ListItem.TvShowTitle)]] | [String.Contains(Container(9500).ListItem.Overlay,OverlayUnwatched.png) +[String.IsEqual(Window(Home).Property(LatestEpisode.1.EpisodeTitle),Container(9500).ListItem.Title) | String.IsEqual(Window(Home).Property(LatestEpisode.2.EpisodeTitle),Container(9500).ListItem.Title) | String.IsEqual(Window(Home).Property(LatestEpisode.3.EpisodeTitle),Container(9500).ListItem.Title) | String.IsEqual(Window(Home).Property(LatestEpisode.4.EpisodeTitle),Container(9500).ListItem.Title) | String.IsEqual(Window(Home).Property(LatestEpisode.5.EpisodeTitle),Container(9500).ListItem.Title) | String.IsEqual(Window(Home).Property(LatestEpisode.6.EpisodeTitle),Container(9500).ListItem.Title) | String.IsEqual(Window(Home).Property(LatestEpisode.7.EpisodeTitle),Container(9500).ListItem.Title) | String.IsEqual(Window(Home).Property(LatestEpisode.8.EpisodeTitle),Container(9500).ListItem.Title) | String.IsEqual(Window(Home).Property(LatestEpisode.9.EpisodeTitle),Container(9500).ListItem.Title) | String.IsEqual(Window(Home).Property(LatestEpisode.10.EpisodeTitle),Container(9500).ListItem.Title)]]">[COLOR=FFD402AA]&#62079;[/COLOR]</value>
         
         <value condition="String.IsEqual(Container(9500).ListItem.Overlay,OverlayWatched.png)">[COLOR=FF00DD44]&#10003;[/COLOR]</value>
@@ -44,23 +86,23 @@
 	
 	
 	<variable name="WatchedLabelPoster">
-        <value condition="ListItem.IsPlaying">[COLOR=FF888888]&#62811;[/COLOR]</value>
+        <value condition="ListItem.IsPlaying">[COLOR=WatchedIcons]&#62811;[/COLOR]</value>
 		<value condition="ListItem.IsResumable">&#62251;</value>
         <value condition="String.IsEqual(ListItem.Overlay,OverlayWatched.png)">[COLOR=FF00DD44]&#10003;[/COLOR]</value>
-        <value condition="[String.Contains(ListItem.Overlay,OverlayUnwatched.png) + [[Container.Content(movies) + [String.IsEqual(Window(Home).Property(LatestMovie.1.Title),ListItem.Label) | String.IsEqual(Window(Home).Property(LatestMovie.2.Title),ListItem.Label) | String.IsEqual(Window(Home).Property(LatestMovie.3.Title),ListItem.Label) | String.IsEqual(Window(Home).Property(LatestMovie.4.Title),ListItem.Label) | String.IsEqual(Window(Home).Property(LatestMovie.5.Title),ListItem.Label) | String.IsEqual(Window(Home).Property(LatestMovie.6.Title),ListItem.Label) | String.IsEqual(Window(Home).Property(LatestMovie.7.Title),ListItem.Label) | String.IsEqual(Window(Home).Property(LatestMovie.8.Title),ListItem.Label) | String.IsEqual(Window(Home).Property(LatestMovie.9.Title),ListItem.Label) | String.IsEqual(Window(Home).Property(LatestMovie.10.Title),ListItem.Label)]] | [[Container.Content(tvshows)] + [String.IsEqual(Window(Home).Property(LatestEpisode.1.ShowTitle),ListItem.TvShowTitle) | String.IsEqual(Window(Home).Property(LatestEpisode.2.ShowTitle),ListItem.TvShowTitle) | String.IsEqual(Window(Home).Property(LatestEpisode.3.ShowTitle),ListItem.TvShowTitle) | String.IsEqual(Window(Home).Property(LatestEpisode.4.ShowTitle),ListItem.TvShowTitle) | String.IsEqual(Window(Home).Property(LatestEpisode.5.ShowTitle),ListItem.TvShowTitle) | String.IsEqual(Window(Home).Property(LatestEpisode.6.ShowTitle),ListItem.TvShowTitle) | String.IsEqual(Window(Home).Property(LatestEpisode.7.ShowTitle),ListItem.TvShowTitle) | String.IsEqual(Window(Home).Property(LatestEpisode.8.ShowTitle),ListItem.TvShowTitle) | String.IsEqual(Window(Home).Property(LatestEpisode.9.ShowTitle),ListItem.TvShowTitle) | String.IsEqual(Window(Home).Property(LatestEpisode.10.ShowTitle),ListItem.TvShowTitle)]] | [Container.Content(episodes) + [String.IsEqual(Window(Home).Property(LatestEpisode.1.EpisodeTitle),ListItem.Title) | String.IsEqual(Window(Home).Property(LatestEpisode.2.EpisodeTitle),ListItem.Title) | String.IsEqual(Window(Home).Property(LatestEpisode.3.EpisodeTitle),ListItem.Title) | String.IsEqual(Window(Home).Property(LatestEpisode.4.EpisodeTitle),ListItem.Title) | String.IsEqual(Window(Home).Property(LatestEpisode.5.EpisodeTitle),ListItem.Title) | String.IsEqual(Window(Home).Property(LatestEpisode.6.EpisodeTitle),ListItem.Title) | String.IsEqual(Window(Home).Property(LatestEpisode.7.EpisodeTitle),ListItem.Title) | String.IsEqual(Window(Home).Property(LatestEpisode.8.EpisodeTitle),ListItem.Title) | String.IsEqual(Window(Home).Property(LatestEpisode.9.EpisodeTitle),ListItem.Title) | String.IsEqual(Window(Home).Property(LatestEpisode.10.EpisodeTitle),ListItem.Title)]]]]">[COLOR=ColoredStars]&#62079;[/COLOR]</value>
+        <value condition="[String.Contains(ListItem.Overlay,OverlayUnwatched.png) + [[Container.Content(movies) + [String.IsEqual(Window(Home).Property(LatestMovie.1.Title),ListItem.Label) | String.IsEqual(Window(Home).Property(LatestMovie.2.Title),ListItem.Label) | String.IsEqual(Window(Home).Property(LatestMovie.3.Title),ListItem.Label) | String.IsEqual(Window(Home).Property(LatestMovie.4.Title),ListItem.Label) | String.IsEqual(Window(Home).Property(LatestMovie.5.Title),ListItem.Label) | String.IsEqual(Window(Home).Property(LatestMovie.6.Title),ListItem.Label) | String.IsEqual(Window(Home).Property(LatestMovie.7.Title),ListItem.Label) | String.IsEqual(Window(Home).Property(LatestMovie.8.Title),ListItem.Label) | String.IsEqual(Window(Home).Property(LatestMovie.9.Title),ListItem.Label) | String.IsEqual(Window(Home).Property(LatestMovie.10.Title),ListItem.Label)]] | [[Container.Content(tvshows)] + [String.IsEqual(Window(Home).Property(LatestEpisode.1.ShowTitle),ListItem.TvShowTitle) | String.IsEqual(Window(Home).Property(LatestEpisode.2.ShowTitle),ListItem.TvShowTitle) | String.IsEqual(Window(Home).Property(LatestEpisode.3.ShowTitle),ListItem.TvShowTitle) | String.IsEqual(Window(Home).Property(LatestEpisode.4.ShowTitle),ListItem.TvShowTitle) | String.IsEqual(Window(Home).Property(LatestEpisode.5.ShowTitle),ListItem.TvShowTitle) | String.IsEqual(Window(Home).Property(LatestEpisode.6.ShowTitle),ListItem.TvShowTitle) | String.IsEqual(Window(Home).Property(LatestEpisode.7.ShowTitle),ListItem.TvShowTitle) | String.IsEqual(Window(Home).Property(LatestEpisode.8.ShowTitle),ListItem.TvShowTitle) | String.IsEqual(Window(Home).Property(LatestEpisode.9.ShowTitle),ListItem.TvShowTitle) | String.IsEqual(Window(Home).Property(LatestEpisode.10.ShowTitle),ListItem.TvShowTitle)]] | [Container.Content(episodes) + [String.IsEqual(Window(Home).Property(LatestEpisode.1.EpisodeTitle),ListItem.Title) | String.IsEqual(Window(Home).Property(LatestEpisode.2.EpisodeTitle),ListItem.Title) | String.IsEqual(Window(Home).Property(LatestEpisode.3.EpisodeTitle),ListItem.Title) | String.IsEqual(Window(Home).Property(LatestEpisode.4.EpisodeTitle),ListItem.Title) | String.IsEqual(Window(Home).Property(LatestEpisode.5.EpisodeTitle),ListItem.Title) | String.IsEqual(Window(Home).Property(LatestEpisode.6.EpisodeTitle),ListItem.Title) | String.IsEqual(Window(Home).Property(LatestEpisode.7.EpisodeTitle),ListItem.Title) | String.IsEqual(Window(Home).Property(LatestEpisode.8.EpisodeTitle),ListItem.Title) | String.IsEqual(Window(Home).Property(LatestEpisode.9.EpisodeTitle),ListItem.Title) | String.IsEqual(Window(Home).Property(LatestEpisode.10.EpisodeTitle),ListItem.Title)]]]]">[COLOR=ColoredIcons]&#62079;[/COLOR]</value>
         <!--<value condition="String.IsEqual(ListItem.Overlay,OverlayUnwatched.png)">&#63346;</value>-->
     </variable>	
 	<variable name="WatchedLabelPosterColor">
-        <value>FF888888</value>
+        <value>WatchedIcons</value>
     </variable>
 	
 	
 	
 	<variable name="WatchedLabelList">
-		<value condition="ListItem.IsPlaying">[COLOR=FF888888]&#62811;[/COLOR]</value>
+		<value condition="ListItem.IsPlaying">&#62811;</value>
         <value condition="ListItem.IsResumable">&#62251;</value>
         <value condition="String.IsEqual(ListItem.Overlay,OverlayWatched.png)">[COLOR=FF00DD44]&#10003;[/COLOR]</value>
-        <value condition="[String.Contains(ListItem.Overlay,OverlayUnwatched.png) + [[Container.Content(movies) + [String.IsEqual(Window(Home).Property(LatestMovie.1.Title),ListItem.Label) | String.IsEqual(Window(Home).Property(LatestMovie.2.Title),ListItem.Label) | String.IsEqual(Window(Home).Property(LatestMovie.3.Title),ListItem.Label) | String.IsEqual(Window(Home).Property(LatestMovie.4.Title),ListItem.Label) | String.IsEqual(Window(Home).Property(LatestMovie.5.Title),ListItem.Label) | String.IsEqual(Window(Home).Property(LatestMovie.6.Title),ListItem.Label) | String.IsEqual(Window(Home).Property(LatestMovie.7.Title),ListItem.Label) | String.IsEqual(Window(Home).Property(LatestMovie.8.Title),ListItem.Label) | String.IsEqual(Window(Home).Property(LatestMovie.9.Title),ListItem.Label) | String.IsEqual(Window(Home).Property(LatestMovie.10.Title),ListItem.Label)]] | [[Container.Content(tvshows)] + [String.IsEqual(Window(Home).Property(LatestEpisode.1.ShowTitle),ListItem.TvShowTitle) | String.IsEqual(Window(Home).Property(LatestEpisode.2.ShowTitle),ListItem.TvShowTitle) | String.IsEqual(Window(Home).Property(LatestEpisode.3.ShowTitle),ListItem.TvShowTitle) | String.IsEqual(Window(Home).Property(LatestEpisode.4.ShowTitle),ListItem.TvShowTitle) | String.IsEqual(Window(Home).Property(LatestEpisode.5.ShowTitle),ListItem.TvShowTitle) | String.IsEqual(Window(Home).Property(LatestEpisode.6.ShowTitle),ListItem.TvShowTitle) | String.IsEqual(Window(Home).Property(LatestEpisode.7.ShowTitle),ListItem.TvShowTitle) | String.IsEqual(Window(Home).Property(LatestEpisode.8.ShowTitle),ListItem.TvShowTitle) | String.IsEqual(Window(Home).Property(LatestEpisode.9.ShowTitle),ListItem.TvShowTitle) | String.IsEqual(Window(Home).Property(LatestEpisode.10.ShowTitle),ListItem.TvShowTitle)]] | [Container.Content(episodes) + [String.IsEqual(Window(Home).Property(LatestEpisode.1.EpisodeTitle),ListItem.Title) | String.IsEqual(Window(Home).Property(LatestEpisode.2.EpisodeTitle),ListItem.Title) | String.IsEqual(Window(Home).Property(LatestEpisode.3.EpisodeTitle),ListItem.Title) | String.IsEqual(Window(Home).Property(LatestEpisode.4.EpisodeTitle),ListItem.Title) | String.IsEqual(Window(Home).Property(LatestEpisode.5.EpisodeTitle),ListItem.Title) | String.IsEqual(Window(Home).Property(LatestEpisode.6.EpisodeTitle),ListItem.Title) | String.IsEqual(Window(Home).Property(LatestEpisode.7.EpisodeTitle),ListItem.Title) | String.IsEqual(Window(Home).Property(LatestEpisode.8.EpisodeTitle),ListItem.Title) | String.IsEqual(Window(Home).Property(LatestEpisode.9.EpisodeTitle),ListItem.Title) | String.IsEqual(Window(Home).Property(LatestEpisode.10.EpisodeTitle),ListItem.Title)]]]]">[COLOR=ColoredStars]&#62079;[/COLOR]</value>
+        <value condition="[String.Contains(ListItem.Overlay,OverlayUnwatched.png) + [[Container.Content(movies) + [String.IsEqual(Window(Home).Property(LatestMovie.1.Title),ListItem.Label) | String.IsEqual(Window(Home).Property(LatestMovie.2.Title),ListItem.Label) | String.IsEqual(Window(Home).Property(LatestMovie.3.Title),ListItem.Label) | String.IsEqual(Window(Home).Property(LatestMovie.4.Title),ListItem.Label) | String.IsEqual(Window(Home).Property(LatestMovie.5.Title),ListItem.Label) | String.IsEqual(Window(Home).Property(LatestMovie.6.Title),ListItem.Label) | String.IsEqual(Window(Home).Property(LatestMovie.7.Title),ListItem.Label) | String.IsEqual(Window(Home).Property(LatestMovie.8.Title),ListItem.Label) | String.IsEqual(Window(Home).Property(LatestMovie.9.Title),ListItem.Label) | String.IsEqual(Window(Home).Property(LatestMovie.10.Title),ListItem.Label)]] | [[Container.Content(tvshows)] + [String.IsEqual(Window(Home).Property(LatestEpisode.1.ShowTitle),ListItem.TvShowTitle) | String.IsEqual(Window(Home).Property(LatestEpisode.2.ShowTitle),ListItem.TvShowTitle) | String.IsEqual(Window(Home).Property(LatestEpisode.3.ShowTitle),ListItem.TvShowTitle) | String.IsEqual(Window(Home).Property(LatestEpisode.4.ShowTitle),ListItem.TvShowTitle) | String.IsEqual(Window(Home).Property(LatestEpisode.5.ShowTitle),ListItem.TvShowTitle) | String.IsEqual(Window(Home).Property(LatestEpisode.6.ShowTitle),ListItem.TvShowTitle) | String.IsEqual(Window(Home).Property(LatestEpisode.7.ShowTitle),ListItem.TvShowTitle) | String.IsEqual(Window(Home).Property(LatestEpisode.8.ShowTitle),ListItem.TvShowTitle) | String.IsEqual(Window(Home).Property(LatestEpisode.9.ShowTitle),ListItem.TvShowTitle) | String.IsEqual(Window(Home).Property(LatestEpisode.10.ShowTitle),ListItem.TvShowTitle)]] | [Container.Content(episodes) + [String.IsEqual(Window(Home).Property(LatestEpisode.1.EpisodeTitle),ListItem.Title) | String.IsEqual(Window(Home).Property(LatestEpisode.2.EpisodeTitle),ListItem.Title) | String.IsEqual(Window(Home).Property(LatestEpisode.3.EpisodeTitle),ListItem.Title) | String.IsEqual(Window(Home).Property(LatestEpisode.4.EpisodeTitle),ListItem.Title) | String.IsEqual(Window(Home).Property(LatestEpisode.5.EpisodeTitle),ListItem.Title) | String.IsEqual(Window(Home).Property(LatestEpisode.6.EpisodeTitle),ListItem.Title) | String.IsEqual(Window(Home).Property(LatestEpisode.7.EpisodeTitle),ListItem.Title) | String.IsEqual(Window(Home).Property(LatestEpisode.8.EpisodeTitle),ListItem.Title) | String.IsEqual(Window(Home).Property(LatestEpisode.9.EpisodeTitle),ListItem.Title) | String.IsEqual(Window(Home).Property(LatestEpisode.10.EpisodeTitle),ListItem.Title)]]]]">[COLOR=ColoredIcons]&#62079;[/COLOR]</value>
         <value condition="String.IsEqual(ListItem.Overlay,OverlayUnwatched.png)">&#61833;</value>
     </variable>
 
@@ -352,7 +394,26 @@
 		<value condition="!String.IsEmpty(Player.SeekNumeric)">$INFO[Player.SeekNumeric(hh:mm:ss)]</value>
 	</variable>
 	
+	<variable name="LabelSort">
+		<value condition="String.IsEqual(Container(211).ListItem.Property(widgetSort),ascending)">$LOCALIZE[584]</value>
+		<value condition="String.IsEqual(Container(211).ListItem.Property(widgetSort),descending)">$LOCALIZE[585]</value>
+		<value>$LOCALIZE[571]</value>
+	</variable>
 	
+	<variable name="LabelSortBy">
+		<value condition="String.IsEqual(Container(211).ListItem.Property(widgetSortby),lastplayed)">$LOCALIZE[568]</value>
+		<value condition="String.IsEqual(Container(211).ListItem.Property(widgetSortby),title)">$LOCALIZE[369]</value>
+		<value condition="String.IsEqual(Container(211).ListItem.Property(widgetSortby),tvshowtitle)">$LOCALIZE[36902]</value>
+		<value condition="String.IsEqual(Container(211).ListItem.Property(widgetSortby),date)">$LOCALIZE[552]</value>
+		<value condition="String.IsEqual(Container(211).ListItem.Property(widgetSortby),artist)">$LOCALIZE[557]</value>
+		<value condition="String.IsEqual(Container(211).ListItem.Property(widgetSortby),album)">$LOCALIZE[558]</value>
+		<value condition="String.IsEqual(Container(211).ListItem.Property(widgetSortby),tracknumber)">$LOCALIZE[554]</value>
+		<value condition="String.IsEqual(Container(211).ListItem.Property(widgetSortby),channelnumber)">$LOCALIZE[19029]</value>
+		<value condition="String.IsEqual(Container(211).ListItem.Property(widgetSortby),year)">$LOCALIZE[345]</value>
+		<value condition="String.IsEqual(Container(211).ListItem.Property(widgetSortby),dateadded)">$LOCALIZE[570]</value>
+		<value condition="String.IsEqual(Container(211).ListItem.Property(widgetSortby),random)">$LOCALIZE[590]</value>
+		<value>$LOCALIZE[571]</value>
+	</variable>
 	
 	
 	

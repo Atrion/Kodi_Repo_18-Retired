@@ -106,8 +106,9 @@ class source:
 
 			data = dict([(i, data[i][0]) if data[i] else (i, '') for i in data])
 
-			title = data['tvshowtitle'] if 'tvshowtitle' in data else data['title']
-			titleYear = '%s S%02dE%02d' % (data['tvshowtitle'], int(data['season']), int(data['episode'])) if 'tvshowtitle' in data else '%s (%s)' % (data['title'], data['year'])
+			show = 'tvshowtitle' in data
+			title = data['tvshowtitle'] if show else data['title']
+			titleYear = '%s S%02dE%02d' % (data['tvshowtitle'], int(data['season']), int(data['episode'])) if show else '%s (%s)' % (data['title'], data['year'])
 
 			if 'exact' in data and data['exact']:
 				query = title = data['tvshowtitle'] if 'tvshowtitle' in data else data['title']
@@ -123,12 +124,10 @@ class source:
 				pack = data['pack'] if 'pack' in data else False
 				packCount = data['packcount'] if 'packcount' in data else None
 
-				if 'tvshowtitle' in data:
-					subcategory = self.subcategories_show.values()[0] if len(self.subcategories_show) == 1 else self.subcategory_any
-				else:
-					subcategory = self.subcategories_movie.values()[0] if len(self.subcategories_movie) == 1 else self.subcategory_any
+				if show: subcategory = self.subcategories_show.values()[0] if len(self.subcategories_show) == 1 else self.subcategory_any
+				else: subcategory = self.subcategories_movie.values()[0] if len(self.subcategories_movie) == 1 else self.subcategory_any
 
-				if 'tvshowtitle' in data:
+				if show:
 					if pack: query = '%s S%02d' % (title, season)
 					else: query = '%s S%02dE%02d' % (title, season, episode)
 				else:
@@ -145,13 +144,12 @@ class source:
 			page = 0
 			added = False
 
-			timeTimeout = tools.Settings.getInteger('scraping.providers.timeout')
-			timerEnd = timeTimeout - 8
+			timerTimeout = tools.Settings.getInteger('scraping.providers.timeout')
+			timerEnd = timerTimeout - 8
 			timer = tools.Time(start = True)
 
 			threads = []
 			self.tLock = threading.Lock()
-
 			while True:
 				# Stop searching 8 seconds before the provider timeout, otherwise might continue searching, not complete in time, and therefore not returning any links.
 				if timer.elapsed() > timerEnd:
@@ -167,7 +165,7 @@ class source:
 				page += 25
 				added = False
 
-				htmlTables = html.find_all('table', 'table')
+				htmlTables = html.find_all('table', class_ = 'table')
 				if htmlTables:
 					htmlTable = htmlTables[0]
 					htmlTbody = htmlTable.find_all('tbody')[0]
@@ -186,8 +184,8 @@ class source:
 
 						# Category
 						if subcategory is self.subcategory_any:
-							htmlCategory = htmlRow.find_all('div', 'hidden')[0].getText()
-							if 'tvshowtitle' in data and len(self.subcategories_show) > 1:
+							htmlCategory = htmlRow.find_all('div', class_ = 'hidden')[0].getText()
+							if show and len(self.subcategories_show) > 1:
 								if htmlCategory not in self.subcategories_show.keys():
 									continue
 							elif len(self.subcategories_show) > 1:
@@ -195,7 +193,7 @@ class source:
 									continue
 
 						# Size
-						htmlSize = re.sub(r"([mMkKgGtT]?)[oO]", r"\1b", htmlRow.find_all('td')[5].getText())
+						htmlSize = re.sub('([mMkKgGtT]?)[oO]', '\\1b', htmlRow.find_all('td')[5].getText())
 
 						# Link
 						htmlLink = self.base_link + self.download_link + str(htmlInfo.get('href').encode('utf-8')).split('/')[-1].split('-')[0]
@@ -205,7 +203,7 @@ class source:
 
 						# Metadata
 						meta = metadata.Metadata(name = htmlName, title = title, year = year, season = season, episode = episode, pack = pack, packCount = packCount, link = htmlLink, size = htmlSize, seeds = htmlSeeds)
-
+						
 						# Ignore
 						if meta.ignore(True):
 							continue

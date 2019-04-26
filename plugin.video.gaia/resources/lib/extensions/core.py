@@ -211,7 +211,7 @@ class Core:
 				except: pass
 				return interface.Core.canceled()
 
-	def scrape(self, title = None, year = None, imdb = None, tvdb = None, season = None, episode = None, tvshowtitle = None, premiered = None, metadata = None, autoplay = None, preset = None, seasoncount = None, library = False, exact = False, items = None):
+	def scrape(self, title = None, year = None, imdb = None, tvdb = None, season = None, episode = None, tvshowtitle = None, premiered = None, metadata = None, autoplay = None, preset = None, seasoncount = None, library = False, exact = False, items = None, process = True):
 		try:
 			tools.Donations.popup()
 
@@ -279,11 +279,10 @@ class Core:
 				autoplay = self.termination or (tools.Time.timestamp() - start) < tools.Settings.getInteger('scraping.providers.timeout')
 
 			self._showClear()
-			self.showStreams(items = self.sources, metadata = metadata, autoplay = autoplay, initial = True, library = library, direct = exact, new = new)
+			self.showStreams(items = self.sources, metadata = metadata, autoplay = autoplay, initial = True, library = library, direct = exact, new = new, process = process)
 		except:
 			tools.Logger.error()
 			self.progressClose(force = True)
-
 
 	def scrapeExact(self, terms = None):
 		if not tools.Settings.getBoolean('internal.search.exact'):
@@ -1647,7 +1646,7 @@ class Core:
 	def showFilters(self):
 		interface.Filters.show()
 
-	def showStreams(self, items = None, extras = None, metadata = None, direct = False, filter = True, autoplay = False, clear = False, library = False, initial = False, new = True, add = False):
+	def showStreams(self, items = None, extras = None, metadata = None, direct = False, filter = True, autoplay = False, clear = False, library = False, initial = False, new = True, add = False, process = True):
 		try:
 			if clear: self._showClear()
 
@@ -1656,7 +1655,7 @@ class Core:
 				self.progressClose(loader = self.navigationStreamsSpecial and new)
 
 			if not direct and self.navigationStreamsDirectory:
-				return self._showStreamsDirectory(filter = filter and new, autoplay = autoplay, library = library, initial = initial, new = new, add = add)
+				return self._showStreamsDirectory(filter = filter and new, autoplay = autoplay, library = library, initial = initial, new = new, add = add, process = process)
 
 			if items == None:
 				items = window.Window.propertyGlobal(self.propertyItems)
@@ -1685,7 +1684,8 @@ class Core:
 				for i in range(len(items)):
 					metadatax.Metadata.initialize(source = items[i])
 				if filter:
-					itemsFiltered = self.sourcesFilter(items = items, metadata = metadata, autoplay = autoplay)
+					if process: itemsFiltered = self.sourcesFilter(items = items, metadata = metadata, autoplay = autoplay)
+					else: itemsFiltered = items
 					if len(itemsFiltered) == 0:
 						if not new or self.progressNotification():
 							return self.showStreams(items = items, extras = extras, metadata = metadata, direct = True, library = library, filter = False, autoplay = False, clear = True, new = new, add = add)
@@ -1693,7 +1693,8 @@ class Core:
 							self.progressClose(force = True, loader = self.navigationStreamsSpecial and new)
 							return False
 				else:
-					itemsFiltered = self.sourcesFilter(items = items, metadata = metadata, apply = False, autoplay = False)
+					if process: itemsFiltered = self.sourcesFilter(items = items, metadata = metadata, apply = False, autoplay = False)
+					else: itemsFiltered = items
 				itemsFiltered = self.sourcesLabel(items = itemsFiltered, metadata = metadata)
 
 			if extras:
@@ -1726,14 +1727,14 @@ class Core:
 	def _showClear(self, filter = False, autoplay = False):
 		interface.Filters.clear()
 
-	def _showStreamsDirectory(self, filter = False, autoplay = False, library = False, initial = False, new = True, add = False):
+	def _showStreamsDirectory(self, filter = False, autoplay = False, library = False, initial = False, new = True, add = False, process = True):
 		try:
 			interface.Loader.show()
 			tools.Time.sleep(0.2)
 			# NB: Use "filterx" and not "filter" as parameters.
 			# Otherwise for some weird reason the back button in the directory does not work.
 			# Maybe Kodi uses that parameter name internally (eg: left side menu "Filter" option).
-			command = '%s?action=streamsShow&direct=%d&filterx=%d&autoplay=%d&library=%d&initial=%d&new=%d&add=%d' % (sys.argv[0], True, filter, autoplay, library, initial, new, add)
+			command = '%s?action=streamsShow&direct=%d&filterx=%d&autoplay=%d&library=%d&initial=%d&new=%d&add=%d&process=%d' % (sys.argv[0], True, filter, autoplay, library, initial, new, add, process)
 			command = self.parameterize(command)
 			self.progressClose(force = True, loader = False) # Important to close to free up window memory, since Container.Update is in a separate process which does not know the window anymore.
 			interface.Loader.show()
@@ -2088,7 +2089,7 @@ class Core:
 			control.addItems(handle = syshandle, items = controls)
 			control.content(syshandle, 'files')
 			control.directory(syshandle, cacheToDisc = True, updateListing = not initial)
-			self.progressClose(force = True, loader = add)
+			self.progressClose(force = True, loader = (add or self.navigationScrapeBar))
 
 		# When launching from the local library, Kodi shows an OK dialog and/or a notification stating that the item couldn't be played, or that it coudln't find the next item in the playlist.
 		# These popups happen random and sometimes not at all. It probably depends on the time it takes to scrape/launch Gaia.
@@ -3532,6 +3533,9 @@ class Core:
 			labelAny = interface.Translation.string(33113)
 			labelNone = interface.Translation.string(33112)
 
+			# FILTERS - LIMIT
+			filterGeneralLimit = int(_filterSetting('general.limit'))
+
 			# FILTERS - REMOVAL
 
 			filterRemovalDuplicates = interface.Filters.removalDuplicates()
@@ -4366,7 +4370,8 @@ class Core:
 				items = self.sourcesRemoveDuplicates(items)
 
 			# Filter - Limit
-			items = items[:5000]
+			if filterGeneralLimit > 0:
+				items = items[:filterGeneralLimit]
 		except:
 			tools.Logger.error()
 

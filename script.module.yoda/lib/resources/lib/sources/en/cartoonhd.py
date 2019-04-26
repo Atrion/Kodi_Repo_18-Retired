@@ -118,11 +118,11 @@ class source:
 
             try:
                 r = re.findall('(https:.*?redirector.*?)[\'\"]', result)
-                for i in r:
-                    try:
-                        sources.append(
-                            {'source': 'gvideo', 'quality': directstream.googletag(i)[0]['quality'], 'language': 'en',
-                             'url': i, 'direct': True, 'debridonly': False})
+            for i in r:
+                try:
+                    sources.append(
+                    {'source': 'gvideo', 'quality': directstream.googletag(i)[0]['quality'], 'language': 'en',
+                        'url': i, 'direct': True, 'debridonly': False})
                     except:
                         pass
             except:
@@ -157,59 +157,59 @@ class source:
             r = re.findall('\'(http.+?)\'', r) + re.findall('\"(http.+?)\"', r)
 
             for i in r:
+            try:
+            if 'google' in i:
+                quality = 'SD'
+
+            if 'googleapis' in i:
                 try:
-                    if 'google' in i:
-                        quality = 'SD'
+                    quality = source_utils.check_sd_url(i)
+            except Exception:
+                pass
 
-                        if 'googleapis' in i:
-                            try:
-                                quality = source_utils.check_sd_url(i)
-                            except Exception:
-                                pass
+            if 'googleusercontent' in i:
+                i = directstream.googleproxy(i)
+            try:
+                quality = directstream.googletag(i)[0]['quality']
+            except Exception:
+                pass
 
-                        if 'googleusercontent' in i:
-                            i = directstream.googleproxy(i)
-                            try:
-                                quality = directstream.googletag(i)[0]['quality']
-                            except Exception:
-                                pass
+                sources.append({
+                'source': 'gvideo',
+                'quality': quality,
+                'language': 'en',
+                'url': i,
+                'direct': True,
+                'debridonly': False
+            })
 
-                        sources.append({
-                            'source': 'gvideo',
-                            'quality': quality,
-                            'language': 'en',
-                            'url': i,
-                            'direct': True,
-                            'debridonly': False
-                        })
+            elif 'llnwi.net' in i or 'vidcdn.pro' in i:
+            try:
+                quality = source_utils.check_sd_url(i)
 
-                    elif 'llnwi.net' in i or 'vidcdn.pro' in i:
-                        try:
-                            quality = source_utils.check_sd_url(i)
+                sources.append({
+                'source': 'CDN',
+                'quality': quality,
+                'language': 'en',
+                'url': i,
+                'direct': True,
+                'debridonly': False
+            })
 
-                            sources.append({
-                                'source': 'CDN',
-                                'quality': quality,
-                                'language': 'en',
-                                'url': i,
-                                'direct': True,
-                                'debridonly': False
-                            })
-
-                        except Exception:
-                            pass
+            except Exception:
+                pass
                     else:
                         valid, hoster = source_utils.is_host_valid(i, hostDict)
-                        if not valid: continue
+            if not valid: continue
 
-                        sources.append({
-                            'source': hoster,
-                            'quality': '720p',
-                            'language': 'en',
-                            'url': i,
-                            'direct': False,
-                            'debridonly': False
-                        })
+                sources.append({
+                'source': hoster,
+                'quality': '720p',
+                'language': 'en',
+                'url': i,
+                'direct': False,
+                'debridonly': False
+            })
                 except Exception:
                     pass
             return sources

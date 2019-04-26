@@ -571,9 +571,10 @@ class OrionTools:
 			return int(time.mktime(fixed.timetuple()))
 
 	@classmethod
-	def timeFormat(self, time = None, format = FormatDateTime):
-		if time == None: time = self.timestamp()
-		elif time == '': return time
+	def timeFormat(self, time = None, format = FormatDateTime, default = None):
+		if time is None:
+			if default is None: time = self.timestamp()
+			else: return default
 		time = datetime.datetime.utcfromtimestamp(time)
 		return time.strftime(format)
 
@@ -584,7 +585,7 @@ class OrionTools:
 		days = timeTo - timeFrom
 		if days == None or days <= 0: return OrionTools.translate(32030)
 		else: days = self.round(days / 86400.0, 0)
-		if format: days = str(days) + ' ' + self.translate(32035)
+		if format: days = str(days) + ' ' + (self.translate(32221) if days == 1 else self.translate(32222))
 		return days
 
 	##############################################################################

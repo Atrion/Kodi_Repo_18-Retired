@@ -6216,6 +6216,26 @@ msgctxt "#34401"
 msgid "Shows the names of remaining providers in the scraping window."
 msgstr ""
 
+msgctxt "#34402"
+msgid "Limit the maximum number of streams shown in the results. Less streams have faster loading times. Set to 0 to show all available streams."
+msgstr ""
+
+msgctxt "#34403"
+msgid "Enables the use of external hoster providers using the OpenScrapers addon."
+msgstr ""
+
+msgctxt "#34404"
+msgid "Installs the OpenScrapers addon."
+msgstr ""
+
+msgctxt "#34405"
+msgid "Launches the OpenScrapers settings."
+msgstr ""
+
+msgctxt "#34406"
+msgid "Enable or disable individual OpenScrapers providers."
+msgstr ""
+
 
 # [/GAIACODE]
 
@@ -8377,7 +8397,7 @@ msgid "Addon Successfully Reset"
 msgstr ""
 
 msgctxt "#35539"
-msgid "xxxxxxxxxxx"
+msgid "General Filters"
 msgstr ""
 
 msgctxt "#35540"
@@ -8410,4 +8430,16 @@ msgstr ""
 
 msgctxt "#35547"
 msgid "Force"
+msgstr ""
+
+msgctxt "#35548"
+msgid "OpenScrapers"
+msgstr ""
+
+msgctxt "#35549"
+msgid "Open Scrapers"
+msgstr ""
+
+msgctxt "#35550"
+msgid "OpenScrapers Providers"
 msgstr ""

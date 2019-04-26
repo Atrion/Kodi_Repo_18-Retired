@@ -7,7 +7,8 @@
 		<visible>Control.IsVisible(507)</visible>
 		<include>JumpBarHorizontal</include>
 		<include>ViewSlideForJumpBar</include>		
-		<control type="group">			
+		<control type="group">	
+			<visible>Control.IsVisible(507)</visible>		
 			<include>Animation.Common</include>				
        		<control type="group">
 			<left>70</left>
@@ -65,6 +66,7 @@
 				<control type="wraplist" id="507">
 					<oninfo condition="ListItem.IsCollection">ActivateWindow(1132)</oninfo>	
 					<!--<visible>Container.Content(movies) | Container.Content(sets) | Container.Content(tvshows)</visible>-->
+					<visible>Container.Content(movies) | Container.Content(tvshows) | Container.Content(episodes) | Container.Content(seasons) | Container.Content(sets)</visible>
                     <top>214</top>
                     <left>-20</left>
                     <width>1980</width>
@@ -128,7 +130,7 @@
 							<control type="textbox">						
 								<top>136</top>
 								<bottom>17</bottom>
-								<font>Small333</font>
+								<font>TinyPlot</font>
 								<height>360</height>
 								<textcolor>Dark2</textcolor>
 								<selectedcolor>Dark1</selectedcolor>
@@ -143,7 +145,7 @@
 								<textcolor>Dark1</textcolor>
 								<label fallback="0.0">$INFO[ListItem.RatingAndVotes]</label>
 								<selectedcolor>Dark1</selectedcolor>
-								<visible>!Skin.HasSetting(furniture.numericrating) + !String.IsEqual(ListItem.Label,..)</visible>
+								<visible>!Skin.HasSetting(furniture.numericrating) + !String.IsEqual(ListItem.Label,..) + !Skin.HasSetting(hidevotesfanart)</visible>
 							</control>
 							<control type="label">
 								<posy>575</posy>
@@ -152,7 +154,7 @@
 								<textcolor>Dark1</textcolor>
 								<label fallback="0.0">$INFO[ListItem.Votes,, $LOCALIZE[205]]</label>
 								<selectedcolor>Dark1</selectedcolor>
-								<visible>Skin.HasSetting(furniture.numericrating) + !String.IsEqual(ListItem.Label,..)</visible>
+								<visible>Skin.HasSetting(furniture.numericrating) + !String.IsEqual(ListItem.Label,..) + !Skin.HasSetting(hidevotesfanart)</visible>
 							</control>						
 							<control type="group">						
 								<posy>505</posy>
@@ -374,7 +376,7 @@
 							<control type="textbox">						
 								<top>136</top>
 								<bottom>17</bottom>							
-								<font>Small333</font>
+								<font>TinyPlot</font>
 								<height>360</height>
 								<textcolor>Dark2</textcolor>
 								<selectedcolor>Dark1</selectedcolor>
@@ -389,7 +391,7 @@
 								<textcolor>Dark1</textcolor>
 								<label fallback="0.0">$INFO[ListItem.RatingAndVotes]</label>
 								<selectedcolor>Dark1</selectedcolor>
-								<visible>!Skin.HasSetting(furniture.numericrating) + !String.IsEqual(ListItem.Label,..)</visible>
+								<visible>!Skin.HasSetting(furniture.numericrating) + !String.IsEqual(ListItem.Label,..) + !Skin.HasSetting(hidevotesfanart)</visible>
 							</control>
 							<control type="label">
 								<posy>575</posy>
@@ -398,7 +400,7 @@
 								<textcolor>Dark1</textcolor>
 								<label fallback="0.0">$INFO[ListItem.Votes,, $LOCALIZE[205]]</label>
 								<selectedcolor>Dark1</selectedcolor>
-								<visible>Skin.HasSetting(furniture.numericrating) + !String.IsEqual(ListItem.Label,..)</visible>
+								<visible>Skin.HasSetting(furniture.numericrating) + !String.IsEqual(ListItem.Label,..) + !Skin.HasSetting(hidevotesfanart)</visible>
 							</control>	
 							<control type="group">						
 								<posy>505</posy>
@@ -679,7 +681,7 @@
 					<control type="textbox">				
 						<top>136</top>
 						<bottom>17</bottom>					
-						<font>Small333</font>
+						<font>TinyPlot</font>
 						<height>360</height>
 						<textcolor>Dark2</textcolor>
 						<selectedcolor>Dark1</selectedcolor>
@@ -694,7 +696,7 @@
 						<textcolor>Dark1</textcolor>
 						<label fallback="0.0">$INFO[ListItem.RatingAndVotes]</label>
 						<selectedcolor>Dark1</selectedcolor>
-						<visible>!Skin.HasSetting(furniture.numericrating) + !String.IsEqual(ListItem.Label,..)</visible>
+						<visible>!Skin.HasSetting(furniture.numericrating) + !String.IsEqual(ListItem.Label,..) + !Skin.HasSetting(hidevotesfanart)</visible>
 					</control>
 					<control type="label">
 						<posy>575</posy>
@@ -703,7 +705,7 @@
 						<textcolor>Dark1</textcolor>
 						<label fallback="0.0">$INFO[ListItem.Votes,, $LOCALIZE[205]]</label>
 						<selectedcolor>Dark1</selectedcolor>
-						<visible>Skin.HasSetting(furniture.numericrating) + !String.IsEqual(ListItem.Label,..)</visible>
+						<visible>Skin.HasSetting(furniture.numericrating) + !String.IsEqual(ListItem.Label,..) + !Skin.HasSetting(hidevotesfanart)</visible>
 					</control>				
 					<control type="group">				
 						<posy>505</posy>

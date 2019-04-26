@@ -284,7 +284,7 @@ class OrionApp:
 					{'title' : 32013, 'value' : self.type('').capitalize()},
 					{'title' : 32014, 'value' : self.status('').capitalize()},
 					{'title' : 32015, 'value' : str(OrionTools.round(self.popularityPercent(0) * 100, 0)) + '%'},
-					{'title' : 32016, 'value' : OrionTools.timeFormat(self.timeAdded(''), format = OrionTools.FormatDate)},
+					{'title' : 32016, 'value' : OrionTools.timeFormat(self.timeAdded(), format = OrionTools.FormatDate)},
 				],
 			},
 		])

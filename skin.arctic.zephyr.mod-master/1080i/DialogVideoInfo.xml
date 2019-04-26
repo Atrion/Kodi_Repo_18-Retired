@@ -784,7 +784,7 @@
 						<width>1270</width>
 						<top>110</top>
 						<left>0</left>
-						<height>290</height>
+						<height>298</height>
 						<font>Tiny</font>
 						<textcolor>Dark2</textcolor>
 						<align>justify</align>
@@ -968,7 +968,7 @@
 							<control type="label">
 								<left>110</left>
 								<top>430</top>
-								<width>615</width>
+								<width>1300</width>
 								<height>42</height>
 								<font>LabelInfoSub</font>
 								<scroll>false</scroll>
@@ -1250,7 +1250,7 @@
 					<control type="label">
 						<left>-15</left>
 						<top>362</top>
-						<width>615</width>
+						<width>1300</width>
 						<height>42</height>
 						<font>LabelInfo</font>
 						<scroll>true</scroll>
@@ -1301,7 +1301,7 @@
                 <left>60</left>
                 <right>60</right>
                 <posy>60</posy>
-                <font>EpisodeNumber</font>
+                <font>EpisodeNumberNew</font>
                 <textcolor>Dark1</textcolor>
                 <height>45</height>
                 <label>$INFO[ListItem.Label]</label>

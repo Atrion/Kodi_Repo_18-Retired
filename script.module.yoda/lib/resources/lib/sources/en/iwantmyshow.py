@@ -24,7 +24,7 @@ class source:
         self.priority = 1
         self.language = ['en']
         self.domains = ['myvideolinks.net','iwantmyshow.tk']
-        self.base_link = 'http://myvideolinks.net'
+        self.base_link = 'http://myvideolinks.net/'
         self.search_link = '/?s=%s'
 
     def movie(self, imdb, title, localtitle, aliases, year):
@@ -76,14 +76,14 @@ class source:
             s = client.request(self.base_link)
             s = re.findall('\'(http.+?)\'', s) + re.findall('\"(http.+?)\"', s)
             s = [i for i in s if urlparse.urlparse(self.base_link).netloc in i and len(i.strip('/').split('/')) > 3]
-            s = s[0] if s else urlparse.urljoin(self.base_link, 'posts')
+            s = s[0] if s else urlparse.urljoin(self.base_link, 'v2')
             s = s.strip('/')
 
             url = s + self.search_link % urllib.quote_plus(query)
 
             r = client.request(url)
 
-            r = client.parseDOM(r, 'h2', attrs = {'class': 'post-title .+?'})
+            r = client.parseDOM(r, 'h2')
             l = zip(client.parseDOM(r, 'a', ret='href'), client.parseDOM(r, 'a', ret='title'))
             r = [(i[0], i[1], re.sub('(\.|\(|\[|\s)(\d{4}|3D)(\.|\)|\]|\s|)(.+|)', '', i[1]), re.findall('[\.|\(|\[|\s](\d{4}|)([\.|\)|\]|\s|].+)', i[1])) for i in l]
             r = [(i[0], i[1], i[2], i[3][0][0], i[3][0][1]) for i in r if i[3]]
@@ -128,12 +128,15 @@ class source:
                     fmt = re.sub('(.+)(\.|\(|\[|\s)(\d{4}|S\d*E\d*|S\d*)(\.|\)|\]|\s)', '', name.upper())
                     fmt = re.split('\.|\(|\)|\[|\]|\s|\-', fmt)
                     fmt = [i.lower() for i in fmt]
-                    print fmt
 
                     if any(i.endswith(('subs', 'sub', 'dubbed', 'dub')) for i in fmt): raise Exception()
                     if any(i in ['extras'] for i in fmt): raise Exception()
 
-                    if '1080p' in fmt:
+                    if '2160p' in fmt:
+                        quality = '4K'
+                    elif '4K' in fmt:
+                        quality = '4K'
+                    elif '1080p' in fmt:
                         quality = '1080p'
                     elif '720p' in fmt:
                         quality = '720p'

@@ -48,13 +48,14 @@ class OrionNetworker:
 	# CONSTRUCTOR
 	##############################################################################
 
-	def __init__(self, link = None, parameters = None, timeout = Timeout, agent = AgentOrion, debug = True):
+	def __init__(self, link = None, parameters = None, timeout = Timeout, agent = AgentOrion, debug = True, json = False):
 		self.mDebug = debug
 		self.mLink = link if OrionTools.isString(link) else ''
 		self.mParameters = parameters
 		self.mTimeout = timeout
 		self.mAgent = self.userAgent(agent)
 		self.mError = False
+		self.mJson = json
 		self.mErrorCode = None
 		self.mStatus = None
 		self.mHeaders = None
@@ -127,32 +128,33 @@ class OrionNetworker:
 	# REQUEST
 	##############################################################################
 
-	def request(self, link = None, parameters = None, timeout = None, agent = None):
+	def request(self, link = None, parameters = None, timeout = None, agent = None, json = None):
 		try:
-			if link == None: link = self.mLink
-			if parameters == None: parameters = self.mParameters
-			if timeout == None: timeout = self.mTimeout
+			if link is None: link = self.mLink
+			if parameters is None: parameters = self.mParameters
+			if timeout is None: timeout = self.mTimeout
+			if json is None: json = self.mJson
 			self.mError = False
 			self.mErrorCode = None
 			self.mResponse = None
 			self.mHeaders = None
 			self.mStatus = None
-			json = False
+			jsonRequest = False
 			if self.mLink:
 				try:
 					if OrionTools.isDictionary(parameters):
 						for key, value in parameters.iteritems():
 							if OrionTools.isStructure(value):
-								json = True
+								jsonRequest = True
 								break
-					if json: parameters = OrionTools.jsonTo(parameters)
+					if jsonRequest: parameters = OrionTools.jsonTo(parameters)
 					elif not OrionTools.isString(parameters): parameters = urllib.urlencode(parameters, doseq = True)
 				except: pass
 				request = urllib2.Request(self.mLink, data = parameters)
 
 				if agent: self.mAgent = self.userAgent(agent)
 				if self.mAgent: request.add_header('User-Agent', self.mAgent)
-				if json: request.add_header('Content-Type', 'application/json')
+				if jsonRequest: request.add_header('Content-Type', 'application/json')
 
 				try:
 					secureContext = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
@@ -168,6 +170,7 @@ class OrionNetworker:
 			except: pass
 			result = self.mResponse.read()
 			self.mResponse.close()
+			if json: result = OrionTools.jsonFrom(result)
 			return result
 		except urllib2.HTTPError as error:
 			self.mError = True

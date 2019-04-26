@@ -12,14 +12,12 @@
 # Addon id: plugin.video.Yoda
 # Addon Provider: Supremacy
 
-
 import re,urllib,urlparse,json,base64
 
 from resources.lib.modules import cleantitle
 from resources.lib.modules import client
 from resources.lib.modules import source_utils
 from resources.lib.modules import dom_parser
-#from resources.lib.modules import log_utils
 
 
 
@@ -35,7 +33,6 @@ class source:
         try:
             query = self.search_link % urllib.quote_plus(cleantitle.query(tvshowtitle))
             result = client.request(query)
-            #tvshowtitle = cleantitle.get(tvshowtitle)
             t = [tvshowtitle] + source_utils.aliases_to_array(aliases)
             t = [cleantitle.get(i) for i in set(t) if i]
             result = re.compile('itemprop="url"\s+href="([^"]+).*?itemprop="name"\s+class="serie-title">([^<]+)', re.DOTALL).findall(result)
@@ -95,9 +92,8 @@ class source:
                     for x in urls: sources.append({'source': host, 'quality': x['quality'], 'language': 'en', 'url': x['url'], 'direct': direct, 'debridonly': False})
                     
                 except:
-                    #traceback.print_exc()
                     pass           
-                    
+                   
             return sources
         except:
             return sources

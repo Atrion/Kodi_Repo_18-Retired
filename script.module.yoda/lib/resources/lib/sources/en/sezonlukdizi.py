@@ -27,8 +27,8 @@ class source:
     def __init__(self):
         self.priority = 1
         self.language = ['en']
-        self.domains = ['sezonlukdizi.net', 'sezonlukdizi.com']
-        self.base_link = 'http://sezonlukdizi.net'
+        self.domains = ['sezonlukdizi.org/']
+        self.base_link = 'https://sezonlukdizi.org/'
         self.search_link = '/js/series1.js'
         self.video_link = '/ajax/dataEmbed.asp'
 

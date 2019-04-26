@@ -22,7 +22,7 @@ class source:
         self.priority = 0
         self.language = ['en']
         self.domains = ['pron.tv']
-        self.base_link = 'https://pron.tv'
+        self.base_link = 'http://pron.tv'
         self.search_link = '/api/search/%s/?apikey=%s&getmeta=0&query=%s&count=%d&from=%d'
         self.types = ['stream']
         self.streamLimit = control.setting('pron.limit')

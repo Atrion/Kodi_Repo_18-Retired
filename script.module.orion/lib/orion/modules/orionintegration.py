@@ -800,7 +800,7 @@ class OrionIntegration:
 	def _openScrapersIntegrate(self):
 		# settings.xml
 		data = self._comment(self._content('settings.xml'), OrionIntegration.LanguageXml, '\t')
-		if not OrionTools.fileInsert(self.pathSettings, '<\s*category\s+label\s*=\s*[\'"]Providers[\'"]\s*>', data):
+		if not OrionTools.fileInsert(self.pathSettings, '<\s*/\s*category\s*>', data):
 			return self._integrateFailure('Open Scrapers settings integration failure', self.pathSettings)
 
 		# __init__.py

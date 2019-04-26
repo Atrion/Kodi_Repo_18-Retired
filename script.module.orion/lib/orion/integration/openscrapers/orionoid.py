@@ -10,19 +10,16 @@
 '''
 
 from orion import *
+from orion.modules.oriontools import *
 from orion.modules.orionnetworker import *
 import threading
 import urllib
 import urlparse
 import pkgutil
-import base64
-import json
-import time
 import sys
 import os
 import re
 import xbmc
-import xbmcvfs
 import xbmcaddon
 
 class source:
@@ -51,6 +48,9 @@ class source:
 	SettingAudioLanguages = 15
 	SettingPopularity = 16
 	SettingAge = 17
+
+	PremiumizeLinkCache = 'https://www.premiumize.me/api/torrent/checkhashes'
+	PremiumizeLinkDownload = 'https://www.premiumize.me/api/transfer/directdl'
 
 	def __init__(self):
 		self.addon = xbmcaddon.Addon('script.module.openscrapers')
@@ -96,17 +96,29 @@ class source:
 			if setting > 0: settings.append(setting)
 		return settings
 
+	def _premiumizeParameters(self, parameters = None):
+		from resolveurl.plugins.premiumize_me import PremiumizeMeResolver
+		if parameters: parameters = [urllib.urlencode(parameters, doseq = True)]
+		else: parameters = []
+		parameters.append(urllib.urlencode({'access_token' : PremiumizeMeResolver.get_setting('token')}, doseq = True))
+		return '&'.join(parameters)
+
+	def _premiumizeRequest(self, link, parameters = None):
+		networker = OrionNetworker(link = link, parameters = parameters, timeout = 60, agent = OrionNetworker.AgentOrion, debug = False, json = True)
+		return networker.request()
+
+	def _premiumizeCached(self, hashes):
+		return self._premiumizeRequest(link = source.PremiumizeLinkCache, parameters = self._premiumizeParameters({'hashes[]' : hashes}))
+
+	def _premiumizeLink(self, link):
+		return source.PremiumizeLinkDownload + '?' + self._premiumizeParameters({'src' : link})
+
 	def _cacheSave(self, data):
 		self.cacheData = data
-		file = xbmcvfs.File(self.cachePath, 'w')
-		file.write(json.dumps(data))
-		file.close()
+		OrionTools.fileWrite(self.cachePath, OrionTools.jsonTo(data))
 
 	def _cacheLoad(self):
-		if self.cacheData == None:
-			file = xbmcvfs.File(self.cachePath)
-			self.cacheData = json.loads(file.read())
-			file.close()
+		if self.cacheData == None: self.cacheData = OrionTools.jsonFrom(OrionTools.fileRead(self.cachePath))
 		return self.cacheData
 
 	def _cacheFind(self, url):
@@ -118,9 +130,6 @@ class source:
 
 	def _cached(self, sources):
 		try:
-			from resolveurl.plugins.premiumize_me import PremiumizeMeResolver
-			token = PremiumizeMeResolver.get_setting('token')
-			cached = PremiumizeMeResolver.get_setting('cached_only') == 'true'
 			hashes = []
 			for i in sources:
 				try:
@@ -129,7 +138,7 @@ class source:
 						if hash: hashes.append(hash)
 				except: pass
 			chunks = [hashes[i:i + source.CacheLimit] for i in xrange(0, len(hashes), source.CacheLimit)]
-			threads = [threading.Thread(target = self._cachedCheck, args = (token, i)) for i in chunks]
+			threads = [threading.Thread(target = self._cachedCheck, args = (i,)) for i in chunks]
 			self.cachedHashes = []
 			self.cachedLock = threading.Lock()
 			[i.start() for i in threads]
@@ -140,24 +149,14 @@ class source:
 				try:
 					if sources[i]['file']['hash'] in self.cachedHashes:
 						sources[i]['cached'] = True
+						sources[i]['stream']['link'] = self._premiumizeLink(link = sources[i]['stream']['link'])
 				except: pass
-			if cached:
-				result = []
-				for i in range(len(sources)):
-					try:
-						if not sources[i]['stream']['type'] == Orion.StreamTorrent or sources[i]['cached']:
-							result.append(sources[i])
-					except: pass
-				sources = result
 		except: self._error()
 		return sources
 
-	def _cachedCheck(self, token, hashes):
+	def _cachedCheck(self, hashes):
 		try:
-			parameters = urllib.urlencode({'access_token' : token}, doseq = True) + '&' + urllib.urlencode({'hashes[]' : hashes}, doseq = True)
-			networker = OrionNetworker(link = 'https://www.premiumize.me/api/torrent/checkhashes', parameters = parameters, timeout = 60, agent = OrionNetworker.AgentOrion, debug = False)
-			data = networker.request()
-			data = json.loads(data)['hashes']
+			data = self._premiumizeCached(hashes = hashes)['hashes']
 			self.cachedLock.acquire()
 			for key, value in data.iteritems():
 				if value['status'] == 'finished':
@@ -221,7 +220,7 @@ class source:
 		return None
 
 	def _days(self, data):
-		try: days = (time.time() - data['time']['updated']) / float(source.TimeDays)
+		try: days = (OrionTools.timestamp() - data['time']['updated']) / float(source.TimeDays)
 		except: days = 0
 		days = int(days)
 		return str(days) + ' Day' + ('' if days == 1 else 's')
@@ -263,16 +262,21 @@ class source:
 
 	def _debrid(self, data):
 		link = data['stream']['link']
-		for resolver in self.resolvers:
-			if resolver.valid_url(url = link, host = None):
-				return True
+		if data['stream']['type'] == Orion.StreamTorrent:
+			try: cached = data['cached']
+			except: cached = False
+			return not cached
+		else:
+			for resolver in self.resolvers:
+				if resolver.valid_url(url = link, host = None):
+					return True
 		return False
 
 	def sources(self, url, hostDict, hostprDict):
 		sources = []
 		try:
 			if url == None: raise Exception()
-			orion = Orion(base64.b64decode(base64.b64decode(base64.b64decode(self.key))).replace(' ', ''))
+			orion = Orion(OrionTools.base64From(OrionTools.base64From(OrionTools.base64From(self.key))).replace(' ', ''))
 			if not orion.userEnabled() or not orion.userValid(): raise Exception()
 			settings = self._settings()
 
@@ -402,4 +406,15 @@ class source:
 			provider = self._provider(item['provider'], True)
 			if provider: url = provider.resolve(url)
 		except: self._error()
+		try:
+			if item['source'] == 'cached':
+				files = self._premiumizeRequest(link = url)['content']
+				size = 0
+				link = None
+				for file in files:
+					if file['size'] > size:
+						size = file['size']
+						link = file['link']
+				url = link
+		except: pass
 		return url

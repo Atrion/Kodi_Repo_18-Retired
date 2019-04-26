@@ -11,9 +11,9 @@
 		<setting id="internal.api.orion" type="text" default="PUFGVkNaa1ZycDFiWFprVVdaMWFXeEdWc3AwVlZwV1U0SmxWYWRVWUdoV1ZXWmxXR3BWVjFNbFZzbEVNTlZsVlhKVmJvbGxWR1oxVlNkbFZQVkZiYU5sVEVaa1JXdG1XdmRsUlNabFZzWlZV" visible="false" />
 		<setting id="internal.api.access" type="text" default="" visible="false" />
 		<setting id="internal.api.user" type="text" default="" visible="false" />
-		<setting id="internal.api.user" type="text" default="" visible="false" />
 		<setting id="internal.api.apps" type="text" default="" visible="false" />
 		<setting id="internal.api.notification" type="text" default="" visible="false" />
+		<setting id="internal.api.subscription" type="text" default="" visible="false" />
 
 		<setting type="lsep" label="[UPPERCASE][B]$ADDON[script.module.orion 32065][/B][/UPPERCASE]" />
 		<setting type="sep" />

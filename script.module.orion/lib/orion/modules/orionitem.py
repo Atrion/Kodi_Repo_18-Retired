@@ -169,7 +169,8 @@ class OrionItem:
 							streams.append(new)
 					except:
 						# Sometimes access[id] can fail to lookup id if something unexpected happens during scraping and the items was not added to the settings.
-						OrionTools.error()
+						# OrionTools.error() # Do not print errors, since this can happen too often.
+						OrionTools.error(message = 'Failed to lookup previous stream access', exception = False)
 			self.mData['streams'] = streams
 			OrionSettings.set('internal.api.access', '')
 

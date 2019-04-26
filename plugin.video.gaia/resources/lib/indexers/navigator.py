@@ -196,7 +196,7 @@ class navigator:
 			if isinstance(item, list): item = item[0]
 			item['meta'] = metadata
 			items.append(item)
-		core.Core(type = self.mType, kids = self.mKids).scrape(items = items)
+		core.Core(type = self.mType, kids = self.mKids).scrape(items = items, process = False)
 
 	def favourites(self):
 		self.addDirectoryItem(32001, self.parameterize('moviesFavourites', type = tools.Media.TypeMovie), 'moviesfavourites.png', 'DefaultFavourite.png')
@@ -820,6 +820,7 @@ class navigator:
 		self.endDirectory()
 
 	def servicesScraperNavigator(self):
+		self.addDirectoryItem(35548, 'opescrapersNavigator', 'opescrapers.png', 'DefaultAddonProgram.png')
 		self.addDirectoryItem(35431, 'lamscrapersNavigator', 'lamscrapers.png', 'DefaultAddonProgram.png')
 		self.addDirectoryItem(35504, 'civscrapersNavigator', 'civscrapers.png', 'DefaultAddonProgram.png')
 		self.addDirectoryItem(35460, 'gloscrapersNavigator', 'gloscrapers.png', 'DefaultAddonProgram.png')
@@ -975,6 +976,13 @@ class navigator:
 			self.addDirectoryItem(33011, 'urlresolverSettings', 'urlresolversettings.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
 		else:
 			self.addDirectoryItem(33474, 'urlresolverInstall', 'urlresolverinstall.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
+		self.endDirectory()
+
+	def opescrapersNavigator(self):
+		if tools.OpeScrapers.installed():
+			self.addDirectoryItem(33011, 'opescrapersSettings', 'opescraperssettings.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
+		else:
+			self.addDirectoryItem(33474, 'opescrapersInstall', 'opescrapersinstall.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
 		self.endDirectory()
 
 	def lamscrapersNavigator(self):

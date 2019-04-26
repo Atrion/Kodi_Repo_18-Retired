@@ -8,7 +8,7 @@
 		<include>JumpBarHorizontal</include>
 		<include>ViewSlideForJumpBar</include>		
 		<include>Animation.Common</include>		
-       <control type="group">
+        <control type="group">
 			<left>70</left>
 			
 			<visible>Control.IsVisible(501)</visible>
@@ -31,7 +31,6 @@
 			</control>
             <visible>Control.IsVisible(501)</visible>
             <control type="group">
-
 				<control type="wraplist" id="501">
 					<oninfo condition="ListItem.IsCollection">ActivateWindow(1132)</oninfo>
                     <top>217</top>
@@ -46,7 +45,7 @@
 					<movement>3</movement>
 					<pagecontrol>1602</pagecontrol>
 					<preloaditems>2</preloaditems>
-					
+					<visible>Container.Content(movies) | Container.Content(tvshows) | Container.Content(episodes) | Container.Content(seasons) | Container.Content(sets)</visible>
 					<scrolltime tween="quadratic">300</scrolltime>
 					<viewtype label="37518">wraplist</viewtype>
 						<!--<scrolltime tween="quadratic">400</scrolltime>-->
@@ -194,18 +193,29 @@
 				
 				
 				
-                <control type="textbox">
-				
+                <control type="textbox">			
                     <top>136</top>
-                    <bottom>17</bottom>
-                    
-                    <font>Small333</font>
+                    <bottom>17</bottom>  
+                    <font>TinyPlot</font>
+					<height>360</height>
+                    <textcolor>Dark1</textcolor>
+                    <selectedcolor>Dark2</selectedcolor>
+                    <label>$INFO[ListItem.Plot]</label>
+					<align>left</align>
+					<autoscroll>false</autoscroll>
+					<visible>Skin.HasSetting(PlotAlignLeft)</visible>
+                </control>
+				<control type="textbox">			
+                    <top>136</top>
+                    <bottom>17</bottom>  
+                    <font>TinyPlot</font>
 					<height>360</height>
                     <textcolor>Dark1</textcolor>
                     <selectedcolor>Dark2</selectedcolor>
                     <label>$INFO[ListItem.Plot]</label>
 					<align>justify</align>
 					<autoscroll>false</autoscroll>
+					<visible>!Skin.HasSetting(PlotAlignLeft)</visible>
                 </control>
 				
 				<control type="label">
@@ -215,7 +225,7 @@
 					<textcolor>Dark1</textcolor>
 					<label>$INFO[ListItem.RatingAndVotes]</label>
 					<selectedcolor>Dark1</selectedcolor>
-					<visible>!Skin.HasSetting(furniture.numericrating)</visible>
+					<visible>!Skin.HasSetting(furniture.numericrating) + !Skin.HasSetting(hidevotesfanart)</visible>
                 </control>
 				<control type="label">
 					<posy>575</posy>
@@ -224,7 +234,7 @@
 					<textcolor>Dark1</textcolor>
 					<label>$INFO[ListItem.Votes,, Stimmen]</label>
 					<selectedcolor>Dark1</selectedcolor>
-					<visible>Skin.HasSetting(furniture.numericrating)</visible>
+					<visible>Skin.HasSetting(furniture.numericrating) + !Skin.HasSetting(hidevotesfanart)</visible>
                 </control>
 				
 				<control type="group">

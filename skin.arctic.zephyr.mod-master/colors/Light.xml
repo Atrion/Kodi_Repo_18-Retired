@@ -4,6 +4,7 @@
     <color name="Highlight2">FFff4081</color>
     <color name="Selected">FFededed</color>
 	<color name="ColoredStars">FFD402AA</color>
+	<color name="ColoredIcons">FFD402AA</color>
     <color name="Dark1">ff141414</color>
     <color name="Dark2">b3141414</color>
     <color name="Dark3">4d141414</color>
@@ -13,11 +14,15 @@
     <color name="Light3">4ddddddd</color>
     <color name="Light4">1fdddddd</color>
     
-    <color name="Background">ffdddddd</color>
+    <color name="Background">ffE6E6E6</color>
+	<color name="BackgroundNew">DEE6E6E6</color>
+	<color name="BackgroundNewBlur">55E6E6E6</color>
     <color name="FanartFade">1fffffff</color>
+	<color name="FanartFadeBlur">A6ffffff</color>
     <color name="FloorFade">BBdddddd</color>
 	<color name="FloorFade2">BBdddddd</color>
-    
+    <color name="FloorFadeBlur">BBdddddd</color>
+	
     <color name="OSDBack">df000000</color>
     <color name="Panel">FF333333</color>
     
@@ -43,5 +48,8 @@
 	<color name="BoxNotification">CC202020</color>
 	<color name="BoxWidget">E6202020</color>
 	<color name="BoxHomerow">80202020</color>
-    
+	
+	<color name="WatchedIcons">FFDBDBDB</color>  
+	<color name="WatchedIconsList">FF808080</color> 
+	<color name="WatchedIconsListFocus">FFDBDBDB</color>  
 </colors>

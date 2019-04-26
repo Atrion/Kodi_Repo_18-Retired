@@ -44,6 +44,9 @@ class Selection(object):
 
 class Adaption(object):
 
+	TypeBasic = 'basic'
+	TypeFull = 'full'
+
 	##############################################################################
 	# SHOW
 	##############################################################################
@@ -55,11 +58,23 @@ class Adaption(object):
 			interface.Dialog.confirm(title = title, message = 'Kodi 18 has numerous bugs in the new settings dialog. You won\'t be able to scroll through all settings without a mouse. You can use an adapted settings structure that can be used under Kodi 18 without a mouse.')
 			choice = interface.Dialog.options(title = title, items = [interface.Format.fontBold('Full Settings With Help Labels: ') + 'Use Kodi with a mouse', interface.Format.fontBold('Basic Settings Without Help Labels: ') + 'Use Kodi without a mouse'])
 			if choice >= 0:
-				path = tools.Settings.pathAddon()
-				if choice == 0: result = tools.File.copy(pathFrom = path + '.full', pathTo = path, overwrite = True)
-				elif choice == 1: result = tools.File.copy(pathFrom = path + '.basic', pathTo = path, overwrite = True)
-				if result: interface.Dialog.notification(title = title, message = 'Settings Successfully Adapted', icon = interface.Dialog.IconSuccess)
-				else: interface.Dialog.notification(title = title, message = 'Settings Adaptation Failure', icon = interface.Dialog.IconError)
+				if self.adapt(type = Adaption.TypeFull if choice == 0 else Adaption.TypeBasic, force = True):
+					interface.Dialog.notification(title = title, message = 'Settings Successfully Adapted', icon = interface.Dialog.IconSuccess)
+				else:
+					interface.Dialog.notification(title = title, message = 'Settings Adaptation Failure', icon = interface.Dialog.IconError)
+
+	@classmethod
+	def adapt(self, type = None, force = False):
+		if tools.System.versionKodiNew():
+			result = False
+			if type == None: type = tools.Settings.getString('internal.settings')
+			if type == '': return result
+			path = tools.Settings.pathAddon()
+			pathOriginal = path + '.' + type
+			if force or not tools.Hash.file(path) == tools.Hash.file(pathOriginal): result = tools.File.copy(pathFrom = pathOriginal, pathTo = path, overwrite = True)
+			if result: tools.Settings.set('internal.settings', type)
+			return result
+		return False
 
 class Advanced(object):
 
@@ -614,6 +629,8 @@ class Wizard(object):
 			choices.append('hosteruniversal')
 			items.append(interface.Format.fontBold(hoster + interface.Translation.string(35355) + ': ' + (enabled if tools.Settings.getBoolean('providers.hoster.universal.open.enabled') or tools.Settings.getBoolean('providers.hoster.universal.member.enabled') else disabled)))
 
+		choices.append('externalopescrapers')
+		items.append(interface.Format.fontBold(external + interface.Translation.string(35550) + ': ' + (enabled if tools.Settings.getBoolean('providers.external.universal.open.opescrapersx') else disabled)))
 		choices.append('externallamscrapers')
 		items.append(interface.Format.fontBold(external + interface.Translation.string(35530) + ': ' + (enabled if tools.Settings.getBoolean('providers.external.universal.open.lamscrapersx') else disabled)))
 		choices.append('externalcivscrapers')
@@ -711,6 +728,9 @@ class Wizard(object):
 			active = self._option(interface.Translation.string(33905) % interface.Translation.string(35358), 33737, 33192) == Wizard.ChoiceRight
 			tools.Settings.set('providers.hoster.universal.open.enabled', active)
 			tools.Settings.set('providers.hoster.universal.member.enabled', active)
+		elif choice == 'externalopescrapers':
+			active = self._option(interface.Translation.string(33907) % interface.Translation.string(35548), 33737, 33192) == Wizard.ChoiceRight
+			tools.Settings.set('providers.external.universal.open.opescrapersx', active)
 		elif choice == 'externallamscrapers':
 			active = self._option(interface.Translation.string(33907) % interface.Translation.string(35431), 33737, 33192) == Wizard.ChoiceRight
 			tools.Settings.set('providers.external.universal.open.lamscrapersx', active)

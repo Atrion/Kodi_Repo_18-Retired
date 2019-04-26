@@ -240,7 +240,7 @@ class episodes:
 				self.blist = cache.get(self.trakt_progress_list, 720, url, self.trakt_user, self.lang)
 				self.list = []
 				self.list = cache.get(self.trakt_progress_list, 0.2, url, self.trakt_user, self.lang)
-				self.sort(dateSort = True)
+				self.sort()
 
 			elif self.trakt_link in url and url == self.mycalendar_link:
 				self.blist = cache.get(self.trakt_episodes_list, 720, url, self.trakt_user, self.lang)
@@ -570,7 +570,15 @@ class episodes:
 				tvdb = re.sub('[^0-9]', '', str(tvdb))
 				tvdb = tvdb.encode('utf-8')
 
-				values = {'imdb': imdb, 'tvdb': tvdb, 'tvshowtitle': tvshowtitle, 'year': year, 'snum': season, 'enum': episode}
+				try: added = item['show']['updated_at']
+				except: added = None
+
+				try: watched = item['show']['last_watched_at']
+				except:
+					try: watched = item['last_watched_at']
+					except: watched = None
+
+				values = {'imdb': imdb, 'tvdb': tvdb, 'tvshowtitle': tvshowtitle, 'year': year, 'snum': season, 'enum': episode, 'added' : added, 'watched' : watched}
 
 				# Gaia
 				try:
@@ -625,6 +633,12 @@ class episodes:
 				if premiered == '' or '-00' in premiered: premiered = '0'
 				premiered = client.replaceHTMLCodes(premiered)
 				premiered = premiered.encode('utf-8')
+
+				try: added = i['added']
+				except: added = None
+
+				try: watched = i['watched']
+				except: watched = None
 
 				try: status = client.parseDOM(item2, 'Status')[0]
 				except: status = ''
@@ -783,7 +797,7 @@ class episodes:
 				plot = client.replaceHTMLCodes(plot)
 				plot = plot.encode('utf-8')
 
-				values = {'title': title, 'seasoncount' : seasoncount, 'season': season, 'episode': episode, 'year': year, 'tvshowtitle': tvshowtitle, 'tvshowyear': tvshowyear, 'premiered': premiered, 'status': status, 'studio': studio, 'genre': genre, 'duration': duration, 'rating': rating, 'votes': votes, 'mpaa': mpaa, 'director': director, 'writer': writer, 'cast': cast, 'plot': plot, 'imdb': imdb, 'tvdb': tvdb, 'poster': poster, 'banner': banner, 'fanart': fanart, 'thumb': thumb, 'snum': i['snum'], 'enum': i['enum']}
+				values = {'title': title, 'seasoncount' : seasoncount, 'season': season, 'episode': episode, 'year': year, 'tvshowtitle': tvshowtitle, 'tvshowyear': tvshowyear, 'premiered': premiered, 'added' : added, 'watched' : watched, 'status': status, 'studio': studio, 'genre': genre, 'duration': duration, 'rating': rating, 'votes': votes, 'mpaa': mpaa, 'director': director, 'writer': writer, 'cast': cast, 'plot': plot, 'imdb': imdb, 'tvdb': tvdb, 'poster': poster, 'banner': banner, 'fanart': fanart, 'thumb': thumb, 'snum': i['snum'], 'enum': i['enum']}
 				if not direct: values['action'] = 'episodes'
 				if 'airday' in i and not i['airday'] == None and not i['airday'] == '':
 					values['airday'] = i['airday']

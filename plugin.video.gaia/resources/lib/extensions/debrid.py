@@ -253,7 +253,7 @@ class Premiumize(Debrid):
 	ParameterType = 'type'
 	ParameterHash = 'hash'
 	ParameterHashes = 'hashes[]'
-	ParameterCashes = 'items[]'
+	ParameterCaches = 'items[]'
 	ParameterSource = 'src'
 	ParameterItemId = 'items[0][id]'
 	ParameterItemType = 'items[0][type]'
@@ -368,12 +368,12 @@ class Premiumize(Debrid):
 					hashes[Premiumize.ParameterHashes] = parameters[Premiumize.ParameterHashes]
 					del parameters[Premiumize.ParameterHashes]
 					httpData = urllib.urlencode(parameters, doseq = True) + '&' + urllib.urlencode(hashes, doseq = True)
-				elif Premiumize.ParameterCashes in parameters:
+				elif Premiumize.ParameterCaches in parameters:
 					# If hashes are very long and if the customer ID and pin is appended to the end of the parameter string, Premiumize will ignore them and say there is no ID/pin.
 					# Manually move the hashes to the back.
 					links = {}
-					links[Premiumize.ParameterCashes] = parameters[Premiumize.ParameterCashes]
-					del parameters[Premiumize.ParameterCashes]
+					links[Premiumize.ParameterCaches] = parameters[Premiumize.ParameterCaches]
+					del parameters[Premiumize.ParameterCaches]
 					httpData = urllib.urlencode(parameters, doseq = True) + '&' + urllib.urlencode(links, doseq = True)
 				else:
 					httpData = urllib.urlencode(parameters, doseq = True)
@@ -479,7 +479,7 @@ class Premiumize(Debrid):
 		if not source == None: parameters[Premiumize.ParameterSource] = source
 		if not itemId == None: parameters[Premiumize.ParameterItemId] = itemId
 		if not itemType == None: parameters[Premiumize.ParameterItemType] = itemType
-		if not caches == None: parameters[Premiumize.ParameterCashes] = caches
+		if not caches == None: parameters[Premiumize.ParameterCaches] = caches
 		if not hash == None:
 			# NB: Always make the hashes lower case. Sometimes Premiumize cannot find the hash if it is upper case.
 			if isinstance(hash, basestring):

@@ -1,6 +1,3 @@
-# -*- coding: UTF-8 -*-
-#######################################################################
-
 # Addon Name: Yoda
 # Addon id: plugin.video.Yoda
 # Addon Provider: Supremacy

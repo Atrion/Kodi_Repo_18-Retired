@@ -37,4 +37,5 @@ if user.enabled() and user.valid():
 	OrionSettings.externalClean()
 	OrionIntegration.check()
 	user.update()
+	user.subscriptionCheck()
 	OrionNotification.dialogNew()

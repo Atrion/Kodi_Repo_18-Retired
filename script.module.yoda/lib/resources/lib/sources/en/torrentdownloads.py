@@ -1,6 +1,3 @@
-# -*- coding: UTF-8 -*-
-#######################################################################
-
 # Addon Name: Yoda
 # Addon id: plugin.video.Yoda
 # Addon Provider: Supremacy
@@ -14,14 +11,13 @@ from resources.lib.modules import workers
 from resources.lib.modules import source_utils
 
 
-
 class source:
     def __init__(self):
         self.priority = 1
         self.language = ['en']
-        self.domains = ['torrentdownloads.info']
-        self.base_link = 'https://torrentdownloads.info'
-        self.search = 'https://torrentdownloads.info/rss.xml?new=1&type=search&cid={0}&search={1}'
+        self.domains = ['torrentdownloads.me']
+        self.base_link = 'https://www.torrentdownloads.me'
+        self.search = 'https://www.torrentdownloads.me/rss.xml?new=1&type=search&cid={0}&search={1}'
 
     def movie(self, imdb, title, localtitle, aliases, year):
         try:
@@ -77,8 +73,6 @@ class source:
 
             self.hostDict = hostDict + hostprDict
             headers = {'User-Agent': client.agent()}
-            # scraper = dgscrape.create_scraper()
-            # _html = scraper.get(url).content
             _html = client.request(url, headers=headers)
             threads = []
             for i in re.findall(r'<item>(.+?)</item>', _html, re.DOTALL):

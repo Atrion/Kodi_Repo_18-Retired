@@ -21,6 +21,10 @@
 from resources.lib.extensions import tools
 from resources.lib.extensions import vpn
 from resources.lib.extensions import library
+from resources.lib.extensions import settings
+
+# Adapt Settings
+settings.Adaption.adapt()
 
 # Launch Gaia
 tools.System.launchAutomatic()

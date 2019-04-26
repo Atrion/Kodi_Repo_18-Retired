@@ -31,8 +31,8 @@ class source:
 		self.pack = True # Checked by provider.py
 		self.priority = 0
 		self.language = ['un']
-		self.domains = ['eztv.ag', 'eztv.unblocked.world', 'eztv.unblocked.today', 'eztv.immunicity.works', 'eztv.immunicity.today']
-		self.base_link = 'https://eztv.ag'
+		self.domains = ['eztv.io', 'eztv.ag', 'eztv.unblocked.world', 'eztv.unblocked.today', 'eztv.immunicity.works', 'eztv.immunicity.today']
+		self.base_link = 'https://eztv.io'
 		self.search_link = '/search/%s'
 
 	def tvshow(self, imdb, tvdb, tvshowtitle, localtitle, year):

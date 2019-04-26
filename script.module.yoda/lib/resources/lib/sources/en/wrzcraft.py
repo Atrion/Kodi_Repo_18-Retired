@@ -17,6 +17,7 @@ import re,urllib,urlparse
 from resources.lib.modules import cleantitle
 from resources.lib.modules import client
 from resources.lib.modules import debrid
+from resources.lib.modules import source_utils
 from resources.lib.modules import cfscrape
 
 class source:
@@ -24,45 +25,47 @@ class source:
         self.priority = 1
         self.language = ['en']
         self.domains = ['wrzcraft.net']
-        self.base_link = 'http://wrzcraft.life'
+        self.base_link = 'http://wrzcraft.life/'
         self.search_link = '/search/%s/feed/rss2/'
-        self.scraper = cfscrape.create_scraper()
+
 
     def movie(self, imdb, title, localtitle, aliases, year):
         try:
             url = {'imdb': imdb, 'title': title, 'year': year}
             url = urllib.urlencode(url)
             return url
-        except:
+        except Exception:
             return
+
 
     def tvshow(self, imdb, tvdb, tvshowtitle, localtvshowtitle, aliases, year):
         try:
             url = {'imdb': imdb, 'tvdb': tvdb, 'tvshowtitle': tvshowtitle, 'year': year}
             url = urllib.urlencode(url)
             return url
-        except:
+        except Exception:
             return
+
 
     def episode(self, url, imdb, tvdb, title, premiered, season, episode):
         try:
-            if url == None: return
+            if url is None: return
 
             url = urlparse.parse_qs(url)
             url = dict([(i, url[i][0]) if url[i] else (i, '') for i in url])
             url['title'], url['premiered'], url['season'], url['episode'] = title, premiered, season, episode
             url = urllib.urlencode(url)
             return url
-        except:
+        except Exception:
             return
 
+
     def sources(self, url, hostDict, hostprDict):
+        sources = []
         try:
-            sources = []
+            if url is None: return sources
 
-            if url == None: return sources
-
-            if debrid.status() == False: raise Exception()
+            if debrid.status() is False: raise Exception()
 
             data = urlparse.parse_qs(url)
             data = dict([(i, data[i][0]) if data[i] else (i, '') for i in data])
@@ -71,13 +74,16 @@ class source:
 
             hdlr = 'S%02dE%02d' % (int(data['season']), int(data['episode'])) if 'tvshowtitle' in data else data['year']
 
-            query = '%s S%02dE%02d' % (data['tvshowtitle'], int(data['season']), int(data['episode'])) if 'tvshowtitle' in data else '%s %s' % (data['title'], data['year'])
+            query = '%s S%02dE%02d' % (data['tvshowtitle'], int(data['season']), int(data['episode'])) if 'tvshowtitle' in data else '%s' % data['imdb']
             query = re.sub('(\\\|/| -|:|;|\*|\?|"|\'|<|>|\|)', ' ', query)
 
             url = self.search_link % urllib.quote_plus(query)
             url = urlparse.urljoin(self.base_link, url)
 
-            r = self.scraper.get(url).content
+            headers = {'User-Agent': client.randomagent(),
+                       'Referer': self.base_link}
+            scraper = cfscrape.create_scraper()
+            r = scraper.get(url, headers=headers).content
 
             posts = client.parseDOM(r, 'item')
 
@@ -93,7 +99,7 @@ class source:
 
                     u = client.parseDOM(c, 'p')
                     u = [client.parseDOM(i, 'a', ret='href') for i in u]
-                    u = [i[0] for i in u if len(i) == 1]
+                    u = [i[0] for i in u if len(i) > 0]
                     if not u: raise Exception()
 
                     if 'tvshowtitle' in data:
@@ -102,73 +108,44 @@ class source:
                          u = [(t, i) for i in u]
 
                     items += u
-                except:
+                except Exception:
                     pass
-
             for item in items:
                 try:
                     name = item[0]
                     name = client.replaceHTMLCodes(name)
 
-                    t = re.sub('(\.|\(|\[|\s)(\d{4}|S\d*E\d*|S\d*|3D)(\.|\)|\]|\s|)(.+|)', '', name)
-                    if not cleantitle.get(t) == cleantitle.get(title): raise Exception()
-
-                    y = re.findall('[\.|\(|\[|\s](\d{4}|S\d*E\d*|S\d*)[\.|\)|\]|\s]', name)[-1].upper()
-
-                    if not y == hdlr: raise Exception()
-
-                    fmt = re.sub('(.+)(\.|\(|\[|\s)(\d{4}|S\d*E\d*|S\d*)(\.|\)|\]|\s)', '', name.upper())
-                    fmt = re.split('\.|\(|\)|\[|\]|\s|\-', fmt)
-                    fmt = [i.lower() for i in fmt]
-
-                    if any(i.endswith(('subs', 'sub', 'dubbed', 'dub')) for i in fmt): raise Exception()
-                    if any(i in ['extras'] for i in fmt): raise Exception()
-
-                    if '1080p' in fmt: quality = '1080p'
-                    elif '720p' in fmt: quality = 'HD'
-                    else: quality = 'SD'
-                    if any(i in ['dvdscr', 'r5', 'r6'] for i in fmt): quality = 'SCR'
-                    elif any(i in ['camrip', 'tsrip', 'hdcam', 'hdts', 'dvdcam', 'dvdts', 'cam', 'telesync', 'ts'] for i in fmt): quality = 'CAM'
-
-                    info = []
-
-                    if '3d' in fmt: info.append('3D')
-
                     try:
-                        size = re.findall('((?:\d+\.\d+|\d+\,\d+|\d+) (?:GB|GiB|MB|MiB))', item[2])[-1]
-                        div = 1 if size.endswith(('GB', 'GiB')) else 1024
-                        size = float(re.sub('[^0-9|/.|/,]', '', size))/div
-                        size = '%.2f GB' % size
-                        info.append(size)
-                    except:
-                        pass
+                        y = re.findall('(?:\.|\(|\[|\s*|)(S\d+E\d+|S\d+)(?:\.|\)|\]|\s*|)', name, re.I)[-1].upper()
+                    except BaseException:
+                        y = re.findall('(?:\.|\(|\[|\s+)(\d{4})(?:\.|\)|\]|\s+)', name)[0].upper()
+                    if not y == hdlr:
+                        raise Exception()
 
-                    if any(i in ['hevc', 'h265', 'x265'] for i in fmt): info.append('HEVC')
+                    url = item[1]
+                    quality, info = source_utils.get_release_quality(url, url)
 
                     info = ' | '.join(info)
 
-                    url = item[1]
-                    if any(x in url for x in ['.rar', '.zip', '.iso']): raise Exception()
+                    if any(x in url for x in ['.rar', '.zip', '.iso']) or any(url.endswith(x) for x in ['.rar', '.zip', '.iso']): raise Exception()
                     url = client.replaceHTMLCodes(url)
                     url = url.encode('utf-8')
 
-                    host = re.findall('([\w]+[.][\w]+)$', urlparse.urlparse(url.strip().lower()).netloc)[0]
-                    if not host in hostDict: raise Exception()
-                    host = client.replaceHTMLCodes(host)
-                    host = host.encode('utf-8')
+                    valid, host = source_utils.is_host_valid(url, hostDict)
+                    if not valid:
+                        continue
 
                     sources.append({'source': host, 'quality': quality, 'language': 'en', 'url': url, 'info': info, 'direct': False, 'debridonly': True})
-                except:
+                except Exception:
                     pass
 
             check = [i for i in sources if not i['quality'] == 'CAM']
             if check: sources = check
 
             return sources
-        except:
+        except Exception:
             return sources
+
 
     def resolve(self, url):
         return url
-
-

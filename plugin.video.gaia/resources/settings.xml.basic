@@ -6,6 +6,7 @@
 
 		<setting type="bool" visible="false" /> <!-- Ensures that a separator is drawn at the top. Can be removed if other cross-group elements are added here. -->
 
+		<setting id="internal.settings" type="text" default="" visible="false" />
 		<setting id="internal.version" type="text" default="" visible="false" />
 		<setting id="internal.launch.initialized" type="bool" default="false" visible="false" />
 		<setting id="internal.wizard.initialized" type="bool" default="false" visible="false" />
@@ -394,6 +395,14 @@
 		<setting type="sep" />
 		<setting id="providers.external.universal.open.enabled" type="bool" label="" default="true" visible="false" /> <!-- must stay here for provider.py -->
 
+		<!-- EXTERNAL - OPESCRAPERS -->
+		<setting id="providers.external.universal.open.opescrapersx" type="bool" label="35549" default="true" />
+		<setting id="providers.external.universal.open.opescrapersx.installed" type="bool" default="false" visible="false" />
+		<setting id="providers.external.universal.open.opescrapersx.installation" type="action" label="33474" option="close" action="RunPlugin(plugin://plugin.video.gaia/?action=opescrapersInstall)" subsetting="true" visible="eq(-2,true) + eq(-1,false)" />
+		<setting id="providers.external.universal.open.opescrapersx.settings" type="action" label="33011" option="close" action="RunPlugin(plugin://plugin.video.gaia/?action=opescrapersSettings)" subsetting="true" visible="eq(-3,true) + eq(-2,true)" />
+		<setting id="providers.external.universal.open.opescrapersx.providers.label" type="action" label="32345" option="close" action="RunPlugin(plugin://plugin.video.gaia/?action=opescrapersProviders)" subsetting="true" visible="eq(-4,true) + eq(-3,true)" />
+			<setting id="providers.external.universal.open.opescrapersx.providers" type="text" visible="false" />
+
 		<!-- EXTERNAL - CIVSCRAPERS -->
 		<setting id="providers.external.universal.open.civscrapersx" type="bool" label="35505" default="true" />
 		<setting id="providers.external.universal.open.civscrapersx.installed" type="bool" default="false" visible="false" />
@@ -425,14 +434,6 @@
 		<setting id="providers.external.universal.open.uniscrapersx.settings" type="action" label="33011" option="close" action="RunPlugin(plugin://plugin.video.gaia/?action=uniscrapersSettings)" subsetting="true" visible="eq(-3,true) + eq(-2,true)" />
 		<setting id="providers.external.universal.open.uniscrapersx.providers.label" type="action" label="32345" option="close" action="RunPlugin(plugin://plugin.video.gaia/?action=uniscrapersProviders)" subsetting="true" visible="eq(-4,true) + eq(-3,true)" />
 			<setting id="providers.external.universal.open.uniscrapersx.providers" type="text" visible="false" />
-
-		<!-- EXTERNAL - NANSCRAPERS -->
-		<setting id="providers.external.universal.open.nanscrapersx" type="bool" label="35332" default="false" />
-		<setting id="providers.external.universal.open.nanscrapersx.installed" type="bool" default="false" visible="false" />
-		<setting id="providers.external.universal.open.nanscrapersx.installation" type="action" label="33474" option="close" action="RunPlugin(plugin://plugin.video.gaia/?action=nanscrapersInstall)" subsetting="true" visible="eq(-2,true) + eq(-1,false)" />
-		<setting id="providers.external.universal.open.nanscrapersx.settings" type="action" label="33011" option="close" action="RunPlugin(plugin://plugin.video.gaia/?action=nanscrapersSettings)" subsetting="true" visible="eq(-3,true) + eq(-2,true)" />
-		<setting id="providers.external.universal.open.nanscrapersx.providers.label" type="action" label="32345" option="close" action="RunPlugin(plugin://plugin.video.gaia/?action=nanscrapersProviders)" subsetting="true" visible="eq(-4,true) + eq(-3,true)" />
-			<setting id="providers.external.universal.open.nanscrapersx.providers" type="text" visible="false" />
 
 		<!-- EXTERNAL - INCSCRAPERS -->
 		<setting id="providers.external.universal.open.incscrapersx" type="bool" label="35334" default="false" />
@@ -492,25 +493,30 @@
 		<setting id="providers.torrent.universal.open.bitlord" type="bool" label="BitLord" subsetting="true" default="true" visible="eq(-11,true)" />
 		<setting id="providers.torrent.universal.open.torrentgalaxy" type="bool" label="TorrentGalaxy" subsetting="true" default="true" visible="eq(-12,true)" />
 		<setting id="providers.torrent.universal.open.torrentquest" type="bool" label="TorrentQuest" subsetting="true" default="true" visible="eq(-13,true)" />
-		<setting id="providers.torrent.universal.open.torrentz2" type="bool" label="Torrentz2" subsetting="true" default="false" visible="eq(-14,true)" />
-		<setting id="providers.torrent.universal.open.torrentproject" type="bool" label="TorrentProject" subsetting="true" default="false" visible="eq(-15,true)" />
-		<setting id="providers.torrent.universal.open.torrentdownload" type="bool" label="TorrentDownload" subsetting="true" default="false" visible="eq(-16,true)" />
-		<setting id="providers.torrent.universal.open.magnet4you" type="bool" label="Magnet4You" subsetting="true" default="false" visible="eq(-17,true)" />
-		<setting id="providers.torrent.universal.open.btdb" type="bool" label="BtDb" subsetting="true" default="false" visible="eq(-18,true)" />
-		<setting id="providers.torrent.universal.open.1337x" type="bool" label="$NUMBER[1337]X" subsetting="true" default="false" visible="eq(-19,true)" />
-		<setting id="providers.torrent.universal.open.demonoid" type="bool" label="Demonoid" subsetting="true" default="false" visible="eq(-20,true)" />
-		<setting id="providers.torrent.universal.open.btscene" type="bool" label="BtScene" subsetting="true" default="false" visible="eq(-21,true)" />
-		<setting id="providers.torrent.universal.open.extratorrent" type="bool" label="ExtraTorrent" subsetting="true" default="false" visible="eq(-22,true)" />
-		<setting id="providers.torrent.universal.open.torlock" type="bool" label="TorLock" subsetting="true" default="false" visible="eq(-23,true)" />
-		<setting id="providers.torrent.universal.open.yourbittorrent" type="bool" label="YourBitTorrent" subsetting="true" default="false" visible="eq(-24,true)" />
-		<setting id="providers.torrent.universal.open.torrentfunk" type="bool" label="TorrentFunk" subsetting="true" default="false" visible="eq(-25,true)" />
-		<setting id="providers.torrent.universal.open.torrenttm" type="bool" label="TorrentTm" subsetting="true" default="false" visible="eq(-26,true)" />
-		<setting id="providers.torrent.universal.open.prostylex" type="bool" label="Prostylex" subsetting="true" default="false" visible="eq(-27,true)" />
-		<setting id="providers.torrent.universal.open.movcr" type="bool" label="Movcr" subsetting="true" default="false" visible="eq(-28,true)" />
-		<setting id="providers.torrent.universal.open.am5k8" type="bool" label="Am5k8" subsetting="true" default="false" visible="eq(-29,true)" />
-		<setting id="providers.torrent.universal.open.seventorrents" type="bool" label="SevenTorrents" subsetting="true" default="false" visible="eq(-30,true)" />
-		<setting id="providers.torrent.universal.open.btbit" type="bool" label="BtBit" subsetting="true" default="false" visible="eq(-31,true)" />
-		<setting id="providers.torrent.universal.open.digbt" type="bool" label="DigBt" subsetting="true" default="false" visible="eq(-32,true)" />
+		<setting id="providers.torrent.universal.open.solidtorrents" type="bool" label="SolidTorrents" subsetting="true" default="true" visible="eq(-14,true)" />
+		<setting id="providers.torrent.universal.open.skytorrents" type="bool" label="SkyTorrents" subsetting="true" default="true" visible="eq(-15,true)" />
+		<setting id="providers.torrent.universal.open.glotorrents" type="bool" label="GloTorrents" subsetting="true" default="true" visible="eq(-16,true)" />
+		<setting id="providers.torrent.universal.open.worldwidetorrents" type="bool" label="WorldWideTorrents" subsetting="true" default="true" visible="eq(-17,true)" />
+		<setting id="providers.torrent.universal.open.pirateiro" type="bool" label="Pirateiro" subsetting="true" default="true" visible="eq(-18,true)" />
+		<setting id="providers.torrent.universal.open.torrentz2" type="bool" label="Torrentz2" subsetting="true" default="false" visible="eq(-19,true)" />
+		<setting id="providers.torrent.universal.open.torrentproject" type="bool" label="TorrentProject" subsetting="true" default="false" visible="eq(-20,true)" />
+		<setting id="providers.torrent.universal.open.torrentdownload" type="bool" label="TorrentDownload" subsetting="true" default="false" visible="eq(-21,true)" />
+		<setting id="providers.torrent.universal.open.magnet4you" type="bool" label="Magnet4You" subsetting="true" default="false" visible="eq(-22,true)" />
+		<setting id="providers.torrent.universal.open.btdb" type="bool" label="BtDb" subsetting="true" default="false" visible="eq(-23,true)" />
+		<setting id="providers.torrent.universal.open.1337x" type="bool" label="$NUMBER[1337]X" subsetting="true" default="false" visible="eq(-24,true)" />
+		<setting id="providers.torrent.universal.open.demonoid" type="bool" label="Demonoid" subsetting="true" default="false" visible="eq(-25,true)" />
+		<setting id="providers.torrent.universal.open.btscene" type="bool" label="BtScene" subsetting="true" default="false" visible="eq(-26,true)" />
+		<setting id="providers.torrent.universal.open.extratorrent" type="bool" label="ExtraTorrent" subsetting="true" default="false" visible="eq(-27,true)" />
+		<setting id="providers.torrent.universal.open.torlock" type="bool" label="TorLock" subsetting="true" default="false" visible="eq(-28,true)" />
+		<setting id="providers.torrent.universal.open.yourbittorrent" type="bool" label="YourBitTorrent" subsetting="true" default="false" visible="eq(-29,true)" />
+		<setting id="providers.torrent.universal.open.torrentfunk" type="bool" label="TorrentFunk" subsetting="true" default="false" visible="eq(-30,true)" />
+		<setting id="providers.torrent.universal.open.torrenttm" type="bool" label="TorrentTm" subsetting="true" default="false" visible="eq(-31,true)" />
+		<setting id="providers.torrent.universal.open.prostylex" type="bool" label="Prostylex" subsetting="true" default="false" visible="eq(-32,true)" />
+		<setting id="providers.torrent.universal.open.movcr" type="bool" label="Movcr" subsetting="true" default="false" visible="eq(-33,true)" />
+		<setting id="providers.torrent.universal.open.am5k8" type="bool" label="Am5k8" subsetting="true" default="false" visible="eq(-34,true)" />
+		<setting id="providers.torrent.universal.open.seventorrents" type="bool" label="SevenTorrents" subsetting="true" default="false" visible="eq(-35,true)" />
+		<setting id="providers.torrent.universal.open.btbit" type="bool" label="BtBit" subsetting="true" default="false" visible="eq(-36,true)" />
+		<setting id="providers.torrent.universal.open.digbt" type="bool" label="DigBt" subsetting="true" default="false" visible="eq(-37,true)" />
 
 		<!-- TORRENT - FRENCH MEMBER -->
 		<setting id="providers.torrent.french.member.enabled" type="bool" label="33264" default="false" />
@@ -789,6 +795,10 @@
 
 		<setting type="bool" visible="false" /> <!-- Ensures that a separator is drawn at the top. Can be removed if other cross-group elements are added here. -->
 
+		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 35539][/B][/UPPERCASE]" />
+		<setting type="sep" />
+		<setting id="manual.general.limit" type="number" label="33480" default="2000" range="0,10000" option="int" />
+
 		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 33678][/B][/UPPERCASE]" />
 		<setting type="sep" />
 		<setting id="manual.sort.priority.enabled" type="bool" label="33699" default="false" />
@@ -887,89 +897,93 @@
 		<setting id="automatic.enabled" type="bool" label="33192" default="false" />
 		<setting id="automatic.manual" type="bool" label="35541" default="true" visible="eq(-1,true)" />
 
-		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 33678][/B][/UPPERCASE]" visible="eq(-1,false) + eq(-2,true)" />
+		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 35539][/B][/UPPERCASE]" visible="eq(-1,false) + eq(-2,true)" />
 		<setting type="sep" visible="eq(-2,false) + eq(-3,true)" />
-		<setting id="automatic.sort.priority.enabled" type="bool" label="33699" default="false" visible="eq(-3,false) + eq(-4,true)" />
-		<setting id="automatic.sort.priority.local" type="enum" label="33693" lvalues="33112|33696|33697|33698|33770" default="1" subsetting="true" visible="eq(-1,true) + eq(-4,false) + eq(-5,true)" />
-		<setting id="automatic.sort.priority.premium" type="enum" label="33769" lvalues="33112|33696|33697|33698|33770" default="2" subsetting="true" visible="eq(-2,true) + eq(-5,false) + eq(-6,true)" />
-		<setting id="automatic.sort.priority.cached" type="enum" label="33694" lvalues="33112|33696|33697|33698|33770" default="3" subsetting="true" visible="eq(-3,true) + eq(-6,false) + eq(-7,true)" />
-		<setting id="automatic.sort.priority.direct" type="enum" label="33695" lvalues="33112|33696|33697|33698|33770" default="4" subsetting="true" visible="eq(-4,true) + eq(-7,false) + eq(-8,true)" />
-		<setting id="automatic.sort.quality" type="enum" label="33764" lvalues="33765|33766" default="0" visible="eq(-8,false) + eq(-9,true)" />
-		<setting id="automatic.sort.primary" type="enum" label="35402" lvalues="33680|33681" default="0" visible="eq(-9,false) + eq(-10,true)" />
-		<setting id="automatic.sort.provider1" type="action" label="$ADDON[plugin.video.gaia 33681] 1" subsetting="true" option="close" action="RunPlugin(plugin://plugin.video.gaia/?action=providersSort&mode=manual&slot=1)" visible="eq(-1,1) + eq(-10,false) + eq(-11,true)" />
-		<setting id="automatic.sort.provider2" type="action" label="$ADDON[plugin.video.gaia 33681] 2" subsetting="true" option="close" action="RunPlugin(plugin://plugin.video.gaia/?action=providersSort&mode=manual&slot=2)" visible="eq(-2,1) + eq(-11,false) + eq(-12,true)" />
-		<setting id="automatic.sort.provider3" type="action" label="$ADDON[plugin.video.gaia 33681] 3" subsetting="true" option="close" action="RunPlugin(plugin://plugin.video.gaia/?action=providersSort&mode=manual&slot=3)" visible="eq(-3,1) + eq(-12,false) + eq(-13,true)" />
-		<setting id="automatic.sort.provider4" type="action" label="$ADDON[plugin.video.gaia 33681] 4" subsetting="true" option="close" action="RunPlugin(plugin://plugin.video.gaia/?action=providersSort&mode=manual&slot=4)" visible="eq(-4,1) + eq(-13,false) + eq(-14,true)" />
-		<setting id="automatic.sort.provider5" type="action" label="$ADDON[plugin.video.gaia 33681] 5" subsetting="true" option="close" action="RunPlugin(plugin://plugin.video.gaia/?action=providersSort&mode=manual&slot=5)" visible="eq(-5,1) + eq(-14,false) + eq(-15,true)" />
-		<setting id="automatic.sort.provider6" type="action" label="$ADDON[plugin.video.gaia 33681] 6" subsetting="true" option="close" action="RunPlugin(plugin://plugin.video.gaia/?action=providersSort&mode=manual&slot=6)" visible="eq(-6,1) + eq(-15,false) + eq(-16,true)" />
-		<setting id="automatic.sort.provider7" type="action" label="$ADDON[plugin.video.gaia 33681] 7" subsetting="true" option="close" action="RunPlugin(plugin://plugin.video.gaia/?action=providersSort&mode=manual&slot=7)" visible="eq(-7,1) + eq(-16,false) + eq(-17,true)" />
-		<setting id="automatic.sort.provider8" type="action" label="$ADDON[plugin.video.gaia 33681] 8" subsetting="true" option="close" action="RunPlugin(plugin://plugin.video.gaia/?action=providersSort&mode=manual&slot=8)" visible="eq(-8,1) + eq(-17,false) + eq(-18,true)" />
-		<setting id="automatic.sort.provider9" type="action" label="$ADDON[plugin.video.gaia 33681] 9" subsetting="true" option="close" action="RunPlugin(plugin://plugin.video.gaia/?action=providersSort&mode=manual&slot=9)" visible="eq(-9,1) + eq(-18,false) + eq(-19,true)" />
-		<setting id="automatic.sort.provider10" type="action" label="$ADDON[plugin.video.gaia 33681] 10" subsetting="true" option="close" action="RunPlugin(plugin://plugin.video.gaia/?action=providersSort&mode=manual&slot=10)" visible="eq(-10,1) + eq(-19,false) + eq(-20,true)" />
-		<setting id="automatic.sort.secondary" type="bool" label="35403" default="false" visible="eq(-20,false) + eq(-21,true)" />
-		<setting id="automatic.sort.size" type="enum" label="35457" lvalues="32302|35226|35227|35228|35229|35230|35231" default="0" subsetting="true" visible="eq(-1,true) + eq(-21,false) + eq(-22,true)" />
-		<setting id="automatic.sort.age" type="enum" label="35225" lvalues="32302|35226|35227|35228|35229|35230|35231" default="0" subsetting="true" visible="eq(-2,true) + eq(-22,false) + eq(-23,true)" />
-		<setting id="automatic.sort.seeds" type="enum" label="35224" lvalues="32302|35226|35227|35228|35229|35230|35231" default="0" subsetting="true" visible="eq(-3,true) + eq(-23,false) + eq(-24,true)" />
-		<setting id="automatic.sort.popularity" type="enum" label="35404" lvalues="32302|35226|35227|35228|35229|35230|35231" default="0" subsetting="true" visible="eq(-4,true) + eq(-24,false) + eq(-25,true)" />
+		<setting id="automatic.general.limit" type="number" label="33480" default="2000" range="0,10000" option="int" visible="eq(-3,false) + eq(-4,true)" />
 
-		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 33194][/B][/UPPERCASE]" visible="eq(-25,false) + eq(-26,true)" />
-		<setting type="sep" visible="eq(-26,false) + eq(-27,true)" />
-		<setting id="automatic.provider.service" type="enum" label="33205" lvalues="33029|33206|33207|33208|33209|33210|33211" default="0" visible="eq(-27,false) + eq(-28,true)" />
-		<setting id="automatic.provider.service.cost" type="enum" label="33212" lvalues="33112|33213|33214|33215|33216|33217|33218|33219|33220|33221|33222" default="4" subsetting="true" visible="eq(-28,false) + eq(-29,true) + !eq(-1,3) + !eq(-1,5) + !eq(-1,6)" />
-		<setting id="automatic.provider.selection" type="enum" label="33197" lvalues="33029|33201|33202|33203|33198|33199|33200" default="0" visible="eq(-29,false) + eq(-30,true)" />
-		<setting id="automatic.provider.age" type="slider" label="33136" default="0" range="0,2000" option="int" subsetting="true" visible="eq(-30,false) + eq(-31,true)" />
-		<setting id="automatic.provider.seeds" type="slider" label="33135" default="0" range="0,2000" option="int" subsetting="true" visible="eq(-31,false) + eq(-32,true) + !eq(-2,2) + !eq(-2,4) + !eq(-2,6)" />
-		<setting id="automatic.provider.popularity" type="slider" label="35491" default="0" range="0,100" option="int" subsetting="true" visible="eq(-32,false) + eq(-33,true)" />
-		<setting id="automatic.provider.cache.torrent" type="enum" label="33464" lvalues="33114|33115|33116" default="0" subsetting="true" visible="eq(-33,false) + eq(-34,true) + !eq(-4,2) + !eq(-4,4) + !eq(-4,6)" />
-		<setting id="automatic.provider.cache.usenet" type="enum" label="33465" lvalues="33114|33115|33116" default="0" subsetting="true" visible="eq(-34,false) + eq(-35,true) + !eq(-5,1) + !eq(-5,4) + !eq(-5,5)" />
-		<setting id="automatic.provider.cache.hoster" type="enum" label="35054" lvalues="33114|33115|33116" default="0" subsetting="true" visible="eq(-35,false) + eq(-36,true) + !eq(-6,3) + !eq(-6,5) + !eq(-6,6)" />
-		<setting id="automatic.provider.captcha" type="bool" label="33195" default="false" visible="eq(-36,false) + eq(-37,true)" />
+		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 33678][/B][/UPPERCASE]" visible="eq(-4,false) + eq(-5,true)" />
+		<setting type="sep" visible="eq(-5,false) + eq(-6,true)" />
+		<setting id="automatic.sort.priority.enabled" type="bool" label="33699" default="false" visible="eq(-6,false) + eq(-7,true)" />
+		<setting id="automatic.sort.priority.local" type="enum" label="33693" lvalues="33112|33696|33697|33698|33770" default="1" subsetting="true" visible="eq(-1,true) + eq(-7,false) + eq(-8,true)" />
+		<setting id="automatic.sort.priority.premium" type="enum" label="33769" lvalues="33112|33696|33697|33698|33770" default="2" subsetting="true" visible="eq(-2,true) + eq(-8,false) + eq(-9,true)" />
+		<setting id="automatic.sort.priority.cached" type="enum" label="33694" lvalues="33112|33696|33697|33698|33770" default="3" subsetting="true" visible="eq(-3,true) + eq(-9,false) + eq(-10,true)" />
+		<setting id="automatic.sort.priority.direct" type="enum" label="33695" lvalues="33112|33696|33697|33698|33770" default="4" subsetting="true" visible="eq(-4,true) + eq(-10,false) + eq(-11,true)" />
+		<setting id="automatic.sort.quality" type="enum" label="33764" lvalues="33765|33766" default="0" visible="eq(-11,false) + eq(-12,true)" />
+		<setting id="automatic.sort.primary" type="enum" label="35402" lvalues="33680|33681" default="0" visible="eq(-12,false) + eq(-13,true)" />
+		<setting id="automatic.sort.provider1" type="action" label="$ADDON[plugin.video.gaia 33681] 1" subsetting="true" option="close" action="RunPlugin(plugin://plugin.video.gaia/?action=providersSort&mode=manual&slot=1)" visible="eq(-1,1) + eq(-13,false) + eq(-14,true)" />
+		<setting id="automatic.sort.provider2" type="action" label="$ADDON[plugin.video.gaia 33681] 2" subsetting="true" option="close" action="RunPlugin(plugin://plugin.video.gaia/?action=providersSort&mode=manual&slot=2)" visible="eq(-2,1) + eq(-14,false) + eq(-15,true)" />
+		<setting id="automatic.sort.provider3" type="action" label="$ADDON[plugin.video.gaia 33681] 3" subsetting="true" option="close" action="RunPlugin(plugin://plugin.video.gaia/?action=providersSort&mode=manual&slot=3)" visible="eq(-3,1) + eq(-15,false) + eq(-16,true)" />
+		<setting id="automatic.sort.provider4" type="action" label="$ADDON[plugin.video.gaia 33681] 4" subsetting="true" option="close" action="RunPlugin(plugin://plugin.video.gaia/?action=providersSort&mode=manual&slot=4)" visible="eq(-4,1) + eq(-16,false) + eq(-17,true)" />
+		<setting id="automatic.sort.provider5" type="action" label="$ADDON[plugin.video.gaia 33681] 5" subsetting="true" option="close" action="RunPlugin(plugin://plugin.video.gaia/?action=providersSort&mode=manual&slot=5)" visible="eq(-5,1) + eq(-17,false) + eq(-18,true)" />
+		<setting id="automatic.sort.provider6" type="action" label="$ADDON[plugin.video.gaia 33681] 6" subsetting="true" option="close" action="RunPlugin(plugin://plugin.video.gaia/?action=providersSort&mode=manual&slot=6)" visible="eq(-6,1) + eq(-18,false) + eq(-19,true)" />
+		<setting id="automatic.sort.provider7" type="action" label="$ADDON[plugin.video.gaia 33681] 7" subsetting="true" option="close" action="RunPlugin(plugin://plugin.video.gaia/?action=providersSort&mode=manual&slot=7)" visible="eq(-7,1) + eq(-19,false) + eq(-20,true)" />
+		<setting id="automatic.sort.provider8" type="action" label="$ADDON[plugin.video.gaia 33681] 8" subsetting="true" option="close" action="RunPlugin(plugin://plugin.video.gaia/?action=providersSort&mode=manual&slot=8)" visible="eq(-8,1) + eq(-20,false) + eq(-21,true)" />
+		<setting id="automatic.sort.provider9" type="action" label="$ADDON[plugin.video.gaia 33681] 9" subsetting="true" option="close" action="RunPlugin(plugin://plugin.video.gaia/?action=providersSort&mode=manual&slot=9)" visible="eq(-9,1) + eq(-21,false) + eq(-22,true)" />
+		<setting id="automatic.sort.provider10" type="action" label="$ADDON[plugin.video.gaia 33681] 10" subsetting="true" option="close" action="RunPlugin(plugin://plugin.video.gaia/?action=providersSort&mode=manual&slot=10)" visible="eq(-10,1) + eq(-22,false) + eq(-23,true)" />
+		<setting id="automatic.sort.secondary" type="bool" label="35403" default="false" visible="eq(-23,false) + eq(-24,true)" />
+		<setting id="automatic.sort.size" type="enum" label="35457" lvalues="32302|35226|35227|35228|35229|35230|35231" default="0" subsetting="true" visible="eq(-1,true) + eq(-24,false) + eq(-25,true)" />
+		<setting id="automatic.sort.age" type="enum" label="35225" lvalues="32302|35226|35227|35228|35229|35230|35231" default="0" subsetting="true" visible="eq(-2,true) + eq(-25,false) + eq(-26,true)" />
+		<setting id="automatic.sort.seeds" type="enum" label="35224" lvalues="32302|35226|35227|35228|35229|35230|35231" default="0" subsetting="true" visible="eq(-3,true) + eq(-26,false) + eq(-27,true)" />
+		<setting id="automatic.sort.popularity" type="enum" label="35404" lvalues="32302|35226|35227|35228|35229|35230|35231" default="0" subsetting="true" visible="eq(-4,true) + eq(-27,false) + eq(-28,true)" />
 
-		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 35481][/B][/UPPERCASE]" visible="eq(-37,false) + eq(-38,true)" />
-		<setting type="sep" visible="eq(-38,false) + eq(-39,true)" />
-		<setting id="automatic.file.name.include" type="text" label="35482" default="" visible="eq(-39,false) + eq(-40,true)" />
-		<setting id="automatic.file.name.exclude" type="text" label="35483" default="" visible="eq(-40,false) + eq(-41,true)" />
-		<setting id="automatic.file.name.unknown" type="enum" label="35484" lvalues="33114|33115" default="0" visible="eq(-41,false) + eq(-42,true)" />
-		<setting id="automatic.file.size.minimum" type="slider" label="35304" default="0" range="0,50,100000" option="int" visible="eq(-42,false) + eq(-43,true)" />
-		<setting id="automatic.file.size.maximum" type="slider" label="35305" default="0" range="0,50,100000" option="int" visible="eq(-43,false) + eq(-44,true)" />
-		<setting id="automatic.file.size.unknown" type="enum" label="35306" lvalues="33114|33115" default="0" visible="eq(-44,false) + eq(-45,true)" />
+		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 33194][/B][/UPPERCASE]" visible="eq(-28,false) + eq(-29,true)" />
+		<setting type="sep" visible="eq(-29,false) + eq(-30,true)" />
+		<setting id="automatic.provider.service" type="enum" label="33205" lvalues="33029|33206|33207|33208|33209|33210|33211" default="0" visible="eq(-30,false) + eq(-31,true)" />
+		<setting id="automatic.provider.service.cost" type="enum" label="33212" lvalues="33112|33213|33214|33215|33216|33217|33218|33219|33220|33221|33222" default="4" subsetting="true" visible="eq(-31,false) + eq(-32,true) + !eq(-1,3) + !eq(-1,5) + !eq(-1,6)" />
+		<setting id="automatic.provider.selection" type="enum" label="33197" lvalues="33029|33201|33202|33203|33198|33199|33200" default="0" visible="eq(-32,false) + eq(-33,true)" />
+		<setting id="automatic.provider.age" type="slider" label="33136" default="0" range="0,2000" option="int" subsetting="true" visible="eq(-33,false) + eq(-34,true)" />
+		<setting id="automatic.provider.seeds" type="slider" label="33135" default="0" range="0,2000" option="int" subsetting="true" visible="eq(-34,false) + eq(-35,true) + !eq(-2,2) + !eq(-2,4) + !eq(-2,6)" />
+		<setting id="automatic.provider.popularity" type="slider" label="35491" default="0" range="0,100" option="int" subsetting="true" visible="eq(-35,false) + eq(-36,true)" />
+		<setting id="automatic.provider.cache.torrent" type="enum" label="33464" lvalues="33114|33115|33116" default="0" subsetting="true" visible="eq(-36,false) + eq(-37,true) + !eq(-4,2) + !eq(-4,4) + !eq(-4,6)" />
+		<setting id="automatic.provider.cache.usenet" type="enum" label="33465" lvalues="33114|33115|33116" default="0" subsetting="true" visible="eq(-37,false) + eq(-38,true) + !eq(-5,1) + !eq(-5,4) + !eq(-5,5)" />
+		<setting id="automatic.provider.cache.hoster" type="enum" label="35054" lvalues="33114|33115|33116" default="0" subsetting="true" visible="eq(-38,false) + eq(-39,true) + !eq(-6,3) + !eq(-6,5) + !eq(-6,6)" />
+		<setting id="automatic.provider.captcha" type="bool" label="33195" default="false" visible="eq(-39,false) + eq(-40,true)" />
 
-		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 33123][/B][/UPPERCASE]" visible="eq(-45,false) + eq(-46,true)" />
-		<setting type="sep" visible="eq(-46,false) + eq(-47,true)" />
-		<setting id="automatic.bandwidth.optimization" type="action" label="33243" action="RunPlugin(plugin://plugin.video.gaia/?action=speedtest&update=automatic)" visible="eq(-47,false) + eq(-48,true)" />
-		<setting id="automatic.bandwidth.maximum" type="enum" label="33133" lvalues="33112|33177|33178|33179|33180|33181|33182|33183|33184|33185|33186|33187|33188|33189|33190|33191|33510|33511|33512|33513|33514|33515|33516|33517|33518|33519|33520|33521|33522|33523|33524|33525|33526|33527|33528|33529|33530|33531|33532|33533|33534|33535|33536|33537|33538|33539|33540|33541|33542|33543|33544|33545|33546|33547|33548|33549|33550|33551|33552|33553|33554|33555|33556|33557|33558|33559|33560" default="0" visible="eq(-48,false) + eq(-49,true)" />
-		<setting id="automatic.bandwidth.unknown" type="enum" label="33134" lvalues="33114|33115" default="0" subsetting="true" visible="!eq(-1,0) + eq(-49,false) + eq(-50,true)" />
+		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 35481][/B][/UPPERCASE]" visible="eq(-40,false) + eq(-41,true)" />
+		<setting type="sep" visible="eq(-41,false) + eq(-42,true)" />
+		<setting id="automatic.file.name.include" type="text" label="35482" default="" visible="eq(-42,false) + eq(-43,true)" />
+		<setting id="automatic.file.name.exclude" type="text" label="35483" default="" visible="eq(-43,false) + eq(-44,true)" />
+		<setting id="automatic.file.name.unknown" type="enum" label="35484" lvalues="33114|33115" default="0" visible="eq(-44,false) + eq(-45,true)" />
+		<setting id="automatic.file.size.minimum" type="slider" label="35304" default="0" range="0,50,100000" option="int" visible="eq(-45,false) + eq(-46,true)" />
+		<setting id="automatic.file.size.maximum" type="slider" label="35305" default="0" range="0,50,100000" option="int" visible="eq(-46,false) + eq(-47,true)" />
+		<setting id="automatic.file.size.unknown" type="enum" label="35306" lvalues="33114|33115" default="0" visible="eq(-47,false) + eq(-48,true)" />
 
-		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 33119][/B][/UPPERCASE]" visible="eq(-50,false) + eq(-51,true)" />
-		<setting type="sep" visible="eq(-51,false) + eq(-52,true)" />
-		<setting id="automatic.additional.editions" type="enum" label="33124" lvalues="33114|33115|33116" default="0" visible="eq(-52,false) + eq(-53,true)" />
-		<setting id="automatic.additional.releases" type="action" label="35162" default="$ADDON[plugin.video.gaia 33029]" option="close" action="RunPlugin(plugin://plugin.video.gaia/?action=settingsCustomReleases&type=automatic)" visible="eq(-53,false) + eq(-54,true)" />
+		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 33123][/B][/UPPERCASE]" visible="eq(-48,false) + eq(-49,true)" />
+		<setting type="sep" visible="eq(-49,false) + eq(-50,true)" />
+		<setting id="automatic.bandwidth.optimization" type="action" label="33243" action="RunPlugin(plugin://plugin.video.gaia/?action=speedtest&update=automatic)" visible="eq(-50,false) + eq(-51,true)" />
+		<setting id="automatic.bandwidth.maximum" type="enum" label="33133" lvalues="33112|33177|33178|33179|33180|33181|33182|33183|33184|33185|33186|33187|33188|33189|33190|33191|33510|33511|33512|33513|33514|33515|33516|33517|33518|33519|33520|33521|33522|33523|33524|33525|33526|33527|33528|33529|33530|33531|33532|33533|33534|33535|33536|33537|33538|33539|33540|33541|33542|33543|33544|33545|33546|33547|33548|33549|33550|33551|33552|33553|33554|33555|33556|33557|33558|33559|33560" default="0" visible="eq(-51,false) + eq(-52,true)" />
+		<setting id="automatic.bandwidth.unknown" type="enum" label="33134" lvalues="33114|33115" default="0" subsetting="true" visible="!eq(-1,0) + eq(-52,false) + eq(-53,true)" />
+
+		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 33119][/B][/UPPERCASE]" visible="eq(-53,false) + eq(-54,true)" />
+		<setting type="sep" visible="eq(-54,false) + eq(-55,true)" />
+		<setting id="automatic.additional.editions" type="enum" label="33124" lvalues="33114|33115|33116" default="0" visible="eq(-55,false) + eq(-56,true)" />
+		<setting id="automatic.additional.releases" type="action" label="35162" default="$ADDON[plugin.video.gaia 33029]" option="close" action="RunPlugin(plugin://plugin.video.gaia/?action=settingsCustomReleases&type=automatic)" visible="eq(-56,false) + eq(-57,true)" />
 			<setting id="automatic.additional.releases.items" type="text" default="" label="" visible="false" />
-		<setting id="automatic.additional.uploaders" type="action" label="35163" default="$ADDON[plugin.video.gaia 33029]" option="close" action="RunPlugin(plugin://plugin.video.gaia/?action=settingsCustomUploaders&type=automatic)" visible="eq(-55,false) + eq(-56,true)" />
+		<setting id="automatic.additional.uploaders" type="action" label="35163" default="$ADDON[plugin.video.gaia 33029]" option="close" action="RunPlugin(plugin://plugin.video.gaia/?action=settingsCustomUploaders&type=automatic)" visible="eq(-58,false) + eq(-59,true)" />
 			<setting id="automatic.additional.uploaders.items" type="text" default="" label="" visible="false" />
 
-		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 33120][/B][/UPPERCASE]" visible="eq(-57,false) + eq(-58,true)" />
-		<setting type="sep" visible="eq(-58,false) + eq(-59,true)" />
-		<setting id="automatic.video.quality.minimum" type="enum" label="33125" lvalues="33112|33763|33762|33761|33760|33759|33758|33137|33138|33139|33140|33141|33142|33143" default="7" visible="eq(-59,false) + eq(-60,true)" />
-		<setting id="automatic.video.quality.maximum" type="enum" label="33126" lvalues="33112|33763|33762|33761|33760|33759|33758|33137|33138|33139|33140|33141|33142|33143" default="9" visible="eq(-60,false) + eq(-61,true)" />
-		<setting id="automatic.video.codec" type="enum" label="33127" lvalues="33113|33146|33144|33145|35416|35417" default="0" visible="eq(-61,false) + eq(-62,true)" />
-		<setting id="automatic.video.3d" type="enum" label="33128" lvalues="33114|33115|33116" default="1" visible="eq(-62,false) + eq(-63,true)" />
+		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 33120][/B][/UPPERCASE]" visible="eq(-60,false) + eq(-61,true)" />
+		<setting type="sep" visible="eq(-61,false) + eq(-62,true)" />
+		<setting id="automatic.video.quality.minimum" type="enum" label="33125" lvalues="33112|33763|33762|33761|33760|33759|33758|33137|33138|33139|33140|33141|33142|33143" default="7" visible="eq(-62,false) + eq(-63,true)" />
+		<setting id="automatic.video.quality.maximum" type="enum" label="33126" lvalues="33112|33763|33762|33761|33760|33759|33758|33137|33138|33139|33140|33141|33142|33143" default="9" visible="eq(-63,false) + eq(-64,true)" />
+		<setting id="automatic.video.codec" type="enum" label="33127" lvalues="33113|33146|33144|33145|35416|35417" default="0" visible="eq(-64,false) + eq(-65,true)" />
+		<setting id="automatic.video.3d" type="enum" label="33128" lvalues="33114|33115|33116" default="1" visible="eq(-65,false) + eq(-66,true)" />
 
-		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 33121][/B][/UPPERCASE]" visible="eq(-63,false) + eq(-64,true)" />
-		<setting type="sep" visible="eq(-64,false) + eq(-65,true)" />
-		<setting id="automatic.audio.channels" type="enum" label="33129" lvalues="33113|33150|33149|33148|33147" default="0" visible="eq(-65,false) + eq(-66,true)" />
-		<setting id="automatic.audio.codec" type="enum" label="33130" lvalues="33113|33155|33154|33151|33152|33153|35418|35419|35420" default="0" visible="eq(-66,false) + eq(-67,true)" />
-		<setting id="automatic.audio.language" type="enum" label="35038" lvalues="33113|35039" default="0" visible="eq(-67,false) + eq(-68,true)" />
-		<setting id="automatic.audio.language.unknown" type="bool" label="35040" subsetting="true" default="true" visible="eq(-68,false) + eq(-69,true) + eq(-1,1)" />
-		<setting id="automatic.audio.language.primary" type="select" label="32356" subsetting="true" default="Automatic" values="None|Automatic|Abkhaz|Afar|Afrikaans|Akan|Albanian|Amharic|Arabic|Aragonese|Armenian|Assamese|Avaric|Avestan|Aymara|Azerbaijani|Bambara|Bashkir|Basque|Belarusian|Bengali|Bihari|Bislama|Bokmal|Bosnian|Breton|Bulgarian|Burmese|Catalan|Chamorro|Chechen|Chichewa|Chinese|Chuvash|Cornish|Corsican|Cree|Croatian|Czech|Danish|Divehi|Dutch|Dzongkha|English|Esperanto|Estonian|Ewe|Faroese|Fijian|Finnish|French|Fula|Gaelic|Galician|Ganda|Georgian|German|Greek|Guarani|Gujarati|Haitian|Hausa|Hebrew|Herero|Hindi|Hiri Motu|Hungarian|Icelandic|Ido|Igbo|Indonesian|Interlingua|Interlingue|Inuktitut|Inupiaq|Irish|Italian|Japanese|Javanese|Kalaallisut|Kannada|Kanuri|Kashmiri|Kazakh|Khmer|Kikuyu|Kinyarwanda|Kirundi|Komi|Kongo|Korean|Kurdish|Kwanyama|Kyrgyz|Lao|Latin|Latvian|Limburgish|Lingala|Lithuanian|Luba-Katanga|Luxembourgish|Macedonian|Malagasy|Malay|Malayalam|Maltese|Manx|Maori|Marathi|Marshallese|Mongolian|Nauruan|Navajo|Ndonga|Nepali|Northern Ndebele|Northern Sami|Norwegian|Nuosu|Nynorsk|Occitan|Ojibwe|Oriya|Oromo|Ossetian|Pali|Pashto|Pushto|Persian|Polish|Portuguese|Punjabi|Quechua|Romanian|Romansh|Russian|Samoan|Sango|Sanskrit|Sardinian|Serbian|Shona|Sindhi|Sinhalese|Slavonic|Slovak|Slovene|Somali|Southern Ndebele|Southern Sotho|Spanish|Sundanese|Swahili|Swati|Swedish|Tagalog|Tahitian|Tajik|Tamil|Tatar|Telugu|Thai|Tibetan|Tigrinya|Tonga|Tsonga|Tswana|Turkish|Turkmen|Twi|Ukrainian|Urdu|Uyghur|Uzbek|Venda|Vietnamese|Volapuk|Walloon|Welsh|Western Frisian|Wolof|Xhosa|Yiddish|Yoruba|Zhuang|Zulu" visible="eq(-69,false) + eq(-70,true) + eq(-2,1)" />
-		<setting id="automatic.audio.language.secondary" type="select" label="32357" subsetting="true" default="Automatic" values="None|Automatic|Abkhaz|Afar|Afrikaans|Akan|Albanian|Amharic|Arabic|Aragonese|Armenian|Assamese|Avaric|Avestan|Aymara|Azerbaijani|Bambara|Bashkir|Basque|Belarusian|Bengali|Bihari|Bislama|Bokmal|Bosnian|Breton|Bulgarian|Burmese|Catalan|Chamorro|Chechen|Chichewa|Chinese|Chuvash|Cornish|Corsican|Cree|Croatian|Czech|Danish|Divehi|Dutch|Dzongkha|English|Esperanto|Estonian|Ewe|Faroese|Fijian|Finnish|French|Fula|Gaelic|Galician|Ganda|Georgian|German|Greek|Guarani|Gujarati|Haitian|Hausa|Hebrew|Herero|Hindi|Hiri Motu|Hungarian|Icelandic|Ido|Igbo|Indonesian|Interlingua|Interlingue|Inuktitut|Inupiaq|Irish|Italian|Japanese|Javanese|Kalaallisut|Kannada|Kanuri|Kashmiri|Kazakh|Khmer|Kikuyu|Kinyarwanda|Kirundi|Komi|Kongo|Korean|Kurdish|Kwanyama|Kyrgyz|Lao|Latin|Latvian|Limburgish|Lingala|Lithuanian|Luba-Katanga|Luxembourgish|Macedonian|Malagasy|Malay|Malayalam|Maltese|Manx|Maori|Marathi|Marshallese|Mongolian|Nauruan|Navajo|Ndonga|Nepali|Northern Ndebele|Northern Sami|Norwegian|Nuosu|Nynorsk|Occitan|Ojibwe|Oriya|Oromo|Ossetian|Pali|Pashto|Pushto|Persian|Polish|Portuguese|Punjabi|Quechua|Romanian|Romansh|Russian|Samoan|Sango|Sanskrit|Sardinian|Serbian|Shona|Sindhi|Sinhalese|Slavonic|Slovak|Slovene|Somali|Southern Ndebele|Southern Sotho|Spanish|Sundanese|Swahili|Swati|Swedish|Tagalog|Tahitian|Tajik|Tamil|Tatar|Telugu|Thai|Tibetan|Tigrinya|Tonga|Tsonga|Tswana|Turkish|Turkmen|Twi|Ukrainian|Urdu|Uyghur|Uzbek|Venda|Vietnamese|Volapuk|Walloon|Welsh|Western Frisian|Wolof|Xhosa|Yiddish|Yoruba|Zhuang|Zulu" visible="eq(-70,false) + eq(-71,true) + eq(-3,1)" />
-		<setting id="automatic.audio.language.tertiary" type="select" label="35036" subsetting="true" default="Automatic" values="None|Automatic|Abkhaz|Afar|Afrikaans|Akan|Albanian|Amharic|Arabic|Aragonese|Armenian|Assamese|Avaric|Avestan|Aymara|Azerbaijani|Bambara|Bashkir|Basque|Belarusian|Bengali|Bihari|Bislama|Bokmal|Bosnian|Breton|Bulgarian|Burmese|Catalan|Chamorro|Chechen|Chichewa|Chinese|Chuvash|Cornish|Corsican|Cree|Croatian|Czech|Danish|Divehi|Dutch|Dzongkha|English|Esperanto|Estonian|Ewe|Faroese|Fijian|Finnish|French|Fula|Gaelic|Galician|Ganda|Georgian|German|Greek|Guarani|Gujarati|Haitian|Hausa|Hebrew|Herero|Hindi|Hiri Motu|Hungarian|Icelandic|Ido|Igbo|Indonesian|Interlingua|Interlingue|Inuktitut|Inupiaq|Irish|Italian|Japanese|Javanese|Kalaallisut|Kannada|Kanuri|Kashmiri|Kazakh|Khmer|Kikuyu|Kinyarwanda|Kirundi|Komi|Kongo|Korean|Kurdish|Kwanyama|Kyrgyz|Lao|Latin|Latvian|Limburgish|Lingala|Lithuanian|Luba-Katanga|Luxembourgish|Macedonian|Malagasy|Malay|Malayalam|Maltese|Manx|Maori|Marathi|Marshallese|Mongolian|Nauruan|Navajo|Ndonga|Nepali|Northern Ndebele|Northern Sami|Norwegian|Nuosu|Nynorsk|Occitan|Ojibwe|Oriya|Oromo|Ossetian|Pali|Pashto|Pushto|Persian|Polish|Portuguese|Punjabi|Quechua|Romanian|Romansh|Russian|Samoan|Sango|Sanskrit|Sardinian|Serbian|Shona|Sindhi|Sinhalese|Slavonic|Slovak|Slovene|Somali|Southern Ndebele|Southern Sotho|Spanish|Sundanese|Swahili|Swati|Swedish|Tagalog|Tahitian|Tajik|Tamil|Tatar|Telugu|Thai|Tibetan|Tigrinya|Tonga|Tsonga|Tswana|Turkish|Turkmen|Twi|Ukrainian|Urdu|Uyghur|Uzbek|Venda|Vietnamese|Volapuk|Walloon|Welsh|Western Frisian|Wolof|Xhosa|Yiddish|Yoruba|Zhuang|Zulu" visible="eq(-71,false) + eq(-72,true) + eq(-4,1)" />
-		<setting id="automatic.audio.dubbed" type="enum" label="35161" lvalues="33114|33115|33116" default="0" visible="eq(-72,false) + eq(-73,true)" />
+		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 33121][/B][/UPPERCASE]" visible="eq(-66,false) + eq(-67,true)" />
+		<setting type="sep" visible="eq(-67,false) + eq(-68,true)" />
+		<setting id="automatic.audio.channels" type="enum" label="33129" lvalues="33113|33150|33149|33148|33147" default="0" visible="eq(-68,false) + eq(-69,true)" />
+		<setting id="automatic.audio.codec" type="enum" label="33130" lvalues="33113|33155|33154|33151|33152|33153|35418|35419|35420" default="0" visible="eq(-69,false) + eq(-70,true)" />
+		<setting id="automatic.audio.language" type="enum" label="35038" lvalues="33113|35039" default="0" visible="eq(-70,false) + eq(-71,true)" />
+		<setting id="automatic.audio.language.unknown" type="bool" label="35040" subsetting="true" default="true" visible="eq(-71,false) + eq(-72,true) + eq(-1,1)" />
+		<setting id="automatic.audio.language.primary" type="select" label="32356" subsetting="true" default="Automatic" values="None|Automatic|Abkhaz|Afar|Afrikaans|Akan|Albanian|Amharic|Arabic|Aragonese|Armenian|Assamese|Avaric|Avestan|Aymara|Azerbaijani|Bambara|Bashkir|Basque|Belarusian|Bengali|Bihari|Bislama|Bokmal|Bosnian|Breton|Bulgarian|Burmese|Catalan|Chamorro|Chechen|Chichewa|Chinese|Chuvash|Cornish|Corsican|Cree|Croatian|Czech|Danish|Divehi|Dutch|Dzongkha|English|Esperanto|Estonian|Ewe|Faroese|Fijian|Finnish|French|Fula|Gaelic|Galician|Ganda|Georgian|German|Greek|Guarani|Gujarati|Haitian|Hausa|Hebrew|Herero|Hindi|Hiri Motu|Hungarian|Icelandic|Ido|Igbo|Indonesian|Interlingua|Interlingue|Inuktitut|Inupiaq|Irish|Italian|Japanese|Javanese|Kalaallisut|Kannada|Kanuri|Kashmiri|Kazakh|Khmer|Kikuyu|Kinyarwanda|Kirundi|Komi|Kongo|Korean|Kurdish|Kwanyama|Kyrgyz|Lao|Latin|Latvian|Limburgish|Lingala|Lithuanian|Luba-Katanga|Luxembourgish|Macedonian|Malagasy|Malay|Malayalam|Maltese|Manx|Maori|Marathi|Marshallese|Mongolian|Nauruan|Navajo|Ndonga|Nepali|Northern Ndebele|Northern Sami|Norwegian|Nuosu|Nynorsk|Occitan|Ojibwe|Oriya|Oromo|Ossetian|Pali|Pashto|Pushto|Persian|Polish|Portuguese|Punjabi|Quechua|Romanian|Romansh|Russian|Samoan|Sango|Sanskrit|Sardinian|Serbian|Shona|Sindhi|Sinhalese|Slavonic|Slovak|Slovene|Somali|Southern Ndebele|Southern Sotho|Spanish|Sundanese|Swahili|Swati|Swedish|Tagalog|Tahitian|Tajik|Tamil|Tatar|Telugu|Thai|Tibetan|Tigrinya|Tonga|Tsonga|Tswana|Turkish|Turkmen|Twi|Ukrainian|Urdu|Uyghur|Uzbek|Venda|Vietnamese|Volapuk|Walloon|Welsh|Western Frisian|Wolof|Xhosa|Yiddish|Yoruba|Zhuang|Zulu" visible="eq(-72,false) + eq(-73,true) + eq(-2,1)" />
+		<setting id="automatic.audio.language.secondary" type="select" label="32357" subsetting="true" default="Automatic" values="None|Automatic|Abkhaz|Afar|Afrikaans|Akan|Albanian|Amharic|Arabic|Aragonese|Armenian|Assamese|Avaric|Avestan|Aymara|Azerbaijani|Bambara|Bashkir|Basque|Belarusian|Bengali|Bihari|Bislama|Bokmal|Bosnian|Breton|Bulgarian|Burmese|Catalan|Chamorro|Chechen|Chichewa|Chinese|Chuvash|Cornish|Corsican|Cree|Croatian|Czech|Danish|Divehi|Dutch|Dzongkha|English|Esperanto|Estonian|Ewe|Faroese|Fijian|Finnish|French|Fula|Gaelic|Galician|Ganda|Georgian|German|Greek|Guarani|Gujarati|Haitian|Hausa|Hebrew|Herero|Hindi|Hiri Motu|Hungarian|Icelandic|Ido|Igbo|Indonesian|Interlingua|Interlingue|Inuktitut|Inupiaq|Irish|Italian|Japanese|Javanese|Kalaallisut|Kannada|Kanuri|Kashmiri|Kazakh|Khmer|Kikuyu|Kinyarwanda|Kirundi|Komi|Kongo|Korean|Kurdish|Kwanyama|Kyrgyz|Lao|Latin|Latvian|Limburgish|Lingala|Lithuanian|Luba-Katanga|Luxembourgish|Macedonian|Malagasy|Malay|Malayalam|Maltese|Manx|Maori|Marathi|Marshallese|Mongolian|Nauruan|Navajo|Ndonga|Nepali|Northern Ndebele|Northern Sami|Norwegian|Nuosu|Nynorsk|Occitan|Ojibwe|Oriya|Oromo|Ossetian|Pali|Pashto|Pushto|Persian|Polish|Portuguese|Punjabi|Quechua|Romanian|Romansh|Russian|Samoan|Sango|Sanskrit|Sardinian|Serbian|Shona|Sindhi|Sinhalese|Slavonic|Slovak|Slovene|Somali|Southern Ndebele|Southern Sotho|Spanish|Sundanese|Swahili|Swati|Swedish|Tagalog|Tahitian|Tajik|Tamil|Tatar|Telugu|Thai|Tibetan|Tigrinya|Tonga|Tsonga|Tswana|Turkish|Turkmen|Twi|Ukrainian|Urdu|Uyghur|Uzbek|Venda|Vietnamese|Volapuk|Walloon|Welsh|Western Frisian|Wolof|Xhosa|Yiddish|Yoruba|Zhuang|Zulu" visible="eq(-73,false) + eq(-74,true) + eq(-3,1)" />
+		<setting id="automatic.audio.language.tertiary" type="select" label="35036" subsetting="true" default="Automatic" values="None|Automatic|Abkhaz|Afar|Afrikaans|Akan|Albanian|Amharic|Arabic|Aragonese|Armenian|Assamese|Avaric|Avestan|Aymara|Azerbaijani|Bambara|Bashkir|Basque|Belarusian|Bengali|Bihari|Bislama|Bokmal|Bosnian|Breton|Bulgarian|Burmese|Catalan|Chamorro|Chechen|Chichewa|Chinese|Chuvash|Cornish|Corsican|Cree|Croatian|Czech|Danish|Divehi|Dutch|Dzongkha|English|Esperanto|Estonian|Ewe|Faroese|Fijian|Finnish|French|Fula|Gaelic|Galician|Ganda|Georgian|German|Greek|Guarani|Gujarati|Haitian|Hausa|Hebrew|Herero|Hindi|Hiri Motu|Hungarian|Icelandic|Ido|Igbo|Indonesian|Interlingua|Interlingue|Inuktitut|Inupiaq|Irish|Italian|Japanese|Javanese|Kalaallisut|Kannada|Kanuri|Kashmiri|Kazakh|Khmer|Kikuyu|Kinyarwanda|Kirundi|Komi|Kongo|Korean|Kurdish|Kwanyama|Kyrgyz|Lao|Latin|Latvian|Limburgish|Lingala|Lithuanian|Luba-Katanga|Luxembourgish|Macedonian|Malagasy|Malay|Malayalam|Maltese|Manx|Maori|Marathi|Marshallese|Mongolian|Nauruan|Navajo|Ndonga|Nepali|Northern Ndebele|Northern Sami|Norwegian|Nuosu|Nynorsk|Occitan|Ojibwe|Oriya|Oromo|Ossetian|Pali|Pashto|Pushto|Persian|Polish|Portuguese|Punjabi|Quechua|Romanian|Romansh|Russian|Samoan|Sango|Sanskrit|Sardinian|Serbian|Shona|Sindhi|Sinhalese|Slavonic|Slovak|Slovene|Somali|Southern Ndebele|Southern Sotho|Spanish|Sundanese|Swahili|Swati|Swedish|Tagalog|Tahitian|Tajik|Tamil|Tatar|Telugu|Thai|Tibetan|Tigrinya|Tonga|Tsonga|Tswana|Turkish|Turkmen|Twi|Ukrainian|Urdu|Uyghur|Uzbek|Venda|Vietnamese|Volapuk|Walloon|Welsh|Western Frisian|Wolof|Xhosa|Yiddish|Yoruba|Zhuang|Zulu" visible="eq(-74,false) + eq(-75,true) + eq(-4,1)" />
+		<setting id="automatic.audio.dubbed" type="enum" label="35161" lvalues="33114|33115|33116" default="0" visible="eq(-75,false) + eq(-76,true)" />
 
-		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 33122][/B][/UPPERCASE]" visible="eq(-73,false) + eq(-74,true)" />
-		<setting type="sep" visible="eq(-74,false) + eq(-75,true)" />
-		<setting id="automatic.subtitles.soft" type="enum" label="33131" lvalues="33114|33115|33116" default="0" visible="eq(-75,false) + eq(-76,true)" />
-		<setting id="automatic.subtitles.hard" type="enum" label="33132" lvalues="33114|33115|33116" default="1" visible="eq(-76,false) + eq(-77,true)" />
+		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 33122][/B][/UPPERCASE]" visible="eq(-76,false) + eq(-77,true)" />
+		<setting type="sep" visible="eq(-77,false) + eq(-78,true)" />
+		<setting id="automatic.subtitles.soft" type="enum" label="33131" lvalues="33114|33115|33116" default="0" visible="eq(-78,false) + eq(-79,true)" />
+		<setting id="automatic.subtitles.hard" type="enum" label="33132" lvalues="33114|33115|33116" default="1" visible="eq(-79,false) + eq(-80,true)" />
 
 		<setting type="sep" />
 		<setting type="bool" visible="false" /> <!-- Ensures that a separator is drawn at the bottom. -->

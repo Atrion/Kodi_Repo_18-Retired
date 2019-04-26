@@ -427,6 +427,8 @@ class Provider(object):
 								link = instance.base_link
 							if link == None and len(domains) > 0:
 								link = domains[0]
+							if isinstance(link, (list, tuple)):
+								link = link[0]
 
 							if not link == None:
 								if not link.startswith('http'):

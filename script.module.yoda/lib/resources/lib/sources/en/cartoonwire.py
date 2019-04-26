@@ -49,6 +49,7 @@ class source:
 			try:
 				match = re.compile('var filmId = "(.+?)"').findall(r)
 				for film_id in match: 
+					
 					server = 'streamango'
 					url = 'https://cartoonwire.to/ajax-get-link-stream/?server=' + server + '&filmId=' + film_id
 					r = client.request(url)
@@ -117,6 +118,7 @@ class source:
 								'direct': False,
 								'debridonly': False
 							})
+					
 					server = 'photo'
 					url = 'https://cartoonwire.to/ajax-get-link-stream/?server=' + server + '&filmId=' + film_id
 					r = client.request(url)

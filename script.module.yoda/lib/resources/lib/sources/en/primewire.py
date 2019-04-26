@@ -12,7 +12,6 @@
 # Addon id: plugin.video.Yoda
 # Addon Provider: Supremacy
 
-
 import re
 import requests
 import traceback
@@ -120,7 +119,7 @@ class source:
                     qualityClass = hostBlock.span['class']
                     quality = 'SD' if ('cam' not in qualityClass and 'ts' not in qualityClass) else 'CAM'
                     unresolvedData = {
-                        'pageURL': self.BASE_URL + hostBlock.a['href'], 
+                        'pageURL': self.BASE_URL + hostBlock.a['href'], # Not yet usable, see resolve().
                         'UA': data['UA'],
                         'cookies': session.cookies.get_dict(),
                         'referer': pageURL
@@ -144,20 +143,20 @@ class source:
     def resolve(self, data):
         try:
             hostURL = None
-            DELAY_PER_REQUEST = 1000 # In milliseconds.
+            DELAY_PER_REQUEST = 1000 
 
             startTime = datetime.now()
             session = self._createSession(data['UA'], data['cookies'], data['referer'])
             r = self._sessionGET(data['pageURL'], session, allowRedirects=False)
             if r.ok:
                 if 'Location' in r.headers:
-                    hostURL = r.headers['Location'] 
+                    hostURL = r.headers['Location']
                 else:
-                   
                     try:
                         hostURL = re.search(r'''go\(\\['"](.*?)\\['"]\);''', jsunpack.unpack(r.text)).group(1)
                     except:
-                        pass
+                        pass 
+
             elapsed = int((datetime.now() - startTime).total_seconds() * 1000)
             if elapsed < DELAY_PER_REQUEST:
                 xbmc.sleep(max(DELAY_PER_REQUEST - elapsed, 100))

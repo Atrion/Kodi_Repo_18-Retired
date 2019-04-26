@@ -150,7 +150,7 @@ msgid "API"
 msgstr ""
 
 msgctxt "#32035"
-msgid "Days"
+msgid "Renew Subscription"
 msgstr ""
 
 msgctxt "#32036"
@@ -893,6 +893,14 @@ msgctxt "#32220"
 msgid "Hoster Protocol"
 msgstr ""
 
+msgctxt "#32221"
+msgid "Day"
+msgstr ""
+
+msgctxt "#32222"
+msgid "Days"
+msgstr ""
+
 ##############################################################################
 # MESSAGES
 ##############################################################################
@@ -1019,6 +1027,14 @@ msgstr ""
 
 msgctxt "#33030"
 msgid "Stream Removal Requested Successful"
+msgstr ""
+
+msgctxt "#33031"
+msgid "Your Subscription Expires In %s"
+msgstr ""
+
+msgctxt "#33032"
+msgid "Your Premium Subscription Expired"
 msgstr ""
 
 ##############################################################################

@@ -73,34 +73,34 @@
 					
 				<label>&#63346;</label>
 			</control>	-->
+
 			<control type="grouplist">
-				<visible>[!String.IsEqual(ListItem.Label,..)  + Container.Content(movies)] | [!String.IsEqual(ListItem.Label,..)  + Container.Content(episodes)]</visible>
-				<visible>!Container.Content(seasons)</visible>
 				<left>90</left>
 				<top>250</top>			
-				<itemgap>0</itemgap>	
+				<itemgap>0</itemgap>
+					<visible>!String.IsEqual(ListItem.Label,..)</visible>	
 				<control type="label">				
 					<height>36</height>
 					<font>Tiny</font>
 					<textcolor>Dark2</textcolor>
-					<label fallback="19055">$LOCALIZE[515]: $INFO[ListItem.Genre]</label>				
+					<label fallback="19055">$VAR[504_Row_1]</label>				
 				</control>
 				<control type="label">
 					<width>1100</width>
 					<height>36</height>
 					<font>Tiny</font>
 					<textcolor>Dark2</textcolor>
-					<label fallback="19055">$LOCALIZE[20339]: $INFO[ListItem.Director]</label>                        
+					<label fallback="19055">$VAR[504_Row_2]</label>                        
                 </control>
 				<control type="label">
 					<width>100%</width>
 					<height>36</height>
 					<font>Tiny</font>
 					<textcolor>Dark2</textcolor>               
-					<label fallback="19055">$LOCALIZE[2050]: $INFO[ListItem.Duration(mins),, $LOCALIZE[31102]]</label>
+					<label fallback="19055">$VAR[504_Row_3]</label>
 				</control>	
 			</control>	
-			<control type="grouplist">
+			<!--<control type="grouplist">
 				<visible>[!String.IsEqual(ListItem.Label,..) + Container.Content(tvshows)] | [!String.IsEqual(ListItem.Label,..) + Container.Content(seasons)]</visible>			
 				<left>90</left>
 				<top>250</top>			
@@ -127,7 +127,7 @@
 					<textcolor>Dark2</textcolor>
 					<label fallback="19055">$LOCALIZE[563]: $INFO[ListItem.MPAA]</label>				
 				</control>	
-			</control>
+			</control>-->
 			<control type="textbox">				
 				<top>376</top>
 				<bottom>17</bottom>
@@ -456,7 +456,7 @@
                         <top>2</top>
                         <right>2</right>
                         <bottom>52</bottom>
-                        <texture colordiffuse="$VAR[ColorHighlight]" border="20">common/selectbox.png</texture>
+                        <texture colordiffuse="$VAR[ColorSquares]" border="20">common/selectbox.png</texture>
                         <animation type="Focus">
                             <effect type="zoom" start="90" end="100" time="150" tween="sine" easing="inout" center="auto" />
                             <effect type="fade" start="0" end="100" time="150" tween="sine" easing="in" />

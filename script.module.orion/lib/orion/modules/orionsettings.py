@@ -113,7 +113,7 @@ class OrionSettings:
 		help = not self.getBoolean('help.enabled.general')
 		data = OrionTools.fileRead(self.pathProfile())
 		if OrionTools.kodiVersionNew(): data = re.sub('(id="help.enabled\..*")(.*)(<\/setting>)', '\\1>%s</setting>' % OrionTools.toBoolean(help, string = True), data, flags = re.IGNORECASE)
-		else: data = re.sub('(id="help.enabled\..*" )(.*)(\/>)', '\\1value="%s" />' % OrionTools.toBoolean(help, string = True), data, flags = re.IGNORECASE)
+		else: data = re.sub('(id="help.enabled\..*?" )(.*)(\/>)', '\\1value="%s" />' % OrionTools.toBoolean(help, string = True), data, flags = re.IGNORECASE)
 		OrionTools.fileWrite(self.pathProfile(), data)
 		self.launch(category = type)
 

@@ -167,11 +167,21 @@ class tvshows:
 						try: self.list = sorted(self.list, key = lambda k: k['tvshowtitle'].lower(), reverse = reverse)
 						except: self.list = sorted(self.list, key = lambda k: k['title'].lower(), reverse = reverse)
 				elif attribute == 2:
-					self.list = sorted(self.list, key = lambda k: k['premiered'], reverse = reverse)
-				elif attribute == 3:
 					self.list = sorted(self.list, key = lambda k: float(k['rating']), reverse = reverse)
-				elif attribute == 4:
+				elif attribute == 3:
 					self.list = sorted(self.list, key = lambda k: int(k['votes'].replace(',', '')), reverse = reverse)
+				elif attribute == 4:
+					for i in range(len(self.list)):
+						if not 'premiered' in self.list[i]: self.list[i]['premiered'] = ''
+					self.list = sorted(self.list, key = lambda k: k['premiered'], reverse = reverse)
+				elif attribute == 5:
+					for i in range(len(self.list)):
+						if not 'added' in self.list[i]: self.list[i]['added'] = ''
+					self.list = sorted(self.list, key = lambda k: k['added'], reverse = reverse)
+				elif attribute == 6:
+					for i in range(len(self.list)):
+						if not 'watched' in self.list[i]: self.list[i]['watched'] = ''
+					self.list = sorted(self.list, key = lambda k: k['watched'], reverse = reverse)
 			elif reverse:
 				self.list = reversed(self.list)
 		except:

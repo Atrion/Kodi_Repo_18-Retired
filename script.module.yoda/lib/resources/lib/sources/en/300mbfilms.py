@@ -12,8 +12,6 @@
 # Addon id: plugin.video.Yoda
 # Addon Provider: Supremacy
 
-
-
 import re,urllib,urlparse
 
 from resources.lib.modules import cleantitle
