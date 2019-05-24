@@ -20,15 +20,15 @@
 # Addon id: script.module.openscrapers
 
 import base64
-import urlparse
-import urllib
 import hashlib
 import re
+import urllib
+import urlparse
 
 from openscrapers.modules import client
 from openscrapers.modules import directstream
-from openscrapers.modules import trakt
 from openscrapers.modules import pyaes
+from openscrapers.modules import trakt
 
 
 def is_anime(content, type, type_id):
@@ -41,44 +41,83 @@ def is_anime(content, type, type_id):
 
 def get_release_quality(release_name, release_link=None):
     if release_name is None: return
-    try: release_name = release_name.encode('utf-8')
-    except: pass
+    try:
+        release_name = release_name.encode('utf-8')
+    except:
+        pass
     try:
         quality = None
         release_name = release_name.upper()
         fmt = re.sub('(.+)(\.|\(|\[|\s)(\d{4}|S\d*E\d*|S\d*)(\.|\)|\]|\s)', '', release_name)
         fmt = re.split('\.|\(|\)|\[|\]|\s|-', fmt)
         fmt = [i.lower() for i in fmt]
-        if '2160p' in fmt: quality = '4K'
-        elif '1080p' in fmt: quality = '1080p'
-        elif '1080' in fmt: quality = '1080p'
-        elif '720p' in fmt: quality = '720p'
-        elif '720' in fmt: quality = '720p'
-        elif 'brrip' in fmt: quality = '720p'
-        elif 'hd' in fmt: quality = '720p'
-        elif 'HD' in fmt: quality = '720p'
-        elif '.hd.' in fmt: quality = '720p'
-        elif 'hdtv' in fmt: quality = '720p'
-        elif 'BluRay' in fmt: quality = '720p'
-        elif '.WEBRip.' in fmt: quality = '720p'
-        elif '480p' in fmt: quality = '480p'
-        elif '480' in fmt: quality = '480p'
-        elif any(i in ['dvdscr', 'r5', 'r6'] for i in fmt): quality = 'SCR'
-        elif any(i in ['camrip', 'tsrip', 'hdcam', 'hdts', 'dvdcam', 'dvdts', 'cam', 'telesync', 'ts'] for i in fmt): quality = 'CAM'
+        if '2160p' in fmt:
+            quality = '4K'
+        elif '4k' in fmt:
+            quality = '4K'
+        elif 'uhd' in fmt:
+            quality = '4K'
+        elif '1080p' in fmt:
+            quality = '1080p'
+        elif '1080' in fmt:
+            quality = '1080p'
+        elif '720p' in fmt:
+            quality = '720p'
+        elif '720' in fmt:
+            quality = '720p'
+        elif 'brrip' in fmt:
+            quality = '720p'
+        elif 'hd' in fmt:
+            quality = '720p'
+        elif 'HD' in fmt:
+            quality = '720p'
+        elif '.hd.' in fmt:
+            quality = '720p'
+        elif 'hdtv' in fmt:
+            quality = '720p'
+        elif 'BluRay' in fmt:
+            quality = '720p'
+        elif '.WEBRip.' in fmt:
+            quality = '720p'
+        elif '480p' in fmt:
+            quality = '480p'
+        elif '480' in fmt:
+            quality = '480p'
+        elif any(i in ['dvdscr', 'r5', 'r6'] for i in fmt):
+            quality = 'SCR'
+        elif any(i in ['camrip', 'tsrip', 'hdcam', 'hdts', 'dvdcam', 'dvdts', 'cam', 'telesync', 'ts'] for i in fmt):
+            quality = 'CAM'
         if not quality:
             if release_link:
                 release_link = release_link.lower()
-                try: release_link = release_link.encode('utf-8')
-                except: pass
-                if '2160' in release_link: quality = '4K'
-                elif '1080' in release_link: quality = '1080p'
-                elif '720' in release_link: quality = '720p'
-                elif '.hd' in release_link: quality = '720p'
-                else: 
-                    if any(i in ['dvdscr', 'r5', 'r6'] for i in release_link): quality = 'SCR'
-                    elif any(i in ['camrip', 'tsrip', 'hdcam', 'hdts', 'dvdcam', 'dvdts', 'cam', 'telesync', 'ts'] for i in release_link): quality = 'CAM'
-                    else: quality = 'SD'
-            else: quality = 'SD'
+                try:
+                    release_link = release_link.encode('utf-8')
+                except:
+                    pass
+                if '2160' in release_link:
+                    quality = '4K'
+                elif '4k' in release_link:
+                    quality = '4K'
+                elif 'uhd' in release_link:
+                    quality = '4K'
+                elif '1080' in release_link:
+                    quality = '1080p'
+                elif '720' in release_link:
+                    quality = '720p'
+                elif '.hd' in release_link:
+                    quality = '720p'
+                else:
+                    if any(i in ['dvdscr', 'r5', 'r6'] for i in release_link):
+                        quality = 'SCR'
+                    elif any(
+                            i in ['camrip', 'tsrip', 'hdcam', 'hdts', 'dvdcam', 'dvdts', 'cam', 'telesync', 'ts'] for i
+                            in
+                            release_link):
+                        quality = 'CAM'
+                    else:
+                        quality = 'SD'
+            else:
+                quality = 'SD'
         info = []
         if '3d' in fmt or '.3D.' in release_name: info.append('3D')
         if any(i in ['hevc', 'h265', 'x265'] for i in fmt): info.append('HEVC')
@@ -88,33 +127,44 @@ def get_release_quality(release_name, release_link=None):
 
 
 def getFileType(url):
-    try: url = url.lower()
-    except: url = str(url)
+    try:
+        url = url.lower()
+    except:
+        url = str(url)
     type = ''
-    if 'bluray' in url: type += ' BLURAY /'
+    if '.bluray' in url: type += ' BLURAY /'
+    if '.hdtv' in url: type += ' HDTV /'
+    if '.hd-tv' in url: type += ' HDTV /'
     if '.web-dl' in url: type += ' WEB-DL /'
     if '.web.' in url: type += ' WEB-DL /'
-    if 'hdrip' in url: type += ' HDRip /'
-    if 'bd-r' in url: type += ' BD-R /'
-    if 'bd-rip' in url: type += ' BD-RIP /'
-    if 'bd.r' in url: type += ' BD-R /'
-    if 'bd.rip' in url: type += ' BD-RIP /'
-    if 'bdr' in url: type += ' BD-R /'
-    if 'bdrip' in url: type += ' BD-RIP /'
-    if 'atmos' in url: type += ' ATMOS /'
-    if 'truehd' in url: type += ' TRUEHD /'
+    if '.hdrip' in url: type += ' HDRip /'
+    if '.bd-r' in url: type += ' BD-R /'
+    if '.bd-rip' in url: type += ' BD-RIP /'
+    if '.bd.r' in url: type += ' BD-R /'
+    if '.bd.rip' in url: type += ' BD-RIP /'
+    if '.bdr' in url: type += ' BD-R /'
+    if '.bdrip' in url: type += ' BD-RIP /'
+    if '.hdr' in url: type += ' HDR /'
+    if '.atmos' in url: type += ' ATMOS /'
+    if '.truehd' in url: type += ' TRUEHD /'
     if '.dd' in url: type += ' DolbyDigital /'
-    if '5.1' in url: type += ' 5.1 /'
+    if '.5.1' in url: type += ' 5.1 /'
+    if '.7.1' in url: type += ' 7.1 /'
     if '.xvid' in url: type += ' XVID /'
     if '.mp4' in url: type += ' MP4 /'
     if '.avi' in url: type += ' AVI /'
-    if 'ac3' in url: type += ' AC3 /'
-    if 'h.264' in url: type += ' H.264 /'
-    if '.x264' in url: type += ' x264 /'
-    if '.x265' in url: type += ' x265 /'
-    if 'subs' in url: 
-        if type != '': type += ' - WITH SUBS'
-        else: type = 'SUBS'
+    if '.ac3' in url: type += ' AC3 /'
+    if '.h.264' in url: type += ' H264 /'
+    if '.h264' in url: type += ' H264 /'
+    if '.h.265' in url: type += ' H265 /'
+    if '.h265' in url: type += ' H265 /'
+    if '.x264' in url: type += ' H264 /'
+    if '.x265' in url: type += ' H265 /'
+    if 'subs' in url:
+        if type != '':
+            type += ' - WITH SUBS'
+        else:
+            type = 'SUBS'
     type = type.rstrip('/')
     return type
 
@@ -122,17 +172,33 @@ def getFileType(url):
 def check_sd_url(release_link):
     try:
         release_link = release_link.lower()
-        if '2160' in release_link: quality = '4K'
-        elif '1080' in release_link: quality = '1080p'
-        elif '720' in release_link: quality = '720p'
-        elif '.hd.' in release_link: quality = '720p'
-        elif 'hdtv' in release_link: quality = '720p'
-        elif 'BluRay' in release_link: quality = '720p'
-        elif '.BluRay.' in release_link: quality = '720p'
-        elif '.WEBRip.' in release_link: quality = '720p'
-        elif any(i in ['dvdscr', 'r5', 'r6'] for i in release_link): quality = 'SCR'
-        elif any(i in ['camrip', 'tsrip', 'hdcam', 'hdts', 'dvdcam', 'dvdts', 'cam', 'telesync', 'ts'] for i in release_link): quality = 'CAM'
-        else: quality = 'SD'
+        if '2160' in release_link:
+            quality = '4K'
+        elif '4k' in release_link:
+            quality = '4K'
+        elif 'uhd' in release_link:
+            quality = '4K'
+        elif '1080' in release_link:
+            quality = '1080p'
+        elif '720' in release_link:
+            quality = '720p'
+        elif '.hd.' in release_link:
+            quality = '720p'
+        elif 'hdtv' in release_link:
+            quality = '720p'
+        elif 'BluRay' in release_link:
+            quality = '720p'
+        elif '.BluRay.' in release_link:
+            quality = '720p'
+        elif '.WEBRip.' in release_link:
+            quality = '720p'
+        elif any(i in ['dvdscr', 'r5', 'r6'] for i in release_link):
+            quality = 'SCR'
+        elif any(i in ['camrip', 'tsrip', 'hdcam', 'hdts', 'dvdcam', 'dvdts', 'cam', 'telesync', 'ts'] for i in
+                 release_link):
+            quality = 'CAM'
+        else:
+            quality = 'SD'
         return quality
     except:
         return 'SD'
@@ -140,16 +206,28 @@ def check_sd_url(release_link):
 
 def check_direct_url(url):
     try:
-        if '4k' in url: quality = '4K'
-        elif '2160p' in url: quality = '4K'
-        elif '2160' in url: quality = '4K'
-        elif '1080p' in url: quality = '1080p'
-        elif '1080' in url: quality = '1080p'
-        elif '720p' in url: quality = '720p'
-        elif '720' in url: quality = '720p'
-        elif any(i in ['dvdscr', 'r5', 'r6'] for i in url): quality = 'SCR'
-        elif any(i in ['camrip', 'tsrip', 'hdcam', 'hdts', 'dvdcam', 'dvdts', 'cam', 'telesync', 'ts'] for i in url): quality = 'CAM'
-        else: quality = 'SD'
+        if '4k' in url:
+            quality = '4K'
+        elif '2160p' in url:
+            quality = '4K'
+        elif '2160' in url:
+            quality = '4K'
+        elif 'uhd' in url:
+            quality = '4K'
+        elif '1080p' in url:
+            quality = '1080p'
+        elif '1080' in url:
+            quality = '1080p'
+        elif '720p' in url:
+            quality = '720p'
+        elif '720' in url:
+            quality = '720p'
+        elif any(i in ['dvdscr', 'r5', 'r6'] for i in url):
+            quality = 'SCR'
+        elif any(i in ['camrip', 'tsrip', 'hdcam', 'hdts', 'dvdcam', 'dvdts', 'cam', 'telesync', 'ts'] for i in url):
+            quality = 'CAM'
+        else:
+            quality = 'SD'
         return quality
     except:
         return 'SD'
@@ -157,24 +235,46 @@ def check_direct_url(url):
 
 def check_url(url):
     try:
-        if '2160p' in url: quality = '4K'
-        elif '2160' in url: quality = '4K'
-        elif '1080p' in url: quality = '1080p'
-        elif '1080' in url: quality = '1080p'
-        elif '720p' in url: quality = '720p'
-        elif '720' in url: quality = '720p'
-        elif '.hd.' in url: quality = '720p'
-        elif 'hd' in url: quality = '720p'
-        elif 'HD' in url: quality = '720p'
-        elif 'hdtv' in url: quality = '720p'
-        elif 'BluRay' in url: quality = '720p'
-        elif '.BluRay.' in url: quality = '720p'
-        elif '.WEBRip.' in url: quality = '720p'
-        elif '480p' in url: quality = 'SD'
-        elif '480' in url: quality = 'SD'
-        elif any(i in ['dvdscr', 'r5', 'r6'] for i in url): quality = 'SCR'
-        elif any(i in ['camrip', 'tsrip', 'hdcam', 'hdts', 'dvdcam', 'dvdts', 'cam', 'telesync', 'ts'] for i in url): quality = 'CAM'
-        else: quality = 'SD'
+        if '2160p' in url:
+            quality = '4K'
+        elif '2160' in url:
+            quality = '4K'
+        elif '4k' in url:
+            quality = '4K'
+        elif 'uhd' in url:
+            quality = '4K'
+        elif '1080p' in url:
+            quality = '1080p'
+        elif '1080' in url:
+            quality = '1080p'
+        elif '720p' in url:
+            quality = '720p'
+        elif '720' in url:
+            quality = '720p'
+        elif '.hd.' in url:
+            quality = '720p'
+        elif 'hd' in url:
+            quality = '720p'
+        elif 'HD' in url:
+            quality = '720p'
+        elif 'hdtv' in url:
+            quality = '720p'
+        elif 'BluRay' in url:
+            quality = '720p'
+        elif '.BluRay.' in url:
+            quality = '720p'
+        elif '.WEBRip.' in url:
+            quality = '720p'
+        elif '480p' in url:
+            quality = 'SD'
+        elif '480' in url:
+            quality = 'SD'
+        elif any(i in ['dvdscr', 'r5', 'r6'] for i in url):
+            quality = 'SCR'
+        elif any(i in ['camrip', 'tsrip', 'hdcam', 'hdts', 'dvdcam', 'dvdts', 'cam', 'telesync', 'ts'] for i in url):
+            quality = 'CAM'
+        else:
+            quality = 'SD'
         return quality
     except:
         return 'SD'
@@ -182,8 +282,10 @@ def check_url(url):
 
 def label_to_quality(label):
     try:
-        try: label = int(re.search('(\d+)', label).group(1))
-        except: label = 0
+        try:
+            label = int(re.search('(\d+)', label).group(1))
+        except:
+            label = 0
         if label >= 2160:
             return '4K'
         elif label >= 1440:
@@ -217,7 +319,7 @@ def is_host_valid(url, domains):
             host = hosts[0]
         if hosts and any([h for h in ['google', 'picasa', 'blogspot'] if h in host]):
             host = 'gvideo'
-        if hosts and any([h for h in ['akamaized','ocloud'] if h in host]):
+        if hosts and any([h for h in ['akamaized', 'ocloud'] if h in host]):
             host = 'CDN'
         return any(hosts), host
     except:
@@ -256,19 +358,20 @@ def get_size(url):
         if size == '0': size = False
         size = convert_size(size)
         return size
-    except: return False
+    except:
+        return False
 
 
 def convert_size(size_bytes):
-   import math
-   if size_bytes == 0:
-       return "0B"
-   size_name = ("B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB")
-   i = int(math.floor(math.log(size_bytes, 1024)))
-   p = math.pow(1024, i)
-   s = round(size_bytes / p, 2)
-   if size_name[i] == 'B' or size_name[i] == 'KB': return None
-   return "%s %s" % (s, size_name[i])
+    import math
+    if size_bytes == 0:
+        return "0B"
+    size_name = ("B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB")
+    i = int(math.floor(math.log(size_bytes, 1024)))
+    p = math.pow(1024, i)
+    s = round(size_bytes / p, 2)
+    if size_name[i] == 'B' or size_name[i] == 'KB': return None
+    return "%s %s" % (s, size_name[i])
 
 
 def check_directstreams(url, hoster='', quality='SD'):
@@ -326,4 +429,3 @@ def evpKDF(passwd, salt, key_size=8, iv_size=4, iterations=1, hash_algorithm="md
         derived_bytes += block[0: min(len(block), (target_key_size - number_of_derived_words) * 4)]
         number_of_derived_words += len(block) / 4
     return {"key": derived_bytes[0: key_size * 4], "iv": derived_bytes[key_size * 4:]}
-

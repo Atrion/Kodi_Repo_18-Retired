@@ -14,6 +14,7 @@ class TVDBAPI:
         self.apiKey = tools.getSetting('tvdb.apikey')
         if self.apiKey == '':
             self.apiKey = "43VPI0R8323FB7TI"
+
         self.baseUrl = 'https://api.thetvdb.com/'
         self.jwToken = tools.getSetting('tvdb.jw')
         self.headers = {'Content-Type': 'application/json'}
@@ -23,7 +24,6 @@ class TVDBAPI:
         self.cast = []
         self.baseImageUrl = 'https://www.thetvdb.com/banners/'
         self.threads = []
-        self.show_cursory = None
 
         if tools.fanart_api_key == '': self.fanart_support = False
         else: self.fanart_support = True
@@ -39,7 +39,7 @@ class TVDBAPI:
     def refresh_lock(self):
         if not tools.tvdb_refreshing:
             return False
-        for i in range(0,5):
+        for i in range(0, 5):
             if tools.tvdb_refresh == '':
                 time.sleep(1)
             else:
@@ -79,6 +79,7 @@ class TVDBAPI:
         url = self.baseUrl + 'refresh_token'
         response = requests.post(url, headers=self.headers)
         response = json.loads(response.text)
+
         if 'Error' in response:
             self.newToken(True)
         else:
@@ -91,11 +92,10 @@ class TVDBAPI:
     def newToken(self, ignore_lock=False):
 
         refresh_lock = self.refresh_lock()
-        if not ignore_lock:
-            if not refresh_lock:
-                tools.tvdb_refreshing = True
-            else:
-                return
+        if not refresh_lock:
+            tools.tvdb_refreshing = True
+        else:
+            return
         url = self.baseUrl + "login"
         postdata = {"apikey": self.apiKey}
         postdata = json.dumps(postdata)
@@ -111,7 +111,7 @@ class TVDBAPI:
         tools.setSetting('tvdb.expiry', str(time.time() + (24 * (60 * 60))))
         return response
 
-    def seriesIDToListItem(self, trakt_object, info_return=True):
+    def seriesIDToListItem(self, trakt_object):
         try:
             tvdbID = trakt_object['ids']['tvdb']
             if self.fanart_support:
@@ -176,7 +176,7 @@ class TVDBAPI:
             except:
                 pass
             try:
-                info['genre'] = self.info.get('genre')
+                info['genre'] = [genre.title() for genre in trakt_object['genres']]
             except:
                 pass
             try:
@@ -188,13 +188,9 @@ class TVDBAPI:
             except:
                 pass
             try:
-                try:
-                    info['premiered'] = trakt_object['first_aired'][:10]
-                    if len(info['premiered']) < 10:
-                        raise Exception
-                except:
-                    info['premiered'] = self.info.get('firstAired')
+                info['premiered'] = trakt_object['first_aired']
             except:
+                info['premiered'] = ''
                 pass
             try:
                 info['status'] = self.info.get('status')
@@ -202,8 +198,12 @@ class TVDBAPI:
                 pass
             try:
                 info['tvshowtitle'] = self.info['seriesName']
+                if info['tvshowtitle'] is None:
+                    info['tvshowtitle'] = trakt_object['title']
+                if info['tvshowtitle'] is None:
+                    return None
             except:
-                pass
+                return None
             try:
                 info['year'] = self.info.get('firstAired')[:4]
             except:
@@ -236,18 +236,15 @@ class TVDBAPI:
             try:
                 if '0' in self.episode_summary['airedSeasons']:
                     self.episode_summary['airedSeasons'].remove('0')
-                info['seasonCount'] = len(self.episode_summary['airedSeasons'])
+                info['season_count'] = len(self.episode_summary['airedSeasons'])
             except:
-                info['seasonCount'] = 0
+                info['season_count'] = 0
                 pass
 
             try:
-                if 'airedEpisodes' in self.episode_summary:
-                    info['episodeCount'] = self.episode_summary['airedEpisodes']
-                else:
-                    info['episodeCount'] = trakt_object['aired_episodes']
+                info['episode_count'] = trakt_object['aired_episodes']
             except:
-                info['episodeCount'] = 0
+                info['episode_count'] = 0
                 pass
 
             try:
@@ -264,7 +261,7 @@ class TVDBAPI:
                 info['country'] = ''
                 pass
 
-            requirements = ['country', 'tvshowtitle', 'year', 'seasonCount']
+            requirements = ['country', 'tvshowtitle', 'year', 'season_count']
             for i in requirements:
                 if i not in info:
                     return None
@@ -276,12 +273,9 @@ class TVDBAPI:
             item['trakt_object'] = {}
             item['trakt_object']['shows'] = [trakt_object]
 
-            if info_return is True:
-                return item
-            else:
-                self.show_cursory = item
+
+            return item
         except:
-            self.show_cursory = False
             return None
 
     def seasonIDToListItem(self, seasonObject, showArgs):
@@ -308,7 +302,9 @@ class TVDBAPI:
             except:
                 pass
             try:
-                item['art']['poster'] = item['art']['thumb'] = self.art['poster']
+                item['art']['poster'] = item['art']['thumb'] = self.art.get('poster', '')
+                if item['art']['poster'] == '' or item['art']['poster'] is None:
+                    item['art']['poster'] = item['art']['thumb'] = showArgs['art']['poster']
             except:
                 item['art']['poster'] = item['art']['thumb'] = ''
 
@@ -317,19 +313,21 @@ class TVDBAPI:
             except:
                 pass
             try:
-                item['info']['aired'] = seasonObject['first_aired'][:10]
+                item['info']['aired'] = seasonObject['first_aired']
             except:
                 pass
             try:
-                item['info']['date'] = seasonObject['first_aired'][:10]
+                item['info']['episode_count'] = seasonObject['episode_count']
             except:
+                item['info']['episode_count'] = 0
                 pass
             try:
-                item['info']['premiered'] = seasonObject['first_aired'][:10]
+                item['info']['aired_episodes'] = seasonObject['aired_episodes']
             except:
+                item['info']['aired_episodes'] = 0
                 pass
             try:
-                item['info']['dateadded'] = seasonObject['first_aired'][:10]
+                item['info']['premiered'] = seasonObject['first_aired']
             except:
                 pass
             try:
@@ -360,23 +358,6 @@ class TVDBAPI:
                 traceback.print_exc()
                 return None
 
-            try:
-                if seasonObject['first_aired'] is None:
-                    pass
-                else:
-                    currentDate = datetime.datetime.today().date()
-                    airdate = str(seasonObject['first_aired'][:10])
-                    airdate = tools.datetime_workaround(airdate)
-                    if airdate is None:
-                        return None
-                    if airdate > currentDate:
-                        item['info']['season_title'] = '[I][COLOR red]%s[/COLOR][/I]' % item['info']['season_title']
-            except:
-                import traceback
-                traceback.print_exc()
-                return None
-                pass
-
             item['info']['mediatype'] = 'season'
             item['ids'] = seasonObject['ids']
             item['trakt_object'] = {}
@@ -391,10 +372,6 @@ class TVDBAPI:
         return item
 
     def episodeIDToListItem(self, trakt_object, showArgs):
-        if 'showInfo' not in showArgs:
-            show_thread = threading.Thread(target=self.seriesIDToListItem, args=(showArgs, False))
-            show_thread.daemon = True
-            show_thread.start()
 
         url = "episodes/%s" % trakt_object['ids']['tvdb']
         response = self.get_request(url)['data']
@@ -406,6 +383,10 @@ class TVDBAPI:
         info = {}
         try:
             info['episode'] = info['sortepisode'] = int(response['airedEpisodeNumber'])
+        except:
+            pass
+        try:
+            info['absoluteNumber'] = int(response['absoluteNumber'])
         except:
             pass
         try:
@@ -422,22 +403,16 @@ class TVDBAPI:
             info['rating'] = float(response['siteRating'])
         except:
             pass
+
         try:
-            try:
-                release = tools.datetime_workaround(trakt_object['first_aired'],
-                                                    '%Y-%m-%dT%H:%M:%S.000Z', date_only=False)
-                release = tools.utc_to_local_datetime(release)
-                info['premiered'] = release.date().strftime('%Y-%m-%d')
-                info['aired'] = release.date().strftime('%Y-%m-%d')
-            except:
-                import traceback
-                traceback.print_exc()
-                info['premiered'] = response['firstAired']
-                info['aired'] = response['firstAired']
+            info['premiered'] = trakt_object['first_aired']
+            info['aired'] = trakt_object['first_aired']
         except:
-            pass
+            info['premiered'] = ''
+            info['aired'] = ''
+
         try:
-            info['year'] = int(info['premiered'][:4])
+            info['year'] = trakt_object['first_aired'][:4]
         except:
             pass
         try:
@@ -448,14 +423,6 @@ class TVDBAPI:
             info['imdbnumber'] = response['imdbId']
         except:
             pass
-        if 'showInfo' not in showArgs:
-            if show_thread.is_alive():
-                show_thread.join()
-            if self.show_cursory is False or self.show_cursory is None:
-                return None
-            else:
-                showArgs = {'showInfo': {}}
-                showArgs['showInfo'] = self.show_cursory
         try:
             info['studio'] = showArgs['showInfo']['info'].get('studio')
         except:
@@ -495,19 +462,6 @@ class TVDBAPI:
         except:
             pass
 
-        try:
-            currentDate = datetime.datetime.today().date()
-            airdate = str(response['firstAired'])
-            if airdate == '':
-                info['title'] = '[I][COLOR red]%s[/COLOR][/I]' % info['title']
-            airdate = tools.datetime_workaround(airdate)
-            if airdate is None:
-                return None
-            if airdate > currentDate:
-                info['title'] = '[I][COLOR red]%s[/COLOR][/I]' % info['title']
-        except:
-            pass
-
         info['trailer'] = ''
         info['mediatype'] = 'episode'
         item['ids'] = trakt_object['ids']
@@ -530,8 +484,11 @@ class TVDBAPI:
         try:
             url = 'series/%s/images/query?keyType=fanart' % tvdbID
             response = self.get_request(url)['data']
-            image = response[0]
-            for i in response:
+            try:
+                image = [i for i in response if i['languageId'] == 7][0]
+            except:
+                image = response[0]
+            for i in [k for k in response if k['languageId'] == 7]:
                 if float(i['ratingsInfo']['average']) > float(image['ratingsInfo']['average']):
                     image = i
                 else:
@@ -548,11 +505,13 @@ class TVDBAPI:
     def getShowPoster(self, tvdbID):
         tools.tv_sema.acquire()
         try:
-            tools.tv_sema.acquire()
             url = 'series/%s/images/query?keyType=poster' % tvdbID
             response = self.get_request(url)['data']
-            image = response[0]
-            for i in response:
+            try:
+                image = [i for i in response if i['languageId'] == 7][0]
+            except:
+                image = response[0]
+            for i in [k for k in response if k['languageId'] == 7]:
                 if float(i['ratingsInfo']['average']) > float(image['ratingsInfo']['average']):
                     image = i
                 else:
@@ -593,8 +552,11 @@ class TVDBAPI:
         try:
             url = 'series/%s/images/query?keyType=season&subKey=%s' % (tvdbID, season)
             response = self.get_request(url)['data']
-            image = response[0]
-            for i in response:
+            try:
+                image = [i for i in response if i['languageId'] == 7][0]
+            except:
+                image = response[0]
+            for i in [k for k in response if k['languageId'] == 7]:
                 if float(i['ratingsInfo']['average']) > float(image['ratingsInfo']['average']):
                     image = i
                 else:

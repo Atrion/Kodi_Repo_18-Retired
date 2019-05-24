@@ -24,8 +24,11 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
-import urllib, urlparse, re
+import re
+import urllib
+import urlparse
 
+from openscrapers.modules import cfscrape
 from openscrapers.modules import cleantitle
 from openscrapers.modules import client
 from openscrapers.modules import source_utils
@@ -36,9 +39,9 @@ class source:
         self.priority = 1
         self.language = ['en']
         self.domains = ['filmxy.me']
-        self.base_link = 'https://www.filmxy.one/'
+        self.base_link = 'https://www.filmxy.ws/'
         self.search_link = 'search/%s/feed/rss2/'
-        self.post = 'https://cdn.filmxy.one/asset/json/posts.json'
+        self.scraper = cfscrape.create_scraper()
 
     def movie(self, imdb, title, localtitle, aliases, year):
         try:
@@ -60,11 +63,10 @@ class source:
             tit = cleantitle.geturl(title + ' ' + year)
             query = urlparse.urljoin(self.base_link, tit)
 
-           
-            r = client.request(query, referer=self.base_link, redirect=True)
+            r = self.scraper.get(query, params={'referer': self.base_link}).content
             if not data['imdb'] in r:
                 return sources
-       
+
             links = []
 
             try:
@@ -98,16 +100,17 @@ class source:
                             rd = True
                     else:
                         rd = False
+                    quality, info = source_utils.get_release_quality(url, url)
                     host = client.replaceHTMLCodes(host)
                     host = host.encode('utf-8')
                     if rd:
                         sources.append(
-                            {'source': host, 'quality': '1080p', 'language': 'en', 'url': url,
+                            {'source': host, 'quality': quality, 'language': 'en', 'url': url,
                              'direct': False,
                              'debridonly': True})
                     else:
                         sources.append(
-                            {'source': host, 'quality': '1080p', 'language': 'en', 'url': url,
+                            {'source': host, 'quality': quality, 'language': 'en', 'url': url,
                              'direct': False,
                              'debridonly': False})
                 except Exception:
@@ -117,4 +120,5 @@ class source:
             return sources
 
     def resolve(self, url):
+
         return url

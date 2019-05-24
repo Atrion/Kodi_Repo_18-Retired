@@ -1,19 +1,18 @@
 # -*- coding: UTF-8 -*-
 
-import pkgutil
 import os.path
-
-import sources_openscrapers
-
+import pkgutil
 
 try:
     import xbmcaddon
+
     __addon__ = xbmcaddon.Addon(id='script.module.openscrapers')
 except:
     __addon__ = None
     pass
 
-def sources():
+
+def sources(specified_folders=None, debug=False):
     try:
         sourceDict = []
         if __addon__ is not None:
@@ -23,6 +22,8 @@ def sources():
         sourceFolder = getScraperFolder(provider)
         sourceFolderLocation = os.path.join(os.path.dirname(__file__), sourceFolder)
         sourceSubFolders = [x[1] for x in os.walk(sourceFolderLocation)][0]
+        if specified_folders is not None:
+            sourceSubFolders = specified_folders
         for i in sourceSubFolders:
             for loader, module_name, is_pkg in pkgutil.walk_packages([os.path.join(sourceFolderLocation, i)]):
                 if is_pkg:
@@ -30,7 +31,9 @@ def sources():
                 try:
                     module = loader.find_module(module_name).load_module(module_name)
                     sourceDict.append((module_name, module.source()))
-                except:
+                except Exception as e:
+                    if debug:
+                        print('Error:Loading module: %s | %s ' % (module_name, e))
                     pass
         return enabledHosters(sourceDict)
     except:
@@ -74,9 +77,12 @@ def getAllHosters():
             for loader, module_name, is_pkg in pkgutil.walk_packages([os.path.join(sourceFolderLocation, i)]):
                 if is_pkg:
                     continue
-                try: mn = str(module_name).split('_')[0]
-                except: mn = str(module_name)
+                try:
+                    mn = str(module_name).split('_')[0]
+                except:
+                    mn = str(module_name)
                 appendList.append(mn)
+
     sourceSubFolders = [x[1] for x in os.walk(os.path.dirname(__file__))][0]
     appendList = []
     for item in sourceSubFolders:
@@ -93,6 +99,8 @@ def getScraperFolder(scraper_source):
 def getModuleName(scraper_folders):
     nameList = []
     for s in scraper_folders:
-        try: nameList.append(s.split('_')[1].lower().title())
-        except: pass
+        try:
+            nameList.append(s.split('_')[1].lower().title())
+        except:
+            pass
     return nameList

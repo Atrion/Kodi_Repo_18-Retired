@@ -4,8 +4,8 @@ import errno
 import tempfile
 import time
 import warnings
-from threading import Thread, Lock
-from Tkinter import Tk, Label
+# from threading import Thread, Lock
+# from Tkinter import Tk, Label
 #=====================================================================================================================
 # API Constants
 #=====================================================================================================================
@@ -79,6 +79,7 @@ def executebuiltin(function, *args):
         print('Executing built in command')
         if '?' in function:
             sys.argv = [None, None, function.split('?')[1]]
+        print(sys.argv)
         execfile(os.path.abspath(os.path.join(os.getcwd(), 'seren.py')))
     except:
         import traceback
@@ -121,6 +122,8 @@ def getInfoImage(infotag):
     return ""
 
 def getInfoLabel(infotag):
+    if infotag == 'System.BuildVersion':
+        return '18.10'
     """Returns an InfoLabel as a string"""
     return ""
 
@@ -256,7 +259,12 @@ class Keyboard(object):
     def __init__(self, default='', heading='', hidden=False):
         pass
     def doModal(self, autoclose=False):
-        self.input_text = raw_input('Input Text')
+        try:
+            print('Input Query:')
+            self.input_text = raw_input()
+        except:
+            print('Input Query:')
+            self.input_text = input()
         pass
     def getText(self):
         return self.input_text
@@ -289,6 +297,7 @@ class Monitor(object):
 
 class Player(object):
     def __init__(self):
+        playlist = []
         pass
     def disableSubtitles(self):
         warnings.warn("Removed in v17.0", category=DeprecationWarning)
@@ -321,6 +330,9 @@ class Player(object):
     def pause(self):
         pass
     def play(self, item="", listitem=None, windowed=False, startpos=-1):
+        print(type(item))
+        if type(item) == PlayList:
+            print('YERp')
         pass
     def playnext(self):
         pass
@@ -345,6 +357,9 @@ class PlayList(list):
 
     def __init__(self, video):
         pass
+
+    def add(self, url, listitem):
+        self.append([url, listitem])
 
     def getposition(self):
         return 0

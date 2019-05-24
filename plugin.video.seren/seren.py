@@ -1,11 +1,17 @@
 # -*- coding: utf-8 -*-
 
 import sys
-import os
 
 from resources.lib.common import tools
 from resources.lib.gui import windows
 from resources.lib.modules import database
+from resources.lib.common import maintenance
+from resources.lib.common import source_utils
+
+try:
+    maintenance.refresh_apis()
+except:
+    pass
 
 try:
     params = dict(tools.parse_qsl(sys.argv[2].replace('?', '')))
@@ -62,7 +68,7 @@ if action == 'smartPlay':
     from resources.lib.modules import smartPlay
 
     smart = smartPlay.SmartPlay(actionArgs)
-    smart.smart_play_show()
+    smart.workaround()
 
 if action == 'moviesHome':
     from resources.lib.gui import movieMenus
@@ -159,45 +165,58 @@ if action == 'revokeTrakt':
 
 if action == 'getSources':
     try:
-        if tools.playList.getposition() == 0:
+        if tools.playList.getposition() == 0 and not tools.premiumize_enabled() and not tools.real_debrid_enabled():
+            tools.showDialog.ok(tools.addonName, tools.lang(40146), tools.lang(40147))
+            sys.exit()
+
+        if tools.playList.getposition() == 0 and tools.getSetting('general.scrapedisplay') == '0':
             display_background = True
         else:
             display_background = False
 
-        background = windows.persistant_background()
-        background.setBackground(actionArgs)
-        background.setText(tools.lang(32045).encode('utf-8'))
+        if tools.getSetting('general.scrapedisplay') == '1':
+            tools.closeBusyDialog()
 
         if display_background:
+            background = windows.persistant_background()
+            background.setBackground(actionArgs)
+            background.setText(tools.lang(32045))
             background.show()
 
         from resources.lib.modules import getSources
 
         sources_window = getSources
 
-        source_results, args = database.get(sources_window.Sources().doModal, 1, actionArgs, seren_reload=seren_reload)
-
+        uncached_sources, source_results, args = database.get(sources_window.Sources().doModal, 1, actionArgs,
+                                                              seren_reload=seren_reload)
         try:
             del sources_window
         except:
             pass
 
         if len(source_results) > 0:
-
-            if tools.getSetting('general.playstyle') == '1' or source_select == 'true':
+            if 'episodeInfo' in args:
+                source_select_style = 'Episodes'
+            else:
+                source_select_style = 'Movie'
+            if tools.getSetting('general.playstyle%s' % source_select_style) == '1' or source_select == 'true':
+                if display_background:
+                    background.setText(tools.lang(40135))
                 from resources.lib.modules import sourceSelect
 
-                source_results = sourceSelect.sourceSelect(source_results, args)
+                source_results = sourceSelect.sourceSelect(uncached_sources, source_results, args)
+
+            if display_background:
+                background.setText(tools.lang(32046))
 
             from resources.lib.modules import resolver
 
-            background.setText(tools.lang(32046).encode('utf-8'))
             resolver_window = resolver
             stream_link = database.get(resolver_window.Resolver().doModal, 1, source_results, args, pack_select,
                                        seren_reload=seren_reload)
             del resolver_window
 
-            if display_background is True:
+            if display_background:
                 background.close()
                 del background
 
@@ -206,7 +225,7 @@ if action == 'getSources':
                 try:
                     tools.playList.clear()
                     tools.closeOkDialog()
-                    tools.showDialog.notification(tools.addonName, tools.lang(32047).encode('utf-8'), time=5000)
+                    tools.showDialog.notification(tools.addonName, tools.lang(32047), time=5000)
                 except:
                     pass
                 pass
@@ -222,7 +241,7 @@ if action == 'getSources':
             if display_background is True:
                 background.close()
                 del background
-            tools.showDialog.notification(tools.addonName, tools.lang(32047).encode('utf-8'), time=5000)
+            tools.showDialog.notification(tools.addonName, tools.lang(32047), time=5000)
 
     except:
         # Perform cleanup and make sure all open windows close and playlist is cleared
@@ -256,11 +275,10 @@ if action == 'getSources':
             pass
 
 if action == 'preScrape':
-    tools.log('Started Pre-scraping')
     try:
         from resources.lib.modules import getSources
 
-        source_results, args = database.get(getSources.Sources().doModal, 1, actionArgs)
+        uncached_sources, source_results, args = database.get(getSources.Sources().doModal, 1, actionArgs)
 
         if tools.getSetting('general.playstyle') == '0':
             from resources.lib.modules import resolver
@@ -353,10 +371,12 @@ if action == 'showsUpdated':
 
 if action == 'showsSearch':
     from resources.lib.gui import tvshowMenus
+
     tvshowMenus.Menus().showsSearch(actionArgs)
 
 if action == 'showsSearchHistory':
     from resources.lib.gui import tvshowMenus
+
     tvshowMenus.Menus().showSearchHistory()
 
 if action == 'showSeasons':
@@ -373,6 +393,10 @@ if action == 'showsRelated':
     from resources.lib.gui import tvshowMenus
 
     tvshowMenus.Menus().showsRelated(actionArgs)
+
+if action == 'showYears':
+    from resources.lib.gui import tvshowMenus
+    tvshowMenus.Menus().showYears(actionArgs, page)
 
 if action == 'searchMenu':
     from resources.lib.gui import homeMenu
@@ -393,11 +417,6 @@ if action == 'traktManager':
     from resources.lib.indexers import trakt
 
     trakt.TraktAPI().traktManager(actionArgs)
-
-if action == 'traktOnDeckHome':
-    from resources.lib.gui import homeMenu
-
-    homeMenu.Menus().traktOnDeck()
 
 if action == 'onDeckShows':
     from resources.lib.gui import tvshowMenus
@@ -445,11 +464,13 @@ if action == 'shufflePlay':
     try:
         smart = smartPlay.SmartPlay(actionArgs).shufflePlay()
     except:
+        import traceback
+        traceback.print_exc()
         pass
 
 if action == 'resetSilent':
     tools.setSetting('general.tempSilent', 'false')
-    tools.showDialog.notification(tools.addonName + ": Silent scrape", tools.lang(32048).encode('utf-8'), time=5000)
+    tools.showDialog.notification(tools.addonName + ": Silent scrape", tools.lang(32048), time=5000)
 
 if action == 'clearTorrentCache':
     from resources.lib.modules import database
@@ -539,35 +560,42 @@ if action == 'cleanInstall':
 
     maintenance.wipe_install()
 
-if action == 'buildPlaylist':
+if action == 'buildPlaylistWorkaround':
+    # import json
+    # from resources.lib.gui import tvshowMenus
+    #
+    # def get_episode_number(list_item):
+    #     episode_number = dict(tools.parse_qsl(list_item[0].replace('?', '')))
+    #     episode_number = int(json.loads(tools.unquote(episode_number['actionArgs']))['episodeInfo']['info']['episode'])
+    #     return episode_number
+    #
+    # # This is a nasty workaround for Kodi 18 Skins
+    #
+    # actionArgs = json.loads(tools.unquote(actionArgs))
+    #
+    # season = actionArgs['season']
+    # episode = int(actionArgs['episode'])
+    # show_id = actionArgs['show_id']
+    #
+    # season_episodes = tvshowMenus.Menus().episodeListBuilder(show_id, season, smartPlay=True, hide_unaired=True)
+    # play_list = []
+    #
+    # for ep in season_episodes:
+    #     ep_no = get_episode_number(ep)
+    #     if ep_no >= episode:
+    #         tools.log(ep_no)
+    #         play_list.append(ep)
+    #
+    #     # If the episode is confirmed ok, add it to our playlist.
+    # play_list = sorted(play_list, key=lambda i: get_episode_number(i))
+    #
+    # for i in play_list:
+    #     tools.playList.add(url=i[0], listitem=i[1])
+    #
+    # tools.player().play(tools.playList)
 
-    # This is a nasty workaround for Kodi 18 Skin Widgets
-    import json
-    from resources.lib.gui import tvshowMenus
-
-    actionArgs = json.loads(tools.unquote(actionArgs))
-
-    try:
-        episode = actionArgs['info_dictionary']['episodeInfo']['info']['episode']
-    except:
-        episode = actionArgs['playlist'][0]['number']
-
-    playlist = tvshowMenus.Menus().episodeListBuilder(actionArgs['playlist'], actionArgs['info_dictionary'],
-                                                      smartPlay=True, hide_unaired=True)
-
-    for i in playlist:
-        # Confirm that the episode meta we have received from TVDB are for the correct episodes
-        # If trakt provides the incorrect TVDB ID it's possible to begin play from the incorrect episode
-        params = dict(tools.parse_qsl(i[0].replace('?', '')))
-        actionArgs = json.loads(params.get('actionArgs'))
-        if actionArgs['episodeInfo']['info']['episode'] < episode:
-            continue
-
-        # If the episode is confirmed ok, add it to our playlist.
-        tools.log("ADDING ITEM TO PLAYLIST")
-        tools.playList.add(url=i[0], listitem=i[1])
-
-    tools.player().play(tools.playList)
+    from resources.lib.modules import smartPlay
+    smartPlay.SmartPlay(actionArgs).smart_play_show()
 
 if action == 'premiumizeCleanup':
     from resources.lib.common import maintenance
@@ -575,6 +603,9 @@ if action == 'premiumizeCleanup':
     maintenance.premiumize_transfer_cleanup()
 
 if action == 'test2':
+    from resources.lib.gui import random_movie
+
+    random_movie.Dialog().doModal()
     pass
 
 if action == 'manualProviderUpdate':
@@ -582,12 +613,100 @@ if action == 'manualProviderUpdate':
 
     customProviders.providers().manual_update()
 
-if action == 'movieYears':
-    from resources.lib.gui import movieMenus
-    menus = movieMenus.Menus()
-    menus.moviesYears()
-
 if action == 'clearSearchHistory':
     from resources.lib.modules import database
+
     database.clearSearchHistory()
     tools.showDialog.ok(tools.addonName, 'Search History has been cleared')
+
+if action == 'externalProviderInstall':
+    from resources.lib.modules import customProviders
+
+    confirmation = tools.showDialog.yesno(tools.addonName, tools.lang(40117))
+    if confirmation == 0:
+        sys.exit()
+
+    customProviders.providers().install_package(1, url=url)
+
+if action == 'externalProviderUninstall':
+    from resources.lib.modules import customProviders
+
+    confirmation = tools.showDialog.yesno(tools.addonName, tools.lang(40119) % url)
+    if confirmation == 0:
+        sys.exit()
+
+    customProviders.providers().uninstall_package(package=url, silent=False)
+
+if action == 'showsNetworks':
+    from resources.lib.gui import tvshowMenus
+
+    tvshowMenus.Menus().showsNetworks()
+
+if action == 'showsNetworkShows':
+    from resources.lib.gui import tvshowMenus
+
+    tvshowMenus.Menus().showsNetworkShows(actionArgs, page)
+
+if action == 'movieYears':
+    from resources.lib.gui import movieMenus
+
+    movieMenus.Menus().movieYears()
+
+if action == 'movieYearsMovies':
+    from resources.lib.gui import movieMenus
+
+    movieMenus.Menus().movieYearsMovies(actionArgs, page)
+
+if action == 'syncTraktActivities':
+    from resources.lib.modules.trakt_sync.activities import TraktSyncDatabase
+    TraktSyncDatabase().sync_activities()
+
+if action == 'traktSyncTools':
+    from resources.lib.gui import homeMenu
+    homeMenu.Menus().traktSyncTools()
+
+if action == 'flushTraktActivities':
+    from resources.lib.modules import trakt_sync
+    trakt_sync.TraktSyncDatabase().flush_activities()
+
+if action == 'flushTraktDBMeta':
+    from resources.lib.modules import trakt_sync
+    trakt_sync.TraktSyncDatabase().clear_all_meta()
+
+if action == 'myFiles':
+    from resources.lib.gui import myFiles
+    myFiles.Menus().home()
+
+if action == 'myFilesFolder':
+    from resources.lib.gui import myFiles
+    myFiles.Menus().myFilesFolder(actionArgs)
+
+if action == 'myFilesPlay':
+    from resources.lib.gui import myFiles
+    myFiles.Menus().myFilesPlay(actionArgs)
+
+if action == 'forceTraktSync':
+    from resources.lib.modules import trakt_sync
+    from resources.lib.modules.trakt_sync.activities import TraktSyncDatabase
+    trakt_sync.TraktSyncDatabase().flush_activities()
+    TraktSyncDatabase().sync_activities()
+
+if action == 'rebuildTraktDatabase':
+    from resources.lib.modules.trakt_sync import TraktSyncDatabase
+    TraktSyncDatabase().re_build_database()
+
+if action == 'myUpcomingEpisodes':
+    from resources.lib.gui import tvshowMenus
+    tvshowMenus.Menus().myUpcomingEpisodes()
+
+if action == 'showsByActor':
+    from resources.lib.gui import tvshowMenus
+    tvshowMenus.Menus().showsByActor(actionArgs)
+
+if action == 'movieByActor':
+    from resources.lib.gui import movieMenus
+    movieMenus.Menus().moviesByActor(actionArgs)
+
+if action == 'playFromRandomPoint':
+    from resources.lib.modules import smartPlay
+    smartPlay.SmartPlay(actionArgs).play_from_random_point()

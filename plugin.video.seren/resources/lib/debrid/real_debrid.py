@@ -4,6 +4,7 @@ import json
 import re
 import requests
 import time
+import threading
 
 from resources.lib.common import source_utils
 from resources.lib.common import tools
@@ -25,6 +26,7 @@ class RealDebrid:
         self.OauthTimeout = 0
         self.OauthTimeStep = 0
         self.BaseUrl = "https://api.real-debrid.com/rest/1.0/"
+        self.cache_check_results = {}
 
     def auth_loop(self):
         if tools.progressDialog.iscanceled():
@@ -54,10 +56,10 @@ class RealDebrid:
         url = self.OauthUrl + self.DeviceCodeUrl % url
         response = json.loads(requests.get(url).text)
         tools.copy2clip(response['user_code'])
-        tools.progressDialog.create(tools.lang(32023).encode('utf-8'))
-        tools.progressDialog.update(-1, tools.lang(32024).encode('utf-8') + ' %s' % tools.colorString(
+        tools.progressDialog.create(tools.lang(32023))
+        tools.progressDialog.update(-1, tools.lang(32024) + ' %s' % tools.colorString(
             'https://real-debrid.com/device'),
-                                    tools.lang(32025).encode('utf-8') + ' %s' % tools.colorString(
+                                    tools.lang(32025) + ' %s' % tools.colorString(
                                         response['user_code']),
                                     'This code has been copied to your clipboard')
         self.OauthTimeout = int(response['expires_in'])
@@ -87,7 +89,7 @@ class RealDebrid:
         tools.setSetting('rd.expiry', str(time.time() + int(response['expires_in'])))
         username = self.get_url('user')['username']
         tools.setSetting('rd.username', username)
-        tools.showDialog.ok(tools.addonName, 'Real Debrid ' + tools.lang(32026).encode('utf-8'))
+        tools.showDialog.ok(tools.addonName, 'Real Debrid ' + tools.lang(32026))
         tools.log('Authorised Real Debrid successfully', 'info')
 
     def refreshToken(self):
@@ -164,20 +166,22 @@ class RealDebrid:
         if isinstance(hashList, list):
             cache_result = {}
             hashList = [hashList[x:x+100] for x in range(0, len(hashList), 100)]
-
+            threads = []
             for section in hashList:
-                hashString = ''
-                for i in section:
-                    hashString += '/%s' % i
-
-                response = self.get_url("torrents/instantAvailability" + hashString)
-                response.update(cache_result)
-                cache_result = response
-            return cache_result
+                threads.append(threading.Thread(target=self._check_hash_thread, args=(section,)))
+            for i in threads:
+                i.start()
+            for i in threads:
+                i.join()
+            return self.cache_check_results
         else:
             hashString = "/" + hashList
             return self.get_url("torrents/instantAvailability" + hashString)
 
+    def _check_hash_thread(self, hashes):
+        hashString = '/' + '/'.join(hashes)
+        response = self.get_url("torrents/instantAvailability" + hashString)
+        self.cache_check_results.update(response)
 
     def addMagnet(self, magnet):
         postData = {'magnet': magnet}
@@ -225,23 +229,38 @@ class RealDebrid:
                         fileIDString += ',' + key
 
             torrent = self.addMagnet(magnet)
+
             try:
-                link = self.torrentSelect(torrent['id'], fileIDString[1:])
+                self.torrentSelect(torrent['id'], fileIDString[1:])
                 link = self.torrentInfo(torrent['id'])
-                link = self.unrestrict_link(link['links'][0])
+                selected_files = [i for i in link['files'] if i['selected'] == 1]
+
+                if len(selected_files) == 1:
+                    link_index = 0
+                else:
+                    link_index = 0
+                    index_bytes = 0
+                    for idx, file in enumerate(selected_files):
+                        if file['bytes'] > index_bytes:
+                            link_index = idx
+                link = self.unrestrict_link(link['links'][link_index])
                 if tools.getSetting('rd.autodelete') == 'true':
                     self.deleteTorrent(torrent['id'])
             except:
+                import traceback
+                traceback.print_exc()
                 self.deleteTorrent(torrent['id'])
                 return None
 
             return link
         except:
+            import traceback
+            traceback.print_exc()
             return None
 
     def magnetToLink(self, torrent, args):
         try:
-            if torrent['package'] == 'single':
+            if torrent['package'] == 'single' or 'episodeInfo' not in args:
                 return self.singleMagnetToLink(torrent['magnet'])
 
             hash = str(re.findall(r'btih:(.*?)&', torrent['magnet'])[0].lower())
@@ -249,6 +268,7 @@ class RealDebrid:
             torrent = self.addMagnet(torrent['magnet'])
             episodeStrings, seasonStrings = source_utils.torrentCacheStrings(args)
             key_list = []
+
             for storage_variant in hashCheck[hash]['rd']:
                 file_inside = False
                 key_list = []
@@ -259,14 +279,14 @@ class RealDebrid:
                     if not any(filename.endswith(extension) for extension in
                                source_utils.COMMON_VIDEO_EXTENSIONS):
                         bad_storage = True
-                        continue
+                        break
                     else:
                         key_list.append(key)
-                        if any(source_utils.cleanTitle(episodeString) in source_utils.cleanTitle(filename) for
+                        if any(episodeString in source_utils.cleanTitle(filename) for
                                episodeString in episodeStrings):
                             file_inside = True
 
-                if file_inside is False or bad_storage is True:
+                if not file_inside or bad_storage:
                     continue
                 else:
                     break
@@ -282,10 +302,12 @@ class RealDebrid:
             link = self.torrentInfo(torrent['id'])
 
             file_index = None
+
             for idx, i in enumerate([i for i in link['files'] if i['selected'] == 1]):
                 if any(source_utils.cleanTitle(episodeString) in source_utils.cleanTitle(i['path'].split('/')[-1]) for
                        episodeString in episodeStrings):
                         file_index = idx
+                        break
 
             if file_index is None:
                 self.deleteTorrent(torrent['id'])
@@ -310,9 +332,15 @@ class RealDebrid:
         try:
             host_list = self.get_url('hosts/status')
             valid_hosts = []
-            for domain, status in host_list.iteritems():
-                if status['supported'] == 1 and status['status'] == 'up':
-                    valid_hosts.append(domain)
+            try:
+                for domain, status in host_list.iteritems():
+                    if status['supported'] == 1 and status['status'] == 'up':
+                        valid_hosts.append(domain)
+            except:
+                # Python 3 support
+                for domain, status in host_list.items():
+                    if status['supported'] == 1 and status['status'] == 'up':
+                        valid_hosts.append(domain)
             return valid_hosts
         except:
             import traceback

@@ -24,8 +24,9 @@
 '''
 
 import re
-import requests
 
+import requests
+from openscrapers.modules import cfscrape
 from openscrapers.modules import cleantitle
 from openscrapers.modules import client
 from openscrapers.modules import source_utils
@@ -38,6 +39,7 @@ class source:
         self.domains = ['cmovieshd.bz']
         self.base_link = 'http://w1.cmovieshd.bz'
         self.search_link = '/film/%s/watching.html?ep=0'
+        self.scraper = cfscrape.create_scraper()
 
     def movie(self, imdb, title, localtitle, aliases, year):
         try:
@@ -62,12 +64,8 @@ class source:
             qual = re.compile('class="quality">(.+?)<').findall(r)
 
             for i in qual:
-                if '1080' in i:
-                    quality = '1080p'
-                elif '720' in i:
-                    quality = '720p'
-                else:
-                    quality = 'SD'
+                quality = source_utils.check_direct_url(i)
+
             u = client.parseDOM(r, "div", attrs={"class": "pa-main anime_muti_link"})
 
             for t in u:
@@ -81,11 +79,14 @@ class source:
                             if 'vidcloud' in url:
                                 continue
                             valid, host = source_utils.is_host_valid(url, hostDict)
-                            sources.append({'source': host, 'quality': quality, 'language': 'en', 'url': url, 'direct': False, 'debridonly': False})
+                            sources.append(
+                                {'source': host, 'quality': quality, 'language': 'en', 'url': url, 'direct': False,
+                                 'debridonly': False})
                     if 'vidcloud' in url:
                         continue
                     valid, host = source_utils.is_host_valid(url, hostDict)
-                    sources.append({'source': host, 'quality': quality, 'language': 'en', 'url': url, 'direct': False, 'debridonly': False})
+                    sources.append({'source': host, 'quality': quality, 'language': 'en', 'url': url, 'direct': False,
+                                    'debridonly': False})
                 return sources
         except:
             import traceback
@@ -93,13 +94,4 @@ class source:
             return
 
     def resolve(self, url):
-        return url
-
-    def unit_test(self, test_type, hosts):
-
-        if test_type == 'movie':
-           url = self.movie('', 'Holiday', '', [], '2018')
-           url = self.sources(url, hosts, [])
-        else:
-            raise Exception("No Episode Calls Available")
         return url

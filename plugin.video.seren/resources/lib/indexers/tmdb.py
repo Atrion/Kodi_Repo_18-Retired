@@ -37,7 +37,7 @@ class TMDBAPI:
             except requests.exceptions.SSLError:
                 response = requests.get(url, verify=False)
         except requests.exceptions.ConnectionError:
-            tools.showDialog.ok(tools.addonName, tools.lang(32028).encode('utf-8'))
+            tools.showDialog.ok(tools.addonName, tools.lang(32028))
             return
 
         if '200' in str(response):
@@ -63,7 +63,6 @@ class TMDBAPI:
             details = self.get_request(url)
 
             if details == None:
-                tools.log('ERROR TMDB FAILED FOR SEASON ID ' + str(seasonObject['tmdb']), 'error')
                 return None
             try:
                 currentDate = datetime.today().date()
@@ -85,9 +84,15 @@ class TMDBAPI:
                     item['info']['plot'] = item['info']['plotoutline'] = details.get('overview', '')
             except:pass
             try:item['info']['aired'] = details.get('air_date', '')
-            except:pass
+            except:
+                import traceback
+                traceback.print_exc()
+                pass
             try:item['info']['premiered'] = details.get('air_date', '')
-            except:pass
+            except:
+                import traceback
+                traceback.print_exc()
+                pass
             try:item['info']['year'] = int(details.get('air_date','0000')[:4])
             except:pass
             try:item['info']['sortseason'] = str(details.get('season_number', ''))
@@ -138,8 +143,8 @@ class TMDBAPI:
                 fanart_thread.run()
 
             details = self.get_request(url)
+
             if details == None:
-                tools.log('ERROR TMDB FAILED FOR MOVIEID ' + str(trakt_object['ids']['tmdb']), 'error')
                 return None
 
             item = {'info': None, 'art': None}
@@ -178,7 +183,7 @@ class TMDBAPI:
                 mpaa = details.get('release_dates')['results']
                 mpaa = [i for i in mpaa if i['iso_3166_1'] == 'US']
                 mpaa = mpaa[0].get('release_dates')[0].get('certification')
-                info['mpaa'] = str(mpaa).encode('utf-8')
+                info['mpaa'] = str(mpaa)
             except:
                 pass
 
@@ -203,10 +208,10 @@ class TMDBAPI:
             try:info['tagline'] = details.get('tagline')
             except:pass
 
-            try:info['aired'] = details.get('first_air_date', '')
+            try:info['aired'] = details.get('release_date', '')
             except:pass
 
-            try:info['premiered'] = details.get('first_air_date', '')
+            try:info['premiered'] = details.get('release_date', '')
             except:pass
 
             try:info['plot'] = details.get('overview')
@@ -220,6 +225,9 @@ class TMDBAPI:
 
             try:info['castandrole'] = [(i['name'],i['character']) for i in details['credits']['cast']]
             except:pass
+
+            try:info['aliases'] = [i['title'] for i in details['alternative_titles']['titles']]
+            except: info['aliases'] = []
 
             info['mediatype'] = 'movie'
 
@@ -243,6 +251,8 @@ class TMDBAPI:
             return item
 
         except:
+            import traceback
+            traceback.print_exc()
             return None
 
     def showToListItem(self, traktItem):
@@ -295,7 +305,7 @@ class TMDBAPI:
             try:info['trailer'] = tools.youtube_url % [i for i in details['videos']['results'] if i['site'] == 'YouTube'][0]['key']
             except:pass
 
-            try:info['genre'] = [str(i['name']) for i in details.get('genres', [])]
+            try:info['genre'] = [str(i['name']).title() for i in details.get('genres', [])]
             except:pass
 
             try:info['duration'] = int(details.get('episode_run_time', '')[0]) * 60
@@ -339,7 +349,7 @@ class TMDBAPI:
             try:info['mpaa'] = [i['rating'] for i in details['content_ratings']['results'] if i['iso_3166_1'] == 'US'][0]
             except:pass
 
-            try:info['seasonCount'] = details.get('number_of_seasons', '')
+            try:info['season_count'] = details.get('number_of_seasons', '')
             except:return None
 
             try:info['tag'] = [i['name'] for i in details['keywords']['results']]

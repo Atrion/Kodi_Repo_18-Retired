@@ -8,7 +8,6 @@ from resources.lib.gui import windows
 from resources.lib.indexers.trakt import TraktAPI
 from resources.lib.modules import database
 
-
 class SmartPlay:
     def __init__(self, info_dictionary):
         try:
@@ -16,72 +15,62 @@ class SmartPlay:
         except:
             self.info_dictionary = info_dictionary
 
-        if 'episodeInfo' not in info_dictionary:
-            self.show_trakt_id = self.info_dictionary['ids']['trakt']
-            if tools.getSetting('trakt.auth') != '':
-                self.user_history = TraktAPI().json_response('sync/history/shows/%s' % self.show_trakt_id)
-            self.poster = self.info_dictionary['art'].get('fanart', '')
-        else:
+        if type(self.info_dictionary) is not dict:
+            raise Exception
+
+        try:
             self.poster = self.info_dictionary['showInfo']['art'].get('fanart', '')
             self.show_trakt_id = self.info_dictionary['showInfo']['ids']['trakt']
+        except:
+            self.poster = self.info_dictionary['art'].get('fanart', '')
+            self.show_trakt_id = self.info_dictionary['ids']['trakt']
 
-        self.show_season_info = database.get(TraktAPI().json_response, 12,
-                                             'shows/%s/seasons?extended=full' % self.show_trakt_id)
         self.window = None
+
+    def get_season_info(self):
+        return database.get(TraktAPI().json_response, 12, 'shows/%s/seasons' % self.show_trakt_id)
 
     def smart_play_show(self, append_playlist=False):
 
         self.window = windows.smart_play_background()
-
         self.window.setBackground(self.poster)
+        self.window.setText(tools.lang(32094))
 
-        self.window.setText(tools.lang(32094).encode('utf-8'))
         if not append_playlist:
             self.window.show()
+
         self.window.setProgress(0)
         self.window.setProgress(40)
-        self.window.setText(tools.lang(32095).encode('utf-8'))
+        self.window.setText(tools.lang(32095))
 
         if not append_playlist:
             tools.playList.clear()
 
         if 'episodeInfo' not in self.info_dictionary:
             if tools.getSetting('trakt.auth') == '':
-                tools.showDialog.ok(tools.addonName, tools.lang(32093).encode('utf-8'))
+                tools.showDialog.ok(tools.addonName, tools.lang(32093))
                 return
+            else:
+                self.user_history = TraktAPI().json_response('sync/history/shows/%s' % self.show_trakt_id)
+
             season, episode = self.get_resume_episode()
 
             if self.final_episode_check(season, episode) is True:
                 season = 1
                 episode = 1
 
-            season_object = TraktAPI().json_response(
-                'shows/%s/seasons?extended=full' % self.info_dictionary['ids']['trakt'])
-            season_object = [x for x in season_object if x['number'] == season]
-            self.info_dictionary = tvshowMenus.Menus().seasonListBuilder(season_object,
-                                                                         self.info_dictionary,
-                                                                         smartPlay=True)
-            self.info_dictionary = json.loads(tools.unquote(self.info_dictionary))
         else:
             season = self.info_dictionary['episodeInfo']['info']['season']
             episode = self.info_dictionary['episodeInfo']['info']['episode']
 
-        self.window.setText(tools.lang(32096).encode('utf-8'))
+        self.window.setText(tools.lang(32096))
         self.window.setProgress(60)
 
-        episode_list = database.get(TraktAPI().json_response, 12,
-                                    'shows/%s/seasons/%s?extended=full' % (self.show_trakt_id, str(season)))
-
-        playlist = []
-
-        for i in episode_list:
-            if i['number'] < episode:
-                continue
-            playlist.append(i)
-
         if append_playlist:
-            tools.log("STARTING PLAYLIST GENERATION")
-            playlist = tvshowMenus.Menus().episodeListBuilder(playlist, self.info_dictionary, smartPlay=True)
+            # Add next seasons episodes to the currently playing playlist and then finish up
+
+            playlist = tvshowMenus.Menus().episodeListBuilder(self.show_trakt_id, season,
+                                                              hide_unaired=True, smartPlay=True)
             for i in playlist:
                 # Confirm that the episode meta we have received from TVDB are for the correct episodes
                 # If trakt provides the incorrect TVDB ID it's possible to begin play from the incorrect episode
@@ -91,40 +80,36 @@ class SmartPlay:
                     continue
 
                 # If the episode is confirmed ok, add it to our playlist.
-                tools.log("ADDING ITEM TO PLAYLIST")
-                tools.playList.add(url=i[0], listitem=i[1])
+                if tvshowMenus.Menus().is_aired(actionArgs['episodeInfo']['info']):
+                    tools.playList.add(url=i[0], listitem=i[1])
             return
 
-        self.window.setText(tools.lang(32097).encode('utf-8'))
+        season_episodes = tvshowMenus.Menus().episodeListBuilder(self.show_trakt_id, season, smartPlay=True)
+
+        self.window.setText(tools.lang(32097))
         self.window.setProgress(80)
 
-        actionArgs = {}
-        actionArgs['playlist'] = playlist
-        actionArgs['info_dictionary'] = self.info_dictionary
-        actionArgs = tools.quote(json.dumps(actionArgs))
+        playlist = []
 
-        # Begin nasty Kodi 18 Skin workaround
+        for ep in season_episodes:
+            path_arguments = dict(tools.parse_qsl(ep[0].replace('?', '')))
+            episode_args = json.loads(tools.unquote(path_arguments['actionArgs']))
+            ep_no = int(episode_args['episodeInfo']['info']['episode'])
 
-        tools.execute('RunPlugin(plugin://plugin.video.%s?action=buildPlaylist&actionArgs=%s)' %
-                      (tools.addonName.lower(), actionArgs))
+            if ep_no >= episode and tvshowMenus.Menus().is_aired(episode_args['episodeInfo']['info']):
+                playlist.append(ep)
+
+        self.window.setText('Starting Playback')
+        self.window.setProgress(100)
+
+        for i in playlist:
+            tools.playList.add(url=i[0], listitem=i[1])
+
+        tools.log('Begining play from Season %s Episode %s' % (season, episode), 'info')
 
         self.window.close()
 
-        # The below code has been commented out due to it breaking on Kodi 18 Widgets a workaround has been implemented
-        # above.
-        #
-        # playlist = tvshowMenus.Menus().episodeListBuilder(playlist, self.info_dictionary, smartPlay=True)
-        # self.window.setText('Starting Playback')
-        # self.window.setProgress(100)
-        #
-        # for i in playlist:
-        #     tools.playList.add(url=i[0], listitem=i[1])
-        #
-        # tools.log('Begining play from Season %s Episode %s' % (season, episode), 'info')
-        #
-        # self.window.close()
-        #
-        # tools.player().play(tools.playList)
+        tools.player().play(tools.playList)
 
     def get_resume_episode(self):
 
@@ -136,7 +121,7 @@ class SmartPlay:
                 return season_number, episode_number
             else:
                 episode_number += 1
-            relevant_season_info = [i for i in self.show_season_info if i['number'] == season_number][0]
+            relevant_season_info = [i for i in self.get_season_info() if i['number'] == season_number][0]
             if episode_number >= relevant_season_info['episode_count']:
                 season_number += 1
                 episode_number = 1
@@ -146,7 +131,7 @@ class SmartPlay:
 
     def final_episode_check(self, season, episode):
 
-        last_aired = TraktAPI().json_response('shows/%s/last_episode?extended=full' % self.show_trakt_id)
+        last_aired = TraktAPI().json_response('shows/%s/last_episode' % self.show_trakt_id)
         if str(season) == str(last_aired['season']):
             if str(episode) == str(last_aired['number']):
                 return True
@@ -155,9 +140,10 @@ class SmartPlay:
     def append_next_season(self):
         season = self.info_dictionary['episodeInfo']['info']['season']
         episode = self.info_dictionary['episodeInfo']['info']['episode']
-        current_season_info = [i for i in self.show_season_info if season == i['number']][0]
+        season_info = self.get_season_info()
+        current_season_info = [i for i in season_info if season == i['number']][0]
         if episode == current_season_info['episode_count']:
-            if len([i for i in self.show_season_info if i['number'] == season + 1]) == 0:
+            if len([i for i in season_info if i['number'] == season + 1]) == 0:
                 return False
             self.info_dictionary['episodeInfo']['info']['episode'] = 1
             self.info_dictionary['episodeInfo']['info']['season'] += 1
@@ -186,10 +172,8 @@ class SmartPlay:
         episode = info['episodeInfo']['info']['episode']
         season = info['episodeInfo']['info']['season']
         show_id = info['showInfo']['ids']['trakt']
-        trakt_object = TraktAPI().json_response(
-            'shows/%s/seasons/%s/episodes/%s?extended=full' % (show_id, season, episode))
 
-        list_item = tvshowMenus.Menus().episodeListBuilder([trakt_object], info, smartPlay=True)[0]
+        list_item = tvshowMenus.Menus().episodeListBuilder(show_id, season, hide_unaired=True, smartPlay=True)
         url = list_item[0] + "&packSelect=true"
         tools.playList.add(url=url, listitem=list_item[1])
         tools.player().play(tools.playList)
@@ -200,23 +184,25 @@ class SmartPlay:
         self.window.setBackground(self.poster)
         self.window.setProgress(0)
         self.window.show()
-        self.window.setText(tools.lang(32096).encode('utf-8'))
+        self.window.setText(tools.lang(32096))
         tools.playList.clear()
-        showInfo = {}
-        showInfo['showInfo'] = self.info_dictionary
+
         season_list = TraktAPI().json_response('shows/%s/seasons?extended=episodes' % self.show_trakt_id)
         if season_list[0]['number'] == 0:
             season_list.pop(0)
         self.window.setProgress(50)
-        self.window.setText(tools.lang(32097).encode('utf-8'))
+        self.window.setText(tools.lang(32097))
         episode_list = [episode for season in season_list for episode in season['episodes']]
         random.shuffle(episode_list)
         episode_list = episode_list[:40]
+        shuffle_list = []
+        for episode in episode_list:
+            shuffle_list.append({'episode': episode, 'show': {'ids': {'trakt': self.show_trakt_id}}})
 
         # mill the episodes
-        playlist = tvshowMenus.Menus().episodeListBuilder(episode_list, showInfo, smartPlay=True)
+        playlist = tvshowMenus.Menus().mixedEpisodeBuilder(shuffle_list, sort=False, smartPlay=True)
         self.window.setProgress(100)
-        self.window.setText(tools.lang(32098).encode('utf-8'))
+        self.window.setText(tools.lang(32098))
         for episode in playlist:
             if episode is not None:
                 tools.playList.add(url=episode[0], listitem=episode[1])
@@ -224,3 +210,29 @@ class SmartPlay:
         self.window.close()
         tools.playList.shuffle()
         tools.player().play(tools.playList)
+
+    def play_from_random_point(self):
+
+        import random
+        random_season = random.randint(1, int(self.info_dictionary['showInfo']['info']['season_count']))
+
+        playlist = tvshowMenus.Menus().episodeListBuilder(self.show_trakt_id, random_season, smartPlay=True,
+                                                          hide_unaired=True)
+
+        random_episode = random.randint(1, int(len(playlist)))
+
+        playlist = playlist[random_episode:]
+
+        self.window.setProgress(100)
+        self.window.setText(tools.lang(32098))
+        for episode in playlist:
+            if episode is not None:
+                tools.playList.add(url=episode[0], listitem=episode[1])
+        self.window.setProgress(100)
+        self.window.close()
+        tools.player().play(tools.playList)
+
+    def workaround(self):
+        actionArgs = tools.quote(json.dumps(self.info_dictionary, sort_keys=True))
+        tools.execute('RunPlugin(plugin://plugin.video.%s?action=buildPlaylistWorkaround&actionArgs=%s)' %
+                      (tools.addonName.lower(), actionArgs))

@@ -9,12 +9,12 @@
 #  ..#######.##.......#######.##....#..######..######.##.....#.##.....#.##.......#######.##.....#..######.
 
 #######################################################################
- # ----------------------------------------------------------------------------
- # "THE BEER-WARE LICENSE" (Revision 42):
- # @Daddy_Blamo wrote this file.  As long as you retain this notice you
- # can do whatever you want with this stuff. If we meet some day, and you think
- # this stuff is worth it, you can buy me a beer in return. - Muad'Dib
- # ----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
+# "THE BEER-WARE LICENSE" (Revision 42):
+# @Daddy_Blamo wrote this file.  As long as you retain this notice you
+# can do whatever you want with this stuff. If we meet some day, and you think
+# this stuff is worth it, you can buy me a beer in return. - Muad'Dib
+# ----------------------------------------------------------------------------
 #######################################################################
 
 # Addon Name: Placenta
@@ -25,8 +25,8 @@ import re
 import urllib
 import urlparse
 
+from openscrapers.modules import cfscrape
 from openscrapers.modules import cleantitle
-from openscrapers.modules import client
 from openscrapers.modules import dom_parser
 from openscrapers.modules import source_utils
 
@@ -38,11 +38,13 @@ class source:
         self.domains = ['cinenator.com']
         self.base_link = 'http://www.cinenator.com'
         self.search_link = '/?s=%s'
+        self.scraper = cfscrape.create_scraper()
 
     def movie(self, imdb, title, localtitle, aliases, year):
         try:
             url = self.__search([localtitle] + source_utils.aliases_to_array(aliases), year)
-            if not url and title != localtitle: url = self.__search([title] + source_utils.aliases_to_array(aliases), year)
+            if not url and title != localtitle: url = self.__search([title] + source_utils.aliases_to_array(aliases),
+                                                                    year)
             return url
         except:
             return
@@ -50,7 +52,8 @@ class source:
     def tvshow(self, imdb, tvdb, tvshowtitle, localtvshowtitle, aliases, year):
         try:
             url = self.__search([localtvshowtitle] + source_utils.aliases_to_array(aliases), year)
-            if not url and tvshowtitle != localtvshowtitle: url = self.__search([tvshowtitle] + source_utils.aliases_to_array(aliases), year)
+            if not url and tvshowtitle != localtvshowtitle: url = self.__search(
+                [tvshowtitle] + source_utils.aliases_to_array(aliases), year)
             return url
         except:
             return
@@ -61,14 +64,15 @@ class source:
                 return
 
             url = urlparse.urljoin(self.base_link, url)
-            url = client.request(url, output='geturl')
+            url = self.scraper.get(url).url
 
             if season == 1 and episode == 1:
                 season = episode = ''
 
-            r = client.request(url)
+            r = self.scraper.get(url).content
             r = dom_parser.parse_dom(r, 'ul', attrs={'class': 'episodios'})
-            r = dom_parser.parse_dom(r, 'a', attrs={'href': re.compile('[^\'"]*%s' % ('-%sx%s' % (season, episode)))})[0].attrs['href']
+            r = dom_parser.parse_dom(r, 'a', attrs={'href': re.compile('[^\'"]*%s' % ('-%sx%s' % (season, episode)))})[
+                0].attrs['href']
 
             return source_utils.strip_domain(r)
         except:
@@ -83,7 +87,7 @@ class source:
 
             url = urlparse.urljoin(self.base_link, url)
 
-            r = client.request(url)
+            r = self.scraper.get(url).content
 
             rel = dom_parser.parse_dom(r, 'div', attrs={'id': 'info'})
             rel = dom_parser.parse_dom(rel, 'div', attrs={'itemprop': 'description'})
@@ -107,7 +111,9 @@ class source:
                 valid, hoster = source_utils.is_host_valid(hoster, hostDict)
                 if not valid: continue
 
-                sources.append({'source': hoster, 'quality': quality, 'language': 'de', 'url': link, 'info': info, 'direct': False, 'debridonly': False, 'checkquality': True})
+                sources.append(
+                    {'source': hoster, 'quality': quality, 'language': 'de', 'url': link, 'info': info, 'direct': False,
+                     'debridonly': False, 'checkquality': True})
 
             return sources
         except:
@@ -116,7 +122,7 @@ class source:
     def resolve(self, url):
         try:
             if self.base_link in url:
-                r = client.request(url)
+                r = self.scraper.get(url).content
                 r = dom_parser.parse_dom(r, 'div', attrs={'class': 'cupe'})
                 r = dom_parser.parse_dom(r, 'div', attrs={'class': 'reloading'})
                 url = dom_parser.parse_dom(r, 'a', req='href')[0].attrs['href']
@@ -133,10 +139,11 @@ class source:
             t = [cleantitle.get(i) for i in set(titles) if i]
             y = ['%s' % str(year), '%s' % str(int(year) + 1), '%s' % str(int(year) - 1), '0']
 
-            r = client.request(query)
+            r = self.scraper.get(query).content
 
             r = dom_parser.parse_dom(r, 'article')
-            r = [(dom_parser.parse_dom(i, 'div', attrs={'class': 'title'}), dom_parser.parse_dom(i, 'span', attrs={'class': 'year'})) for i in r]
+            r = [(dom_parser.parse_dom(i, 'div', attrs={'class': 'title'}),
+                  dom_parser.parse_dom(i, 'span', attrs={'class': 'year'})) for i in r]
             r = [(dom_parser.parse_dom(i[0][0], 'a', req='href'), i[1][0].content) for i in r if i[0] and i[1]]
             r = [(i[0][0].attrs['href'], i[0][0].content, i[1]) for i in r if i[0]]
             r = sorted(r, key=lambda i: int(i[2]), reverse=True)  # with year > no year

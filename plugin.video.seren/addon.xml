@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.video.seren" version="0.1.35" name="Seren" provider-name="Nixgates">
+<addon id="plugin.video.seren" version="0.2.35" name="Seren" provider-name="Nixgates">
 	<requires>
 		<import addon="xbmc.python" version="2.19.0" />
 		<import addon="script.module.requests" version="2.19.1" />
@@ -7,6 +7,7 @@
 		<import addon="script.module.metahandler" version="1.0.0" />
 		<import addon="plugin.video.youtube" version="6.2.0"/>
 		<import addon="script.module.addon.signals" version="0.0.1"/>
+		<import addon="script.module.dateutil" version="2.7.3"/>
 	</requires>
 	<extension point="xbmc.python.pluginsource" library="seren.py">
 		<provides>video</provides>
@@ -27,91 +28,60 @@
 			<fanart>temp-fanart.png</fanart>
 		</assets>
 		<news>
-Changelog 0.1.35
-Fixed scrape error caused by missing artwork
-Sources that are not compatible are now hidden from users
-Fixed landscape image issue for episode items
+Changelog 0.2.35:
+Seren now utilizes Kodi Repository dateutil package
 
-Changelog 0.1.34
-Fanart now also supplies landscape images
-Workaround put in place for issue where trakt would supply multiples of a show season
-Fixed issue where episodes would show as None if not released
-Fixed Most Collected sorting by title
+Changelog 0.2.34:
+Cleaned up logging
 
-Changelog 0.1.33
-Fixed RD resolving errors
-Fanart.tv module now only applies clear art and clear logo to movies and
-Fixed Source Select not selecting files
+Changelog 0.2.33:
+Premiumize Cloud Inspection now includes size for identified items
+Cloud Inspection threads now gracefully exit if pre-emptive termination limit is reached
+Increased file identification
+Fixed delay with getsources window showing
 
-Changelog 0.1.32
-Decreased TVDB semaphore limit
-Fixed Trakt list sorting with titles that start with the word 'The'
-Added support for RealDebrid API changes
-Began work on console mode
-Added multiple meta labels for movie items
-Added possible workaround for UTC to local timezone conversion
-Movie filter now supports years surrounded in []
-Added Fanart Support
-Fixed Search history order
-Limited Next Up show amount to 200 most recently watched titles
-Fixed error caused from Auto Episode Resume and Kodi 18 widget workaround
-Added better resolve support for movies in premiumize module
-Added workaround for long cache check urls with Real Debrid
-Fixed issue were items were incorrectly marked as watched with Trakt
-Re-designed Source Select window
-Added support for package developers to use github archives to push updates
-Added IMDB variable to torernt provider modules (Package devs please update to include this new variable, as support for modules without it will be dropped in the near future)
-Added Ratings for movie items
+Changelog 0.2.32:
+Fixed is_aired format error
+Fixed issue with hide SD removing cloud files
 
-Changelog 0.1.31
-Added Sort and Filter for low quality items
-Re-order Settings Menu
+Changelog 0.2.31:
+Fixed issue with un-aired episodes being added to playlist after smartplay speedup
+Seren now confirms TMDB year information with IMDB prior to scraping
+Fixed issues with Seren identifying sources from the users premiumize cloud
 
-Changelog 0.1.30
-Fixed Finish Watching sort order
-Increased Hoster Support
-Added Search History option
-Premiumize module now uses direct download to resolve torrent files
+Changelog 0.2.30:
+Fixed dictionary key issue for show items in smartPlay modules created with new workaround
 
-Changelog 0.1.29
-Reverted changes to mixed episode lists
-Added option to disable title overwrites for episode lists
+Changelog 0.2.29:
+Added removal of duplicate space characters to clean title function
+Added support for single episode folders to Premiumize cloud inspection
 
-Changelog 0.1.28
-Added try except in zfile module to handle if file is already in byte form
+Changelog 0.2.28:
+Fixed issue with addonName variable change
 
-Changelog 0.1.27
-Added delay to setViewType call
-Added setting to disable setting viewTypes with Seren
-Removed idle, closeAllDialogs, added closeOkDialog, added closeBusyDialog
-Removed busy dialog stalling after failure to find sources
+Changelog 0.2.27:
+Adjusted RD cache inspection to allow multiple video files within a single movie item
+Adjust RD movie resolving to pull largest file out of torrent item
+Seren now polls Kodi for supported video containers instead of hardcoding
+Fixed key error when marking episode as watched in local database
+Added settings cache dictionary to reduce Kodi's logging of "trying to load setting definitions from old format..."
+Cleaned up addon logging
 
-Changelog 0.1.26
-Increased keep-alive ticks to prevent pre-scrape occuring to early
-Reduced busy dialog occurance on failure to scrape
-Fixed provider install issue with zipfiles
+Changelog 0.2.26:
+Fix Auto Episode Resume
 
-Changelog 0.1.25
-Fixed setSetting argument naming (Fixes pre-emptive scraping)
-Trakt lists sorting now ignores 'The '
-Removed title appends to follow more closely to Kodi standards, another method of showing play percentage must be met
-Fixed Trakt dates for episode items
-Added Studio to metadata
-Seren now appends next season to current playlist during playback instead of after
-Removed references to now defunct OMNIConnect Addon
-Added Re-scrape cm item to episode items
-Fixed and optimised list pagination
-Trakt Lists now use user slugs to support users with periods in their username
-Added ability to direct search through plugin url
-Confirmed Trakt list sorting for all types except excluded (popularity, percentage, my rating)
-Added support to fail resolve if file ends with .rar
-Release titles are now deaccented and encoded with utf-8 to prevent unicode errors
-Fixed Ghost providers occuring if a provider was no longer available in a updated version of a provider package.
-Fixed TVDB module creating an artwork URL if no artwork is available
-Added token refresh lock to the TVDB module to stop instances of the class spawning mass refresh requests
-Massively reduced chance Kodi will drop Seren's settings
-Fixed Real Debrid post request making a get request after token refresh
-Custom Provider module now uses Zfile module to accomodate zipfile module bug on Android devices
+Changelog 0.2.25:
+Movie years now uses the popular API endpoint
+Added option to enable Debrid Cloud inspection during scrape
+Added Upcoming Episodes to My Shows menu
+Added By Actor search to Discover Show/Movie menus
+"Hide Un-Aired Episodes" renamed to "Hide Un-Aired Items"
+"Hide Un-Aired Items" setting now applies to movie/show/season menus as well
+Marking show/season item as watched/collected now triggers a background re-sync of relevant items
+Increased resolving restrictions
+Playstyle for Episodes and Movies are now seperate
+Fixed issue with Premiumize Torrent File Picker
+Speed Increase for playlist building
 
 		</news>
 	</extension>

@@ -1,15 +1,19 @@
+import ast
 import logging
+import operator as op
+import os
 import random
 import re
-import ast
-import operator as op
-
-import requests
-
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
-from requests.sessions import Session
+import ssl
+from collections import OrderedDict
 from copy import deepcopy
 from time import sleep
+
+import requests
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
+from requests.packages.urllib3.util.ssl_ import create_urllib3_context
+from requests.sessions import Session
 
 try:
     from urlparse import urlparse
@@ -25,18 +29,21 @@ operators = {ast.Add: op.add, ast.Sub: op.sub, ast.Mult: op.mul,
              ast.Div: op.truediv, ast.Pow: op.pow, ast.BitXor: op.xor,
              ast.USub: op.neg}
 
+
 def eval_expr(expr):
     return eval_(ast.parse(expr, mode='eval').body)
 
+
 def eval_(node):
-    if isinstance(node, ast.Num): # <number>
+    if isinstance(node, ast.Num):  # <number>
         return node.n
-    elif isinstance(node, ast.BinOp): # <left> <operator> <right>
+    elif isinstance(node, ast.BinOp):  # <left> <operator> <right>
         return operators[type(node.op)](eval_(node.left), eval_(node.right))
-    elif isinstance(node, ast.UnaryOp): # <operator> <operand> e.g., -1
+    elif isinstance(node, ast.UnaryOp):  # <operator> <operand> e.g., -1
         return operators[type(node.op)](eval_(node.operand))
     else:
         raise TypeError(node)
+
 
 DEFAULT_USER_AGENTS = [
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36",
@@ -50,32 +57,103 @@ DEFAULT_USER_AGENTS = [
 
 DEFAULT_USER_AGENT = random.choice(DEFAULT_USER_AGENTS)
 
-BUG_REPORT = ("Cloudflare may have changed their technique, or there may be a bug in the script.\n\nPlease read https://github.com/Anorov/cloudflare-scrape#updates, then file a bug report at https://github.com/Anorov/cloudflare-scrape/issues.")
+BUG_REPORT = (
+    "Cloudflare may have changed their technique, or there may be a bug in the script.\n\nPlease read https://github.com/Anorov/cloudflare-scrape#updates, then file a bug report at https://github.com/Anorov/cloudflare-scrape/issues.")
+
+
+class CipherSuiteAdapter(HTTPAdapter):
+    def __init__(self, cipherSuite=None, **kwargs):
+        self.cipherSuite = cipherSuite
+        super(CipherSuiteAdapter, self).__init__(**kwargs)
+
+    def init_poolmanager(self, *args, **kwargs):
+        kwargs['ssl_context'] = create_urllib3_context(ciphers=self.cipherSuite)
+        return super(CipherSuiteAdapter, self).init_poolmanager(*args, **kwargs)
+
+    def proxy_manager_for(self, *args, **kwargs):
+        kwargs['ssl_context'] = create_urllib3_context(ciphers=self.cipherSuite)
+        return super(CipherSuiteAdapter, self).proxy_manager_for(*args, **kwargs)
+
 
 class CloudflareScraper(Session):
     def __init__(self, *args, **kwargs):
         super(CloudflareScraper, self).__init__(*args, **kwargs)
         self.tries = 0
+        self.prev_resp = None
+        self.cipher_suite = None
 
         if "requests" in self.headers["User-Agent"]:
             # Spoof Firefox on Linux if no custom User-Agent has been set
             self.headers["User-Agent"] = DEFAULT_USER_AGENT
 
+    def is_cloudflare_on(self, response, allow_empty_body=False):
+        is_cloudflare_response = (response.status_code in [429, 503]
+                                  and response.headers.get("Server", "").startswith("cloudflare"))
+
+        return (is_cloudflare_response and (allow_empty_body or
+                                            (b"jschl_vc" in response.content and b"jschl_answer" in response.content)))
+
+    def load_cipher_suite(self):
+        if self.cipher_suite:
+            return self.cipher_suite
+
+        ciphers = [
+            'GREASE_3A', 'GREASE_6A', 'AES128-GCM-SHA256', 'AES256-GCM-SHA256', 'AES256-GCM-SHA384',
+            'CHACHA20-POLY1305-SHA256',
+            'ECDHE-ECDSA-AES128-GCM-SHA256', 'ECDHE-RSA-AES128-GCM-SHA256', 'ECDHE-ECDSA-AES256-GCM-SHA384',
+            'ECDHE-RSA-AES256-GCM-SHA384', 'ECDHE-ECDSA-CHACHA20-POLY1305-SHA256', 'ECDHE-RSA-CHACHA20-POLY1305-SHA256',
+            'ECDHE-RSA-AES128-CBC-SHA', 'ECDHE-RSA-AES256-CBC-SHA', 'RSA-AES128-GCM-SHA256', 'RSA-AES256-GCM-SHA384',
+            'ECDHE-RSA-AES128-GCM-SHA256', 'RSA-AES256-SHA', '3DES-EDE-CBC'
+        ]
+
+        self.cipher_suite = ''
+
+        ctx = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+        ctx.set_ciphers('ALL')
+
+        for cipher in ciphers:
+            try:
+                ctx.set_ciphers(cipher)
+                self.cipher_suite = '{}:{}'.format(self.cipher_suite, cipher).rstrip(':')
+            except ssl.SSLError:
+                pass
+
+        return self.cipher_suite
+
     def request(self, method, url, *args, **kwargs):
-        resp = super(CloudflareScraper, self).request(method, url, *args, **kwargs)
+        self.headers = (
+            OrderedDict(
+                [
+                    ('User-Agent', self.headers['User-Agent']),
+                    ('Accept', 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'),
+                    ('Accept-Language', 'en-US,en;q=0.5'),
+                    ('Accept-Encoding', 'gzip, deflate'),
+                    ('Connection', 'close'),
+                    ('Upgrade-Insecure-Requests', '1')
+                ]
+            )
+        )
 
-        if 'why_captcha' in resp.text:
-            raise Exception('Cloudflare returned captcha!')
+        instance = super(CloudflareScraper, self)
+        instance.mount('https://', CipherSuiteAdapter(self.load_cipher_suite()))
+        resp = instance.request(method, url, *args, **kwargs)
 
-        if 'cf-error-code' in resp.text:
-            raise Exception('Cloudflare returned error!')
+        if b'why_captcha' in resp.content or b'/cdn-cgi/l/chk_captcha' in resp.content:
+            exception_message = 'Cloudflare returned captcha!'
+            if self.prev_resp is not None and os.getenv('CI') == 'true':
+                exception_message += '\n' + self.prev_resp.text
+            raise Exception(exception_message)
+
+        self.prev_resp = resp
 
         # Check if Cloudflare anti-bot is on
-        if (resp.headers.get("Server", "").startswith("cloudflare")
-            and b"jschl_vc" in resp.content
-            and b"jschl_answer" in resp.content):
+        if self.is_cloudflare_on(resp):
             if self.tries >= 3:
-                raise Exception('Failed to solve Cloudflare challenge!')
+                exception_message = 'Failed to solve Cloudflare challenge!'
+                if os.getenv('CI') == 'true':
+                    exception_message += '\n' + resp.text
+                raise Exception(exception_message)
+
             return self.solve_cf_challenge(resp, **kwargs)
 
         # Otherwise, no Cloudflare anti-bot detected
@@ -90,36 +168,30 @@ class CloudflareScraper(Session):
         body = resp.text
         parsed_url = urlparse(resp.url)
         domain = parsed_url.netloc
-        submit_url = "%s://%s/cdn-cgi/l/chk_jschl" % (parsed_url.scheme, domain)
-
-        self.domain = domain
+        submit_url = '{}://{}/cdn-cgi/l/chk_jschl'.format(parsed_url.scheme, domain)
 
         cloudflare_kwargs = deepcopy(original_kwargs)
-        params = cloudflare_kwargs.setdefault("params", {})
-        headers = cloudflare_kwargs.setdefault("headers", {})
-        headers["Referer"] = resp.url
+        headers = cloudflare_kwargs.setdefault('headers', {'Referer': resp.url})
 
         try:
-            params["jschl_vc"] = re.search(r'name="jschl_vc" value="(\w+)"', body).group(1)
-            params["pass"] = re.search(r'name="pass" value="(.+?)"', body).group(1)
-            if 'name="s"' in body:
-                params["s"] = re.search(r'name="s"\svalue="(?P<s_value>[^"]+)', body).group('s_value')
-            answer = self.get_answer(body)
+            params = cloudflare_kwargs.setdefault(
+                'params', OrderedDict(
+                    [
+                        ('s', re.search(r'name="s"\svalue="(?P<s_value>[^"]+)', body).group('s_value')),
+                        ('jschl_vc', re.search(r'name="jschl_vc" value="(\w+)"', body).group(1)),
+                        ('pass', re.search(r'name="pass" value="(.+?)"', body).group(1)),
+                    ]
+                )
+            )
+
+            answer = self.get_answer(body, domain)
 
         except Exception as e:
-            # Something is wrong with the page.
-            # This may indicate Cloudflare has changed their anti-bot
-            # technique. If you see this and are running the latest version,
-            # please open a GitHub issue so I can update the code accordingly.
-            logging.error("[!] %s Unable to parse Cloudflare anti-bots page. "
-                          "Try upgrading cloudflare-scrape, or submit a bug report "
-                          "if you are running the latest version. Please read "
-                          "https://github.com/Anorov/cloudflare-scrape#updates "
-                          "before submitting a bug report." % e)
+            logging.error("Unable to parse Cloudflare anti-bots page. %s" % e)
             raise
 
         try:
-            params["jschl_answer"] = str(answer)  # str(int(jsunfuck.cfunfuck(js)) + len(domain))
+            params["jschl_answer"] = str(answer)
         except:
             pass
 
@@ -127,85 +199,105 @@ class CloudflareScraper(Session):
         # so the redirect has to be handled manually here to allow for
         # performing other types of requests even as the first request.
         method = resp.request.method
-        cloudflare_kwargs["allow_redirects"] = False
+
+        cloudflare_kwargs['allow_redirects'] = False
 
         redirect = self.request(method, submit_url, **cloudflare_kwargs)
-        if redirect.status_code == 403:
-            raise Exception('Unable to pass the Cloudflare challenge!')
-        redirect_location = urlparse(redirect.headers["Location"])
-
+        redirect_location = urlparse(redirect.headers['Location'])
         if not redirect_location.netloc:
-            redirect_url = urlunparse((parsed_url.scheme, domain, redirect_location.path, redirect_location.params, redirect_location.query, redirect_location.fragment))
+            redirect_url = urlunparse(
+                (
+                    parsed_url.scheme,
+                    domain,
+                    redirect_location.path,
+                    redirect_location.params,
+                    redirect_location.query,
+                    redirect_location.fragment
+                )
+            )
             return self.request(method, redirect_url, **original_kwargs)
-        return self.request(method, redirect.headers["Location"], **original_kwargs)
 
-    def get_answer(self, body):
+        return self.request(method, redirect.headers['Location'], **original_kwargs)
+
+    def get_answer(self, body, domain):
         init = re.findall('setTimeout\(function\(\){\s*var.*?.*:(.*?)}', body)[-1]
         builder = re.findall(r"challenge-form\'\);\s*(.*)a.v", body)[0]
+        try:
+            challenge_element = re.findall(r'id="cf.*?>(.*?)</', body)[0]
+        except:
+            challenge_element = None
+
         if '/' in init:
             init = init.split('/')
             decryptVal = self.parseJSString(init[0]) / float(self.parseJSString(init[1]))
         else:
             decryptVal = self.parseJSString(init)
         lines = builder.split(';')
-
         char_code_at_sep = '"("+p+")")}'
+
         for line in lines:
             if len(line) > 0 and '=' in line:
                 sections = line.split('=')
-                if '/' in sections[1]:
-                    subsecs = sections[1].split('/')
+                if len(sections) < 3:
+                    if '/' in sections[1]:
+                        subsecs = sections[1].split('/')
+                        val_1 = self.parseJSString(subsecs[0])
+                        if char_code_at_sep in subsecs[1]:
+                            subsubsecs = re.findall(r"^(.*?)(.)\(function", subsecs[1])[0]
+                            operand_1 = self.parseJSString(subsubsecs[0] + ')')
+                            operand_2 = ord(domain[self.parseJSString(
+                                subsecs[1][subsecs[1].find(char_code_at_sep) + len(char_code_at_sep):-2])])
+                            val_2 = '%.16f%s%.16f' % (float(operand_1), subsubsecs[1], float(operand_2))
+                            val_2 = eval_expr(val_2)
+                        else:
+                            val_2 = self.parseJSString(subsecs[1])
+                        line_val = val_1 / float(val_2)
+                    elif len(sections) > 2 and 'atob' in sections[2]:
+                        expr = re.findall((r"id=\"%s.*?>(.*?)</" % re.findall(r"k = '(.*?)'", body)[0]), body)[0]
+                        if '/' in expr:
+                            expr_parts = expr.split('/')
+                            val_1 = self.parseJSString(expr_parts[0])
+                            val_2 = self.parseJSString(expr_parts[1])
+                            line_val = val_1 / float(val_2)
+                        else:
+                            line_val = self.parseJSString(expr)
+                    else:
+                        if 'function' in sections[1]:
+                            continue
+                        line_val = self.parseJSString(sections[1])
+
+                elif 'Element' in sections[2]:
+                    subsecs = challenge_element.split('/')
                     val_1 = self.parseJSString(subsecs[0])
                     if char_code_at_sep in subsecs[1]:
                         subsubsecs = re.findall(r"^(.*?)(.)\(function", subsecs[1])[0]
                         operand_1 = self.parseJSString(subsubsecs[0] + ')')
-                        operand_2 = ord(self.domain[self.parseJSString(subsecs[1][subsecs[1].find(char_code_at_sep) + len(char_code_at_sep):-2])])
+                        operand_2 = ord(domain[self.parseJSString(
+                            subsecs[1][subsecs[1].find(char_code_at_sep) + len(char_code_at_sep):-2])])
                         val_2 = '%.16f%s%.16f' % (float(operand_1), subsubsecs[1], float(operand_2))
                         val_2 = eval_expr(val_2)
                     else:
                         val_2 = self.parseJSString(subsecs[1])
                     line_val = val_1 / float(val_2)
-                elif len(sections) > 2 and 'atob' in sections[2]:
-                    expr = re.findall((r"id=\"%s.*?>(.*?)</" % re.findall(r"k = '(.*?)'", body)[0]), body)[0]
-                    if '/' in expr:
-                        expr_parts = expr.split('/')
-                        val_1 = self.parseJSString(expr_parts[0])
-                        val_2 = self.parseJSString(expr_parts[1])
-                        line_val = val_1 / float(val_2)
-                    else:
-                        line_val = self.parseJSString(expr)
-                else:
-                    line_val = self.parseJSString(sections[1])
+
                 decryptVal = '%.16f%s%.16f' % (float(decryptVal), sections[0][-1], float(line_val))
                 decryptVal = eval_expr(decryptVal)
 
-        answer = float('%.10f' % decryptVal)
-
         if '+ t.length' in body:
-            answer += len(self.domain)
+            decryptVal += len(domain)
 
-        return answer
+        return float('%.10f' % decryptVal)
 
     def parseJSString(self, s):
         offset = 1 if s[0] == '+' else 0
         val = s.replace('!+[]', '1').replace('!![]', '1').replace('[]', '0')[offset:]
+
         val = val.replace('(+0', '(0').replace('(+1', '(1')
+
         val = re.findall(r'\((?:\d|\+|\-)*\)', val)
+
         val = ''.join([str(eval_expr(i)) for i in val])
         return int(val)
 
 
-def create_scraper(sess=None, **kwargs):
-    """
-    Convenience function for creating a ready-to-go requests.Session (subclass) object.
-    """
-    scraper = CloudflareScraper()
-
-    if sess:
-        attrs = ["auth", "cert", "cookies", "headers", "hooks", "params", "proxies", "data"]
-        for attr in attrs:
-            val = getattr(sess, attr, None)
-            if val:
-                setattr(scraper, attr, val)
-
-    return scraper
+create_scraper = CloudflareScraper
