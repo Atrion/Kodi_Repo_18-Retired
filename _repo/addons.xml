@@ -356,10 +356,11 @@
 	</extension>
 </addon>
 
-<addon id="script.module.openscrapers" name="OpenScrapers Module" version="0.0.1.6" provider-name="Addons4Kodi">
+<addon id="script.module.openscrapers" name="OpenScrapers Module" version="0.0.1.7" provider-name="Addons4Kodi">
     <requires>
-        <import addon="xbmc.python" version="2.1.0" />
+        <import addon="xbmc.python" version="2.25.0" />
         <import addon="script.module.beautifulsoup4"/>
+		<import addon="script.module.js2py"/>
     </requires>
     <extension point="xbmc.python.module" library="lib" />
     <extension point="xbmc.python.pluginsource" library="lib/default.py">
@@ -423,7 +424,7 @@ Fixed search issue caused by character accents
 
 <addon id="plugin.video.amazon-test"
        name="Amazon VOD"
-       version="0.7.2-bis"
+       version="0.7.3"
        provider-name="Sandmann79, Varstahl">
   <requires>
     <import addon="xbmc.python" version="2.24.0"/>
@@ -458,7 +459,7 @@ Diese Addon verwendet pyDes von Todd Whiteman</disclaimer>
 
 <addon id="script.module.kodi-six"
        name="Kodi Six"
-       version="0.0.3"
+       version="0.1.0"
        provider-name="Roman V.M.">
   <requires>
     <import addon="xbmc.python" version="2.26.0"/>
@@ -474,7 +475,9 @@ Diese Addon verwendet pyDes von Todd Whiteman</disclaimer>
     <assets>
       <icon>icon.png</icon>
     </assets>
-    <news>0.0.3:
+    <news>0.1.0:
+- Implemented lazy patching of Kodi API functions and classes.
+0.0.3:
 - Added xbmcdrm module.</news>
   </extension>
 </addon>
@@ -1396,7 +1399,7 @@ Added Trakt Manager
   </requires>
 </addon>
 
-    <addon id="repository.Atrion18B" name="[COLOR maroon]Atrion's Repo for Kodi 18.x Backup[/COLOR]" version="0.1.3" provider-name="Atrion Darnay">
+    <addon id="repository.Atrion18B" name="[COLOR maroon]Atrion's Repo for Kodi 18.x Backup[/COLOR]" version="0.1.4" provider-name="Atrion Darnay">
         <requires>
             <import addon="xbmc.addon" version="12.0.0"/>
         </requires>
@@ -1574,10 +1577,10 @@ Added Trakt Manager
 
 <addon id="script.module.simplejson"
        name="simplejson"
-       version="3.4.0"
+       version="3.16.1"
        provider-name="Bob Ippolito">
   <requires>
-    <import addon="xbmc.python" version="2.1.0"/>
+    <import addon="xbmc.python" version="2.14.0"/>
   </requires>
   <extension point="xbmc.python.module"
              library="lib" />
@@ -1586,10 +1589,10 @@ Added Trakt Manager
     <language></language>
     <summary lang="en">Simple, fast, extensible JSON encoder/decoder for Python</summary>
     <description lang="en">Simple, fast, extensible JSON encoder/decoder for Python</description>
-    <disclaimer lang="en">Code taken from https://pypi.python.org/pypi/simplejson/</disclaimer>
+    <disclaimer lang="en">Code taken from https://pypi.org/project/simplejson/</disclaimer>
     <license>MIT License, Academic Free License v. 2.1</license>
-    <website>https://pypi.python.org/pypi/simplejson/</website>
-    <source>https://pypi.python.org/pypi/simplejson/</source>
+    <website>https://pypi.org/project/simplejson/</website>
+    <source>https://github.com/simplejson/simplejson</source>
   </extension>
 </addon>
 
@@ -2527,29 +2530,30 @@ A udev rule is needed. See https://kodi.wiki/view/Tankstick</description>
   </requires>
 </addon>
 
-<addon id="script.module.resolveurl" name="ResolveURL" version="5.0.31" provider-name="jsergio">
-	<requires>
-		<import addon="xbmc.python" version="2.1.0" />
-		<import addon="plugin.video.youtube" optional="true" />
-		<import addon="script.module.python.twitch" optional="true" />
-		<import addon="script.module.cryptopy" version="1.2.6" optional="true" />
-		<import addon="plugin.video.gdrive" optional="true" />
-	</requires>
-	<extension point="xbmc.python.module" library="lib" />
-	<extension point="xbmc.python.pluginsource" library="lib/default.py" />
-	<extension point="xbmc.addon.metadata">
-		<platform>all</platform>
-		<summary lang="en">Resolve common video host URL's to be playable in XBMC/Kodi.</summary>
-		<summary lang="es">Resolver enlaces a videos de sitios populares para poder reproducirlos en XBMC/Kodi.</summary>
-		<summary lang="hr">Prilagodi najčešće URL-ove video izvora kako bi radili u XBMC/Kodiju.</summary>
-		<description lang="en">Resolve common video host URL's to be playable in XBMC/Kodi, simplify addon development of video plugins requiring multi video hosts.</description>
-		<description lang="hr">Prilagodi najčešće URL-ove video izvora kako bi radili u XBMC/Kodiju, pojednostavnjuje razvoj priključaka za video dodatke koji zahtjevaju višestruke video izvore.</description>
-	</extension>
+<addon id="script.module.resolveurl" name="ResolveURL" version="5.0.32" provider-name="jsergio">
+    <requires>
+        <import addon="xbmc.python" version="2.1.0" />
+        <import addon="plugin.video.youtube" optional="true" />
+        <import addon="script.module.python.twitch" optional="true" />
+        <import addon="script.module.cryptopy" version="1.2.6" optional="true" />
+        <import addon="plugin.video.gdrive" optional="true" />
+    </requires>
+    <extension point="xbmc.python.module" library="lib" />
+    <extension point="xbmc.python.pluginsource" library="lib/default.py" />
+    <extension point="xbmc.addon.metadata">
+        <platform>all</platform>
+        <summary lang="en">Resolve common video host URL's to be playable in XBMC/Kodi.</summary>
+        <summary lang="es">Resolver enlaces a videos de sitios populares para poder reproducirlos en XBMC/Kodi.</summary>
+        <summary lang="hr">Prilagodi najčešće URL-ove video izvora kako bi radili u XBMC/Kodiju.</summary>
+        <summary lang="el">Επίλυση συνδέσμων κοινών εξυπηρετητών σε μορφή βίντεο ικανό για αναπαραγωγή στο XBMC/Kodi.</summary>
+        <description lang="en">Resolve common video host URL's to be playable in XBMC/Kodi, simplify addon development of video plugins requiring multi video hosts.</description>
+        <description lang="hr">Prilagodi najčešće URL-ove video izvora kako bi radili u XBMC/Kodiju, pojednostavnjuje razvoj priključaka za video dodatke koji zahtjevaju višestruke video izvore.</description>
+    </extension>
 </addon>
 
 <addon id="script.module.urllib3"
        name="urllib3"
-       version="1.25.2"
+       version="1.25.3"
        provider-name="shazow">
   <requires>
     <import addon="xbmc.python" version="2.25.0"/>
@@ -3093,7 +3097,7 @@ A udev rule is needed. See https://kodi.wiki/view/Tankstick</description>
   </extension>
 </addon>
 
-    <addon id="repository.Atrion18" name="[COLOR maroon]Atrion's Repo for Kodi 18.x[/COLOR]" version="0.1.3" provider-name="Atrion Darnay">
+    <addon id="repository.Atrion18" name="[COLOR maroon]Atrion's Repo for Kodi 18.x[/COLOR]" version="0.1.4" provider-name="Atrion Darnay">
         <requires>
             <import addon="xbmc.addon" version="12.0.0"/>
         </requires>
@@ -3108,6 +3112,25 @@ A udev rule is needed. See https://kodi.wiki/view/Tankstick</description>
             <description>Atrion's Repo for Kodi 18.x</description>
             <platform>all</platform>
     </extension>
+</addon>
+
+<addon id="script.module.pytz" name="pytz" version="2014.2" provider-name="Stuart Bishop, Paul Backhouse">
+	<requires>
+		<import addon="xbmc.python" version="2.1.0"/>
+	</requires>
+	<extension point="xbmc.python.module" library="lib"/>
+	<extension point="xbmc.addon.metadata">
+	    <summary lang="en">World Timezone Definitions for Python.</summary>
+	    <description lang="en">pytz brings the Olson tz database into Python. This library allows accurate and cross platform timezone calculations using Python 2.4 or higher. It also solves the issue of ambiguous times at the end of daylight saving time, which you can read more about in the Python Library Reference (datetime.tzinfo).</description>
+	    <platform>all</platform>
+	    <language></language>
+	    <license>MIT</license>
+	    <forum></forum>
+	    <website>https://pypi.python.org/pypi/pytz/</website>
+	    <source>https://github.com/powlo/script.module.pytz</source>
+	    <email></email>
+	    <disclaimer lang="en">Use at your own risk. The authors accept no liability. May cause permanent and/or catastrophic damage. Side effects include, but are not limited to loss of memory, seizures, sudden fits of rage, sudden fits of melancholy, inability to recall prominent capital cities, lack of respect for authority, fear of cats, temporary and/or permanent black outs. Avoid inhalation. Use in a well ventilated space. Keep away from small children.</disclaimer>
+	</extension>
 </addon>
 
 <addon id="repository.jsergio" name="jsergio repo" version="1.0.4" provider-name="jsergio">
@@ -4103,6 +4126,24 @@ change:  Better handling of read/write falures and errors to help troubleshootin
   </extension>
 </addon>
 
+<addon id="script.module.pyjsparser" name="pyjsparser" version="2.7.1" provider-name="Addons4Kodi">
+  <requires>
+    <import addon="xbmc.python" version="2.25.0"/>
+  </requires>
+  <extension point="xbmc.python.module" library="lib" />
+  <extension point="xbmc.addon.metadata">
+    <summary>Pure Python JavaScript Translator/Interpreter</summary>
+    <description>Packed for Kodi from https://github.com/PiotrDabkowski/pyjsparser</description>
+    <platform>all</platform>
+    <language></language>
+    <license>MIT</license>
+    <forum></forum>
+    <website>https://github.com/PiotrDabkowski/pyjsparser</website>
+    <source>https://github.com/PiotrDabkowski/pyjsparser</source>
+    <email></email>
+  </extension>
+</addon>
+
 <addon id="xbmc.python" version="2.26.0" provider-name="Team Kodi">
   <backwards-compatibility abi="2.1.0"/>
   <requires>
@@ -4705,6 +4746,27 @@ change:  Better handling of read/write falures and errors to help troubleshootin
 	</extension>
 </addon>
 
+<addon id="script.module.js2py" name="js2py" version="0.6.3" provider-name="Addons4Kodi">
+  <requires>
+    <import addon="xbmc.python" version="2.25.0"/>
+    <import addon="script.module.six" version="1.11.0"/>
+    <import addon="script.module.pyjsparser" version="2.7.1"/>
+    <import addon="script.module.tzlocal" version="1.5.1"/>
+  </requires>
+  <extension point="xbmc.python.module" library="lib" />
+  <extension point="xbmc.addon.metadata">
+    <summary>Pure Python JavaScript Translator/Interpreter</summary>
+    <description>Packed for Kodi from https://github.com/PiotrDabkowski/Js2Py</description>
+    <platform>all</platform>
+    <language></language>
+    <license>MIT</license>
+    <forum></forum>
+    <website>https://github.com/PiotrDabkowski/Js2Py</website>
+    <source>https://github.com/PiotrDabkowski/Js2Py</source>
+    <email></email>
+  </extension>
+</addon>
+
 <addon id="metadata.local"
        name="Local information only"
        version="1.0.0"
@@ -4749,6 +4811,25 @@ change:  Better handling of read/write falures and errors to help troubleshootin
     <license>GNU GENERAL PUBLIC LICENSE Version 2</license>
     <source>https://github.com/marcelveldt/script.module.musicbrainz</source>
     <platform>all</platform>
+  </extension>
+</addon>
+
+<addon id="script.module.tzlocal" name="tzlocal" version="1.5.1" provider-name="Addons4Kodi">
+  <requires>
+    <import addon="xbmc.python" version="2.25.0"/>
+    <import addon="script.module.pytz" version="2014.2"/>
+  </requires>
+  <extension point="xbmc.python.module" library="lib" />
+  <extension point="xbmc.addon.metadata">
+    <summary>Python Module to find out the current time zone</summary>
+    <description>Packed for Kodi from https://github.com/regebro/tzlocal</description>
+    <platform>all</platform>
+    <language></language>
+    <license>MIT</license>
+    <forum></forum>
+    <website>https://github.com/regebro/tzlocal</website>
+    <source>https://github.com/regebro/tzlocal</source>
+    <email></email>
   </extension>
 </addon>
 

@@ -24,11 +24,10 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-
+from openscrapers.modules import cfscrape
 from openscrapers.modules import cleantitle
 from openscrapers.modules import client
 from openscrapers.modules import source_utils
-from openscrapers.modules import cfscrape
 
 
 class source:
@@ -54,19 +53,19 @@ class source:
             hostDict = hostprDict + hostDict
             r = self.scraper.get(url).content
             u = client.parseDOM(r, "ul", attrs={"id": "serverul"})
+
             for t in u:
                 u = client.parseDOM(t, 'a', ret='href')
                 for url in u:
-                    if 'getlink' in url:
-                        continue
                     quality = source_utils.check_url(url)
                     valid, host = source_utils.is_host_valid(url, hostDict)
-                    if valid:
-                        sources.append({'source': host, 'quality': quality, 'language': 'en', 'url': url, 'direct': False, 'debridonly': False})
+                    if valid or 'getlink' in url:
+                        sources.append(
+                            {'source': host, 'quality': quality, 'language': 'en', 'url': url, 'direct': False,
+                             'debridonly': False})
                 return sources
         except:
             return
 
     def resolve(self, url):
         return url
-
