@@ -104,7 +104,13 @@ class source:
 	@classmethod
 	def _instancesRename(self, path):
 		# CloudFlare import can clash with an import from another addon.
-		replacements = [['from resources.lib.', 'from globalscrapers.'], ['from globalscrapers.modules import cfscrape', 'try: from globalscrapers.modules import cfscrape\nexcept: pass'], ['xbmcaddon.Addon()', 'xbmcaddon.Addon("' + tools.Extensions.IdGloScrapers + '")']]
+		replacements = [
+			['from resources.lib.', 'from globalscrapers.'],
+			['from globalscrapers.modules import cfscrape', 'try: from globalscrapers.modules import cfscrape\nexcept: pass'],
+			['xbmcaddon.Addon()', 'xbmcaddon.Addon("' + tools.Extensions.IdGloScrapers + '")'],
+			['if debrid.status() is False:', 'if False:'],
+			['if debrid.status() == False:', 'if False:'],
+		]
 		directories, files = tools.File.listDirectory(path, absolute = True)
 		for file in files:
 			if file.endswith('.py'):
@@ -143,7 +149,7 @@ class source:
 		try:
 			path1 = [sources]
 			for package1, name1, pkg1 in pkgutil.walk_packages(path1):
-				if not pkg1:
+				if not pkg1 and not 'torrent' in name1.lower():
 					try:
 						id = name1
 						if id == 'orion' or id == 'orionoid': continue
@@ -307,6 +313,7 @@ class source:
 						except: continue
 
 						source = item['source'].lower().replace(' ', '')
+						if 'torrent' in source: continue
 						if source == 'direct' or source == 'directlink':
 							source = urlparse.urlsplit(item['url'])[1].split(':')[0]
 							if network.Networker.ipIs(source):

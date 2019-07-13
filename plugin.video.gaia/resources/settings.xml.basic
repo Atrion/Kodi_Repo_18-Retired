@@ -42,6 +42,7 @@
 		<setting id="link.easynews" type="text" label="" visible="false" default="https://gaiakodi.com/x?easynews" />
 		<setting id="link.alldebrid" type="text" label="" visible="false" default="https://gaiakodi.com/x?alldebrid" />
 		<setting id="link.rapidpremium" type="text" label="" visible="false" default="https://gaiakodi.com/x?rapidpremium" />
+		<setting id="link.emby" type="text" label="" visible="false" default="https://gaiakodi.com/x?emby" />
 
 		<setting id="link.coinbase" type="text" label="" visible="false" default="https://gaiakodi.com/x?coinbase" />
 		<setting id="link.exodus" type="text" label="" visible="false" default="https://gaiakodi.com/x?exodus" />
@@ -101,7 +102,10 @@
 		<setting id="general.playback.resume" type="enum" label="32344" lvalues="32302|33565|33800" default="1" />
 		<setting id="general.playback.end" type="slider" label="35309" range="50,100" option="int" default="80" />
 		<setting id="general.playback.timeout" type="slider" label="35289" range="20,300" option="int" default="90" />
-		<setting id="general.playback.sequential.enabled" type="bool" label="35433" default="false" />
+		<setting id="general.playback.binge" type="enum" label="35579" lvalues="33737|33110|33800" default="1" />
+		<setting id="general.playback.binge.delay" type="slider" label="35581" range="0,60" option="int" default="5" subsetting="true" visible="!eq(-1,0)" />
+		<setting id="general.playback.binge.suppress" type="bool" label="35583" default="true" subsetting="true" visible="!eq(-2,0)" />
+		<setting id="general.playback.sequential" type="bool" label="35433" default="false" />
 		<setting id="general.playback.retry.enabled" type="bool" label="35290" default="true" />
 		<setting id="general.playback.retry.limit" type="slider" label="35291" subsetting="true" range="1,10" option="int" default="1" visible="eq(-1,true)" />
 		<setting id="general.playback.retry.delay" type="slider" label="35292" subsetting="true" range="0,180" option="int" default="3" visible="eq(-2,true)" />
@@ -157,12 +161,9 @@
 		<setting id="interface.theme.icon" type="action" label="33338" default="White" action="RunPlugin(plugin://plugin.video.gaia/?action=themeIconSelect)" />
 		<setting id="interface.theme.icon.quality" type="enum" label="33641" lvalues="33642|33643|33644" default="0" subsetting="true" visible="!eq(-1,Default)" />
 		<setting id="interface.theme.background" type="bool" label="32337" default="true" />
+		<setting id="interface.theme.fanart" type="bool" label="35260" default="true" />
 		<setting id="interface.theme.poster" type="enum" label="33453" lvalues="33112|33455|33456|33457" default="2" />
 		<setting id="interface.theme.banner" type="enum" label="33454" lvalues="33112|33455|33456" default="2" />
-
-		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 32311][/B][/UPPERCASE]" />
-		<setting type="sep" />
-		<setting id="interface.fanart" type="bool" label="33237" default="true" />
 
 		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 33787][/B][/UPPERCASE]" />
 		<setting type="sep" />
@@ -171,11 +172,16 @@
 
 		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 33232][/B][/UPPERCASE]" />
 		<setting type="sep" />
+		<setting id="interface.navigation.limit" type="slider" label="35307" default="50" range="5,200" option="int" />
+		<setting id="interface.navigation.cinema" type="bool" label="35567" default="false" />
+		<setting id="interface.navigation.cinema.progress" type="bool" label="35568" default="true" subsetting="true" visible="eq(-1,true)" />
+		<setting id="interface.navigation.cinema.curtains" type="bool" label="35584" default="true" subsetting="true" visible="eq(-2,true)" />
+		<setting id="interface.navigation.cinema.interrupt" type="bool" label="35569" default="false" subsetting="true" visible="eq(-3,true)" />
 		<setting id="interface.navigation.scrape" type="enum" label="32335" lvalues="33105|32332|32336" default="0" />
 		<setting id="interface.navigation.scrape.providers" type="bool" label="32345" default="false" subsetting="true" visible="!eq(-1,2)" />
 		<setting id="interface.navigation.scrape.background" type="enum" label="32337" subsetting="true" lvalues="33112|33248|35463|35260" default="1" visible="eq(-2,0)" />
 		<setting id="interface.navigation.streams" type="enum" label="33224" lvalues="33105|32333|32332" default="0" />
-		<setting id="interface.navigation.streams.reload" type="enum" label="35545" subsetting="true" lvalues="33107|33109|35546" default="2" visible="eq(-1,0)" />
+		<setting id="interface.navigation.streams.reload" type="enum" label="35545" subsetting="true" lvalues="33107|33109|35546" default="1" visible="eq(-1,0)" />
 		<setting id="interface.navigation.streams.background" type="enum" label="32337" subsetting="true" lvalues="33112|33248|35463|35260" default="1" visible="eq(-2,0)" />
 		<setting id="interface.navigation.streams.poster" type="enum" label="35488" subsetting="true" lvalues="35489|35490" default="1" visible="eq(-3,0)" />
 		<setting id="interface.navigation.streams.decorations" type="enum" label="35464" subsetting="true" lvalues="33455|35465|35466" default="2" visible="eq(-4,0)" />
@@ -234,6 +240,10 @@
 
 		<setting type="bool" visible="false" /> <!-- Ensures that a separator is drawn at the top. Can be removed if other cross-group elements are added here. -->
 
+		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 35602][/B][/UPPERCASE]" />
+		<setting type="sep" />
+		<setting id="interface.ratings.type" type="enum" label="35603" lvalues="35604|35605" default="1" />
+
 		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 33490][/B][/UPPERCASE]" />
 		<setting type="sep" />
 		<setting id="interface.arrivals.movies" type="enum" label="32320" lvalues="33004|33571|32323|33006|33007" default="1" />
@@ -264,13 +274,14 @@
 		<setting id="interface.sort.articles" type="bool" label="35195" default="true" />
 		<setting id="interface.sort.movies.type" type="enum" label="35190" lvalues="33564|33039|35187|35188|35391|35392|35393" default="0" />
 		<setting id="interface.sort.movies.order" type="enum" label="33679" lvalues="33649|33650" default="0" subsetting="true" />
-		<setting id="interface.sort.shows.type" type="enum" label="35191" lvalues="33564|33039|35187|35188|35391|35392|35393" default="0" />
-		<setting id="interface.sort.shows.order" type="enum" label="33679" lvalues="33649|33650" default="0" subsetting="true" />
-		<setting id="interface.sort.shows.date" type="enum" label="35194" lvalues="32302|33649|33650" default="2" subsetting="true" />
 		<setting id="interface.sort.documentaries.type" type="enum" label="35192" lvalues="33564|33039|35187|35188|35391|35392|35393" default="0" />
 		<setting id="interface.sort.documentaries.order" type="enum" label="33679" lvalues="33649|33650" default="0" subsetting="true" />
 		<setting id="interface.sort.shorts.type" type="enum" label="35193" lvalues="33564|33039|35187|35188|35391|35392|35393" default="0" />
 		<setting id="interface.sort.shorts.order" type="enum" label="33679" lvalues="33649|33650" default="0" subsetting="true" />
+		<setting id="interface.sort.progress.type" type="enum" label="35572" lvalues="33564|33039|35187|35188|35391|35392|35393" default="6" />
+		<setting id="interface.sort.progress.order" type="enum" label="33679" lvalues="33649|33650" default="1" subsetting="true" />
+		<setting id="interface.sort.calendar.type" type="enum" label="35573" lvalues="33564|33039|35187|35188|35391|35392|35393" default="4" />
+		<setting id="interface.sort.calendar.order" type="enum" label="33679" lvalues="33649|33650" default="1" subsetting="true" />
 
 		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 35237][/B][/UPPERCASE]" />
 		<setting type="sep" />
@@ -293,8 +304,7 @@
 	</category>
 
 	<!-- SCRAPING -->
-	<category label="33881">
-
+	<category label="$ADDON[plugin.video.gaia 33881] 1">
 		<setting type="bool" visible="false" /> <!-- Ensures that a separator is drawn at the top. Can be removed if other cross-group elements are added here. -->
 
 		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 32345][/B][/UPPERCASE]" />
@@ -315,7 +325,7 @@
 		<setting id="scraping.foreign.enabled" type="bool" label="33192" default="true" />
 		<setting id="scraping.foreign.characters" type="bool" label="35202" default="false" visible="eq(-1,true)" />
 		<setting id="scraping.foreign.timeout" type="slider" label="33273" subsetting="true" default="20" range="10,90" option="int" visible="eq(-2,true)" />
-		<setting id="scraping.foreign.language" type="select" label="33787" subsetting="true" values="Automatic|English|French|German|Korean|Polish|Russian" default="Automatic" visible="eq(-3,true)" />
+		<setting id="scraping.foreign.language" type="select" label="33787" subsetting="true" values="Automatic|Abkhaz|Afar|Afrikaans|Akan|Albanian|Amharic|Arabic|Aragonese|Armenian|Assamese|Avaric|Avestan|Aymara|Azerbaijani|Bambara|Bashkir|Basque|Belarusian|Bengali|Bihari|Bislama|Bokmal|Bosnian|Breton|Bulgarian|Burmese|Catalan|Chamorro|Chechen|Chichewa|Chinese|Chuvash|Cornish|Corsican|Cree|Croatian|Czech|Danish|Divehi|Dutch|Dzongkha|English|Esperanto|Estonian|Ewe|Faroese|Fijian|Finnish|French|Fula|Gaelic|Galician|Ganda|Georgian|German|Greek|Guarani|Gujarati|Haitian|Hausa|Hebrew|Herero|Hindi|Hiri Motu|Hungarian|Icelandic|Ido|Igbo|Indonesian|Interlingua|Interlingue|Inuktitut|Inupiaq|Irish|Italian|Japanese|Javanese|Kalaallisut|Kannada|Kanuri|Kashmiri|Kazakh|Khmer|Kikuyu|Kinyarwanda|Kirundi|Komi|Kongo|Korean|Kurdish|Kwanyama|Kyrgyz|Lao|Latin|Latvian|Limburgish|Lingala|Lithuanian|Luba-Katanga|Luxembourgish|Macedonian|Malagasy|Malay|Malayalam|Maltese|Manx|Maori|Marathi|Marshallese|Mongolian|Nauruan|Navajo|Ndonga|Nepali|Northern Ndebele|Northern Sami|Norwegian|Nuosu|Nynorsk|Occitan|Ojibwe|Oriya|Oromo|Ossetian|Pali|Pashto|Pushto|Persian|Polish|Portuguese|Punjabi|Quechua|Romanian|Romansh|Russian|Samoan|Sango|Sanskrit|Sardinian|Serbian|Shona|Sindhi|Sinhalese|Slavonic|Slovak|Slovene|Somali|Southern Ndebele|Southern Sotho|Spanish|Sundanese|Swahili|Swati|Swedish|Tagalog|Tahitian|Tajik|Tamil|Tatar|Telugu|Thai|Tibetan|Tigrinya|Tonga|Tsonga|Tswana|Turkish|Turkmen|Twi|Ukrainian|Urdu|Uyghur|Uzbek|Venda|Vietnamese|Volapuk|Walloon|Welsh|Western Frisian|Wolof|Xhosa|Yiddish|Yoruba|Zhuang|Zulu" default="Automatic" visible="eq(-3,true)" />
 
 		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 33270][/B][/UPPERCASE]" />
 		<setting type="sep" />
@@ -331,16 +341,112 @@
 		<setting id="scraping.failure.count" type="slider" label="33670" default="3" range="1,20" option="int" subsetting="true" visible="eq(-1,true)" />
 		<setting id="scraping.failure.time" type="slider" label="33671" default="5" range="0,30" option="int" subsetting="true" visible="eq(-2,true)" />
 
+		<setting type="sep" />
+		<setting type="bool" visible="false" /> <!-- Ensures that a separator is drawn at the bottom. -->
+	</category>
+
+	<!-- SCRAPING -->
+	<category label="$ADDON[plugin.video.gaia 33881] 2">
+		<setting type="bool" visible="false" /> <!-- Ensures that a separator is drawn at the top. Can be removed if other cross-group elements are added here. -->
+
 		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 33882][/B][/UPPERCASE]" />
 		<setting type="sep" />
 		<setting id="scraping.termination.enabled" type="bool" label="33192" default="false" />
 		<setting id="scraping.termination.mode" type="enum" label="35160" subsetting="true" lvalues="33113|33110|33800|33983" default="0" visible="eq(-1,true)" />
-		<setting id="scraping.termination.count" type="slider" label="33883" default="5" range="1,100" option="int" subsetting="true" visible="eq(-2,true)" />
-		<setting id="scraping.termination.type" type="enum" label="33890" subsetting="true" lvalues="33113|33768|33884|33489|33885|33886|33887|33888" default="0" visible="eq(-3,true)" />
-		<setting id="scraping.termination.video.quality" type="enum" label="33889" subsetting="true" lvalues="33113|33763|33762|33761|33760|33759|33758|33137|33138|33139|33140|33141|33142|33143" default="9" visible="eq(-4,true)" />
-		<setting id="scraping.termination.video.codec" type="enum" label="33127" subsetting="true" lvalues="33113|33146|33144|33145" default="0" visible="eq(-5,true)" />
-		<setting id="scraping.termination.audio.channels" type="enum" label="33129" subsetting="true" lvalues="33113|33150|33149|33148|33147" default="0" visible="eq(-6,true)" />
-		<setting id="scraping.termination.audio.codec" type="enum" label="33130" subsetting="true" lvalues="33113|33155|33154|33151|33152|33153" default="0" visible="eq(-7,true)" />
+
+		<setting id="scraping.termination.local.enabled" type="bool" label="32314" default="false" visible="eq(-2,true)" />
+		<setting id="scraping.termination.local.count" type="slider" label="33883" default="5" range="0,100" option="int" subsetting="true" visible="eq(-3,true) + eq(-1,true)" />
+		<setting id="scraping.termination.local.count.movies" type="slider" label="35588" default="5" range="1,100" option="int" subsetting="true" visible="eq(-1,0) + eq(-4,true) + eq(-2,true)" />
+		<setting id="scraping.termination.local.count.shows" type="slider" label="35589" default="5" range="1,100" option="int" subsetting="true" visible="eq(-2,0) + eq(-5,true) + eq(-3,true)" />
+		<setting id="scraping.termination.local.video.quality" type="enum" label="33889" subsetting="true" lvalues="33249|33113|33763|33762|33761|33760|33759|33758|33137|33138|33139|33140|33141|33142|33143" default="10" visible="eq(-6,true) + eq(-4,true)" />
+		<setting id="scraping.termination.local.video.quality.movies" type="enum" label="35590" subsetting="true" lvalues="33113|33763|33762|33761|33760|33759|33758|33137|33138|33139|33140|33141|33142|33143" default="9" visible="eq(-1,0) + eq(-7,true) + eq(-5,true)" />
+		<setting id="scraping.termination.local.video.quality.shows" type="enum" label="35591" subsetting="true" lvalues="33113|33763|33762|33761|33760|33759|33758|33137|33138|33139|33140|33141|33142|33143" default="9" visible="eq(-2,0) + eq(-8,true) + eq(-6,true)" />
+		<setting id="scraping.termination.local.video.codec" type="enum" label="33127" subsetting="true" lvalues="33249|33113|33146|33144|33145" default="1" visible="eq(-9,true) + eq(-7,true)" />
+		<setting id="scraping.termination.local.video.codec.movies" type="enum" label="35592" subsetting="true" lvalues="33113|33146|33144|33145" default="0" visible="eq(-1,0) + eq(-10,true) + eq(-8,true)" />
+		<setting id="scraping.termination.local.video.codec.shows" type="enum" label="35593" subsetting="true" lvalues="33113|33146|33144|33145" default="0" visible="eq(-2,0) + eq(-11,true) + eq(-9,true)" />
+		<setting id="scraping.termination.local.audio.channels" type="enum" label="33129" subsetting="true" lvalues="33249|33113|33150|33149|33148|33147" default="1" visible="eq(-12,true) + eq(-10,true)" />
+		<setting id="scraping.termination.local.audio.channels.movies" type="enum" label="35594" subsetting="true" lvalues="33113|33150|33149|33148|33147" default="0" visible="eq(-1,0) + eq(-13,true) + eq(-11,true)" />
+		<setting id="scraping.termination.local.audio.channels.shows" type="enum" label="35595" subsetting="true" lvalues="33113|33150|33149|33148|33147" default="0" visible="eq(-2,0) + eq(-14,true) + eq(-12,true)" />
+		<setting id="scraping.termination.local.audio.codec" type="enum" label="33130" subsetting="true" lvalues="33249|33113|33155|33154|33151|33152|33153" default="1" visible="eq(-15,true) + eq(-13,true)" />
+		<setting id="scraping.termination.local.audio.codec.movies" type="enum" label="35596" subsetting="true" lvalues="33113|33155|33154|33151|33152|33153" default="0" visible="eq(-1,0) + eq(-16,true) + eq(-14,true)" />
+		<setting id="scraping.termination.local.audio.codec.shows" type="enum" label="35597" subsetting="true" lvalues="33113|33155|33154|33151|33152|33153" default="0" visible="eq(-2,0) + eq(-17,true) + eq(-15,true)" />
+
+		<setting id="scraping.termination.premium.enabled" type="bool" label="33768" default="false" visible="eq(-18,true)" />
+		<setting id="scraping.termination.premium.count" type="slider" label="33883" default="5" range="0,100" option="int" subsetting="true" visible="eq(-19,true) + eq(-1,true)" />
+		<setting id="scraping.termination.premium.count.movies" type="slider" label="35588" default="5" range="1,100" option="int" subsetting="true" visible="eq(-1,0) + eq(-20,true) + eq(-2,true)" />
+		<setting id="scraping.termination.premium.count.shows" type="slider" label="35589" default="5" range="1,100" option="int" subsetting="true" visible="eq(-2,0) + eq(-21,true) + eq(-3,true)" />
+		<setting id="scraping.termination.premium.video.quality" type="enum" label="33889" subsetting="true" lvalues="33249|33113|33763|33762|33761|33760|33759|33758|33137|33138|33139|33140|33141|33142|33143" default="10" visible="eq(-22,true) + eq(-4,true)" />
+		<setting id="scraping.termination.premium.video.quality.movies" type="enum" label="35590" subsetting="true" lvalues="33113|33763|33762|33761|33760|33759|33758|33137|33138|33139|33140|33141|33142|33143" default="9" visible="eq(-1,0) + eq(-23,true) + eq(-5,true)" />
+		<setting id="scraping.termination.premium.video.quality.shows" type="enum" label="35591" subsetting="true" lvalues="33113|33763|33762|33761|33760|33759|33758|33137|33138|33139|33140|33141|33142|33143" default="9" visible="eq(-2,0) + eq(-24,true) + eq(-6,true)" />
+		<setting id="scraping.termination.premium.video.codec" type="enum" label="33127" subsetting="true" lvalues="33249|33113|33146|33144|33145" default="1" visible="eq(-25,true) + eq(-7,true)" />
+		<setting id="scraping.termination.premium.video.codec.movies" type="enum" label="35592" subsetting="true" lvalues="33113|33146|33144|33145" default="0" visible="eq(-1,0) + eq(-26,true) + eq(-8,true)" />
+		<setting id="scraping.termination.premium.video.codec.shows" type="enum" label="35593" subsetting="true" lvalues="33113|33146|33144|33145" default="0" visible="eq(-2,0) + eq(-27,true) + eq(-9,true)" />
+		<setting id="scraping.termination.premium.audio.channels" type="enum" label="33129" subsetting="true" lvalues="33249|33113|33150|33149|33148|33147" default="1" visible="eq(-28,true) + eq(-10,true)" />
+		<setting id="scraping.termination.premium.audio.channels.movies" type="enum" label="35594" subsetting="true" lvalues="33113|33150|33149|33148|33147" default="0" visible="eq(-1,0) + eq(-29,true) + eq(-11,true)" />
+		<setting id="scraping.termination.premium.audio.channels.shows" type="enum" label="35595" subsetting="true" lvalues="33113|33150|33149|33148|33147" default="0" visible="eq(-2,0) + eq(-30,true) + eq(-12,true)" />
+		<setting id="scraping.termination.premium.audio.codec" type="enum" label="33130" subsetting="true" lvalues="33249|33113|33155|33154|33151|33152|33153" default="1" visible="eq(-31,true) + eq(-13,true)" />
+		<setting id="scraping.termination.premium.audio.codec.movies" type="enum" label="35596" subsetting="true" lvalues="33113|33155|33154|33151|33152|33153" default="0" visible="eq(-1,0) + eq(-32,true) + eq(-14,true)" />
+		<setting id="scraping.termination.premium.audio.codec.shows" type="enum" label="35597" subsetting="true" lvalues="33113|33155|33154|33151|33152|33153" default="0" visible="eq(-2,0) + eq(-33,true) + eq(-15,true)" />
+
+		<setting id="scraping.termination.torrent.enabled" type="bool" label="33199" default="false" visible="eq(-34,true)" />
+		<setting id="scraping.termination.torrent.count" type="slider" label="33883" default="5" range="0,100" option="int" subsetting="true" visible="eq(-35,true) + eq(-1,true)" />
+		<setting id="scraping.termination.torrent.count.movies" type="slider" label="35588" default="5" range="1,100" option="int" subsetting="true" visible="eq(-1,0) + eq(-36,true) + eq(-2,true)" />
+		<setting id="scraping.termination.torrent.count.shows" type="slider" label="35589" default="5" range="1,100" option="int" subsetting="true" visible="eq(-2,0) + eq(-37,true) + eq(-3,true)" />
+		<setting id="scraping.termination.torrent.type" type="enum" label="33890" subsetting="true" lvalues="33249|33113|33884" default="1" visible="eq(-38,true) + eq(-4,true)" />
+		<setting id="scraping.termination.torrent.type.movies" type="enum" label="35598" subsetting="true" lvalues="33113|33884" default="0" visible="eq(-1,0) + eq(-39,true) + eq(-5,true)" />
+		<setting id="scraping.termination.torrent.type.shows" type="enum" label="35599" subsetting="true" lvalues="33113|33884" default="0" visible="eq(-2,0) + eq(-40,true) + eq(-6,true)" />
+		<setting id="scraping.termination.torrent.video.quality" type="enum" label="33889" subsetting="true" lvalues="33249|33113|33763|33762|33761|33760|33759|33758|33137|33138|33139|33140|33141|33142|33143" default="10" visible="eq(-41,true) + eq(-7,true)" />
+		<setting id="scraping.termination.torrent.video.quality.movies" type="enum" label="35590" subsetting="true" lvalues="33113|33763|33762|33761|33760|33759|33758|33137|33138|33139|33140|33141|33142|33143" default="9" visible="eq(-1,0) + eq(-42,true) + eq(-8,true)" />
+		<setting id="scraping.termination.torrent.video.quality.shows" type="enum" label="35591" subsetting="true" lvalues="33113|33763|33762|33761|33760|33759|33758|33137|33138|33139|33140|33141|33142|33143" default="9" visible="eq(-2,0) + eq(-43,true) + eq(-9,true)" />
+		<setting id="scraping.termination.torrent.video.codec" type="enum" label="33127" subsetting="true" lvalues="33249|33113|33146|33144|33145" default="1" visible="eq(-44,true) + eq(-10,true)" />
+		<setting id="scraping.termination.torrent.video.codec.movies" type="enum" label="35592" subsetting="true" lvalues="33113|33146|33144|33145" default="0" visible="eq(-1,0) + eq(-45,true) + eq(-11,true)" />
+		<setting id="scraping.termination.torrent.video.codec.shows" type="enum" label="35593" subsetting="true" lvalues="33113|33146|33144|33145" default="0" visible="eq(-2,0) + eq(-46,true) + eq(-12,true)" />
+		<setting id="scraping.termination.torrent.audio.channels" type="enum" label="33129" subsetting="true" lvalues="33249|33113|33150|33149|33148|33147" default="1" visible="eq(-47,true) + eq(-13,true)" />
+		<setting id="scraping.termination.torrent.audio.channels.movies" type="enum" label="35594" subsetting="true" lvalues="33113|33150|33149|33148|33147" default="0" visible="eq(-1,0) + eq(-48,true) + eq(-14,true)" />
+		<setting id="scraping.termination.torrent.audio.channels.shows" type="enum" label="35595" subsetting="true" lvalues="33113|33150|33149|33148|33147" default="0" visible="eq(-2,0) + eq(-49,true) + eq(-15,true)" />
+		<setting id="scraping.termination.torrent.audio.codec" type="enum" label="33130" subsetting="true" lvalues="33249|33113|33155|33154|33151|33152|33153" default="1" visible="eq(-50,true) + eq(-16,true)" />
+		<setting id="scraping.termination.torrent.audio.codec.movies" type="enum" label="35596" subsetting="true" lvalues="33113|33155|33154|33151|33152|33153" default="0" visible="eq(-1,0) + eq(-51,true) + eq(-17,true)" />
+		<setting id="scraping.termination.torrent.audio.codec.shows" type="enum" label="35597" subsetting="true" lvalues="33113|33155|33154|33151|33152|33153" default="0" visible="eq(-2,0) + eq(-52,true) + eq(-18,true)" />
+
+		<setting id="scraping.termination.usenet.enabled" type="bool" label="33200" default="false" visible="eq(-53,true)" />
+		<setting id="scraping.termination.usenet.count" type="slider" label="33883" default="5" range="0,100" option="int" subsetting="true" visible="eq(-54,true) + eq(-1,true)" />
+		<setting id="scraping.termination.usenet.count.movies" type="slider" label="35588" default="5" range="1,100" option="int" subsetting="true" visible="eq(-1,0) + eq(-55,true) + eq(-2,true)" />
+		<setting id="scraping.termination.usenet.count.shows" type="slider" label="35589" default="5" range="1,100" option="int" subsetting="true" visible="eq(-2,0) + eq(-56,true) + eq(-3,true)" />
+		<setting id="scraping.termination.usenet.type" type="enum" label="33890" subsetting="true" lvalues="33249|33113|33884" default="1" visible="eq(-57,true) + eq(-4,true)" />
+		<setting id="scraping.termination.usenet.type.movies" type="enum" label="35598" subsetting="true" lvalues="33113|33884" default="0" visible="eq(-1,0) + eq(-58,true) + eq(-5,true)" />
+		<setting id="scraping.termination.usenet.type.shows" type="enum" label="35599" subsetting="true" lvalues="33113|33884" default="0" visible="eq(-2,0) + eq(-59,true) + eq(-6,true)" />
+		<setting id="scraping.termination.usenet.video.quality" type="enum" label="33889" subsetting="true" lvalues="33249|33113|33763|33762|33761|33760|33759|33758|33137|33138|33139|33140|33141|33142|33143" default="10" visible="eq(-60,true) + eq(-7,true)" />
+		<setting id="scraping.termination.usenet.video.quality.movies" type="enum" label="35590" subsetting="true" lvalues="33113|33763|33762|33761|33760|33759|33758|33137|33138|33139|33140|33141|33142|33143" default="9" visible="eq(-1,0) + eq(-61,true) + eq(-8,true)" />
+		<setting id="scraping.termination.usenet.video.quality.shows" type="enum" label="35591" subsetting="true" lvalues="33113|33763|33762|33761|33760|33759|33758|33137|33138|33139|33140|33141|33142|33143" default="9" visible="eq(-2,0) + eq(-62,true) + eq(-9,true)" />
+		<setting id="scraping.termination.usenet.video.codec" type="enum" label="33127" subsetting="true" lvalues="33249|33113|33146|33144|33145" default="1" visible="eq(-63,true) + eq(-10,true)" />
+		<setting id="scraping.termination.usenet.video.codec.movies" type="enum" label="35592" subsetting="true" lvalues="33113|33146|33144|33145" default="0" visible="eq(-1,0) + eq(-64,true) + eq(-11,true)" />
+		<setting id="scraping.termination.usenet.video.codec.shows" type="enum" label="35593" subsetting="true" lvalues="33113|33146|33144|33145" default="0" visible="eq(-2,0) + eq(-65,true) + eq(-12,true)" />
+		<setting id="scraping.termination.usenet.audio.channels" type="enum" label="33129" subsetting="true" lvalues="33249|33113|33150|33149|33148|33147" default="1" visible="eq(-66,true) + eq(-13,true)" />
+		<setting id="scraping.termination.usenet.audio.channels.movies" type="enum" label="35594" subsetting="true" lvalues="33113|33150|33149|33148|33147" default="0" visible="eq(-1,0) + eq(-67,true) + eq(-14,true)" />
+		<setting id="scraping.termination.usenet.audio.channels.shows" type="enum" label="35595" subsetting="true" lvalues="33113|33150|33149|33148|33147" default="0" visible="eq(-2,0) + eq(-68,true) + eq(-15,true)" />
+		<setting id="scraping.termination.usenet.audio.codec" type="enum" label="33130" subsetting="true" lvalues="33249|33113|33155|33154|33151|33152|33153" default="1" visible="eq(-69,true) + eq(-16,true)" />
+		<setting id="scraping.termination.usenet.audio.codec.movies" type="enum" label="35596" subsetting="true" lvalues="33113|33155|33154|33151|33152|33153" default="0" visible="eq(-1,0) + eq(-70,true) + eq(-17,true)" />
+		<setting id="scraping.termination.usenet.audio.codec.shows" type="enum" label="35597" subsetting="true" lvalues="33113|33155|33154|33151|33152|33153" default="0" visible="eq(-2,0) + eq(-71,true) + eq(-18,true)" />
+
+		<setting id="scraping.termination.hoster.enabled" type="bool" label="33198" default="false" visible="eq(-72,true)" />
+		<setting id="scraping.termination.hoster.count" type="slider" label="33883" default="5" range="0,100" option="int" subsetting="true" visible="eq(-73,true) + eq(-1,true)" />
+		<setting id="scraping.termination.hoster.count.movies" type="slider" label="35588" default="5" range="1,100" option="int" subsetting="true" visible="eq(-1,0) + eq(-74,true) + eq(-2,true)" />
+		<setting id="scraping.termination.hoster.count.shows" type="slider" label="35589" default="5" range="1,100" option="int" subsetting="true" visible="eq(-2,0) + eq(-75,true) + eq(-3,true)" />
+		<setting id="scraping.termination.hoster.type" type="enum" label="33890" subsetting="true" lvalues="33249|33113|33884" default="1" visible="eq(-76,true) + eq(-4,true)" />
+		<setting id="scraping.termination.hoster.type.movies" type="enum" label="35598" subsetting="true" lvalues="33113|33884" default="0" visible="eq(-1,0) + eq(-77,true) + eq(-5,true)" />
+		<setting id="scraping.termination.hoster.type.shows" type="enum" label="35599" subsetting="true" lvalues="33113|33884" default="0" visible="eq(-2,0) + eq(-78,true) + eq(-6,true)" />
+		<setting id="scraping.termination.hoster.video.quality" type="enum" label="33889" subsetting="true" lvalues="33249|33113|33763|33762|33761|33760|33759|33758|33137|33138|33139|33140|33141|33142|33143" default="10" visible="eq(-79,true) + eq(-7,true)" />
+		<setting id="scraping.termination.hoster.video.quality.movies" type="enum" label="35590" subsetting="true" lvalues="33113|33763|33762|33761|33760|33759|33758|33137|33138|33139|33140|33141|33142|33143" default="9" visible="eq(-1,0) + eq(-80,true) + eq(-8,true)" />
+		<setting id="scraping.termination.hoster.video.quality.shows" type="enum" label="35591" subsetting="true" lvalues="33113|33763|33762|33761|33760|33759|33758|33137|33138|33139|33140|33141|33142|33143" default="9" visible="eq(-2,0) + eq(-81,true) + eq(-9,true)" />
+		<setting id="scraping.termination.hoster.video.codec" type="enum" label="33127" subsetting="true" lvalues="33249|33113|33146|33144|33145" default="1" visible="eq(-82,true) + eq(-10,true)" />
+		<setting id="scraping.termination.hoster.video.codec.movies" type="enum" label="35592" subsetting="true" lvalues="33113|33146|33144|33145" default="0" visible="eq(-1,0) + eq(-83,true) + eq(-11,true)" />
+		<setting id="scraping.termination.hoster.video.codec.shows" type="enum" label="35593" subsetting="true" lvalues="33113|33146|33144|33145" default="0" visible="eq(-2,0) + eq(-84,true) + eq(-12,true)" />
+		<setting id="scraping.termination.hoster.audio.channels" type="enum" label="33129" subsetting="true" lvalues="33249|33113|33150|33149|33148|33147" default="1" visible="eq(-85,true) + eq(-13,true)" />
+		<setting id="scraping.termination.hoster.audio.channels.movies" type="enum" label="35594" subsetting="true" lvalues="33113|33150|33149|33148|33147" default="0" visible="eq(-1,0) + eq(-86,true) + eq(-14,true)" />
+		<setting id="scraping.termination.hoster.audio.channels.shows" type="enum" label="35595" subsetting="true" lvalues="33113|33150|33149|33148|33147" default="0" visible="eq(-2,0) + eq(-87,true) + eq(-15,true)" />
+		<setting id="scraping.termination.hoster.audio.codec" type="enum" label="33130" subsetting="true" lvalues="33249|33113|33155|33154|33151|33152|33153" default="1" visible="eq(-88,true) + eq(-16,true)" />
+		<setting id="scraping.termination.hoster.audio.codec.movies" type="enum" label="35596" subsetting="true" lvalues="33113|33155|33154|33151|33152|33153" default="0" visible="eq(-1,0) + eq(-89,true) + eq(-17,true)" />
+		<setting id="scraping.termination.hoster.audio.codec.shows" type="enum" label="35597" subsetting="true" lvalues="33113|33155|33154|33151|33152|33153" default="0" visible="eq(-2,0) + eq(-90,true) + eq(-18,true)" />
 
 		<setting type="sep" />
 		<setting type="bool" visible="false" /> <!-- Ensures that a separator is drawn at the bottom. -->
@@ -372,8 +478,9 @@
 		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 33262][/B][/UPPERCASE]" />
 		<setting type="sep" />
 
-		<!-- GENERAL - ORION -->
 		<setting id="providers.general.special.member.enabled" type="bool" default="true" visible="false" />
+
+		<!-- GENERAL - ORION -->
 		<setting id="providers.general.special.member.oriscrapers" type="bool" label="35400" default="true" />
 		<setting id="providers.general.special.member.oriscrapers.settings" type="action" label="33011" option="close" action="RunPlugin(plugin://plugin.video.gaia/?action=orionSettings)" subsetting="true" visible="eq(-1,true)" />
 
@@ -389,6 +496,7 @@
 		<setting id="providers.general.premium.member.offcloud" type="bool" label="OffCloud" subsetting="true" default="true" visible="eq(-2,true)" />
 		<setting id="providers.general.premium.member.realdebrid" type="bool" label="RealDebrid" subsetting="true" default="true" visible="eq(-3,true)" />
 		<setting id="providers.general.premium.member.easynews" type="bool" label="EasyNews" subsetting="true" default="true" visible="eq(-4,true)" />
+		<setting id="providers.general.premium.member.emby" type="bool" label="35551" default="false" subsetting="true" visible="eq(-5,true)" />
 
 		<!-- EXTERNAL -->
 		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 33045][/B][/UPPERCASE]" />
@@ -435,6 +543,14 @@
 		<setting id="providers.external.universal.open.uniscrapersx.providers.label" type="action" label="32345" option="close" action="RunPlugin(plugin://plugin.video.gaia/?action=uniscrapersProviders)" subsetting="true" visible="eq(-4,true) + eq(-3,true)" />
 			<setting id="providers.external.universal.open.uniscrapersx.providers" type="text" visible="false" />
 
+		<!-- EXTERNAL - YODSCRAPERS -->
+		<setting id="providers.external.universal.open.yodscrapersx" type="bool" label="35456" default="false" />
+		<setting id="providers.external.universal.open.yodscrapersx.installed" type="bool" default="false" visible="false" />
+		<setting id="providers.external.universal.open.yodscrapersx.installation" type="action" label="33474" option="close" action="RunPlugin(plugin://plugin.video.gaia/?action=yodscrapersInstall)" subsetting="true" visible="eq(-2,true) + eq(-1,false)" />
+		<setting id="providers.external.universal.open.yodscrapersx.settings" type="action" label="33011" option="close" action="RunPlugin(plugin://plugin.video.gaia/?action=yodscrapersSettings)" subsetting="true" visible="eq(-3,true) + eq(-2,true)" />
+		<setting id="providers.external.universal.open.yodscrapersx.providers.label" type="action" label="32345" option="close" action="RunPlugin(plugin://plugin.video.gaia/?action=yodscrapersProviders)" subsetting="true" visible="eq(-4,true) + eq(-3,true)" />
+			<setting id="providers.external.universal.open.yodscrapersx.providers" type="text" visible="false" />
+
 		<!-- EXTERNAL - INCSCRAPERS -->
 		<setting id="providers.external.universal.open.incscrapersx" type="bool" label="35334" default="false" />
 		<setting id="providers.external.universal.open.incscrapersx.installed" type="bool" default="false" visible="false" />
@@ -450,14 +566,6 @@
 		<setting id="providers.external.universal.open.plascrapersx.settings" type="action" label="33011" option="close" action="RunPlugin(plugin://plugin.video.gaia/?action=plascrapersSettings)" subsetting="true" visible="eq(-3,true) + eq(-2,true)" />
 		<setting id="providers.external.universal.open.plascrapersx.providers.label" type="action" label="32345" option="close" action="RunPlugin(plugin://plugin.video.gaia/?action=plascrapersProviders)" subsetting="true" visible="eq(-4,true) + eq(-3,true)" />
 			<setting id="providers.external.universal.open.plascrapersx.providers" type="text" visible="false" />
-
-		<!-- EXTERNAL - YODSCRAPERS -->
-		<setting id="providers.external.universal.open.yodscrapersx" type="bool" label="35456" default="false" />
-		<setting id="providers.external.universal.open.yodscrapersx.installed" type="bool" default="false" visible="false" />
-		<setting id="providers.external.universal.open.yodscrapersx.installation" type="action" label="33474" option="close" action="RunPlugin(plugin://plugin.video.gaia/?action=yodscrapersInstall)" subsetting="true" visible="eq(-2,true) + eq(-1,false)" />
-		<setting id="providers.external.universal.open.yodscrapersx.settings" type="action" label="33011" option="close" action="RunPlugin(plugin://plugin.video.gaia/?action=yodscrapersSettings)" subsetting="true" visible="eq(-3,true) + eq(-2,true)" />
-		<setting id="providers.external.universal.open.yodscrapersx.providers.label" type="action" label="32345" option="close" action="RunPlugin(plugin://plugin.video.gaia/?action=yodscrapersProviders)" subsetting="true" visible="eq(-4,true) + eq(-3,true)" />
-			<setting id="providers.external.universal.open.yodscrapersx.providers" type="text" visible="false" />
 
 		<setting type="sep" />
 		<setting type="bool" visible="false" /> <!-- Ensures that a separator is drawn at the bottom. -->
@@ -482,15 +590,15 @@
 		<setting id="providers.torrent.universal.open.enabled" type="bool" label="33046" default="true" />
 		<setting id="providers.torrent.universal.open.thepiratebay" type="bool" label="ThePirateBay" subsetting="true" default="true" visible="eq(-1,true)" />
 		<setting id="providers.torrent.universal.open.kickasstorrents" type="bool" label="KickassTorrents" subsetting="true" default="true" visible="eq(-2,true)" />
-		<setting id="providers.torrent.universal.open.idope" type="bool" label="iDope" subsetting="true" default="true" visible="eq(-3,true)" />
-		<setting id="providers.torrent.universal.open.zooqle" type="bool" label="Zooqle" subsetting="true" default="true" visible="eq(-4,true)" />
-		<setting id="providers.torrent.universal.open.torrentapi" type="bool" label="TorrentApi" subsetting="true" default="true" visible="eq(-5,true)" />
-		<setting id="providers.torrent.universal.open.limetorrents" type="bool" label="LimeTorrents" subsetting="true" default="true" visible="eq(-6,true)" />
-		<setting id="providers.torrent.universal.open.popcorntime" type="bool" label="PopcornTime" subsetting="true" default="true" visible="eq(-7,true)" />
-		<setting id="providers.torrent.universal.open.yify" type="bool" label="Yify" subsetting="true" default="true" visible="eq(-8,true)" />
-		<setting id="providers.torrent.universal.open.eztv" type="bool" label="EzTV" subsetting="true" default="true" visible="eq(-9,true)" />
-		<setting id="providers.torrent.universal.open.magnetdl" type="bool" label="MagnetDl" subsetting="true" default="true" visible="eq(-10,true)" />
-		<setting id="providers.torrent.universal.open.bitlord" type="bool" label="BitLord" subsetting="true" default="true" visible="eq(-11,true)" />
+		<setting id="providers.torrent.universal.open.zooqle" type="bool" label="Zooqle" subsetting="true" default="true" visible="eq(-3,true)" />
+		<setting id="providers.torrent.universal.open.torrentapi" type="bool" label="TorrentApi" subsetting="true" default="true" visible="eq(-4,true)" />
+		<setting id="providers.torrent.universal.open.limetorrents" type="bool" label="LimeTorrents" subsetting="true" default="true" visible="eq(-5,true)" />
+		<setting id="providers.torrent.universal.open.popcorntime" type="bool" label="PopcornTime" subsetting="true" default="true" visible="eq(-6,true)" />
+		<setting id="providers.torrent.universal.open.yify" type="bool" label="Yify" subsetting="true" default="true" visible="eq(-7,true)" />
+		<setting id="providers.torrent.universal.open.eztv" type="bool" label="EzTV" subsetting="true" default="true" visible="eq(-8,true)" />
+		<setting id="providers.torrent.universal.open.magnetdl" type="bool" label="MagnetDl" subsetting="true" default="true" visible="eq(-9,true)" />
+		<setting id="providers.torrent.universal.open.bitlord" type="bool" label="BitLord" subsetting="true" default="true" visible="eq(-10,true)" />
+		<setting id="providers.torrent.universal.open.1337x" type="bool" label="$NUMBER[1337]X" subsetting="true" default="true" visible="eq(-11,true)" />
 		<setting id="providers.torrent.universal.open.torrentgalaxy" type="bool" label="TorrentGalaxy" subsetting="true" default="true" visible="eq(-12,true)" />
 		<setting id="providers.torrent.universal.open.torrentquest" type="bool" label="TorrentQuest" subsetting="true" default="true" visible="eq(-13,true)" />
 		<setting id="providers.torrent.universal.open.solidtorrents" type="bool" label="SolidTorrents" subsetting="true" default="true" visible="eq(-14,true)" />
@@ -503,19 +611,19 @@
 		<setting id="providers.torrent.universal.open.torrentdownload" type="bool" label="TorrentDownload" subsetting="true" default="false" visible="eq(-21,true)" />
 		<setting id="providers.torrent.universal.open.magnet4you" type="bool" label="Magnet4You" subsetting="true" default="false" visible="eq(-22,true)" />
 		<setting id="providers.torrent.universal.open.btdb" type="bool" label="BtDb" subsetting="true" default="false" visible="eq(-23,true)" />
-		<setting id="providers.torrent.universal.open.1337x" type="bool" label="$NUMBER[1337]X" subsetting="true" default="false" visible="eq(-24,true)" />
-		<setting id="providers.torrent.universal.open.demonoid" type="bool" label="Demonoid" subsetting="true" default="false" visible="eq(-25,true)" />
-		<setting id="providers.torrent.universal.open.btscene" type="bool" label="BtScene" subsetting="true" default="false" visible="eq(-26,true)" />
-		<setting id="providers.torrent.universal.open.extratorrent" type="bool" label="ExtraTorrent" subsetting="true" default="false" visible="eq(-27,true)" />
-		<setting id="providers.torrent.universal.open.torlock" type="bool" label="TorLock" subsetting="true" default="false" visible="eq(-28,true)" />
-		<setting id="providers.torrent.universal.open.yourbittorrent" type="bool" label="YourBitTorrent" subsetting="true" default="false" visible="eq(-29,true)" />
-		<setting id="providers.torrent.universal.open.torrentfunk" type="bool" label="TorrentFunk" subsetting="true" default="false" visible="eq(-30,true)" />
-		<setting id="providers.torrent.universal.open.torrenttm" type="bool" label="TorrentTm" subsetting="true" default="false" visible="eq(-31,true)" />
-		<setting id="providers.torrent.universal.open.prostylex" type="bool" label="Prostylex" subsetting="true" default="false" visible="eq(-32,true)" />
-		<setting id="providers.torrent.universal.open.movcr" type="bool" label="Movcr" subsetting="true" default="false" visible="eq(-33,true)" />
-		<setting id="providers.torrent.universal.open.am5k8" type="bool" label="Am5k8" subsetting="true" default="false" visible="eq(-34,true)" />
-		<setting id="providers.torrent.universal.open.seventorrents" type="bool" label="SevenTorrents" subsetting="true" default="false" visible="eq(-35,true)" />
-		<setting id="providers.torrent.universal.open.btbit" type="bool" label="BtBit" subsetting="true" default="false" visible="eq(-36,true)" />
+		<setting id="providers.torrent.universal.open.demonoid" type="bool" label="Demonoid" subsetting="true" default="false" visible="eq(-24,true)" />
+		<setting id="providers.torrent.universal.open.btscene" type="bool" label="BtScene" subsetting="true" default="false" visible="eq(-25,true)" />
+		<setting id="providers.torrent.universal.open.extratorrent" type="bool" label="ExtraTorrent" subsetting="true" default="false" visible="eq(-26,true)" />
+		<setting id="providers.torrent.universal.open.torlock" type="bool" label="TorLock" subsetting="true" default="false" visible="eq(-27,true)" />
+		<setting id="providers.torrent.universal.open.yourbittorrent" type="bool" label="YourBitTorrent" subsetting="true" default="false" visible="eq(-28,true)" />
+		<setting id="providers.torrent.universal.open.torrentfunk" type="bool" label="TorrentFunk" subsetting="true" default="false" visible="eq(-29,true)" />
+		<setting id="providers.torrent.universal.open.torrenttm" type="bool" label="TorrentTm" subsetting="true" default="false" visible="eq(-30,true)" />
+		<setting id="providers.torrent.universal.open.prostylex" type="bool" label="Prostylex" subsetting="true" default="false" visible="eq(-31,true)" />
+		<setting id="providers.torrent.universal.open.movcr" type="bool" label="Movcr" subsetting="true" default="false" visible="eq(-32,true)" />
+		<setting id="providers.torrent.universal.open.am5k8" type="bool" label="Am5k8" subsetting="true" default="false" visible="eq(-33,true)" />
+		<setting id="providers.torrent.universal.open.seventorrents" type="bool" label="SevenTorrents" subsetting="true" default="false" visible="eq(-34,true)" />
+		<setting id="providers.torrent.universal.open.btbit" type="bool" label="BtBit" subsetting="true" default="false" visible="eq(-35,true)" />
+		<setting id="providers.torrent.universal.open.idope" type="bool" label="iDope" subsetting="true" default="false" visible="eq(-36,true)" />
 		<setting id="providers.torrent.universal.open.digbt" type="bool" label="DigBt" subsetting="true" default="false" visible="eq(-37,true)" />
 
 		<!-- TORRENT - FRENCH MEMBER -->
@@ -541,6 +649,14 @@
 		<setting id="providers.torrent.italian.open.ilcorsaronero" type="bool" label="IlCorSaRoNeRo" subsetting="true" default="true" visible="eq(-1,true)" />
 		<setting id="providers.torrent.italian.open.tntvillage" type="bool" label="TNTVillage" subsetting="true" default="true" visible="eq(-2,true)" />
 
+		<setting type="sep" />
+		<setting type="bool" visible="false" /> <!-- Ensures that a separator is drawn at the bottom. -->
+	</category>
+
+	<category label="$ADDON[plugin.video.gaia 32345] 3">
+
+		<setting type="bool" visible="false" /> <!-- Ensures that a separator is drawn at the top. Can be removed if other cross-group elements are added here. -->
+
 		<!-- USENET -->
 		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 33044][/B][/UPPERCASE]" />
 		<setting type="sep" />
@@ -548,16 +664,25 @@
 		<!-- USENET - UNIVERSAL MEMBER -->
 		<setting id="providers.usenet.universal.member.enabled" type="bool" label="33047" default="false" />
 		<setting id="providers.usenet.universal.member.usenetcrawler" type="bool" label="UsenetCrawler" subsetting="true" default="true" visible="eq(-1,true)" />
-		<setting id="providers.usenet.universal.member.abnzb" type="bool" label="AbNZB" subsetting="true" default="true" visible="eq(-2,true)" />
-		<setting id="providers.usenet.universal.member.nzbfinder" type="bool" label="NZBFinder" subsetting="true" default="true" visible="eq(-3,true)" />
-		<setting id="providers.usenet.universal.member.nzbndx" type="bool" label="NZBndx" subsetting="true" default="true" visible="eq(-4,true)" />
-		<setting id="providers.usenet.universal.member.nzbgeek" type="bool" label="NZBgeek" subsetting="true" default="true" visible="eq(-5,true)" />
+		<setting id="providers.usenet.universal.member.abnzb" type="bool" label="AbNzb" subsetting="true" default="true" visible="eq(-2,true)" />
+		<setting id="providers.usenet.universal.member.althub" type="bool" label="AltHub" subsetting="true" default="true" visible="eq(-3,true)" />
+		<setting id="providers.usenet.universal.member.dognzb" type="bool" label="DogNzb" subsetting="true" default="true" visible="eq(-4,true)" />
+		<setting id="providers.usenet.universal.member.nzbfinder" type="bool" label="NzbFinder" subsetting="true" default="true" visible="eq(-5,true)" />
+		<setting id="providers.usenet.universal.member.nzbndx" type="bool" label="NzbNdx" subsetting="true" default="true" visible="eq(-6,true)" />
+		<setting id="providers.usenet.universal.member.nzbgeek" type="bool" label="NzbGeek" subsetting="true" default="true" visible="eq(-7,true)" />
+		<setting id="providers.usenet.universal.member.nzbhydra" type="bool" label="NzbHydra" subsetting="true" default="true" visible="eq(-8,true)" />
+		<setting id="providers.usenet.universal.member.nzbwolf" type="bool" label="NzbWolf" subsetting="true" default="true" visible="eq(-9,true)" />
+		<setting id="providers.usenet.universal.member.nzbnoob" type="bool" label="NzbNoob" subsetting="true" default="true" visible="eq(-10,true)" />
 
 		<!-- USENET - UNIVERSAL OPEN -->
 		<setting id="providers.usenet.universal.open.enabled" type="bool" label="33046" default="false" />
-		<setting id="providers.usenet.universal.open.newzleech" type="bool" label="NewzLeech" subsetting="true" default="true" visible="eq(-1,true)" />
-		<setting id="providers.usenet.universal.open.nzbstars" type="bool" label="NZBStars" subsetting="true" default="true" visible="eq(-2,true)" />
-		<setting id="providers.usenet.universal.open.binzb" type="bool" label="BiNZB" subsetting="true" default="true" visible="eq(-3,true)" />
+		<setting id="providers.usenet.universal.open.binzb" type="bool" label="BiNzb" subsetting="true" default="true" visible="eq(-1,true)" />
+		<setting id="providers.usenet.universal.open.nzbindex" type="bool" label="NzbIndex" subsetting="true" default="true" visible="eq(-2,true)" />
+		<setting id="providers.usenet.universal.open.newzleech" type="bool" label="NewzLeech" subsetting="true" default="true" visible="eq(-3,true)" />
+		<setting id="providers.usenet.universal.open.nzbstars" type="bool" label="NzbStars" subsetting="true" default="true" visible="eq(-4,true)" />
+		<setting id="providers.usenet.universal.open.nzbserver" type="bool" label="NzbServer" subsetting="true" default="true" visible="eq(-5,true)" />
+		<setting id="providers.usenet.universal.open.nzbfriends" type="bool" label="NzbFriends" subsetting="true" default="true" visible="eq(-6,true)" />
+		<setting id="providers.usenet.universal.open.findnzb" type="bool" label="FindNzb" subsetting="true" default="true" visible="eq(-7,true)" />
 
 		<!-- HOSTER -->
 		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 33263][/B][/UPPERCASE]" />
@@ -666,6 +791,13 @@
 		<setting id="accounts.debrid.easynews.user" type="text" label="33267" default="" visible="eq(-1,true)" />
 		<setting id="accounts.debrid.easynews.pass" type="text" option="hidden" label="32307" default="" visible="eq(-2,true)" />
 
+		<!-- EMBY -->
+		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 35551][/B][/UPPERCASE]" />
+		<setting type="sep" />
+		<setting id="accounts.premium.emby.enabled" type="bool" label="33192" default="false" />
+		<setting id="accounts.premium.emby.servers" type="action" label="35552" action="RunPlugin(plugin://plugin.video.gaia/?action=embySettings)" subsetting="True" visible="eq(-1,true)" />
+			<setting id="accounts.premium.emby.servers.list" type="text" label="" default="" visible="false" />
+
 		<setting type="sep" />
 		<setting type="bool" visible="false" /> <!-- Ensures that a separator is drawn at the bottom. -->
 	</category>
@@ -694,33 +826,61 @@
 		<setting type="lsep" label="[UPPERCASE][B]UsenetCrawler[/B][/UPPERCASE]" />
 		<setting type="sep" />
 		<setting id="accounts.providers.usenetcrawler.enabled" type="bool" label="33192" default="false" />
-		<setting id="accounts.providers.usenetcrawler.user" type="text" label="33267" default="" visible="eq(-1,true)" />
-		<setting id="accounts.providers.usenetcrawler.pass" type="text" option="hidden" label="32307" default="" visible="eq(-2,true)" />
+		<setting id="accounts.providers.usenetcrawler.api" type="text" option="hidden" label="33100" default="" visible="eq(-1,true)" />
 
 		<!-- ABNZB -->
-		<setting type="lsep" label="[UPPERCASE][B]AbNZB[/B][/UPPERCASE]" />
+		<setting type="lsep" label="[UPPERCASE][B]AbNzb[/B][/UPPERCASE]" />
 		<setting type="sep" />
 		<setting id="accounts.providers.abnzb.enabled" type="bool" label="33192" default="false" />
 		<setting id="accounts.providers.abnzb.api" type="text" option="hidden" label="33100" default="" visible="eq(-1,true)" />
 
+		<!-- ALTHUB -->
+		<setting type="lsep" label="[UPPERCASE][B]AltHub[/B][/UPPERCASE]" />
+		<setting type="sep" />
+		<setting id="accounts.providers.althub.enabled" type="bool" label="33192" default="false" />
+		<setting id="accounts.providers.althub.api" type="text" option="hidden" label="33100" default="" visible="eq(-1,true)" />
+
+		<!-- DOGNZB -->
+		<setting type="lsep" label="[UPPERCASE][B]DogNzb[/B][/UPPERCASE]" />
+		<setting type="sep" />
+		<setting id="accounts.providers.dognzb.enabled" type="bool" label="33192" default="false" />
+		<setting id="accounts.providers.dognzb.api" type="text" option="hidden" label="33100" default="" visible="eq(-1,true)" />
+
 		<!-- NZBFINDER -->
-		<setting type="lsep" label="[UPPERCASE][B]NZBFinder[/B][/UPPERCASE]" />
+		<setting type="lsep" label="[UPPERCASE][B]NzbFinder[/B][/UPPERCASE]" />
 		<setting type="sep" />
 		<setting id="accounts.providers.nzbfinder.enabled" type="bool" label="33192" default="false" />
 		<setting id="accounts.providers.nzbfinder.api" type="text" option="hidden" label="33100" default="" visible="eq(-1,true)" />
 
 		<!-- NZBNDX -->
-		<setting type="lsep" label="[UPPERCASE][B]NZBndx[/B][/UPPERCASE]" />
+		<setting type="lsep" label="[UPPERCASE][B]NzbNdx[/B][/UPPERCASE]" />
 		<setting type="sep" />
 		<setting id="accounts.providers.nzbndx.enabled" type="bool" label="33192" default="false" />
-		<setting id="accounts.providers.nzbndx.user" type="text" label="33267" default="" visible="eq(-1,true)" />
-		<setting id="accounts.providers.nzbndx.pass" type="text" option="hidden" label="32307" default="" visible="eq(-2,true)" />
+		<setting id="accounts.providers.nzbndx.api" type="text" option="hidden" label="33100" default="" visible="eq(-1,true)" />
 
 		<!-- NZBGEEK -->
-		<setting type="lsep" label="[UPPERCASE][B]NZBgeek[/B][/UPPERCASE]" />
+		<setting type="lsep" label="[UPPERCASE][B]NzbGeek[/B][/UPPERCASE]" />
 		<setting type="sep" />
 		<setting id="accounts.providers.nzbgeek.enabled" type="bool" label="33192" default="false" />
 		<setting id="accounts.providers.nzbgeek.api" type="text" option="hidden" label="33100" default="" visible="eq(-1,true)" />
+
+		<!-- NZBHYDRA -->
+		<setting type="lsep" label="[UPPERCASE][B]NzbHydra[/B][/UPPERCASE]" />
+		<setting type="sep" />
+		<setting id="accounts.providers.nzbhydra.enabled" type="bool" label="33192" default="false" />
+		<setting id="accounts.providers.nzbhydra.api" type="text" option="hidden" label="33100" default="" visible="eq(-1,true)" />
+
+		<!-- NZBWOLF -->
+		<setting type="lsep" label="[UPPERCASE][B]NzbWolf[/B][/UPPERCASE]" />
+		<setting type="sep" />
+		<setting id="accounts.providers.nzbwolf.enabled" type="bool" label="33192" default="false" />
+		<setting id="accounts.providers.nzbwolf.api" type="text" option="hidden" label="33100" default="" visible="eq(-1,true)" />
+
+		<!-- NZBNOOB -->
+		<setting type="lsep" label="[UPPERCASE][B]NzbNoob[/B][/UPPERCASE]" />
+		<setting type="sep" />
+		<setting id="accounts.providers.nzbnoob.enabled" type="bool" label="33192" default="false" />
+		<setting id="accounts.providers.nzbnoob.api" type="text" option="hidden" label="33100" default="" visible="eq(-1,true)" />
 
 		<setting type="sep" />
 		<setting type="bool" visible="false" /> <!-- Ensures that a separator is drawn at the bottom. -->

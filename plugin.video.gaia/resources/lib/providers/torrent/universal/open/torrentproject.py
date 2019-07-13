@@ -68,6 +68,7 @@ class source:
 			if url == None:
 				raise Exception()
 
+			ignoreContains = None
 			data = urlparse.parse_qs(url)
 			data = dict([(i, data[i][0]) if data[i] else (i, '') for i in data])
 
@@ -87,8 +88,14 @@ class source:
 				packCount = data['packcount'] if 'packcount' in data else None
 
 				if 'tvshowtitle' in data:
-					if pack: query = '%s %d' % (title, season)
-					else: query = '%s S%02dE%02d' % (title, season, episode)
+					# Search special episodes by name. All special episodes are added to season 0 by Trakt and TVDb. Hence, do not search by filename (eg: S02E00), since the season is not known.
+					if (season == 0 or episode == 0) and ('title' in data and not data['title'] == None and not data['title'] == ''):
+						title = '%s %s' % (data['tvshowtitle'], data['title']) # Change the title for metadata filtering.
+						query = title
+						ignoreContains = len(data['title']) / float(len(title)) # Increase the required ignore ration, since otherwise individual episodes and season packs are found as well.
+					else:
+						if pack: query = '%s %d' % (title, season)
+						else: query = '%s S%02dE%02d' % (title, season, episode)
 				else:
 					query = '%s %d' % (title, year)
 				query = re.sub('(\\\|/| -|:|;|\*|\?|"|\'|<|>|\|)', ' ', query)
@@ -141,8 +148,8 @@ class source:
 					meta = metadata.Metadata(name = jsonName, title = title, year = year, season = season, episode = episode, pack = pack, packCount = packCount, link = jsonLink, size = jsonSize, seeds = jsonSeeds)
 
 					# Ignore
-					if meta.ignore(True):
-						continue
+					meta.ignoreAdjust(contains = ignoreContains)
+					if meta.ignore(True): continue
 
 					# Ignore Name
 					# TorrentProject has a lot of season packs, foreign titles, and other torrents that should be excluded. If the name does not contain the exact search string, ignore the result.

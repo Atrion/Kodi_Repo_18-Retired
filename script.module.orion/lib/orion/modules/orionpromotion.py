@@ -63,9 +63,13 @@ class OrionPromotion:
 		except: return default
 
 	##############################################################################
-	# LIMIT
+	# MULTIPLIER
 	##############################################################################
 
-	def limitMultiplier(self, default = None):
-		try: return self.mData['limit']['multiplier']
+	def multiplierStreams(self, default = None):
+		try: return self.mData['multiplier']['streams']
+		except: return default
+
+	def multiplierHashes(self, default = None):
+		try: return self.mData['multiplier']['hashes']
 		except: return default

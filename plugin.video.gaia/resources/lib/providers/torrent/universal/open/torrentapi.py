@@ -73,6 +73,7 @@ class source:
 			if url == None:
 				raise Exception()
 
+			ignoreContains = None
 			data = urlparse.parse_qs(url)
 			data = dict([(i, data[i][0]) if data[i] else (i, '') for i in data])
 
@@ -97,8 +98,14 @@ class source:
 				packCount = data['packcount'] if 'packcount' in data else None
 
 				if 'tvshowtitle' in data:
-					if pack: query = '%s S%02d' % (title, season) # Must add S before season, otherwise TorrentAPI throws an error (maybe because the search term is too general).
-					else: query = '%s S%02dE%02d' % (title, season, episode)
+					# Search special episodes by name. All special episodes are added to season 0 by Trakt and TVDb. Hence, do not search by filename (eg: S02E00), since the season is not known.
+					if (season == 0 or episode == 0) and ('title' in data and not data['title'] == None and not data['title'] == ''):
+						title = '%s %s' % (data['tvshowtitle'], data['title']) # Change the title for metadata filtering.
+						query = title
+						ignoreContains = len(data['title']) / float(len(title)) # Increase the required ignore ration, since otherwise individual episodes and season packs are found as well.
+					else:
+						if pack: query = '%s S%02d' % (title, season) # Must add S before season, otherwise TorrentAPI throws an error (maybe because the search term is too general).
+						else: query = '%s S%02dE%02d' % (title, season, episode)
 				else:
 					query = '%s %d' % (title, year)
 				query = re.sub('(\\\|/| -|:|;|\*|\?|"|\'|<|>|\|)', ' ', query)
@@ -120,8 +127,8 @@ class source:
 				meta = metadata.Metadata(name = jsonName, title = title, year = year, season = season, episode = episode, pack = pack, packCount = packCount, link = jsonLink, size = jsonSize, seeds = jsonSeeds)
 
 				# Ignore
-				if meta.ignore(False):
-					continue
+				meta.ignoreAdjust(contains = ignoreContains)
+				if meta.ignore(False): continue
 
 				# Add
 				sources.append({'url' : jsonLink, 'debridonly' : False, 'direct' : False, 'source' : 'torrent', 'language' : self.language[0], 'quality':  meta.videoQuality(), 'metadata' : meta, 'file' : jsonName})

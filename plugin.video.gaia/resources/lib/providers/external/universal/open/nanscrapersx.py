@@ -82,6 +82,7 @@ class source:
 			for scraper in get_scrapers:
 				scraper = scraper()
 				id = scraper.name.replace(' ', '').lower()
+				if 'torrent' in id: continue
 				if id == 'orion' or id == 'orionoid': continue
 				scraperNew = source()
 				scraperNew.id = id
@@ -282,6 +283,7 @@ class source:
 					except: continue
 
 					source = item['source'].lower().replace(' ', '')
+					if 'torrent' in source: continue
 					if source == 'direct' or source == 'directlink':
 						source = urlparse.urlsplit(item['url'])[1].split(':')[0]
 						if network.Networker.ipIs(source):

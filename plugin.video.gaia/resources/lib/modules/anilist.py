@@ -19,21 +19,20 @@
 '''
 
 import json, urlparse, urllib
-
-from resources.lib.modules import cache
 from resources.lib.modules import client
 from resources.lib.modules import cleantitle
+from resources.lib.extensions import cache
 
 
 def _getAniList(url):
 	try:
 		url = urlparse.urljoin('https://anilist.co', '/api%s' % url)
-		return client.request(url, headers={'Authorization': '%s %s' % cache.get(_getToken, 1), 'Content-Type': 'application/x-www-form-urlencoded'})
+		return client.request(url, headers={'Authorization': '%s %s' % cache.Cache().cacheShort(_getAniToken), 'Content-Type': 'application/x-www-form-urlencoded'})
 	except:
 		pass
 
 
-def _getToken():
+def _getAniToken():
 	result = urllib.urlencode({'grant_type': 'client_credentials', 'client_id': 'gaiaaddon-ocdew', 'client_secret': 'e2B2Phu3PL4WzVL179'})
 	result = client.request('https://anilist.co/api/auth/access_token', post=result, headers={'Content-Type': 'application/x-www-form-urlencoded'}, error=True)
 	result = json.loads(result)

@@ -20,10 +20,8 @@
 
 
 import urllib,json,time
-from resources.lib.modules import cache
 from resources.lib.modules import control
 from resources.lib.modules import client
-
 from resources.lib.extensions import tools
 from resources.lib.extensions import debrid as debridx
 

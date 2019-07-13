@@ -376,6 +376,11 @@ class OrionStream:
 
 	EditionNone = None
 	EditionExtended = 'extended'
+	EditionCollector = 'collector'
+	EditionDirector = 'director'
+	EditionCommentary = 'commentary'
+	EditionMaking = 'making'
+	EditionSpecial = 'special'
 
 	AudioStandard = 'standard'
 	AudioDubbed = 'dubbed'
@@ -484,15 +489,19 @@ class OrionStream:
 		except: return default
 
 	##############################################################################
+	# LINKS
+	##############################################################################
+
+	def links(self, default = None):
+		try: return self.mData['links']
+		except: return default
+
+	##############################################################################
 	# STREAM
 	##############################################################################
 
 	def streamType(self, default = None):
 		try: return self.mData['stream']['type']
-		except: return default
-
-	def streamLink(self, default = None):
-		try: return self.mData['stream']['link']
 		except: return default
 
 	def streamOrigin(self, default = None):

@@ -41,56 +41,56 @@ A few things to note:
 
 ##############################################################################################################################################################################################################################################
 
-STREAM EXAMPLE 1 - Retrieve a movie using an IMDb ID.
+STREAM RETRIEVE 1 - Retrieve a movie using an IMDb ID.
 
 	from orion import *
 	result = Orion('my_app_key').streams(type = Orion.TypeMovie, idImdb = '0063350')
 
 ##############################################################################################################################################################################################################################################
 
-STREAM EXAMPLE 2 - Retrieve an episode using a TVDb ID.
+STREAM RETRIEVE 2 - Retrieve an episode using a TVDb ID.
 
 	from orion import *
 	result = Orion('my_app_key').streams(type = Orion.TypeShow, idTvdb = '73739', numberSeason = 3, numberEpisode = 5)
 
 ##############################################################################################################################################################################################################################################
 
-STREAM EXAMPLE 3 - Retrieve a movie using a query string. Using a query is not advised, since the wrong results might be returned.
+STREAM RETRIEVE 3 - Retrieve a movie using a query string. Using a query is not advised, since the wrong results might be returned.
 
 	from orion import *
 	result = Orion('my_app_key').streams(type = Orion.TypeMovie, query = 'Night of the Living Dead 1968')
 
 ##############################################################################################################################################################################################################################################
 
-STREAM EXAMPLE 4 - Retrieve a movie no larger than 2GB and being either a direct hoster, a cached torrent, or a cached usenet link on Premiumize.
+STREAM RETRIEVE 4 - Retrieve a movie no larger than 2GB and being either a direct hoster, a cached torrent, or a cached usenet link on Premiumize.
 
 	from orion import *
 	result = Orion('my_app_key').streams(type = Orion.TypeMovie, idImdb = '0063350', fileSize = [None, 2147483648], access = [Orion.AccessDirect, Orion.AccessPremiumizeTorrent, Orion.AccessPremiumizeUsenet])
 
 ##############################################################################################################################################################################################################################################
 
-STREAM EXAMPLE 5 - Retrieve a movie that has a video quality between SD and HD1080, and a DD or DTS audio system.
+STREAM RETRIEVE 5 - Retrieve a movie that has a video quality between SD and HD1080, and a DD or DTS audio system.
 
 	from orion import *
 	result = Orion('my_app_key').streams(type = Orion.TypeMovie, idImdb = '0063350', videoQuality = [Orion.QualitySd, Orion.QualityHd1080], audioSystem = [Orion.SystemDd, Orion.SystemDts])
 
 ##############################################################################################################################################################################################################################################
 
-STREAM EXAMPLE 6 - Retrieve a movie that has a popularity of at least 50% and sorted by file size in descending order.
+STREAM RETRIEVE 6 - Retrieve a movie that has a popularity of at least 50% and sorted by file size in descending order.
 
 	from orion import *
 	result = Orion('my_app_key').streams(type = Orion.TypeMovie, idImdb = '0063350', popularityPercent = 0.5, sortValue = Orion.SortFileSize, sortOrder = Orion.OrderDescending)
 
 ##############################################################################################################################################################################################################################################
 
-STREAM EXAMPLE 7 - Retrieve a movie with a maximum of 100 links and a page offset of 2 (that is link number 101 - 200).
+STREAM RETRIEVE 7 - Retrieve a movie with a maximum of 100 links and a page offset of 2 (that is link number 101 - 200).
 
 	from orion import *
 	result = Orion('my_app_key').streams(type = Orion.TypeMovie, idImdb = '0063350', limitCount = 100, limitPage = 2)
 
 ##############################################################################################################################################################################################################################################
 
-STREAM EXAMPLE 8 - Retrieve a movie but only torrent MAGNET links or hoster HTTPS links.
+STREAM RETRIEVE 8 - Retrieve a movie but only torrent MAGNET links or hoster HTTPS links.
 
 	from orion import *
 	result = Orion('my_app_key').streams(type = Orion.TypeMovie, idImdb = '0063350', protocolTorrent = [Orion.ProtocolMagnet], protocolHoster = [Orion.ProtocolHttps])
@@ -108,6 +108,34 @@ STREAM REMOVE - Request the removal of an incorrect or non-working stream.
 
 	from orion import *
 	result = Orion('my_app_key').streamRemove(idItem = 'id_of_movie_or_episode', idStream = 'orion_stream_id')
+
+##############################################################################################################################################################################################################################################
+
+CONTAINER RETRIEVE - Retrieve the details for a list of containers, including links and hashes.
+
+	from orion import *
+	result = Orion('my_app_key').containers(links = ['source_link_of_torrent_or_usenet_container', 'source_link_of_torrent_or_usenet_container'])
+
+##############################################################################################################################################################################################################################################
+
+CONTAINER HASHES - Retrieve the hashes for a list of containers.
+
+	from orion import *
+	result = Orion('my_app_key').containerHashes(links = ['source_link_of_torrent_or_usenet_container', 'source_link_of_torrent_or_usenet_container'])
+
+##############################################################################################################################################################################################################################################
+
+CONTAINER DOWNLOAD 1 - Download a container to memory.
+
+	from orion import *
+	data = Orion('my_app_key').containerDownload(id = 'container_id_or_sha1_or_link')
+
+##############################################################################################################################################################################################################################################
+
+CONTAINER DOWNLOAD 2 - Download a container to file.
+
+	from orion import *
+	result = Orion('my_app_key').containerDownload(id = 'container_id_or_sha1_or_link', path = '/tmp/xyz.torrent')
 
 ##############################################################################################################################################################################################################################################
 
@@ -203,6 +231,7 @@ from orion.modules.orionuser import *
 from orion.modules.orionstats import *
 from orion.modules.oriontools import *
 from orion.modules.orionitem import *
+from orion.modules.orioncontainer import *
 from orion.modules.orionsettings import *
 from orion.modules.orionnavigator import *
 
@@ -600,7 +629,12 @@ class Orion:
 
 	# Edition Type
 	EditionNone = OrionStream.EditionNone							# None					(Normal cinema version)
-	EditionExtended = OrionStream.EditionExtended					# 'extended'			(Extended editions and director cuts)
+	EditionExtended = OrionStream.EditionExtended					# 'extended'			(Extended editions)
+	EditionCollector = OrionStream.EditionCollector					# 'collector'			(Collector editions)
+	EditionDirector = OrionStream.EditionDirector					# 'director'			(Director cuts)
+	EditionCommentary = OrionStream.EditionCommentary				# 'commentary'			(Commentary voiceovers)
+	EditionMaking = OrionStream.EditionMaking						# 'making'				(Making of editions)
+	EditionSpecial = OrionStream.EditionSpecial						# 'special'				(Special editions)
 
 	# Audio Type
 	AudioStandard = OrionStream.AudioStandard						# 'standard'			(Standard non-dubbed audio)
@@ -662,7 +696,7 @@ class Orion:
 	# Subtitle Type
 	SubtitleNone = OrionStream.SubtitleNone							# None					(No subtitles)
 	SubtitleSoft = OrionStream.SubtitleSoft							# 'soft'				(Soft-coded subtitles that can be disabled)
-	SubtitleHard = OrionStream.SubtitleHard							# 'hard'				(Soft-coded subtitles that cannot be disabled)
+	SubtitleHard = OrionStream.SubtitleHard							# 'hard'				(Hard-coded subtitles that cannot be disabled)
 
 	# Sorting Value
 	SortShuffle = OrionItem.SortShuffle								# 'shuffle'				(Randomly shuffle results)
@@ -697,21 +731,33 @@ class Orion:
 	# ENCODING
 	##############################################################################
 
-	def _encode(self, object, encoding = None):
+	def _encode(self, object, encoding = None, dictionary = False):
 		if encoding == None: encoding = self.mEncoding
-		if object == None: return '' if encoding == Orion.EncodingJson else None
+		if object == None:
+			return '' if encoding == Orion.EncodingJson else None
 		elif encoding == Orion.EncodingJson:
-			if OrionTools.isArray(object): return [OrionTools.jsonTo(i.data()) for i in object]
-			else: return OrionTools.jsonTo(object.data())
+			if OrionTools.isArray(object):
+				if dictionary: return OrionTools.jsonTo({key : value for item in object for key, value in item.data().items()})
+				else: return [OrionTools.jsonTo(i.data()) for i in object]
+			else:
+				try: return OrionTools.jsonTo(object.data())
+				except: return OrionTools.jsonTo(object)
 		elif encoding == Orion.EncodingStruct:
-			if OrionTools.isArray(object): return [i.data() for i in object]
-			else: return object.data()
-		else: return object
+			if OrionTools.isArray(object):
+				result = [i.data() for i in object]
+				if dictionary: return {key : value for item in result for key, value in item.items()}
+				else: return result
+			else:
+				try: return object.data()
+				except: return object
+		else:
+			return object
 
 	##############################################################################
 	# LINK
 	##############################################################################
 
+	# Retrieve the link to Orion's website.
 	def link(self):
 		return OrionTools.link()
 
@@ -719,15 +765,19 @@ class Orion:
 	# SETTINGS
 	##############################################################################
 
+	# Retrieve the scraping timeout from the user settings.
 	def settingsScrapingTimeout(self):
 		return OrionSettings.getGeneralScrapingTimeout()
 
+	# Retrieve the scraping mode from the user settings.
 	def settingsScrapingMode(self):
 		return OrionSettings.getGeneralScrapingMode()
 
+	# Retrieve the minimum scraping count from the user settings.
 	def settingsScrapingCount(self):
 		return OrionSettings.getGeneralScrapingCount()
 
+	# Retrieve the minimum scraping video quality from the user settings.
 	def settingsScrapingQuality(self):
 		return OrionSettings.getGeneralScrapingQuality()
 
@@ -735,12 +785,15 @@ class Orion:
 	# APP
 	##############################################################################
 
+	# Retrieve the app details.
 	def app(self, encoding = None):
 		return self._encode(self.mApp, encoding = encoding)
 
+	# Check if the app authentication credentials are valid.
 	def appValid(self):
 		return self.mApp.valid()
 
+	# Show a dialog with the app details.
 	def appDialog(self):
 		return OrionNavigator.dialogApp()
 
@@ -748,24 +801,31 @@ class Orion:
 	# USER
 	##############################################################################
 
+	# Retrieve the user details.
 	def user(self, encoding = None):
 		return self._encode(OrionUser.instance(), encoding = encoding)
 
+	# Check if the user has entered authentication credentials.
 	def userEnabled(self):
 		return OrionUser.instance().enabled()
 
+	# Check if the user authentication credentials are valid.
 	def userValid(self):
 		return OrionUser.instance().valid()
 
+	# Check if the user has a free account.
 	def userFree(self):
 		return OrionUser.instance().subscriptionPackageFree()
 
+	# Check if the user has a premium account.
 	def userPremium(self):
 		return OrionUser.instance().subscriptionPackagePremium()
 
+	# Show a dialog with the user details.
 	def userDialog(self):
 		return OrionNavigator.dialogUser()
 
+	# Update the user account with the given API key, or update the user account by showing an API key input dialog.
 	def userUpdate(self, key = None, input = False, loader = False):
 		if input:
 			key = OrionNavigator.settingsAccountKey()
@@ -780,14 +840,17 @@ class Orion:
 	# SERVER
 	##############################################################################
 
+	# Retrieve the server statistics.
 	def serverStats(self, encoding = None):
 		stats = OrionStats.instance()
 		stats.update()
 		return self._encode(stats, encoding = encoding)
 
+	# Show a dialog with the server details.
 	def serverDialog(self):
 		return OrionNavigator.dialogServer()
 
+	# Test if the server is up and running.
 	def serverTest(self):
 		return OrionApi().serverTest()
 
@@ -795,6 +858,7 @@ class Orion:
 	# STREAMS
 	##############################################################################
 
+	# Retrieve a list of streams with links and metadata, according to the given filters.
 	def streams(self,
 
 				type,
@@ -838,9 +902,10 @@ class Orion:
 
 				access = FilterSettings,
 
+				filePack = FilterSettings,
+				fileName = FilterSettings,
 				fileSize = FilterSettings, # Can be a single value holding the maximum size (eg: 1073741824), or a tuple/list with the minimum and maximum sizes (eg: [536870912,1073741824]). If either value is None, there is no upper/lower bound (eg: [536870912,None])
 				fileUnknown = FilterSettings,
-				filePack = FilterSettings,
 
 				metaRelease = FilterSettings,
 				metaUploader = FilterSettings,
@@ -906,9 +971,10 @@ class Orion:
 
 			access = access,
 
+			filePack = filePack,
+			fileName = fileName,
 			fileSize = fileSize,
 			fileUnknown = fileUnknown,
-			filePack = filePack,
 
 			metaRelease = metaRelease,
 			metaUploader = metaUploader,
@@ -932,20 +998,58 @@ class Orion:
 		if not details: result = result.streams()
 		return self._encode(result, encoding = encoding)
 
+	# Retrieve the number of streams adhering to the minimum video quality of the user settings.
 	def streamsCount(self, streams, quality = FilterNone):
 		if quality == Orion.FilterSettings: quality = self.settingsScrapingQuality()
 		return OrionStream.count(streams = streams, quality = quality)
 
+	# Vote a stream up or down to change its popularity.
 	def streamVote(self, idItem, idStream, vote = VoteUp, notification = False):
 		OrionItem.popularityVote(idItem = idItem, idStream = idStream, vote = vote, notification = notification)
 
+	# Request the removal of a specific item.
 	def streamRemove(self, idItem, idStream, notification = False):
 		OrionItem.remove(idItem = idItem, idStream = idStream, notification = notification)
 
+	# Retrieve the supported stream types from the user settings.
 	def streamTypes(self, supported = None):
 		types = []
-		setting = OrionSettings.getFiltersInteger('filters.stream.type', self.mApp.id())
+		app = self.mApp.id()
+		setting = OrionSettings.getFiltersInteger('filters.stream.type', app if OrionSettings.getFiltersEnabled(app) else None)
 		if setting in (0, 1, 2, 4) and (supported == None or OrionStream.TypeTorrent in supported): types.append(OrionStream.TypeTorrent)
 		if setting in (0, 1, 3, 5) and (supported == None or OrionStream.TypeUsenet in supported): types.append(OrionStream.TypeUsenet)
 		if setting in (0, 2, 3, 6) and (supported == None or OrionStream.TypeHoster in supported): types.append(OrionStream.TypeHoster)
 		return types
+
+	##############################################################################
+	# CONTAINER
+	##############################################################################
+
+	# Retrieve container details for the given links.
+	# The links parameter can be a single link or a list of links.
+	def containers(self, links, encoding = None):
+		single = OrionTools.isString(links)
+		result = OrionContainer.retrieve(links = links)
+		if single: result = result[0]
+		return self._encode(result, encoding = encoding)
+
+	# Retrieve hashes for the given links.
+	# The links parameter can be a single link or a list of links.
+	def containerHashes(self, links, encoding = None):
+		single = OrionTools.isString(links)
+		result = OrionContainer.hashes(links = links)
+		if single:
+			result = result[0]
+			if not encoding == Orion.EncodingObject:
+				try: result = result.hash()
+				except: pass
+			return self._encode(result, encoding = encoding)
+		else:
+			return self._encode(result, encoding = encoding, dictionary = True)
+
+	# Download the container file.
+	# The id can be the container's ID, SHA1 hash, or link.
+	# If a path is provided, the container will be download to file, otherwise the container's binary data will be returned.
+	@classmethod
+	def containerDownload(self, id, path = None):
+		return OrionContainer.download(id = id, path = path)

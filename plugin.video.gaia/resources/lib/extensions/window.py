@@ -151,6 +151,8 @@ class Window(object):
 	IdWindowInformation = 12003
 	IdListControl = 52000
 
+	PropertyType = 'GaiaType'
+
 	# All Kodi windows have this fixed dimension.
 	SizeWidth = 1280
 	SizeHeight = 720
@@ -292,6 +294,11 @@ class Window(object):
 		return not globals()[self.__name__].Instance == None
 
 	@classmethod
+	def _instanceId(self):
+		try: return globals()[self.__name__].Instance.mId
+		except: return None
+
+	@classmethod
 	def _instanceDelete(self):
 		try:
 			del globals()[self.__name__].Instance
@@ -356,8 +363,8 @@ class Window(object):
 				window = self._instance(self(**arguments))
 			except:
 				tools.Logger.error()
-				tools.Logger.log('GAIA ERROR WINDOW: ' + str(arguments)) # gaiaremove - for temporary debugging. Can be removed later.
 				return None
+		window.propertySet(Window.PropertyType, self.__name__)
 		window._initializeStart()
 		window._initializeEnd()
 		window.mWindow.doModal()
@@ -420,15 +427,20 @@ class Window(object):
 		tools.File.deleteDirectory(self._pathWindow())
 
 	@classmethod
-	def close(self, id = None, loader = True):
+	def close(self, id = None, loader = False):
 		try:
 			# Instance might be lost if accessed in a subsequent execution (eg: applying filters).
 			if id == None and not self._instanceHas(): id = self._idProperty()
 
 			if id == None:
 				instance = self._instance()
-				instance._remove()
+
+				# Close the window BEFORE calling _remove().
+				# This seems to solve the issue of Gaia labels remaining in the Kodi UI when the cancel button in scraping window is clicked.
 				instance.mWindow.close()
+
+				instance._remove()
+				#instance.mWindow.close()
 				if loader: interface.Loader.hide() # Sometimes is visible if canceling playback window.
 				try:
 					del instance.mWindow
@@ -468,6 +480,18 @@ class Window(object):
 		result = xbmcgui.getCurrentWindowDialogId()
 		if id == None: return result
 		else: return result == id
+
+	@classmethod
+	def currentType(self):
+		try:
+			result = xbmcgui.Window(self.currentDialog()).getProperty(Window.PropertyType)
+			if result == '': return None
+			else: return result
+		except: return None
+
+	@classmethod
+	def currentGaia(self):
+		return not self.currentType() == None
 
 	@classmethod
 	def visible(self, id = None):
@@ -685,7 +709,8 @@ class Window(object):
 				else: self.mWindow.removeControl(controls)
 				for control in controls:
 					del control
-		except: pass
+		except:
+			pass
 
 	def _add(self, control, fixed = False):
 		self._lock()
@@ -703,6 +728,12 @@ class Window(object):
 		images = self._background(type = type, path = path)
 		for image in images:
 			self._addImage(path = image['path'], color = image['color'], x = 0, y = 0, width = self.mWidth, height = self.mHeight, fixed = fixed)
+
+	def _addCurtains(self):
+		if tools.Settings.getBoolean('interface.navigation.cinema') and tools.Settings.getBoolean('interface.navigation.cinema.curtains'):
+			path = tools.File.joinPath(tools.System.pathResources(), 'resources', 'media', 'cinema', 'curtains.png')
+			return self._addImage(path = path, x = 0, y = 0, width = self.mWidth, height = self.mHeight)
+		return None
 
 	def _addButton(self, text, x, y, width = None, height = None, callback = None, icon = None, bold = True, uppercase = True):
 		dimension = self._dimensionButton(text = text, icon = icon)
@@ -797,6 +828,35 @@ class WindowIntro(Window):
 			if i < WindowIntro.Parts - 1: delay += WindowIntro.TimeDelay
 
 		return dimension
+
+class WindowCinema(Window):
+
+	LogoWidth = 300
+	LogoHeight = 218
+
+	def __init__(self, backgroundType, backgroundPath):
+		super(WindowCinema, self).__init__(backgroundType = backgroundType, backgroundPath = backgroundPath)
+
+	def __del__(self):
+		super(WindowCinema, self).__del__()
+
+	@classmethod
+	def show(self, wait = False, initialize = True, close = False):
+		return super(WindowCinema, self)._show(backgroundType = self.BackgroundCombined, backgroundPath = None, wait = wait, initialize = initialize, close = close)
+
+	def _initializeStart(self):
+		super(WindowCinema, self)._initializeStart()
+
+	def _initializeEnd(self):
+		super(WindowCinema, self)._initializeEnd()
+		self._addCurtains()
+		self._addLogo()
+
+	def _addLogo(self):
+		width = self._scaleWidth(WindowCinema.LogoWidth)
+		height = self._scaleHeight(WindowCinema.LogoHeight)
+		path = tools.File.joinPath(tools.System.pathResources(), 'resources', 'media', 'cinema', 'logo.png')
+		self._addImage(path = path, x = self._centerX(width), y = self._centerY(height), width = width, height = height)
 
 class WindowProgress(Window):
 
@@ -997,6 +1057,7 @@ class WindowProgress(Window):
 
 	def _addStatus(self, text = None):
 		if text == None: text = self.mStatus
+		if isinstance(text, bool): text = ''
 		self.mStatusControl, dimension = self._addLine(text = text, color = self.ColorHighlight)
 		return dimension
 
@@ -1075,6 +1136,7 @@ class WindowScrape(WindowProgress):
 		if tools.Settings.getBoolean('interface.navigation.scrape.providers'): self._dimensionUpdate(self._addProviders())
 		self._dimensionUpdate(self._addSeparator())
 		self._dimensionUpdate(self._addCancel())
+		self._addCurtains()
 
 	@classmethod
 	def show(self, background = None, status = True, wait = False, initialize = True, close = False):
@@ -1252,10 +1314,16 @@ class WindowPlayback(WindowProgress):
 			self._dimensionUpdate(self._addRetries())
 			self._dimensionUpdate(self._addSeparator2())
 		self._dimensionUpdate(self._addCancel())
+		self._addCurtains()
 
 	@classmethod
 	def show(self, background = None, status = True, wait = False, initialize = True, close = False, retry = False):
 		return super(WindowPlayback, self).show(backgroundType = tools.Settings.getInteger('interface.navigation.playback.background'), backgroundPath = background, logo = self.LogoIcon, status = status, wait = wait, initialize = initialize, close = close, retry = retry)
+
+	@classmethod
+	def close(self, id = None, loader = True):
+		# Sometimes is visible if canceling playback window. Loader parameter True by default.
+		return super(WindowPlayback, self).close(id = id, loader = loader)
 
 	@classmethod
 	def update(self, progress = None, finished = None, status = None, substatus1 = None, substatus2 = None, total = None, remaining = None):
@@ -1389,3 +1457,148 @@ class WindowStreams(WindowProgress):
 		if index >= 0:
 			self.focus(50000)
 			self.mContexts[index].show()
+
+
+class WindowBinge(WindowProgress):
+
+	ControlsPadding = 30
+
+	def __init__(self, backgroundType, backgroundPath, logo, status):
+		super(WindowBinge, self).__init__(backgroundType = backgroundType, backgroundPath = backgroundPath, logo = logo, status = status)
+		self.mControlSeparator1 = None
+		self.mControlSeparator2 = None
+		self.mControlTitle = None
+		self.mControlEpisode = None
+		self.mControlCancel = None
+		self.mControlConmtinue = None
+
+		self.mTime = None
+		self.mContinue = True
+
+		self._onAction(WindowBase.ActionMoveLeft, self._actionFocusCancel)
+		self._onAction(WindowBase.ActionMoveRight, self._actionFocusContinue)
+		self._onAction(WindowBase.ActionMoveUp, self._actionFocusCancel)
+		self._onAction(WindowBase.ActionMoveDown, self._actionFocusContinue)
+		self._onAction(WindowBase.ActionItemNext, self._actionFocusContinue)
+		self._onAction(WindowBase.ActionItemPrevious, self._actionFocusCancel)
+		self._onAction(WindowBase.ActionSelectItem, self._actionFocusContinue)
+
+	def __del__(self):
+		super(WindowBinge, self).__del__()
+
+	def _initializeStart(self):
+		super(WindowBinge, self)._initializeStart()
+		self._dimensionUpdate(self._dimensionSeparator())
+		self._dimensionUpdate(self._dimensionLine())
+		self._dimensionUpdate(self._dimensionLine())
+		self._dimensionUpdate(self._dimensionSeparator())
+		self._dimensionUpdate(self._dimensionControls())
+
+	def _initializeEnd(self):
+		super(WindowBinge, self)._initializeEnd()
+		self._dimensionUpdate(self._addSeparator1())
+		self._dimensionUpdate(self._addTitle())
+		self._dimensionUpdate(self._addEpisode())
+		self._dimensionUpdate(self._addSeparator2())
+		self._dimensionUpdate(self._addControls())
+		self._addCurtains()
+
+	@classmethod
+	def show(self, background = None, wait = False, initialize = True, close = False, title = None, season = None, episode = None, delay = True):
+		next = False
+		result = super(WindowBinge, self).show(backgroundType = tools.Settings.getInteger('interface.navigation.playback.background'), backgroundPath = background, logo = self.LogoIcon, status = interface.Translation.string(35582), wait = wait, initialize = initialize, close = close)
+		if result:
+			instance = self._instance()
+			instance._setLabel(control = instance.mControlTitle, text = title, size = self.FontHuge, bold = True, uppercase = True)
+			instance._setLabel(control = instance.mControlEpisode, text = self._separator(['%s %s' % (interface.Translation.string(32055), self._highlight(season)), '%s %s' % (interface.Translation.string(33028), self._highlight(episode))]), size = self.FontHuge, bold = True, uppercase = True)
+			if delay:
+				delay = tools.Settings.getInteger('general.playback.binge.delay') * 1000.0 + 1000
+				self.update(progress = 0, time = int(delay / 1000))
+				timer = tools.Time()
+				timer.start()
+				elapsed = 0
+				while (delay - elapsed) > 1000 and instance.visible():
+					elapsed = timer.elapsed(milliseconds = True)
+					self.update(progress = int((elapsed + 1000) / delay * 100), time = int((delay - elapsed) / 1000))
+					tools.Time.sleep(0.2)
+				self.update(progress = 100, time = 0, finished = True)
+				next = instance.mContinue
+				instance.close()
+		return result and next
+
+	@classmethod
+	def update(self, progress = None, finished = None, time = None):
+		instance = super(WindowBinge, self).update(progress = progress, finished = finished)
+		if instance == None: return instance
+		instance._lock()
+
+		if not time == None: instance.mTime = time
+		instance.mStatus = '%s %s %s' % (interface.Translation.string(35582), self._highlight(instance.mTime), interface.Translation.string(32405))
+		instance._setLabel(control = instance.mStatusControl, text = instance.mStatus, size = self.FontHuge, bold = True, uppercase = True)
+
+		instance._unlock()
+		return instance
+
+	@classmethod
+	def enabled(self):
+		return tools.Settings.getInteger('interface.navigation.playback') == 0
+
+	def _actionFocusCancel(self):
+		try: self.focus(self.mControlCancel[0])
+		except: pass
+
+	def _actionFocusContinue(self):
+		try: self.focus(self.mControlContinue[0])
+		except: pass
+
+	def _actionCancel(self):
+		self.mContinue = False
+		self.close()
+
+	def _actionContinue(self):
+		self.mContinue = True
+		self.close()
+
+	def _dimensionControls(self):
+		dimensionCancel = self._dimensionCancel()
+		dimensionContinue = self._dimensionContinue()
+		return (self._scaleWidth(WindowBinge.ControlsPadding) + dimensionCancel[0] + dimensionContinue[0], max(dimensionCancel[1], dimensionContinue[1]))
+
+	def _dimensionCancel(self):
+		return self._dimensionButton(text = 33743, icon = True)
+
+	def _dimensionContinue(self):
+		return self._dimensionButton(text = 33821, icon = True)
+
+	def _addSeparator1(self):
+		self.mControlSeparator1, dimension = self._addSeparator(control = True)
+		return dimension
+
+	def _addSeparator2(self):
+		self.mControlSeparator2, dimension = self._addSeparator(control = True)
+		return dimension
+
+	def _addStatus(self, text = None):
+		if text == None: text = self.mStatus
+		self.mStatusControl, dimension = self._addLine(text = text) # Overwrite color with white.
+		return dimension
+
+	def _addTitle(self):
+		self.mControlTitle, dimension = self._addLine()
+		return dimension
+
+	def _addEpisode(self):
+		self.mControlEpisode, dimension = self._addLine()
+		return dimension
+
+	def _addControls(self):
+		dimension = self._dimensionControls()
+		y = self._offsetY() + self._scaleHeight(20)
+
+		x = self._centerX(dimension[0])
+		self.mControlCancel = self._addButton(text = 33743, x = x, y = y, callback = self._actionCancel, icon = 'error')
+
+		x += self._dimensionCancel()[0] + self._scaleWidth(WindowBinge.ControlsPadding)
+		self.mControlContinue = self._addButton(text = 33821, x = x, y = y, callback = self._actionContinue, icon = 'play')
+
+		return dimension

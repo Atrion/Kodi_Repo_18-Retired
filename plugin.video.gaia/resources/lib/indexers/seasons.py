@@ -25,7 +25,6 @@ from resources.lib.modules import cleantitle
 from resources.lib.modules import cleangenre
 from resources.lib.modules import control
 from resources.lib.modules import client
-from resources.lib.modules import cache
 from resources.lib.modules import playcount
 from resources.lib.modules import workers
 from resources.lib.modules import views
@@ -35,6 +34,7 @@ from resources.lib.indexers import episodes as episodesx
 from resources.lib.indexers import tvshows as tvshowsx
 
 from resources.lib.extensions import tools
+from resources.lib.extensions import cache
 from resources.lib.extensions import interface
 from resources.lib.extensions import shortcuts
 
@@ -120,7 +120,7 @@ class seasons:
 			return episodes().get(tvshowtitle, year, imdb, tvdb)
 
 		if idx == True:
-			self.list = cache.get(self.tvdb_list, 24, tvshowtitle, year, imdb, tvdb, self.lang)
+			self.list = cache.Cache().cacheMedium(self.tvdb_list, tvshowtitle, year, imdb, tvdb, self.lang)
 			if self.kidsOnly():
 				self.list = [i for i in self.list if 'mpaa' in i and tools.Kids.allowed(i['mpaa'])]
 			self.seasonDirectory(self.list)
@@ -136,7 +136,7 @@ class seasons:
 		# Dirty implementation, but avoids rewritting everything from episodes.py.
 
 		episodes = episodesx.episodes(type = self.type, kids = self.kids)
-		self.list = cache.get(episodes.trakt_list, 0, url, self.trakt_user)
+		self.list = cache.Cache().cacheMini(episodes.trakt_list, url, self.trakt_user)
 		self.list = self.list[::-1]
 
 		tvshows = tvshowsx.tvshows(type = self.type, kids = self.kids)
@@ -164,32 +164,17 @@ class seasons:
 	def userlists(self):
 		episodes = episodesx.episodes(type = self.type, kids = self.kids)
 		userlists = []
-
 		try:
 			if trakt.getTraktCredentialsInfo() == False: raise Exception()
-			activity = trakt.getActivity()
+			self.list = []
+			userlists += cache.Cache().cacheMini(episodes.trakt_user_list, self.traktlists_link, self.trakt_user)
 		except:
 			pass
 
 		try:
 			if trakt.getTraktCredentialsInfo() == False: raise Exception()
 			self.list = []
-			try:
-				if activity > cache.timeout(episodes.trakt_user_list, self.traktlists_link, self.trakt_user): raise Exception()
-				userlists += cache.get(episodes.trakt_user_list, 3, self.traktlists_link, self.trakt_user)
-			except:
-				userlists += cache.get(episodes.trakt_user_list, 0, self.traktlists_link, self.trakt_user)
-		except:
-			pass
-
-		try:
-			if trakt.getTraktCredentialsInfo() == False: raise Exception()
-			self.list = []
-			try:
-				if activity > cache.timeout(episodes.trakt_user_list, self.traktlikedlists_link, self.trakt_user): raise Exception()
-				userlists += cache.get(episodes.trakt_user_list, 3, self.traktlikedlists_link, self.trakt_user)
-			except:
-				userlists += cache.get(episodes.trakt_user_list, 0, self.traktlikedlists_link, self.trakt_user)
+			userlists += cache.Cache().cacheMini(episodes.trakt_user_list, self.traktlikedlists_link, self.trakt_user)
 		except:
 			pass
 
@@ -217,6 +202,8 @@ class seasons:
 
 
 	def tvdb_list(self, tvshowtitle, year, imdb, tvdb, lang, limit=''):
+		list = []
+
 		try:
 			if imdb == '0':
 				try:
@@ -309,8 +296,10 @@ class seasons:
 			item = result[0]
 			item2 = result2[0]
 			episodes = [i for i in result if '<EpisodeNumber>' in i]
-			episodes = [i for i in episodes if not '<SeasonNumber>0</SeasonNumber>' in i]
-			episodes = [i for i in episodes if not '<EpisodeNumber>0</EpisodeNumber>' in i]
+			if not tools.Settings.getBoolean('interface.tvshows.special.seasons'):
+				episodes = [i for i in episodes if not '<SeasonNumber>0</SeasonNumber>' in i]
+			if not tools.Settings.getBoolean('interface.tvshows.special.episodes'):
+				episodes = [i for i in episodes if not '<EpisodeNumber>0</EpisodeNumber>' in i]
 			seasons = [i for i in episodes if '<EpisodeNumber>1</EpisodeNumber>' in i]
 
 			counts = self.seasonCountParse(seasons = seasons, episodes = episodes)
@@ -382,6 +371,8 @@ class seasons:
 			if duration == '': duration = '0'
 			duration = client.replaceHTMLCodes(duration)
 			duration = duration.encode('utf-8')
+			try: duration = str(int(duration) * 60)
+			except: pass
 
 			try: rating = client.parseDOM(item, 'Rating')[0]
 			except: rating = ''
@@ -452,7 +443,7 @@ class seasons:
 				try: seasoncount = counts[season]
 				except: seasoncount = None
 
-				self.list.append({'season': season, 'seasoncount': seasoncount, 'tvshowtitle': tvshowtitle, 'label': label, 'year': year, 'premiered': premiered, 'status': status, 'studio': studio, 'genre': genre, 'duration': duration, 'rating': rating, 'votes': votes, 'mpaa': mpaa, 'cast': cast, 'plot': plot, 'imdb': imdb, 'tvdb': tvdb, 'poster': poster, 'banner': banner, 'fanart': fanart, 'thumb': thumb})
+				list.append({'season': season, 'seasoncount': seasoncount, 'tvshowtitle': tvshowtitle, 'label': label, 'year': year, 'premiered': premiered, 'status': status, 'studio': studio, 'genre': genre, 'duration': duration, 'rating': rating, 'votes': votes, 'mpaa': mpaa, 'cast': cast, 'plot': plot, 'imdb': imdb, 'tvdb': tvdb, 'poster': poster, 'banner': banner, 'fanart': fanart, 'thumb': thumb})
 			except:
 				pass
 
@@ -540,11 +531,11 @@ class seasons:
 				try: seasoncount = counts[season]
 				except: seasoncount = None
 
-				self.list.append({'title': title, 'label': label, 'seasoncount' : seasoncount, 'season': season, 'episode': episode, 'tvshowtitle': tvshowtitle, 'year': year, 'premiered': premiered, 'status': status, 'studio': studio, 'genre': genre, 'duration': duration, 'rating': rating, 'votes': votes, 'mpaa': mpaa, 'director': director, 'writer': writer, 'cast': cast, 'plot': episodeplot, 'imdb': imdb, 'tvdb': tvdb, 'poster': poster, 'banner': banner, 'fanart': fanart, 'thumb': thumb})
+				list.append({'title': title, 'label': label, 'seasoncount' : seasoncount, 'season': season, 'episode': episode, 'tvshowtitle': tvshowtitle, 'year': year, 'premiered': premiered, 'status': status, 'studio': studio, 'genre': genre, 'duration': duration, 'rating': rating, 'votes': votes, 'mpaa': mpaa, 'director': director, 'writer': writer, 'cast': cast, 'plot': episodeplot, 'imdb': imdb, 'tvdb': tvdb, 'poster': poster, 'banner': banner, 'fanart': fanart, 'thumb': thumb})
 			except:
 				pass
 
-		return self.list
+		return list
 
 	@classmethod
 	def seasonCountParse(self, season = None, items = None, seasons = None, episodes = None):
@@ -553,8 +544,10 @@ class seasons:
 		counts = {} # Do not use a list, since not all seasons are labeled by number. Eg: MythBusters
 		if episodes == None:
 			episodes = [i for i in items if '<EpisodeNumber>' in i]
-			episodes = [i for i in episodes if not '<SeasonNumber>0</SeasonNumber>' in i]
-			episodes = [i for i in episodes if not '<EpisodeNumber>0</EpisodeNumber>' in i]
+			if not tools.Settings.getBoolean('interface.tvshows.special.seasons'):
+				episodes = [i for i in episodes if not '<SeasonNumber>0</SeasonNumber>' in i]
+			if not tools.Settings.getBoolean('interface.tvshows.special.episodes'):
+				episodes = [i for i in episodes if not '<EpisodeNumber>0</EpisodeNumber>' in i]
 			seasons = [i for i in episodes if '<EpisodeNumber>1</EpisodeNumber>' in i]
 		for s in seasons:
 		    season = client.parseDOM(s, 'SeasonNumber')[0]
@@ -574,7 +567,7 @@ class seasons:
 		except: return None
 
 	def seasonCount(self, tvshowtitle, year, imdb, tvdb, season):
-		try: return cache.get(self._seasonCount, 168, tvshowtitle, year, imdb, tvdb)[season]
+		try: return cache.Cache().cacheLong(self._seasonCount, tvshowtitle, year, imdb, tvdb)[season]
 		except: return None
 
 	def _seasonCount(self, tvshowtitle, year, imdb, tvdb):
@@ -659,11 +652,12 @@ class seasons:
 		media = tools.Media()
 
 		addonPoster, addonBanner = control.addonPoster(), control.addonBanner()
-		addonFanart, settingFanart = control.addonFanart(), tools.Settings.getBoolean('interface.fanart')
+		addonFanart, settingFanart = control.addonFanart(), tools.Settings.getBoolean('interface.theme.fanart')
 
-		try: indicators =  playcount.getSeasonIndicators(items[0]['imdb'])
+		try: indicators = playcount.getSeasonIndicators(items[0]['imdb'])
 		except: indicators = None
 
+		ratingsOwn = tools.Settings.getInteger('interface.ratings.type') == 1
 		unwatchedEnabled = tools.Settings.getBoolean('interface.tvshows.unwatched.enabled')
 		unwatchedLimit = tools.Settings.getBoolean('interface.tvshows.unwatched.limit')
 
@@ -682,11 +676,12 @@ class seasons:
 				if label == None: label = season
 				if multi == True and not label in title and not title in label: label = '%s - %s' % (title, label)
 
-				systitle = sysname = urllib.quote_plus(title)
+				systitle = urllib.quote_plus(title)
+
+				trailer = '%s Season %s' % (title, str(season))
 
 				meta = dict((k,v) for k, v in i.iteritems() if not v == '0')
 				meta.update({'mediatype': 'tvshow'})
-				meta.update({'trailer': '%s?action=streamsTrailer&title=%s&imdb=%s' % (sysaddon, sysname, imdb)})
 
 				# Gaia
 				# Remove default time, since this might mislead users. Rather show no time.
@@ -704,7 +699,7 @@ class seasons:
 					meta['plot'] = plot
 				except: pass
 
-				try: meta.update({'duration': str(int(meta['duration']) * 60)})
+				try: meta.update({'duration': int(meta['duration'])})
 				except: pass
 				try: meta.update({'genre': cleangenre.lang(meta['genre'], self.lang)})
 				except: pass
@@ -719,8 +714,8 @@ class seasons:
 				except:
 					pass
 
-				sysmeta = urllib.quote_plus(json.dumps(meta))
-				url = self.parameterize('%s?action=episodesRetrieve&tvshowtitle=%s&year=%s&imdb=%s&tvdb=%s&season=%s' % (sysaddon, systitle, year, imdb, tvdb, season))
+				if ratingsOwn and 'ratingown' in meta and not meta['ratingown'] == '0':
+					meta['rating'] = meta['ratingown']
 
 				item = control.item(label = label)
 
@@ -729,7 +724,8 @@ class seasons:
 					watched = overlay == 7
 					if watched: meta.update({'playcount': 1, 'overlay': 7})
 					else: meta.update({'playcount': 0, 'overlay': 6})
-					if unwatchedEnabled and not watched:
+					meta.update({'watched': int(watched)}) # Kodi's documentation says this value is deprecate. However, without this value, Kodi adds the watched checkmark over the remaining episode count.
+					if unwatchedEnabled:
 						count = playcount.getSeasonCount(imdb, season, unwatchedLimit)
 						if count:
 							item.setProperty('TotalEpisodes', str(count['total']))
@@ -788,9 +784,13 @@ class seasons:
 				if not clearart == '0' and not clearart == None: art.update({'clearart' : clearart})
 				if not fanart == '0' and not fanart == None: item.setProperty('Fanart_Image', fanart)
 
+				meta.update({'trailer': '%s?action=streamsTrailer&title=%s&imdb=%s&art=%s' % (sysaddon, urllib.quote_plus(trailer), imdb, urllib.quote_plus(json.dumps(art)))})
+				sysmeta = urllib.quote_plus(json.dumps(meta))
+				url = self.parameterize('%s?action=episodesRetrieve&tvshowtitle=%s&year=%s&imdb=%s&tvdb=%s&season=%s' % (sysaddon, systitle, year, imdb, tvdb, season))
+
 				item.setArt(art)
 				item.setInfo(type = 'Video', infoLabels = tools.Media.metadataClean(meta))
-				item.addContextMenuItems([interface.Context(mode = interface.Context.ModeItem, type = self.type, kids = self.kids, create = True, watched = watched, season = season, metadata = meta, art = art, label = label, link = url, trailer = title, title = title, year = year, imdb = imdb, tvdb = tvdb).menu()])
+				item.addContextMenuItems([interface.Context(mode = interface.Context.ModeItem, type = self.type, kids = self.kids, create = True, watched = watched, season = season, metadata = meta, art = art, label = label, link = url, trailer = trailer, title = title, year = year, imdb = imdb, tvdb = tvdb).menu()])
 				control.addItem(handle = syshandle, url = url, listitem = item, isFolder = True)
 			except:
 				pass

@@ -134,7 +134,7 @@ msgid "Unlimited"
 msgstr ""
 
 msgctxt "#32031"
-msgid "Requests"
+msgid "Links"
 msgstr ""
 
 msgctxt "#32032"
@@ -262,7 +262,7 @@ msgid "Streams Available"
 msgstr ""
 
 msgctxt "#32063"
-msgid "Streams Returned"
+msgid "Streams Retrieved"
 msgstr ""
 
 msgctxt "#32064"
@@ -450,7 +450,7 @@ msgid "RealDebrid Cached"
 msgstr ""
 
 msgctxt "#32110"
-msgid "Season Pack"
+msgid "Season Packs"
 msgstr ""
 
 msgctxt "#32111"
@@ -802,7 +802,7 @@ msgid "Promotion Offer"
 msgstr ""
 
 msgctxt "#32198"
-msgid "Limit Multiplier"
+msgid "Hashes"
 msgstr ""
 
 msgctxt "#32199"
@@ -899,6 +899,62 @@ msgstr ""
 
 msgctxt "#32222"
 msgid "Days"
+msgstr ""
+
+msgctxt "#32223"
+msgid "Link Multiplier"
+msgstr ""
+
+msgctxt "#32224"
+msgid "Hash Multiplier"
+msgstr ""
+
+msgctxt "#32225"
+msgid "Link Requests"
+msgstr ""
+
+msgctxt "#32226"
+msgid "Hash Requests"
+msgstr ""
+
+msgctxt "#32227"
+msgid "Hashes Found"
+msgstr ""
+
+msgctxt "#32228"
+msgid "Hashes Requested"
+msgstr ""
+
+msgctxt "#32229"
+msgid "Hashes Returned"
+msgstr ""
+
+msgctxt "#32230"
+msgid "Containers"
+msgstr ""
+
+msgctxt "#32231"
+msgid "Container Requests"
+msgstr ""
+
+msgctxt "#32232"
+msgid "Containers Requested"
+msgstr ""
+
+msgctxt "#32233"
+msgid "Containers Returned"
+msgstr ""
+
+msgctxt "#32234"
+msgid "File Name"
+msgstr ""
+
+msgctxt "#32235"
+msgid "Optional"
+msgstr ""
+
+msgctxt "#32236"
+msgid "File"
 msgstr ""
 
 ##############################################################################
@@ -1022,11 +1078,11 @@ msgid "The vote was successfully cast."
 msgstr ""
 
 msgctxt "#33029"
-msgid "Stream Vote Cast Successful"
+msgid "Stream Vote Cast Successfully"
 msgstr ""
 
 msgctxt "#33030"
-msgid "Stream Removal Requested Successful"
+msgid "Stream Removal Requested Successfully"
 msgstr ""
 
 msgctxt "#33031"
@@ -1271,4 +1327,8 @@ msgstr ""
 
 msgctxt "#34058"
 msgid "The protocol of hoster links. Hoster files are retrieved over HTTP(S) or FTP(S)."
+msgstr ""
+
+msgctxt "#34059"
+msgid "The file name of the stream. Either require streams to have a file name or optionally allow streams with or without a file name."
 msgstr ""

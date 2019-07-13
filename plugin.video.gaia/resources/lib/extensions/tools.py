@@ -34,6 +34,7 @@ import sys
 import os
 import copy
 import stat
+import base64
 import uuid
 import hashlib
 import shutil
@@ -97,7 +98,8 @@ class Time(object):
 			# Do not use time.clock(), gives incorrect result for search.py
 			return int(time.time())
 		else:
-			return int(time.mktime(fixedTime.timetuple()))
+			try: return int(time.mktime(fixedTime.timetuple()))
+			except: return int(time.strftime('%s')) # Somtimes mktime fails (mktime argument out of range), which seems to be an issue with very large dates (eg 2120-02-03) on Android.
 
 	@classmethod
 	def format(self, timestamp = None, format = FormatDateTime):
@@ -199,36 +201,222 @@ class Language(object):
 	CaseUpper = 1
 	CaseLower = 2
 
+	# Codes
+	CodePrimary = 0
+	CodeSecondary = 1
+	CodeTertiary = 2
+	CodeDefault = CodePrimary
+
 	Automatic = 'automatic'
 	Alternative = 'alternative'
 
 	UniversalName = 'Universal'
 	UniversalCode = 'un'
+	UniversalCountry = 'un'
 
 	EnglishName = 'English'
 	EnglishCode = 'en'
-	EnglishAbbreviation = 'eng'
+	EnglishCountry = 'gb'
 
-	GermanCode = 'de'
-	GermanAbbreviation = 'ger'
+	Replacements = {'gr' : 'el'}
+	Detection = None
 
-	GreekCode = 'el'
-	GreekAlternative = 'gr'
-
-	Names = [UniversalName, 'Abkhaz', 'Afar', 'Afrikaans', 'Akan', 'Albanian', 'Amharic', 'Arabic', 'Aragonese', 'Armenian', 'Assamese', 'Avaric', 'Avestan', 'Aymara', 'Azerbaijani', 'Bambara', 'Bashkir', 'Basque', 'Belarusian', 'Bengali', 'Bihari', 'Bislama', 'Bokmal', 'Bosnian', 'Breton', 'Bulgarian', 'Burmese', 'Catalan', 'Chamorro', 'Chechen', 'Chichewa', 'Chinese', 'Chuvash', 'Cornish', 'Corsican', 'Cree', 'Croatian', 'Czech', 'Danish', 'Divehi', 'Dutch', 'Dzongkha', EnglishName, 'Esperanto', 'Estonian', 'Ewe', 'Faroese', 'Fijian', 'Finnish', 'French', 'Fula', 'Gaelic', 'Galician', 'Ganda', 'Georgian', 'German', 'Greek', 'Guarani', 'Gujarati', 'Haitian', 'Hausa', 'Hebrew', 'Herero', 'Hindi', 'Hiri Motu', 'Hungarian', 'Icelandic', 'Ido', 'Igbo', 'Indonesian', 'Interlingua', 'Interlingue', 'Inuktitut', 'Inupiaq', 'Irish', 'Italian', 'Japanese', 'Javanese', 'Kalaallisut', 'Kannada', 'Kanuri', 'Kashmiri', 'Kazakh', 'Khmer', 'Kikuyu', 'Kinyarwanda', 'Kirundi', 'Komi', 'Kongo', 'Korean', 'Kurdish', 'Kwanyama', 'Kyrgyz', 'Lao', 'Latin', 'Latvian', 'Limburgish', 'Lingala', 'Lithuanian', 'Luba-Katanga', 'Luxembourgish', 'Macedonian', 'Malagasy', 'Malay', 'Malayalam', 'Maltese', 'Manx', 'Maori', 'Marathi', 'Marshallese', 'Mongolian', 'Nauruan', 'Navajo', 'Ndonga', 'Nepali', 'Northern Ndebele', 'Northern Sami', 'Norwegian', 'Nuosu', 'Nynorsk', 'Occitan', 'Ojibwe', 'Oriya', 'Oromo', 'Ossetian', 'Pali', 'Pashto', 'Persian', 'Polish', 'Portuguese', 'Punjabi', 'Quechua', 'Romanian', 'Romansh', 'Russian', 'Samoan', 'Sango', 'Sanskrit', 'Sardinian', 'Serbian', 'Shona', 'Sindhi', 'Sinhalese', 'Slavonic', 'Slovak', 'Slovene', 'Somali', 'Southern Ndebele', 'Southern Sotho', 'Spanish', 'Sundanese', 'Swahili', 'Swati', 'Swedish', 'Tagalog', 'Tahitian', 'Tajik', 'Tamil', 'Tatar', 'Telugu', 'Thai', 'Tibetan', 'Tigrinya', 'Tonga', 'Tsonga', 'Tswana', 'Turkish', 'Turkmen', 'Twi', 'Ukrainian', 'Urdu', 'Uyghur', 'Uzbek', 'Venda', 'Vietnamese', 'Volapuk', 'Walloon', 'Welsh', 'Western Frisian', 'Wolof', 'Xhosa', 'Yiddish', 'Yoruba', 'Zhuang', 'Zulu']
-	NamesLower = None
-	NamesUpper = None
-
-	Codes = [UniversalCode, 'ab', 'aa', 'af', 'ak', 'sq', 'am', 'ar', 'an', 'hy', 'as', 'av', 'ae', 'ay', 'az', 'bm', 'ba', 'eu', 'be', 'bn', 'bh', 'bi', 'nb', 'bs', 'br', 'bg', 'my', 'ca', 'ch', 'ce', 'ny', 'zh', 'cv', 'kw', 'co', 'cr', 'hr', 'cs', 'da', 'dv', 'nl', 'dz', EnglishCode, 'eo', 'et', 'ee', 'fo', 'fj', 'fi', 'fr', 'ff', 'gd', 'gl', 'lg', 'ka', 'de', 'el', 'gn', 'gu', 'ht', 'ha', 'he', 'hz', 'hi', 'ho', 'hu', 'is', 'io', 'ig', 'id', 'ia', 'ie', 'iu', 'ik', 'ga', 'it', 'ja', 'jv', 'kl', 'kn', 'kr', 'ks', 'kk', 'km', 'ki', 'rw', 'rn', 'kv', 'kg', 'ko', 'ku', 'kj', 'ky', 'lo', 'la', 'lv', 'li', 'ln', 'lt', 'lu', 'lb', 'mk', 'mg', 'ms', 'ml', 'mt', 'gv', 'mi', 'mr', 'mh', 'mn', 'na', 'nv', 'ng', 'ne', 'nd', 'se', 'no', 'ii', 'nn', 'oc', 'oj', 'or', 'om', 'os', 'pi', 'ps', 'fa', 'pl', 'pt', 'pa', 'qu', 'ro', 'rm', 'ru', 'sm', 'sg', 'sa', 'sc', 'sr', 'sn', 'sd', 'si', 'cu', 'sk', 'sl', 'so', 'nr', 'st', 'es', 'su', 'sw', 'ss', 'sv', 'tl', 'ty', 'tg', 'ta', 'tt', 'te', 'th', 'bo', 'ti', 'to', 'ts', 'tn', 'tr', 'tk', 'tw', 'uk', 'ur', 'ug', 'uz', 've', 'vi', 'vo', 'wa', 'cy', 'fy', 'wo', 'xh', 'yi', 'yo', 'za', 'zu']
-	CodesUpper = None
-	CodesCapital = None
-
-	Countries = {UniversalCode : UniversalCode, EnglishCode : 'gb', 'gv': 'im', 'ga': 'ie', 'gn': 'ar', 'lb': 'lu', 'la': 'va', 'ln': 'cg', 'lo': 'la', 'tr': 'tr', 'ts': 'za', 'lv': 'lv', 'to': 'to', 'lt': 'lt', 'lu': 'cd', 'tk': 'tm', 'th': 'th', 'ti': 'er', 'tg': 'tj', 'ta': 'lk', 'de': 'de', 'da': 'dk', 'dz': 'bt', 'st': 'ls', 'dv': 'mv', 'qu': 'bo', 'el': 'cy', 'zh': 'cn', 'et': 'ee', 'es': 'es', 'ru': 'ru', 'rw': 'rw', 'rn': 'bi', 'ro': 'ro', 'be': 'by', 'bg': 'bg', 'uk': 'ua', 'bn': 'bd', 'bi': 'vu', 'bs': 'ba', 'ja': 'jp', 'xh': 'za', 'ch': 'gu', 'ca': 'ad', 'cs': 'cz', 'ps': 'af', 'pt': 'pt', 'pa': 'aw', 'pl': 'pl', 'hy': 'am', 'hr': 'hr', 'ht': 'ht', 'hu': 'hu', 'hi': 'in', 'he': 'il', 'mg': 'mg', 'uz': 'uz', 'mn': 'mn', 'mi': 'nz', 'mh': 'mh', 'mk': 'mk', 'ur': 'pk', 'mt': 'mt', 'ms': 'bn', 'my': 'mm', 've': 'za', 'af': 'za', 'tn': 'bw', 'vi': 'vn', 'is': 'is', 'am': 'et', 'it': 'it', 'ar': 'dz', 'zu': 'za', 'ay': 'bo', 'az': 'az', 'id': 'id', 'nl': 'nl', 'nn': 'bv', 'no': 'no', 'na': 'nr', 'nb': 'bv', 'nd': 'zw', 'ne': 'np', 'ny': 'mw', 'nr': 'za', 'fr': 'fr', 'sm': 'ws', 'fa': 'ir', 'kk': 'kz', 'ff': 'bf', 'fi': 'fi', 'fj': 'fj', 'fo': 'fo', 'ka': 'ge', 'kg': 'cd', 'ss': 'sz', 'sr': 'me', 'sq': 'al', 'ko': 'kr', 'sv': 'ax', 'km': 'kh', 'kl': 'gl', 'sk': 'sk', 'si': 'lk', 'so': 'so', 'sn': 'zw', 'ku': 'iq', 'sl': 'si', 'ky': 'kg', 'sg': 'cf', 'sw': 'tz', 'te' : 'in'}
+	Languages = [
+	    {'name' : UniversalName,		'code' : [UniversalCode, UniversalCode, UniversalCode],		'country' : UniversalCountry},
+	    {'name' : 'Abkhazian',			'code' : ['ab', 'abk', 'abk'],		'country' : None},
+	    {'name' : 'Afar',				'code' : ['aa', 'aar', 'aar'],		'country' : 'dj'},
+	    {'name' : 'Afrikaans',			'code' : ['af', 'afr', 'afr'],		'country' : 'za'},
+	    {'name' : 'Akan',				'code' : ['ak', 'aka', 'aka'],		'country' : None},
+	    {'name' : 'Albanian',			'code' : ['sq', 'sqi', 'alb'],		'country' : 'al'},
+	    {'name' : 'Amharic',			'code' : ['am', 'amh', 'amh'],		'country' : 'et'},
+	    {'name' : 'Arabic',				'code' : ['ar', 'ara', 'ara'],		'country' : 'sa'},
+	    {'name' : 'Aragonese',			'code' : ['an', 'arg', 'arg'],		'country' : None},
+	    {'name' : 'Armenian',			'code' : ['hy', 'hye', 'arm'],		'country' : 'am'},
+	    {'name' : 'Assamese',			'code' : ['as', 'asm', 'asm'],		'country' : 'in'},
+	    {'name' : 'Avaric',				'code' : ['av', 'ava', 'ava'],		'country' : None},
+	    {'name' : 'Avestan',			'code' : ['ae', 'ave', 'ave'],		'country' : None},
+	    {'name' : 'Aymara',				'code' : ['ay', 'aym', 'aym'],		'country' : 'bo'},
+	    {'name' : 'Azerbaijani',		'code' : ['az', 'aze', 'aze'],		'country' : 'az'},
+	    {'name' : 'Bambara',			'code' : ['bm', 'bam', 'bam'],		'country' : None},
+	    {'name' : 'Bashkir',			'code' : ['ba', 'bak', 'bak'],		'country' : 'ru'},
+	    {'name' : 'Basque',				'code' : ['eu', 'eus', 'baq'],		'country' : 'es'},
+	    {'name' : 'Belarusian',			'code' : ['be', 'bel', 'bel'],		'country' : 'by'},
+	    {'name' : 'Bengali',			'code' : ['bn', 'ben', 'ben'],		'country' : 'bd'},
+	    {'name' : 'Bihari',				'code' : ['bh', 'bih', 'bih'],		'country' : None},
+	    {'name' : 'Bislama',			'code' : ['bi', 'bis', 'bis'],		'country' : 'vu'},
+	    {'name' : 'Bosnian',			'code' : ['bs', 'bos', 'bos'],		'country' : 'ba'},
+	    {'name' : 'Breton',				'code' : ['br', 'bre', 'bre'],		'country' : 'fr'},
+	    {'name' : 'Bulgarian',			'code' : ['bg', 'bul', 'bul'],		'country' : 'bg'},
+	    {'name' : 'Burmese',			'code' : ['my', 'mya', 'bur'],		'country' : 'mm'},
+	    {'name' : 'Catalan',			'code' : ['ca', 'cat', 'cat'],		'country' : 'es'},
+	    {'name' : 'Chamorro',			'code' : ['ch', 'cha', 'cha'],		'country' : 'gu'},
+	    {'name' : 'Chechen',			'code' : ['ce', 'che', 'che'],		'country' : 'ru'},
+	    {'name' : 'Chichewa',			'code' : ['ny', 'nya', 'nya'],		'country' : 'mw'},
+	    {'name' : 'Chinese',			'code' : ['zh', 'zho', 'chi'],		'country' : 'cn'},
+	    {'name' : 'Chuvash',			'code' : ['cv', 'chv', 'chv'],		'country' : None},
+	    {'name' : 'Cornish',			'code' : ['kw', 'cor', 'cor'],		'country' : 'gb'},
+	    {'name' : 'Corsican',			'code' : ['co', 'cos', 'cos'],		'country' : 'fr'},
+	    {'name' : 'Cree',				'code' : ['cr', 'cre', 'cre'],		'country' : None},
+	    {'name' : 'Croatian',			'code' : ['hr', 'hrv', 'hrv'],		'country' : 'hr'},
+	    {'name' : 'Czech',				'code' : ['cs', 'ces', 'cze'],		'country' : 'cz'},
+	    {'name' : 'Danish',				'code' : ['da', 'dan', 'dan'],		'country' : 'dk'},
+	    {'name' : 'Divehi',				'code' : ['dv', 'div', 'div'],		'country' : 'mv'},
+	    {'name' : 'Dutch',				'code' : ['nl', 'nld', 'dut'],		'country' : 'nl'},
+	    {'name' : 'Dzongkha',			'code' : ['dz', 'dzo', 'dzo'],		'country' : None},
+	    {'name' : 'English',			'code' : ['en', 'eng', 'eng'],		'country' : 'gb'},
+	    {'name' : 'Esperanto',			'code' : ['eo', 'epo', 'epo'],		'country' : None},
+	    {'name' : 'Estonian',			'code' : ['et', 'est', 'est'],		'country' : 'ee'},
+	    {'name' : 'Ewe',				'code' : ['ee', 'ewe', 'ewe'],		'country' : None},
+	    {'name' : 'Faroese',			'code' : ['fo', 'fao', 'fao'],		'country' : 'fo'},
+	    {'name' : 'Fijian',				'code' : ['fj', 'fij', 'fij'],		'country' : 'fj'},
+	    {'name' : 'Finnish',			'code' : ['fi', 'fin', 'fin'],		'country' : 'fi'},
+	    {'name' : 'French',				'code' : ['fr', 'fra', 'fre'],		'country' : 'fr'},
+	    {'name' : 'Fulah',				'code' : ['ff', 'ful', 'ful'],		'country' : 'bf'},
+	    {'name' : 'Galician',			'code' : ['gl', 'glg', 'glg'],		'country' : 'es'},
+	    {'name' : 'Georgian',			'code' : ['ka', 'kat', 'geo'],		'country' : 'ge'},
+	    {'name' : 'German',				'code' : ['de', 'deu', 'ger'],		'country' : 'de'},
+	    {'name' : 'Greek',				'code' : ['el', 'ell', 'gre'],		'country' : 'gr'},
+	    {'name' : 'Guarani',			'code' : ['gn', 'grn', 'grn'],		'country' : 'py'},
+	    {'name' : 'Gujarati',			'code' : ['gu', 'guj', 'guj'],		'country' : 'in'},
+	    {'name' : 'Haitian',			'code' : ['ht', 'hat', 'hat'],		'country' : 'ht'},
+	    {'name' : 'Hausa',				'code' : ['ha', 'hau', 'hau'],		'country' : 'ng'},
+	    {'name' : 'Hebrew',				'code' : ['he', 'heb', 'heb'],		'country' : 'il'},
+	    {'name' : 'Herero',				'code' : ['hz', 'her', 'her'],		'country' : None},
+	    {'name' : 'Hindi',				'code' : ['hi', 'hin', 'hin'],		'country' : 'in'},
+	    {'name' : 'Hiri Motu',			'code' : ['ho', 'hmo', 'hmo'],		'country' : 'pg'},
+	    {'name' : 'Hungarian',			'code' : ['hu', 'hun', 'hun'],		'country' : 'hu'},
+	    {'name' : 'Interlingua',		'code' : ['ia', 'ina', 'ina'],		'country' : None},
+	    {'name' : 'Indonesian',			'code' : ['id', 'ind', 'ind'],		'country' : 'id'},
+	    {'name' : 'Interlingue',		'code' : ['ie', 'ile', 'ile'],		'country' : None},
+	    {'name' : 'Irish',				'code' : ['ga', 'gle', 'gle'],		'country' : 'ie'},
+	    {'name' : 'Igbo',				'code' : ['ig', 'ibo', 'ibo'],		'country' : 'ng'},
+	    {'name' : 'Inupiaq',			'code' : ['ik', 'ipk', 'ipk'],		'country' : None},
+	    {'name' : 'Ido',				'code' : ['io', 'ido', 'ido'],		'country' : None},
+	    {'name' : 'Icelandic',			'code' : ['is', 'isl', 'ice'],		'country' : 'is'},
+	    {'name' : 'Italian',			'code' : ['it', 'ita', 'ita'],		'country' : 'it'},
+	    {'name' : 'Inuktitut',			'code' : ['iu', 'iku', 'iku'],		'country' : None},
+	    {'name' : 'Japanese',			'code' : ['ja', 'jpn', 'jpn'],		'country' : 'jp'},
+	    {'name' : 'Javanese',			'code' : ['jv', 'jav', 'jav'],		'country' : None},
+	    {'name' : 'Kalaallisut',		'code' : ['kl', 'kal', 'kal'],		'country' : 'gl'},
+	    {'name' : 'Kannada',			'code' : ['kn', 'kan', 'kan'],		'country' : 'in'},
+	    {'name' : 'Kanuri',				'code' : ['kr', 'kau', 'kau'],		'country' : None},
+	    {'name' : 'Kashmiri',			'code' : ['ks', 'kas', 'kas'],		'country' : None},
+	    {'name' : 'Kazakh',				'code' : ['kk', 'kaz', 'kaz'],		'country' : 'kz'},
+	    {'name' : 'Central Khmer',		'code' : ['km', 'khm', 'khm'],		'country' : 'kh'},
+	    {'name' : 'Kikuyu',				'code' : ['ki', 'kik', 'kik'],		'country' : None},
+	    {'name' : 'Kinyarwanda',		'code' : ['rw', 'kin', 'kin'],		'country' : 'rw'},
+	    {'name' : 'Kirghiz',			'code' : ['ky', 'kir', 'kir'],		'country' : 'kg'},
+	    {'name' : 'Komi',				'code' : ['kv', 'kom', 'kom'],		'country' : None},
+	    {'name' : 'Kongo',				'code' : ['kg', 'kon', 'kon'],		'country' : 'cd'},
+	    {'name' : 'Korean',				'code' : ['ko', 'kor', 'kor'],		'country' : 'kr'},
+	    {'name' : 'Kurdish',			'code' : ['ku', 'kur', 'kur'],		'country' : 'iq'},
+	    {'name' : 'Kuanyama',			'code' : ['kj', 'kua', 'kua'],		'country' : None},
+	    {'name' : 'Latin',				'code' : ['la', 'lat', 'lat'],		'country' : None},
+	    {'name' : 'Luxembourgish',		'code' : ['lb', 'ltz', 'ltz'],		'country' : 'lu'},
+	    {'name' : 'Ganda',				'code' : ['lg', 'lug', 'lug'],		'country' : None},
+	    {'name' : 'Limburgan',			'code' : ['li', 'lim', 'lim'],		'country' : None},
+	    {'name' : 'Lingala',			'code' : ['ln', 'lin', 'lin'],		'country' : None},
+	    {'name' : 'Lao',				'code' : ['lo', 'lao', 'lao'],		'country' : 'la'},
+	    {'name' : 'Lithuanian',			'code' : ['lt', 'lit', 'lit'],		'country' : 'lt'},
+	    {'name' : 'Luba-Katanga',		'code' : ['lu', 'lub', 'lub'],		'country' : None},
+	    {'name' : 'Latvian',			'code' : ['lv', 'lav', 'lav'],		'country' : 'lv'},
+	    {'name' : 'Manx',				'code' : ['gv', 'glv', 'glv'],		'country' : None},
+	    {'name' : 'Macedonian',			'code' : ['mk', 'mkd', 'mac'],		'country' : 'mk'},
+	    {'name' : 'Malagasy',			'code' : ['mg', 'mlg', 'mlg'],		'country' : 'mg'},
+	    {'name' : 'Malay',				'code' : ['ms', 'msa', 'may'],		'country' : 'my'},
+	    {'name' : 'Malayalam',			'code' : ['ml', 'mal', 'mal'],		'country' : None},
+	    {'name' : 'Maltese',			'code' : ['mt', 'mlt', 'mlt'],		'country' : 'mt'},
+	    {'name' : 'Maori',				'code' : ['mi', 'mri', 'mao'],		'country' : 'nz'},
+	    {'name' : 'Marathi',			'code' : ['mr', 'mar', 'mar'],		'country' : None},
+	    {'name' : 'Marshallese',		'code' : ['mh', 'mah', 'mah'],		'country' : 'mh'},
+	    {'name' : 'Mongolian',			'code' : ['mn', 'mon', 'mon'],		'country' : 'mn'},
+	    {'name' : 'Nauru',				'code' : ['na', 'nau', 'nau'],		'country' : 'nr'},
+	    {'name' : 'Navajo',				'code' : ['nv', 'nav', 'nav'],		'country' : None},
+	    {'name' : 'North Ndebele',		'code' : ['nd', 'nde', 'nde'],		'country' : 'zw'},
+	    {'name' : 'Nepali',				'code' : ['ne', 'nep', 'nep'],		'country' : 'np'},
+	    {'name' : 'Ndonga',				'code' : ['ng', 'ndo', 'ndo'],		'country' : None},
+	    {'name' : 'Norwegian Bokmal',	'code' : ['nb', 'nob', 'nob'],		'country' : 'no'},
+	    {'name' : 'Norwegian Nynorsk',	'code' : ['nn', 'nno', 'nno'],		'country' : 'no'},
+	    {'name' : 'Norwegian',			'code' : ['no', 'nor', 'nor'],		'country' : 'no'},
+	    {'name' : 'Sichuan Yi',			'code' : ['ii', 'iii', 'iii'],		'country' : 'cn'},
+	    {'name' : 'South Ndebele',		'code' : ['nr', 'nbl', 'nbl'],		'country' : 'za'},
+	    {'name' : 'Occitan',			'code' : ['oc', 'oci', 'oci'],		'country' : None},
+	    {'name' : 'Ojibwa',				'code' : ['oj', 'oji', 'oji'],		'country' : None},
+	    {'name' : 'Old Slavonic',		'code' : ['cu', 'chu', 'chu'],		'country' : None},
+	    {'name' : 'Oromo',				'code' : ['om', 'orm', 'orm'],		'country' : None},
+	    {'name' : 'Oriya',				'code' : ['or', 'ori', 'ori'],		'country' : None},
+	    {'name' : 'Ossetian',			'code' : ['os', 'oss', 'oss'],		'country' : None},
+	    {'name' : 'Panjabi',			'code' : ['pa', 'pan', 'pan'],		'country' : None},
+	    {'name' : 'Pali',				'code' : ['pi', 'pli', 'pli'],		'country' : None},
+	    {'name' : 'Persian',			'code' : ['fa', 'fas', 'per'],		'country' : None},
+	    {'name' : 'Polish',				'code' : ['pl', 'pol', 'pol'],		'country' : 'pl'},
+	    {'name' : 'Pashto',				'code' : ['ps', 'pus', 'pus'],		'country' : None},
+	    {'name' : 'Portuguese',			'code' : ['pt', 'por', 'por'],		'country' : 'pt'},
+	    {'name' : 'Quechua',			'code' : ['qu', 'que', 'que'],		'country' : None},
+	    {'name' : 'Romansh',			'code' : ['rm', 'roh', 'roh'],		'country' : 'ch'},
+	    {'name' : 'Rundi',				'code' : ['rn', 'run', 'run'],		'country' : None},
+	    {'name' : 'Romanian',			'code' : ['ro', 'ron', 'rum'],		'country' : 'ro'},
+	    {'name' : 'Russian',			'code' : ['ru', 'rus', 'rus'],		'country' : 'ru'},
+	    {'name' : 'Sanskrit',			'code' : ['sa', 'san', 'san'],		'country' : None},
+	    {'name' : 'Sardinian',			'code' : ['sc', 'srd', 'srd'],		'country' : None},
+	    {'name' : 'Sindhi',				'code' : ['sd', 'snd', 'snd'],		'country' : None},
+	    {'name' : 'Northern Sami',		'code' : ['se', 'sme', 'sme'],		'country' : 'se'},
+	    {'name' : 'Samoan',				'code' : ['sm', 'smo', 'smo'],		'country' : 'ws'},
+	    {'name' : 'Sango',				'code' : ['sg', 'sag', 'sag'],		'country' : None},
+	    {'name' : 'Serbian',			'code' : ['sr', 'srp', 'srp'],		'country' : 'rs'},
+	    {'name' : 'Gaelic',				'code' : ['gd', 'gla', 'gla'],		'country' : 'gb'},
+	    {'name' : 'Shona',				'code' : ['sn', 'sna', 'sna'],		'country' : 'zw'},
+	    {'name' : 'Sinhala',			'code' : ['si', 'sin', 'sin'],		'country' : 'lk'},
+	    {'name' : 'Slovak',				'code' : ['sk', 'slk', 'slo'],		'country' : 'sk'},
+	    {'name' : 'Slovenian',			'code' : ['sl', 'slv', 'slv'],		'country' : 'si'},
+	    {'name' : 'Somali',				'code' : ['so', 'som', 'som'],		'country' : 'so'},
+	    {'name' : 'Southern Sotho',		'code' : ['st', 'sot', 'sot'],		'country' : 'za'},
+	    {'name' : 'Spanish',			'code' : ['es', 'spa', 'spa'],		'country' : 'es'},
+	    {'name' : 'Sundanese',			'code' : ['su', 'sun', 'sun'],		'country' : None},
+	    {'name' : 'Swahili',			'code' : ['sw', 'swa', 'swa'],		'country' : 'tz'},
+	    {'name' : 'Swati',				'code' : ['ss', 'ssw', 'ssw'],		'country' : 'sz'},
+	    {'name' : 'Swedish',			'code' : ['sv', 'swe', 'swe'],		'country' : 'se'},
+	    {'name' : 'Tamil',				'code' : ['ta', 'tam', 'tam'],		'country' : 'in'},
+	    {'name' : 'Telugu',				'code' : ['te', 'tel', 'tel'],		'country' : None},
+	    {'name' : 'Tajik',				'code' : ['tg', 'tgk', 'tgk'],		'country' : 'tj'},
+	    {'name' : 'Thai',				'code' : ['th', 'tha', 'tha'],		'country' : 'th'},
+	    {'name' : 'Tigrinya',			'code' : ['ti', 'tir', 'tir'],		'country' : None},
+	    {'name' : 'Tibetan',			'code' : ['bo', 'bod', 'tib'],		'country' : 'cn'},
+	    {'name' : 'Turkmen',			'code' : ['tk', 'tuk', 'tuk'],		'country' : 'tm'},
+	    {'name' : 'Tagalog',			'code' : ['tl', 'tgl', 'tgl'],		'country' : 'ph'},
+	    {'name' : 'Tswana',				'code' : ['tn', 'tsn', 'tsn'],		'country' : 'zaz'},
+	    {'name' : 'Tonga',				'code' : ['to', 'ton', 'ton'],		'country' : None},
+	    {'name' : 'Turkish',			'code' : ['tr', 'tur', 'tur'],		'country' : 'tr'},
+	    {'name' : 'Tsonga',				'code' : ['ts', 'tso', 'tso'],		'country' : None},
+	    {'name' : 'Tatar',				'code' : ['tt', 'tat', 'tat'],		'country' : None},
+	    {'name' : 'Twi',				'code' : ['tw', 'twi', 'twi'],		'country' : None},
+	    {'name' : 'Tahitian',			'code' : ['ty', 'tah', 'tah'],		'country' : None},
+	    {'name' : 'Uighur',				'code' : ['ug', 'uig', 'uig'],		'country' : None},
+	    {'name' : 'Ukrainian',			'code' : ['uk', 'ukr', 'ukr'],		'country' : 'ua'},
+	    {'name' : 'Urdu',				'code' : ['ur', 'urd', 'urd'],		'country' : 'pk'},
+	    {'name' : 'Uzbek',				'code' : ['uz', 'uzb', 'uzb'],		'country' : 'uz'},
+	    {'name' : 'Venda',				'code' : ['ve', 'ven', 'ven'],		'country' : 'za'},
+	    {'name' : 'Vietnamese',			'code' : ['vi', 'vie', 'vie'],		'country' : 'vn'},
+	    {'name' : 'Volapük',			'code' : ['vo', 'vol', 'vol'],		'country' : None},
+	    {'name' : 'Walloon',			'code' : ['wa', 'wln', 'wln'],		'country' : None},
+	    {'name' : 'Welsh',				'code' : ['cy', 'cym', 'wel'],		'country' : 'gb'},
+	    {'name' : 'Wolof',				'code' : ['wo', 'wol', 'wol'],		'country' : None},
+	    {'name' : 'Western Frisian',	'code' : ['fy', 'fry', 'fry'],		'country' : None},
+	    {'name' : 'Xhosa',				'code' : ['xh', 'xho', 'xho'],		'country' : 'za'},
+	    {'name' : 'Yiddish',			'code' : ['yi', 'yid', 'yid'],		'country' : 'il'},
+	    {'name' : 'Yoruba',				'code' : ['yo', 'yor', 'yor'],		'country' : None},
+	    {'name' : 'Zhuang',				'code' : ['za', 'zha', 'zha'],		'country' : None},
+	    {'name' : 'Zulu',				'code' : ['zu', 'zul', 'zul'],		'country' : 'za'},
+	]
 
 	@classmethod
-	def _process(self, nameOrCode):
-		if nameOrCode.lower() == Language.GreekAlternative: nameOrCode = Language.GreekCode
-		return nameOrCode
+	def _process(self, language):
+		if type(language) is tuple: language = language[0]
+		elif type(language) is dict: language = language['code'][Language.CodeDefault]
+		language = language.lower().strip()
+		try: language = Language.Replacements[language]
+		except: pass
+		return language
 
 	@classmethod
 	def customization(self):
@@ -265,185 +453,164 @@ class Language(object):
 		else: return languages
 
 	@classmethod
-	def isUniversal(self, nameOrCode):
-		if nameOrCode == None: return False
-		elif type(nameOrCode) is tuple: nameOrCode = nameOrCode[0]
-		nameOrCode = nameOrCode.lower()
-		return nameOrCode == Language.UniversalCode.lower() or nameOrCode == Language.UniversalName.lower()
+	def isUniversal(self, language):
+		if language == None: return False
+		language = self._process(language)
+		return language == Language.UniversalCode.lower() or language == Language.UniversalName.lower()
 
 	@classmethod
-	def isEnglish(self, nameOrCode):
-		if nameOrCode == None: return False
-		elif type(nameOrCode) is tuple: nameOrCode = nameOrCode[0]
-		nameOrCode = nameOrCode.lower()
-		return nameOrCode == Language.EnglishCode.lower() or nameOrCode == Language.EnglishName.lower()
+	def isEnglish(self, language):
+		if language == None: return False
+		language = self._process(language)
+		return language == Language.EnglishCode.lower() or language == Language.EnglishName.lower()
 
 	@classmethod
 	def languages(self, universal = True):
-		result = []
-		for i in range(len(Language.Codes)):
-			result.append((Language.Codes[i], Language.Names[i]))
-		if not universal: result = result[1:]
-		return result
+		if universal: return Language.Languages
+		else: return Language.Languages[1:]
 
 	@classmethod
 	def names(self, case = CaseCapital, universal = True):
-		if case == Language.CaseUpper:
-			if Language.NamesUpper == None:
-				Language.NamesUpper = [i.upper() for i in Language.Names]
-			return Language.NamesUpper if universal else Language.NamesUpper[1:]
-		elif case == Language.CaseLower:
-			if Language.NamesLower == None:
-				Language.NamesLower = [i.lower() for i in Language.Names]
-			return Language.NamesLower if universal else Language.NamesLower[1:]
-		else:
-			return Language.Names if universal else Language.Names[1:]
+		names = [i['name'] for i in Language.Languages]
+		if not universal: names = names[1:]
+		if case == Language.CaseUpper: names = [i.upper() for i in names]
+		elif case == Language.CaseLower: names = [i.lower() for i in names]
+		return names
 
 	@classmethod
-	def codes(self, case = CaseLower, universal = True):
-		if case == Language.CaseCapital:
-			if Language.CodesCapital == None:
-				Language.CodesCapital = [i.capitalize() for i in Language.Codes]
-			return Language.CodesCapital if universal else Language.CodesCapital[1:]
-		elif case == Language.CaseUpper:
-			if Language.CodesUpper == None:
-				Language.CodesUpper = [i.upper() for i in Language.Codes]
-			return Language.CodesUpper if universal else Language.CodesUpper[1:]
-		else:
-			return Language.Codes if universal else Language.Codes[1:]
+	def codes(self, case = CaseLower, universal = True, code = CodeDefault):
+		codes = [i['code'][code] for i in Language.Languages]
+		if not universal: codes = codes[1:]
+		if case == Language.CaseCapital: codes = [i.capitalize() for i in codes]
+		elif case == Language.CaseUpper: codes = [i.upper() for i in codes]
+		return codes
 
 	@classmethod
 	def detection(self):
-		# A lot of names use abbreviations.
-		return self.names(case = Language.CaseLower) + [Language.EnglishAbbreviation, Language.GermanAbbreviation]
+		if Language.Detection == None:
+			Language.Detection = self.names(case = Language.CaseLower, universal = False)
+			Language.Detection += self.codes(case = Language.CaseLower, universal = False, code = Language.CodeSecondary)
+			Language.Detection += self.codes(case = Language.CaseLower, universal = False, code = Language.CodeTertiary)
+			Language.Detection = list(set(Language.Detection))
+		return Language.Detection
 
 	@classmethod
-	def language(self, nameOrCode, index = False):
-		if nameOrCode == None: return None
-		elif type(nameOrCode) is tuple: nameOrCode = nameOrCode[0]
-		nameOrCode = self._process(nameOrCode).lower().strip()
+	def index(self, language):
+		if language == None: return None
+		language = self._process(language)
 
-		if Language.Automatic in nameOrCode:
+		for i in range(len(Language.Languages)):
+			if language in Language.Languages[i]['code']:
+				return i
+
+		for i in range(len(Language.Languages)):
+			if language == Language.Languages[i]['name'].lower():
+				return i
+
+		return None
+
+	@classmethod
+	def language(self, language):
+		if language == None: return None
+		language = self._process(language)
+
+		if Language.Automatic in language:
 			return self.settings(single = True)
-		elif Language.Alternative in nameOrCode:
+		elif Language.Alternative in language:
 			languages = self.settings()
-			for language in languages:
-				if not language[0] == Language.EnglishCode:
-					return language
+			for i in languages:
+				if not i['code'][code] == Language.EnglishCode:
+					return i
 			return languages[0]
 
-		# NB & TODO: Very bad, but easy implementation to compares ISO 639-1 and ISO 639-2 codes. This does not work properley for languages, and a proper map for ISO 639-2 must be added.
-		if isinstance(nameOrCode, basestring) and len(nameOrCode) == 3:
-			if nameOrCode == Language.EnglishAbbreviation:
-				return self.language(Language.EnglishCode, index = index)
-			elif nameOrCode == Language.GermanAbbreviation:
-				return self.language(Language.GermanCode, index = index)
-			else:
-				code = None
-				for i in range(len(Language.Codes)):
-					code = Language.Codes[i]
-					if nameOrCode.startswith(code) or (code[0] == nameOrCode[0] and code[1] == nameOrCode[2]):
-						return i if index else (Language.Codes[i], Language.Names[i])
+		for i in Language.Languages:
+			if language in i['code']:
+				return i
 
-		for i in range(len(Language.Codes)):
-			if Language.Codes[i] == nameOrCode:
-				return i if index else (Language.Codes[i], Language.Names[i])
-
-		for i in range(len(Language.Codes)):
-			if Language.Names[i].lower() == nameOrCode:
-				return i if index else (Language.Codes[i], Language.Names[i])
+		for i in Language.Languages:
+			if language == i['name'].lower():
+				return i
 
 		return None
 
 	@classmethod
-	def name(self, nameOrCode):
-		if nameOrCode == None: return None
-		elif type(nameOrCode) is tuple: nameOrCode = nameOrCode[0]
-		nameOrCode = self._process(nameOrCode).lower().strip()
+	def name(self, language):
+		if language == None: return None
+		language = self._process(language)
 
-		if Language.Automatic in nameOrCode:
-			return self.settings(single = True)[1]
-		elif Language.Alternative in nameOrCode:
+		if Language.Automatic in language:
+			return self.settings(single = True)['name']
+		elif Language.Alternative in language:
 			languages = self.settings()
-			for language in languages:
-				if not language[0] == Language.EnglishCode:
-					return language[1]
-			return languages[0][1]
+			for i in languages:
+				if not i['code'][code] == Language.EnglishCode:
+					return i['name']
+			return languages[0]['name']
 
-		# NB & TODO: Very bad, but easy implementation to compares ISO 639-1 and ISO 639-2 codes. This does not work properley for languages, and a proper map for ISO 639-2 must be added.
-		if isinstance(nameOrCode, basestring) and len(nameOrCode) == 3:
-			if nameOrCode == 'ger':
-					return self.name('de')
-			else:
-				code = None
-				for i in range(len(Language.Codes)):
-					code = Language.Codes[i]
-					if nameOrCode.startswith(code) or (code[0] == nameOrCode[0] and code[1] == nameOrCode[2]):
-						return Language.Names[i]
+		for i in Language.Languages:
+			if language in i['code']:
+				return i['name']
 
-		for i in range(len(Language.Codes)):
-			if Language.Codes[i] == nameOrCode:
-				return Language.Names[i]
-
-		for i in range(len(Language.Codes)):
-			if Language.Names[i].lower() == nameOrCode:
-				return Language.Names[i]
+		for i in Language.Languages:
+			if language == i['name'].lower():
+				return i['name']
 
 		return None
 
 	@classmethod
-	def code(self, nameOrCode):
-		if nameOrCode == None: return None
-		elif type(nameOrCode) is tuple: nameOrCode = nameOrCode[0]
-		nameOrCode = self._process(nameOrCode).lower().strip()
+	def code(self, language, code = CodeDefault):
+		if language == None: return None
+		language = self._process(language)
 
-		if Language.Automatic in nameOrCode:
-			return self.settings(single = True)[0]
-		elif Language.Alternative in nameOrCode:
+		if Language.Automatic in language:
+			return self.settings(single = True)['code'][code]
+		elif Language.Alternative in language:
 			languages = self.settings()
-			for language in languages:
-				if not language[0] == Language.EnglishCode:
-					return language[0]
-			return languages[0][0]
+			for i in languages:
+				if not i['code'][code] == Language.EnglishCode:
+					return i['code'][code]
+			return languages[0]['code'][code]
 
-		# NB & TODO: Very bad, but easy implementation to compares ISO 639-1 and ISO 639-2 codes. This does not work properley for languages, and a proper map for ISO 639-2 must be added.
-		if isinstance(nameOrCode, basestring) and len(nameOrCode) == 3:
-			if nameOrCode == 'ger':
-					return self.code('de')
-			else:
-				code = None
-				for i in range(len(Language.Codes)):
-					code = Language.Codes[i]
-					if nameOrCode.startswith(code) or (code[0] == nameOrCode[0] and code[1] == nameOrCode[2]):
-						return Language.Codes[i]
+		for i in Language.Languages:
+			if language in i['code']:
+				return i['code'][code]
 
-		for i in range(len(Language.Names)):
-			if Language.Names[i].lower() == nameOrCode:
-				return Language.Codes[i]
-
-		for i in range(len(Language.Codes)):
-			if Language.Codes[i] == nameOrCode:
-				return Language.Codes[i]
+		for i in Language.Languages:
+			if language == i['name'].lower():
+				return i['code'][code]
 
 		return None
 
 	@classmethod
-	def ununiversalze(self, languages, english = True):
-		for language in languages:
-			if self.isUniversal(language):
-				languages.remove(language)
+	def ununiversalize(self, languages, english = True):
+		for i in range(len(languages)):
+			if self.isUniversal(languages[i]):
+				del languages[i]
 				if english:
-					english = (Language.EnglishCode, Language.EnglishName)
-					if not english in languages: languages.append(english)
+					has = False
+					for j in range(len(languages)):
+						if self.isEnglish(languages[j]):
+							has = True
+							break
+					if not has: languages.append(self.language(Language.EnglishCode))
 				break
 		return languages
 
 	@classmethod
+	def clean(self, languages):
+		current = []
+		result = []
+		for i in languages:
+			if i and not i['name'] in current:
+				current.append(i['name'])
+				result.append(i)
+		return result
+
+	@classmethod
 	def country(self, language):
 		if language == None: return None
-		elif type(language) is tuple: language = language[0]
-		try: return Language.Countries[language]
-		except: return Language.UniversalCode
+		try: return self.language(language)['country']
+		except: return Language.UniversalCountry
 
 
 class Hash(object):
@@ -698,7 +865,7 @@ class Converter(object):
 
 	@classmethod
 	def boolean(self, value, string = False, none = False):
-		if none and value == None:
+		if none and value is None:
 			return value
 		elif string:
 			return 'true' if value else 'false'
@@ -741,10 +908,14 @@ class Converter(object):
 			except: return string
 
 	@classmethod
-	def base64From(self, data, iterations = 1):
+	def base64From(self, data, iterations = 1, url = False):
 		data = str(data)
-		for i in range(iterations):
-			data = data.decode(Converter.Base64)
+		if url:
+			for i in range(iterations):
+				data = base64.urlsafe_b64decode(data)
+		else:
+			for i in range(iterations):
+				data = data.decode(Converter.Base64)
 		return data
 
 	@classmethod
@@ -800,34 +971,6 @@ class Converter(object):
 		except:
 			return data
 
-class Cache(object):
-
-	# Example: cacheNamed(functionPointer, 30, val1, val2)
-	# If timeout <= 0 or None, will force new retrieval.
-	@classmethod
-	def cache(self, function, timeout, *arguments):
-		from resources.lib.modules import cache
-		return cache.get(function, timeout, *arguments)
-
-	# Example: cacheNamed(functionPointer, 30, par1 = val1, par2 = val2)
-	# If timeout <= 0 or None, will force new retrieval.
-	# NB: DO NOT USE THIS FUNCTION. It seems that this function often does not work. Sometimes it does. Rather cache() and pass the function manually like in debrid.Premiumize.
-	'''@classmethod
-	def cacheNamed(self, function, timeout, **arguments):
-		def cacheNamed(**arguments):
-			return function(**arguments)
-		return self.cache(cacheNamed, timeout, dict(**arguments)) # arguments must be converted to dict, since cache.get only takes unnamed parameters.
-	'''
-
-	@classmethod
-	def clean(self, duration = 1209600):
-		from resources.lib.modules import cache
-		return cache.cache_clean(duration)
-
-	@classmethod
-	def clear(self):
-		from resources.lib.modules import cache
-		return cache.cache_clear()
 
 class Logger(object):
 
@@ -1077,18 +1220,20 @@ class File(object):
 		return self.writeNow(path, '')
 
 	@classmethod
-	def readNow(self, path):
+	def readNow(self, path, utf = True):
 		try:
 			file = xbmcvfs.File(path)
 			result = file.read()
 			file.close()
-			return result.decode('utf-8')
+			if utf: return result.decode('utf-8')
+			else: return result
 		except: return None
 
 	@classmethod
-	def writeNow(self, path, value):
+	def writeNow(self, path, value, utf = True):
 		file = xbmcvfs.File(path, 'w')
-		result = file.write(str(value.encode('utf-8')))
+		if utf: value = value.encode('utf-8')
+		result = file.write(str(value))
 		file.close()
 		return result
 
@@ -1292,10 +1437,8 @@ class System(object):
 	def path(self, id = GaiaAddon):
 		try: addon = xbmcaddon.Addon(id)
 		except: addon = None
-		if addon == None:
-			return ''
-		else:
-			return File.translatePath(addon.getAddonInfo('path').decode('utf-8'))
+		if addon == None: return ''
+		else: return File.translatePath(addon.getAddonInfo('path').decode('utf-8'))
 
 	@classmethod
 	def pathArtwork(self):
@@ -1616,6 +1759,31 @@ class System(object):
 				Settings.set('internal.version', self.version())
 				File.deleteDirectory(File.joinPath(System.profile(), 'Scrapers'))
 				interface.Loader.hide()
+
+			# gaiaremove
+			# Can be removed in later versions.
+			if versionOld < 500 and versionNew >= 500:
+				# Because of metadata failures due to the new language system.
+				from resources.lib.extensions import history
+				history.History().clear(confirm = False)
+
+				# New cache system.
+				from resources.lib.extensions import cache
+				cache.Cache().clear(confirm = False)
+
+			# gaiaremove
+			if versionOld < 503 and versionNew >= 503:
+				# The database structure has changed, causing the cache to fail since it cannot insert anything.
+				# Drop the entire table instead of deleting rows from the table, like in version 5.0.0 above.
+				from resources.lib.extensions import cache
+				cache.Cache()._drop(cache.Cache.Name)
+
+			# gaiaremove
+			if versionOld < 504 and versionNew >= 504:
+				# Seems that some systems didn't correctly drop the database in version 5.0.3.
+				# Just delete the entire file.
+				from resources.lib.extensions import cache
+				cache.Cache()._deleteFile()
 
 			# Backup - Import
 			Backup.automaticImport()
@@ -2313,6 +2481,11 @@ class Settings(object):
 		return None if result == None or result == '' else result
 
 	@classmethod
+	def has(self, id, raw = False, cached = True):
+		result = self.get(id = id, raw = raw, cached = cached, database = True)
+		return not result is None and not result is ''
+
+	@classmethod
 	def customGetReleases(self, type, raw = False):
 		result = self.getList(id = '%s.additional.releases.items' % type, raw = raw)
 		if result == '': return None
@@ -2567,14 +2740,13 @@ class Media(object):
 			pack = (pack and packs)
 			if not season == None and not episode == None and not pack:
 				type = Media.TypeEpisode
-			if not season == None:
+			elif not season == None:
 				type = Media.TypeSeason
 			else:
 				type = Media.TypeMovie
 
 		self._initialize()
 		format = Media.Formats[type]
-
 		return self._format(format = format, title = title, year = year, season = season, episode = episode)
 
 	# Raw title to search on the web/scrapers.
@@ -2600,11 +2772,14 @@ class Media(object):
 		return type == Media.TypeShow or type == Media.TypeSeason or type == Media.TypeEpisode
 
 	@classmethod
-	def metadataClean(self, metadata):
+	def metadataClean(self, metadata, exclude = None):
 		# Filter out non-existing/custom keys.
 		# Otherise there are tons of errors in Kodi 18 log.
 		if metadata == None: return metadata
-		allowed = ['genre', 'country', 'year', 'episode', 'season', 'sortepisode', 'sortseason', 'episodeguide', 'showlink', 'top250', 'setid', 'tracknumber', 'rating', 'userrating', 'watched', 'playcount', 'overlay', 'cast', 'castandrole', 'director', 'mpaa', 'plot', 'plotoutline', 'title', 'originaltitle', 'sorttitle', 'duration', 'studio', 'tagline', 'writer', 'tvshowtitle', 'premiered', 'status', 'set', 'setoverview', 'tag', 'imdbnumber', 'code', 'aired', 'credits', 'lastplayed', 'album', 'artist', 'votes', 'path', 'trailer', 'dateadded', 'mediatype', 'dbid']
+		allowed = ['genre',	'country', 'year', 'episode', 'season', 'sortepisode', 'sortseason', 'episodeguide', 'showlink', 'top250', 'setid', 'tracknumber', 'rating', 'userrating', 'watched', 'playcount', 'overlay', 'cast', 'castandrole', 'director', 'mpaa', 'plot', 'plotoutline', 'title', 'originaltitle', 'sorttitle', 'duration', 'studio', 'tagline', 'writer', 'tvshowtitle', 'premiered', 'status', 'set', 'setoverview', 'tag', 'imdbnumber', 'code', 'aired', 'credits', 'lastplayed', 'album', 'artist', 'votes', 'path', 'trailer', 'dateadded', 'mediatype', 'dbid']
+		if exclude:
+			if not isinstance(exclude, (list, tuple)): exclude = ['userrating', 'watched', 'playcount', 'overlay', 'duration']
+			allowed = [i for i in allowed if not i in exclude]
 		return {k: v for k, v in metadata.iteritems() if k in allowed}
 
 ###################################################################
@@ -3401,9 +3576,7 @@ class Extensions(object):
 
 	# IDs
 	IdGaiaAddon = 'plugin.video.gaia'
-	IdGaiaRepository1 = 'repository.gaia.1'
-	IdGaiaRepository2 = 'repository.gaia.2'
-	IdGaiaRepository3 = 'repository.gaia.3'
+	IdGaiaRepository = 'repository.gaia'
 	IdGaiaArtwork = 'script.gaia.artwork'
 	IdGaiaBinaries = 'script.gaia.binaries'
 	IdGaiaResources = 'script.gaia.resources'
@@ -3430,6 +3603,7 @@ class Extensions(object):
 	IdElementumRepository = 'repository.elementum'
 	IdQuasar = 'plugin.video.quasar'
 	IdQuasarRepository = 'repository.quasar'
+	IdExtendedInfo = 'script.extendedinfo'
 	IdYouTube = 'plugin.video.youtube'
 
 	@classmethod
@@ -3481,24 +3655,10 @@ class Extensions(object):
 
 		result = [
 			{
-				'id' : Extensions.IdGaiaRepository1,
-				'name' : 'Gaia Repository 1',
+				'id' : Extensions.IdGaiaRepository,
+				'name' : 'Gaia Repository',
 				'type' : Extensions.TypeRequired,
 				'description' : 33917,
-				'icon' : 'extensionsgaia.png',
-			},
-			{
-				'id' : Extensions.IdGaiaRepository2,
-				'name' : 'Gaia Repository 2',
-				'type' : Extensions.TypeRecommended,
-				'description' : 33918,
-				'icon' : 'extensionsgaia.png',
-			},
-			{
-				'id' : Extensions.IdGaiaRepository3,
-				'name' : 'Gaia Repository 3',
-				'type' : Extensions.TypeRecommended,
-				'description' : 33918,
 				'icon' : 'extensionsgaia.png',
 			},
 			{
@@ -3601,7 +3761,7 @@ class Extensions(object):
 			},
 			{
 				'id' : Extensions.IdNanScrapers,
-				'name' : 'NoobsAndNerds Scrapers',
+				'name' : 'NaN Scrapers',
 				'type' : Extensions.TypeOptional,
 				'description' : 33963,
 				'icon' : 'extensionsnanscrapers.png',
@@ -3658,10 +3818,16 @@ class Extensions(object):
 				'icon' : 'extensionsquasar.png',
 			},
 			{
+				'id' : Extensions.IdExtendedInfo,
+				'name' : 'ExtendedInfo',
+				'type' : Extensions.TypeRequired,
+				'description' : 35570,
+				'icon' : 'extensionsextendedinfo.png',
+			},
+			{
 				'id' : Extensions.IdYouTube,
-				'dependencies' : [Extensions.IdResolveUrl],
 				'name' : 'YouTube',
-				'type' : Extensions.TypeOptional,
+				'type' : Extensions.TypeRequired,
 				'description' : 35297,
 				'icon' : 'extensionsyoutube.png',
 			},
@@ -4384,6 +4550,34 @@ class MetaHandler(object):
 		return Extensions.disable(id = MetaHandler.Id, refresh = refresh)
 
 ###################################################################
+# YOUTUBE
+###################################################################
+
+class ExtendedInfo(object):
+
+	Id = Extensions.IdExtendedInfo
+
+	@classmethod
+	def settings(self):
+		Extensions.settings(id = ExtendedInfo.Id)
+
+	@classmethod
+	def launch(self):
+		Extensions.launch(id = ExtendedInfo.Id)
+
+	@classmethod
+	def installed(self):
+		return Extensions.installed(id = ExtendedInfo.Id)
+
+	@classmethod
+	def enable(self, refresh = False):
+		return Extensions.enable(id = ExtendedInfo.Id, refresh = refresh)
+
+	@classmethod
+	def disable(self, refresh = False):
+		return Extensions.disable(id = ExtendedInfo.Id, refresh = refresh)
+
+###################################################################
 # INFORMATION
 ###################################################################
 
@@ -4419,11 +4613,8 @@ class Information(object):
 	@classmethod
 	def trailer(self, imdb, wait = True): # Only works for movies.
 		from resources.lib.extensions import interface
-
 		if wait: interface.Loader.show()
-
 		self._execute(parameters = {'info' : 'playtrailer', 'imdb_id' : imdb})
-
 		if wait:
 			player = xbmc.Player()
 			for i in range(Information.Wait):
@@ -4727,7 +4918,10 @@ class Backup(object):
 		from resources.lib.extensions import interface
 		interface.Dialog.confirm(title = 35321, message = 35323)
 		if not confirm or interface.Dialog.option(title = 35321, message = 35324):
-			Backup.directImport(File.joinPath(System.path(id = System.GaiaResources), 'resources', 'settings', 'reaper.18.zip' if System.versionKodiNew() else 'reaper.17.zip'))
+			choice = interface.Dialog.options(title = 35321, items = [interface.Format.fontBold(35615), interface.Format.fontBold(35616)])
+			if choice < 0: return False
+			settings = 'reaper.' + ('slow' if choice == 0 else 'fast') + '.' + ('18' if System.versionKodiNew() else '17') + '.zip'
+			Backup.directImport(File.joinPath(System.path(id = System.GaiaResources), 'resources', 'settings', settings))
 			return True
 		else:
 			return False
@@ -4803,13 +4997,13 @@ class Donations(object):
 
 	@classmethod
 	def _popup(self):
+		from resources.lib.extensions import interface
 		if not self.donor():
-			from resources.lib.extensions import interface
 			counter = Settings.getInteger('internal.donation')
 			counter += 1
 			if counter >= Donations.PopupThreshold:
 				Settings.set('internal.donation', 0)
-				if not interface.Dialog.option(title = 33505, message = 35014, labelConfirm = 35015, labelDeny = 33505):
+				if interface.Dialog.option(title = 33505, message = 35014, labelConfirm = 33505, labelDeny = 35015):
 					self.show()
 					interface.Loader.hide()
 					return True
@@ -4999,7 +5193,7 @@ class Statistics(object):
 			orion = orionoid.Orionoid()
 			data = {
 				'version' : System.version(),
-				'orion' : orion.accountEnabled() and orion.accountValid(),
+				'orion' : orion.accountValid(),
 
 				'system' : System.informationSystem(),
 				'python' : System.informationPython(),
@@ -5037,6 +5231,44 @@ class Statistics(object):
 			api.Api.deviceUpdate(data = data)
 		except:
 			Logger.error()
+
+###################################################################
+# BINGE
+###################################################################
+
+class Binge(object):
+
+	ModeNone = 0
+	ModeFirst = 1
+	ModeContinue = 2
+
+	@classmethod
+	def settingsType(self):
+		return Settings.getInteger('general.playback.binge')
+
+	@classmethod
+	def settingsEnabled(self, type = None):
+		return (self.settingsType() if type is None else type) > 0
+
+	@classmethod
+	def settingsDisabled(self, type = None):
+		return (self.settingsType() if type is None else type) == 0
+
+	@classmethod
+	def settingsManual(self, type = None):
+		return (self.settingsType() if type is None else type) == 1
+
+	@classmethod
+	def settingsAutomatic(self, type = None):
+		return (self.settingsType() if type is None else type) == 2
+
+	@classmethod
+	def settingsDelay(self):
+		return Settings.getInteger('general.playback.binge.delay')
+
+	@classmethod
+	def settingsSuppress(self):
+		return Settings.getBoolean('general.playback.binge.suppress')
 
 ###################################################################
 # ANNOUNCEMENT

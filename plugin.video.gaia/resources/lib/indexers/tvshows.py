@@ -18,28 +18,29 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
-import os,sys,re,json,urllib,urlparse,datetime,random
+import os,sys,re,json,urllib,urlparse,datetime,random,threading
 
 from resources.lib.modules import trakt
 from resources.lib.modules import cleantitle
 from resources.lib.modules import cleangenre
 from resources.lib.modules import control
 from resources.lib.modules import client
-from resources.lib.modules import cache
 from resources.lib.modules import metacache
 from resources.lib.modules import playcount
 from resources.lib.modules import workers
 from resources.lib.modules import views
 
 from resources.lib.extensions import tools
+from resources.lib.extensions import cache
 from resources.lib.extensions import interface
 from resources.lib.extensions import shortcuts
+from resources.lib.extensions import convert
 from resources.lib.externals.beautifulsoup import BeautifulSoup
 
 class tvshows:
 
 	def __init__(self, type = tools.Media.TypeShow, kids = tools.Selection.TypeUndefined, notifications = True):
-		self.count = 60
+		self.count = tools.Settings.getInteger('interface.navigation.limit')
 
 		self.type = type
 
@@ -67,6 +68,7 @@ class tvshows:
 
 		self.list = []
 
+		self.imdb_public = True
 		self.imdb_link = 'http://www.imdb.com'
 		self.trakt_link = 'http://api-v2launch.trakt.tv'
 		self.tvmaze_link = 'http://www.tvmaze.com'
@@ -117,6 +119,7 @@ class tvshows:
 		self.imdblist2_link = 'http://www.imdb.com/list/%s/?view=detail&sort=created:desc&title_type=tvSeries,tvEpisode,tvMiniSeries&start=1'
 		self.imdbwatchlist_link = 'http://www.imdb.com/user/ur%s/watchlist?sort=alpha,asc' % self.imdb_user
 		self.imdbwatchlist2_link = 'http://www.imdb.com/user/ur%s/watchlist?sort=date_added,desc' % self.imdb_user
+		self.imdbratings_link = 'https://www.imdb.com/user/ur%s/ratings?sort=your_rating,desc&mode=detail' % self.imdb_user
 
 		self.year_link = 'http://www.imdb.com/search/title?title_type=tvSeries,tvMiniSeries&languages=en&num_votes=100,&production_status=released&year=%s,%s&sort=moviemeter,asc&count=%d&start=1%s' % ('%s', '%s', self.count, '%s')
 		self.language_link = 'http://www.imdb.com/search/title?title_type=tvSeries,tvMiniSeries&num_votes=100,&production_status=released&languages=%s&sort=moviemeter,asc&count=%d&start=1%s' % ('%s', self.count, '%s')
@@ -183,11 +186,11 @@ class tvshows:
 						if not 'watched' in self.list[i]: self.list[i]['watched'] = ''
 					self.list = sorted(self.list, key = lambda k: k['watched'], reverse = reverse)
 			elif reverse:
-				self.list = reversed(self.list)
+				self.list.reverse()
 		except:
 			tools.Logger.error()
 
-	def get(self, url, idx = True):
+	def get(self, url, idx = True, full = False):
 		try:
 			try: url = getattr(self, url + '_link')
 			except: pass
@@ -209,38 +212,32 @@ class tvshows:
 				lists = []
 				for u in urls:
 					self.list = []
-					try:
-						if not '/users/me/' in url: raise Exception()
-						if trakt.getActivity() > cache.timeout(self.trakt_list, u, self.trakt_user): raise Exception()
-						result = cache.get(self.trakt_list, 0, u, self.trakt_user)
-						if result: lists += result
-					except:
-						result = cache.get(self.trakt_list, 0, u, self.trakt_user)
-						if result: lists += result
+					result = cache.Cache().cacheMini(self.trakt_list, u, self.trakt_user)
+					if result: lists += result
 				self.list = lists
 
 				self.sort()
 				if idx == True: self.worker()
 
 			elif u in self.trakt_link and self.search_link in url:
-				self.list = cache.get(self.trakt_list, 1, url, self.trakt_user)
+				self.list = cache.Cache().cacheShort(self.trakt_list, url, self.trakt_user)
 				if idx == True: self.worker(level=0)
 
 			elif u in self.trakt_link:
-				self.list = cache.get(self.trakt_list, 24, url, self.trakt_user)
+				self.list = cache.Cache().cacheMedium(self.trakt_list, url, self.trakt_user)
 				if idx == True: self.worker()
 
 			elif u in self.imdb_link and ('/user/' in url or '/list/' in url):
-				self.list = cache.get(self.imdb_list, 0, url)
+				self.list = cache.Cache().cacheMini(self.imdb_list, url, full)
 				self.sort()
 				if idx == True: self.worker()
 
 			elif u in self.imdb_link:
-				self.list = cache.get(self.imdb_list, 24, url)
+				self.list = cache.Cache().cacheMedium(self.imdb_list, url, full)
 				if idx == True: self.worker()
 
 			elif u in self.tvmaze_link:
-				self.list = cache.get(self.tvmaze_list, 168, url)
+				self.list = cache.Cache().cacheLong(self.tvmaze_list, url, full)
 				if idx == True: self.worker()
 
 			if self.list == None: self.list = []
@@ -261,6 +258,37 @@ class tvshows:
 				interface.Loader.hide()
 				if self.notifications: interface.Dialog.notification(title = 32002, message = 33049, icon = interface.Dialog.IconInformation)
 
+	def next(self, title, year, imdb, tvdb, season = None, episode = None, notification = True, scrape = False):
+		from resources.lib.indexers import seasons
+		from resources.lib.indexers import episodes
+		from resources.lib.extensions import core
+		interface.Loader.show()
+
+		try: season = int(season)
+		except: pass
+		try: episode = int(episode)
+		except: pass
+		found = False
+		result = None
+		today = int(re.sub('[^0-9]', '', (datetime.datetime.utcnow() - datetime.timedelta(hours = 5)).strftime('%Y-%m-%d')))
+
+		resultSeasons = seasons.seasons(type = self.type, kids = self.kids).get(tvshowtitle = title, year = year, imdb = imdb, tvdb = tvdb, idx = False)
+		for i in resultSeasons:
+			if season is None or int(i['season']) >= season:
+				if not playcount.getSeasonWatched(imdb = i['season'], tvdb = i['season'], season = i['season']):
+					resultEpisodes = episodes.episodes(type = self.type, kids = self.kids).get(tvshowtitle = i['tvshowtitle'], year = i['year'], imdb = i['imdb'], tvdb = i['tvdb'], season = i['season'], idx = False)
+					for j in resultEpisodes:
+						if episode is None or int(j['episode']) >= episode:
+							if not playcount.getEpisodeWatched(imdb = j['imdb'], tvdb = j['tvdb'], season = j['season'], episode = j['episode']):
+								if int(re.sub('[^0-9]', '', str(j['premiered']))) < today: result = j
+								found = True
+								break
+					if found: break
+
+		if result == None and notification: interface.Dialog.notification(title = 35580, message = 35587, icon = interface.Dialog.IconInformation)
+		elif not result == None: core.Core(type = self.type, kids = self.kids).scrape(binge = True, title = result['title'], year = result['year'], imdb = result['imdb'], tvdb = result['tvdb'], season = result['season'], episode = result['episode'], tvshowtitle = result['tvshowtitle'], metadata = result)
+		return result
+
 	def random(self):
 		from resources.lib.indexers import seasons
 
@@ -279,7 +307,7 @@ class tvshows:
 		select = None
 		while select == None:
 			try:
-				result = cache.get(self.imdb_list, 24, random.choice(selection))
+				result = cache.Cache().cacheMedium(self.imdb_list, random.choice(selection))
 				select = random.choice(result)
 			except:
 				select = None
@@ -502,7 +530,7 @@ class tvshows:
 
 	def languages(self):
 		languages = tools.Language.languages(universal = False)
-		for i in languages: self.list.append({'name': str(i[1]), 'url': self.language_link % (i[0], self.certificates), 'image': 'languages.png', 'action': self.parameterize('showsRetrieve')})
+		for i in languages: self.list.append({'name': str(i['name']), 'url': self.language_link % (i['code'][0], self.certificates), 'image': 'languages.png', 'action': self.parameterize('showsRetrieve')})
 		self.addDirectory(self.list)
 		return self.list
 
@@ -551,10 +579,8 @@ class tvshows:
 
 
 	def persons(self, url):
-		if url == None:
-			self.list = cache.get(self.imdb_person_list, 24, self.personlist_link)
-		else:
-			self.list = cache.get(self.imdb_person_list, 1, url)
+		if url == None: self.list = cache.Cache().cacheMedium(self.imdb_person_list, self.personlist_link)
+		else: self.list = cache.Cache().cacheShort(self.imdb_person_list, url)
 
 		if len(self.list) == 0:
 			interface.Loader.hide()
@@ -573,20 +599,8 @@ class tvshows:
 		if mode == None or mode == 'trakt':
 			try:
 				if trakt.getTraktCredentialsInfo() == False: raise Exception()
-				activity = trakt.getActivity()
-			except: pass
-
-			try:
-				if trakt.getTraktCredentialsInfo() == False: raise Exception()
 				self.list = []
-				lists = []
-
-				try:
-					if activity > cache.timeout(self.trakt_user_list, self.traktlists_link, self.trakt_user): raise Exception()
-					lists += cache.get(self.trakt_user_list, 3, self.traktlists_link, self.trakt_user)
-				except:
-					lists += cache.get(self.trakt_user_list, 0, self.traktlists_link, self.trakt_user)
-
+				lists = cache.Cache().cacheMini(self.trakt_user_list, self.traktlists_link, self.trakt_user)
 				for i in range(len(lists)): lists[i].update({'image': 'traktlists.png'})
 				userlists += lists
 			except: pass
@@ -604,14 +618,7 @@ class tvshows:
 			try:
 				if trakt.getTraktCredentialsInfo() == False: raise Exception()
 				self.list = []
-				lists = []
-
-				try:
-					if activity > cache.timeout(self.trakt_user_list, self.traktlikedlists_link, self.trakt_user): raise Exception()
-					lists += cache.get(self.trakt_user_list, 3, self.traktlikedlists_link, self.trakt_user)
-				except:
-					lists += cache.get(self.trakt_user_list, 0, self.traktlikedlists_link, self.trakt_user)
-
+				lists = cache.Cache().cacheMini(self.trakt_user_list, self.traktlikedlists_link, self.trakt_user)
 				for i in range(len(lists)): lists[i].update({'image': 'traktlists.png'})
 				userlists += lists
 			except: pass
@@ -641,6 +648,8 @@ class tvshows:
 
 
 	def trakt_list(self, url, user):
+		list = []
+
 		try:
 			dupes = []
 
@@ -725,6 +734,8 @@ class tvshows:
 				except: duration = '0'
 				if duration == None: duration = '0'
 				duration = duration.encode('utf-8')
+				try: duration = str(int(duration) * 60)
+				except: pass
 
 				try: rating = str(item['rating'])
 				except: rating = '0'
@@ -749,14 +760,16 @@ class tvshows:
 				plot = client.replaceHTMLCodes(plot)
 				plot = plot.encode('utf-8')
 
-				self.list.append({'title': title, 'originaltitle': title, 'year': year, 'premiered': premiered, 'studio': studio, 'genre': genre, 'duration': duration, 'rating': rating, 'votes': votes, 'mpaa': mpaa, 'plot': plot, 'imdb': imdb, 'tvdb': tvdb, 'poster': '0', 'next': next})
+				list.append({'title': title, 'originaltitle': title, 'year': year, 'premiered': premiered, 'studio': studio, 'genre': genre, 'duration': duration, 'rating': rating, 'votes': votes, 'mpaa': mpaa, 'plot': plot, 'imdb': imdb, 'tvdb': tvdb, 'poster': '0', 'next': next})
 			except:
 				pass
 
-		return self.list
+		return list
 
 
 	def trakt_user_list(self, url, user):
+		list = []
+
 		try:
 			result = trakt.getTrakt(url)
 			items = json.loads(result)
@@ -775,61 +788,107 @@ class tvshows:
 				url = self.traktlist_link % url
 				url = url.encode('utf-8')
 
-				self.list.append({'name': name, 'url': url})
+				list.append({'name': name, 'url': url})
 			except:
 				pass
 
-		self.list = sorted(self.list, key=lambda k: re.sub('(^the |^a |^an )', '', k['name'].lower()))
-		return self.list
+		list = sorted(list, key=lambda k: re.sub('(^the |^a |^an )', '', k['name'].lower()))
+		return list
 
 
-	def imdb_list(self, url):
-		try:
-			dupes = []
+	def imdb_list(self, url, full = False):
+		list = []
+		items = []
+		dupes = []
+		isRating = '/ratings' in url
+		isOwn = '/user/' in url
 
-			for i in re.findall('date\[(\d+)\]', url):
-				url = url.replace('date[%s]' % i, (self.datetime - datetime.timedelta(days = int(i))).strftime('%Y-%m-%d'))
+		for i in re.findall('date\[(\d+)\]', url):
+			url = url.replace('date[%s]' % i, (self.datetime - datetime.timedelta(days = int(i))).strftime('%Y-%m-%d'))
+		urlOriginal = url
 
-			def imdb_watchlist_id(url):
-				return client.parseDOM(client.request(url).decode('iso-8859-1').encode('utf-8'), 'meta', ret='content', attrs = {'property': 'pageId'})[0]
+		def imdb_watchlist_id(url):
+			try: return client.parseDOM(client.request(url).decode('iso-8859-1').encode('utf-8'), 'meta', ret='content', attrs = {'property': 'pageId'})[0]
+			except: return None
 
-			if url == self.imdbwatchlist_link:
-				url = cache.get(imdb_watchlist_id, 8640, url)
-				url = self.imdblist_link % url
-			elif url == self.imdbwatchlist2_link:
-				url = cache.get(imdb_watchlist_id, 8640, url)
-				url = self.imdblist2_link % url
+		def privacyNotification():
+			self.imdb_public = False
+			if not full:
+				cache.Cache().cacheDelete(imdb_watchlist_id, urlOriginal)
+				interface.Dialog.confirm(title = 32034, message = 35609 if isRating else 35608)
+			return cache.Cache.Skip
 
-			result = client.request(url)
+		while True:
+			try:
+				next = ''
+				id = None
 
-			result = result.replace('\n','')
-			result = result.decode('iso-8859-1').encode('utf-8')
+				if url == self.imdbwatchlist_link:
+					id = cache.Cache().cacheMedium(imdb_watchlist_id, url)
+					if id: url = self.imdblist_link % id
+				elif url == self.imdbwatchlist2_link:
+					id = cache.Cache().cacheMedium(imdb_watchlist_id, url)
+					if id: url = self.imdblist2_link % id
 
-			items = client.parseDOM(result, 'div', attrs = {'class': '.+? lister-item'}) + client.parseDOM(result, 'div', attrs = {'class': 'lister-item .+?'})
-			items += client.parseDOM(result, 'div', attrs = {'class': 'list_item.+?'})
-		except:
-			return
+				if isOwn and not isRating and (not id or id.startswith('ur')):
+					if len(items) == 0: return privacyNotification()
+					else: break
 
-		try:
-			# Gaia
-			# HTML syntax error, " directly followed by attribute name. Insert space in between. parseDOM can otherwise not handle it.
-			result = result.replace('"class="lister-page-next', '" class="lister-page-next')
+				result = client.request(url, output = 'extended', error = True)
+				if isOwn and int(result[1]) == 403:
+					if len(items) == 0: return privacyNotification()
+					else: break
 
-			next = client.parseDOM(result, 'a', ret='href', attrs = {'class': 'lister-page-next.+?'})
+				result = result[0].replace('\n','')
+				result = result.decode('iso-8859-1').encode('utf-8')
 
-			if len(next) == 0:
-				next = client.parseDOM(result, 'div', attrs = {'class': 'pagination'})[0]
-				next = zip(client.parseDOM(next, 'a', ret='href'), client.parseDOM(next, 'a'))
-				next = [i[0] for i in next if 'Next' in i[1]]
+				items += client.parseDOM(result, 'div', attrs = {'class': '.+? lister-item'}) + client.parseDOM(result, 'div', attrs = {'class': 'lister-item .+?'})
+				items += client.parseDOM(result, 'div', attrs = {'class': 'list_item.+?'})
+			except:
+				return
 
-			next = url.replace(urlparse.urlparse(url).query, urlparse.urlparse(next[0]).query)
-			next = client.replaceHTMLCodes(next)
-			next = next.encode('utf-8')
-		except:
-			next = ''
+			try:
+				# Gaia
+				# HTML syntax error, " directly followed by attribute name. Insert space in between. parseDOM can otherwise not handle it.
+				result = result.replace('"class="lister-page-next', '" class="lister-page-next')
+
+				next = client.parseDOM(result, 'a', ret='href', attrs = {'class': '.*?lister-page-next.*?'})
+
+				if len(next) == 0:
+					next = client.parseDOM(result, 'div', attrs = {'class': 'pagination'})[0]
+					next = zip(client.parseDOM(next, 'a', ret='href'), client.parseDOM(next, 'a'))
+					next = [i[0] for i in next if 'Next' in i[1]]
+
+				next = url.replace(urlparse.urlparse(url).query, urlparse.urlparse(next[0]).query)
+				next = client.replaceHTMLCodes(next)
+				next = next.encode('utf-8')
+			except:
+				next = ''
+
+			if not full or next == '': break
+			url = next
 
 		for item in items:
 			try:
+				if isRating: # Rating lists cannot be filtered according to movie/show type using GET parameters.
+					# Some lists contain movies.
+					skip = True
+					if 'Episode:' in item:
+						skip = False
+					else:
+						try:
+							# Years that contain extra parts, like "Video Game" or "2019-" or "2011-2018".
+							year = client.parseDOM(item, 'span', attrs = {'class': '.*lister-item-year.*'})[0].lower()
+							if bool(re.search('\(\d{4}.*\d{4}\)', year)): skip = False # Ignore (2018 Video Game) or (2018 TV Movie)
+						except: pass
+					if skip:
+						try:
+							duration = re.search('((\d+\shr\s)?\d+\smin)', item).group(1)
+							duration = convert.ConverterDuration(value = duration).value(convert.ConverterDuration.UnitSecond)
+							if duration > 18000: skip = False
+						except: pass
+					if skip: raise Exception()
+
 				title = client.parseDOM(item, 'a')[1]
 				title = client.replaceHTMLCodes(title)
 				title = title.encode('utf-8')
@@ -841,7 +900,8 @@ class tvshows:
 
 				if int(year) > int((self.datetime).strftime('%Y')): raise Exception()
 
-				imdb = client.parseDOM(item, 'a', ret='href')[0]
+				imdb = client.parseDOM(item, 'div', attrs = {'class': '.*lister-item-content.*'})[0] # Find the show ID, and not the episode ID if present.
+				imdb = client.parseDOM(imdb, 'a', ret='href')[0]
 				imdb = re.findall('(tt\d*)', imdb)[0]
 				imdb = imdb.encode('utf-8')
 
@@ -869,9 +929,10 @@ class tvshows:
 				genre = client.replaceHTMLCodes(genre)
 				genre = genre.encode('utf-8')
 
-				try: duration = re.findall('(\d+?) min(?:s|)', item)[-1]
+				try:
+					duration = re.search('((\d+\shr\s)?\d+\smin)', item).group(1)
+					duration = str(convert.ConverterDuration(value = duration).value(convert.ConverterDuration.UnitSecond))
 				except: duration = '0'
-				duration = duration.encode('utf-8')
 
 				rating = '0'
 				try: rating = client.parseDOM(item, 'span', attrs = {'class': 'rating-rating'})[0]
@@ -881,8 +942,28 @@ class tvshows:
 						try: rating = client.parseDOM(item, 'div', ret='data-value', attrs = {'class': '.*?imdb-rating'})[0]
 						except: pass
 				if rating == '' or rating == '-': rating = '0'
+				if rating == '0':
+					try:
+						rating = client.parseDOM(item, 'span', attrs = {'class': 'ipl-rating-star__rating'})[0]
+						if rating == '' or rating == '-': rating = '0'
+					except: pass
 				rating = client.replaceHTMLCodes(rating)
 				rating = rating.encode('utf-8')
+
+				ratingown = '0'
+				# Do not do this for other lists, since the alternative rating might be from a different user (creator of the list) and will incorrectly overwrite the current user's rating.
+				# Also ingore individual episodes, since the season and episode numbers are unknown.
+				if isOwn and (not isRating or not 'Episode:' in item):
+					try:
+						ratingown = client.parseDOM(client.parseDOM(item, 'div', attrs = {'class': '.*?ipl-rating-star--other-user.*?'})[0], 'span', attrs = {'class': 'ipl-rating-star__rating'})[0]
+						if ratingown == '' or ratingown == '-': ratingown = '0'
+					except: pass
+				ratingown = client.replaceHTMLCodes(ratingown)
+				ratingown = ratingown.encode('utf-8')
+
+				ratingtime = '0'
+				try: ratingtime = convert.ConverterTime(re.search('Rated on (.*?)<', item, re.IGNORECASE).group(1), format = convert.ConverterTime.FormatDateShort).timestamp()
+				except: pass
 
 				votes = '0'
 				try: votes = client.parseDOM(item, 'span', attrs = {'name': 'nv'})[0]
@@ -928,14 +1009,16 @@ class tvshows:
 				plot = client.replaceHTMLCodes(plot)
 				plot = plot.encode('utf-8')
 
-				self.list.append({'title': title, 'originaltitle': title, 'year': year, 'genre': genre, 'duration': duration, 'rating': rating, 'votes': votes, 'mpaa': mpaa, 'director': director, 'cast': cast, 'plot': plot, 'imdb': imdb, 'tvdb': '0', 'poster': poster, 'next': next})
+				list.append({'title': title, 'originaltitle': title, 'year': year, 'genre': genre, 'duration': duration, 'rating': rating, 'ratingown': ratingown, 'ratingtime' : ratingtime, 'votes': votes, 'mpaa': mpaa, 'director': director, 'cast': cast, 'plot': plot, 'imdb': imdb, 'tvdb': '0', 'poster': poster, 'next': next})
 			except:
 				pass
 
-		return self.list
+		return list
 
 
 	def imdb_person_list(self, url):
+		list = []
+
 		try:
 			result = client.request(url)
 			result = result.decode('iso-8859-1').encode('utf-8')
@@ -960,14 +1043,16 @@ class tvshows:
 				image = client.replaceHTMLCodes(image)
 				image = image.encode('utf-8')
 
-				self.list.append({'name': name, 'url': url, 'image': image})
+				list.append({'name': name, 'url': url, 'image': image})
 			except:
 				tools.Logger.error()
 
-		return self.list
+		return list
 
 
 	def imdb_user_list(self, url):
+		list = []
+
 		try:
 			result = client.request(url)
 			result = result.decode('iso-8859-1').encode('utf-8')
@@ -987,15 +1072,75 @@ class tvshows:
 				url = client.replaceHTMLCodes(url)
 				url = url.encode('utf-8')
 
-				self.list.append({'name': name, 'url': url})
+				list.append({'name': name, 'url': url})
 			except:
 				pass
 
-		self.list = sorted(self.list, key=lambda k: re.sub('(^the |^a |^an )', '', k['name'].lower()))
-		return self.list
+		list = sorted(list, key=lambda k: re.sub('(^the |^a |^an )', '', k['name'].lower()))
+		return list
+
+
+	def imdb_account(self, watched = None, ratings = None):
+		data = [[], []]
+
+		threads = []
+		if watched is None: threads.append(threading.Thread(target = self.imdb_watched, args = (data, 0)))
+		else: data[0] = watched
+		if ratings is None: threads.append(threading.Thread(target = self.imdb_ratings, args = (data, 1)))
+		else: data[1] = ratings
+		[i.start() for i in threads]
+		[i.join() for i in threads]
+
+		result = data[0]
+		for i in data[1]:
+			found = -1
+			for j in range(len(result)):
+				try:
+					if i['imdb'] == result[j]['imdb']:
+						found = j
+						break
+				except: pass
+				try:
+					if i['tvdb'] == result[j]['tvdb']:
+						found = j
+						break
+				except: pass
+			if found >= 0: result[found].update(i)
+			else: result.append(i)
+
+		return result
+
+
+	def imdb_watched(self, resultData = None, resultIndex = None):
+		data = self.get(url = 'imdbwatchlist', idx = False, full = True)
+		values = []
+		for item in data:
+			value = {}
+			if 'watchedtime' in item and not item['watchedtime'] == '0': value['time'] = item['watchedtime']
+			if 'imdb' in item and not item['imdb'] == '0': value['imdb'] = item['imdb']
+			if 'tvdb' in item and not item['tvdb'] == '0': value['tvdb'] = item['tvdb']
+			if 'imdb' in value or 'tvdb' in value: values.append(value)
+		if not resultData is None: resultData[resultIndex] = values
+		return values
+
+
+	def imdb_ratings(self, resultData = None, resultIndex = None):
+		data = self.get(url = 'imdbratings', idx = False, full = True)
+		values = []
+		for item in data:
+			if 'ratingown' in item and not item['ratingown'] == '0':
+				value = {'rating' : float(item['ratingown'])}
+				if 'ratingtime' in item and not item['ratingtime'] == '0': value['time'] = item['ratingtime']
+				if 'imdb' in item and not item['imdb'] == '0': value['imdb'] = item['imdb']
+				if 'tvdb' in item and not item['tvdb'] == '0': value['tvdb'] = item['tvdb']
+				if 'imdb' in value or 'tvdb' in value: values.append(value)
+		if not resultData is None: resultData[resultIndex] = values
+		return values
 
 
 	def tvmaze_list(self, url):
+		list = []
+
 		try:
 			result = client.request(url)
 			result = client.parseDOM(result, 'section', attrs = {'id': 'this-seasons-shows'})
@@ -1065,6 +1210,8 @@ class tvshows:
 				if duration == None: duration = '0'
 				duration = str(duration)
 				duration = duration.encode('utf-8')
+				try: duration = str(int(duration) * 60)
+				except: pass
 
 				try: rating = item['rating']['average']
 				except: rating = '0'
@@ -1084,7 +1231,7 @@ class tvshows:
 				if content == None or content == '': content = '0'
 				content = content.encode('utf-8')
 
-				self.list.append({'title': title, 'originaltitle': title, 'year': year, 'premiered': premiered, 'studio': studio, 'genre': genre, 'duration': duration, 'rating': rating, 'plot': plot, 'imdb': imdb, 'tvdb': tvdb, 'poster': poster, 'content': content})
+				list.append({'title': title, 'originaltitle': title, 'year': year, 'premiered': premiered, 'studio': studio, 'genre': genre, 'duration': duration, 'rating': rating, 'plot': plot, 'imdb': imdb, 'tvdb': tvdb, 'poster': poster, 'content': content})
 			except:
 				pass
 
@@ -1094,11 +1241,11 @@ class tvshows:
 			[i.start() for i in threads]
 			[i.join() for i in threads]
 
-			filter = [i for i in self.list if i['content'] == 'scripted']
-			filter += [i for i in self.list if not i['content'] == 'scripted']
-			self.list = filter
+			filter = [i for i in list if i['content'] == 'scripted']
+			filter += [i for i in list if not i['content'] == 'scripted']
+			list = filter
 
-			return self.list
+			return list
 		except:
 			return
 
@@ -1139,8 +1286,8 @@ class tvshows:
 		except:
 			tools.Logger.error()
 
-	def metadataRetrieve(self, title, year, imdb, tvdb):
-		self.list = [{'metacache' : False, 'title' : title, 'year' : year, 'imdb' : imdb, 'tvdb' : tvdb}]
+	def metadataRetrieve(self, tvshowtitle, title, year, imdb, tvdb, season, episode):
+		self.list = [{'metacache' : False, 'tvshowtitle' : tvshowtitle, 'title' : title, 'year' : year, 'imdb' : imdb, 'tvdb' : tvdb, 'season' : season, 'episode' : episode}]
 		self.worker()
 		return self.list[0]
 
@@ -1177,7 +1324,6 @@ class tvshows:
 
 				if tvdb == '': tvdb = '0'
 
-
 			if tvdb == '0':
 				url = self.tvdb_by_query % (urllib.quote_plus(self.list[i]['title']))
 
@@ -1195,7 +1341,6 @@ class tvshows:
 
 				if tvdb == '': tvdb = '0'
 
-
 			url = self.tvdb_info_link % tvdb
 			item = client.request(url, timeout='10')
 			if item == None: raise Exception()
@@ -1205,7 +1350,6 @@ class tvshows:
 				except: pass
 				if imdb == '': imdb = '0'
 				imdb = imdb.encode('utf-8')
-
 
 			try: title = client.parseDOM(item, 'SeriesName')[0]
 			except: title = ''
@@ -1245,6 +1389,8 @@ class tvshows:
 			if duration == '': duration = '0'
 			duration = client.replaceHTMLCodes(duration)
 			duration = duration.encode('utf-8')
+			try: duration = str(int(duration) * 60)
+			except: pass
 
 			try: rating = client.parseDOM(item, 'Rating')[0]
 			except: rating = ''
@@ -1385,11 +1531,12 @@ class tvshows:
 		syshandle = int(sys.argv[1])
 
 		addonPoster, addonBanner = control.addonPoster(), control.addonBanner()
-		addonFanart, settingFanart = control.addonFanart(), tools.Settings.getBoolean('interface.fanart')
+		addonFanart, settingFanart = control.addonFanart(), tools.Settings.getBoolean('interface.theme.fanart')
 
-		indicators = playcount.getTVShowIndicators()
+		indicators = playcount.getShowIndicators()
 
 		flatten = tools.Settings.getBoolean('interface.tvshows.flatten')
+		ratingsOwn = tools.Settings.getInteger('interface.ratings.type') == 1
 		unwatchedEnabled = tools.Settings.getBoolean('interface.tvshows.unwatched.enabled')
 		unwatchedLimit = tools.Settings.getBoolean('interface.tvshows.unwatched.limit')
 		nextMenu = interface.Translation.string(32053)
@@ -1405,12 +1552,13 @@ class tvshows:
 				except: pass
 				if label == None: label = title
 
-				systitle = sysname = urllib.quote_plus(title)
+				systitle = urllib.quote_plus(title)
 				sysimage = urllib.quote_plus(i['poster'])
+
+				trailer = '%s Season 1' % title
 
 				meta = dict((k,v) for k, v in i.iteritems() if not v == '0')
 				meta.update({'mediatype': 'tvshow'})
-				meta.update({'trailer': '%s?action=streamsTrailer&title=%s&imdb=%s' % (sysaddon, sysname, imdb)})
 
 				# Gaia
 				# Remove default time, since this might mislead users. Rather show no time.
@@ -1428,23 +1576,23 @@ class tvshows:
 					meta['plot'] = plot
 				except: pass
 
-				try: meta.update({'duration': str(int(meta['duration']) * 60)})
+				try: meta.update({'duration': int(meta['duration'])})
 				except: pass
 				try: meta.update({'genre': cleangenre.lang(meta['genre'], self.lang)})
 				except: pass
 
-				sysmeta = urllib.quote_plus(json.dumps(meta))
-				if flatten == True: url = '%s?action=episodesRetrieve&tvshowtitle=%s&year=%s&imdb=%s&tvdb=%s' % (sysaddon, systitle, year, imdb, tvdb)
-				else: url = '%s?action=seasonsRetrieve&tvshowtitle=%s&year=%s&imdb=%s&tvdb=%s' % (sysaddon, systitle, year, imdb, tvdb)
-				url = self.parameterize(url)
+				if ratingsOwn and 'ratingown' in meta and not meta['ratingown'] == '0':
+					meta['rating'] = meta['ratingown']
+
 				item = control.item(label = label)
 
 				try:
-					overlay = int(playcount.getTVShowOverlay(indicators, imdb, tvdb))
+					overlay = int(playcount.getShowOverlay(indicators, imdb, tvdb))
 					watched = overlay == 7
 					if watched: meta.update({'playcount': 1, 'overlay': 7})
 					else: meta.update({'playcount': 0, 'overlay': 6})
-					if unwatchedEnabled and not watched:
+					meta.update({'watched': int(watched)}) # Kodi's documentation says this value is deprecate. However, without this value, Kodi adds the watched checkmark over the remaining episode count.
+					if unwatchedEnabled:
 						count = playcount.getShowCount(indicators, imdb, tvdb, unwatchedLimit)
 						if count:
 							item.setProperty('TotalEpisodes', str(count['total']))
@@ -1502,10 +1650,16 @@ class tvshows:
 				if not clearart == '0' and not clearart == None: art.update({'clearart' : clearart})
 				if not landscape == '0' and not landscape == None: art.update({'landscape' : landscape})
 
+				meta.update({'trailer': '%s?action=streamsTrailer&title=%s&imdb=%s&art=%s' % (sysaddon, urllib.quote_plus(trailer), imdb, urllib.quote_plus(json.dumps(art)))})
+				sysmeta = urllib.quote_plus(json.dumps(meta))
+				if flatten == True: url = '%s?action=episodesRetrieve&tvshowtitle=%s&year=%s&imdb=%s&tvdb=%s' % (sysaddon, systitle, year, imdb, tvdb)
+				else: url = '%s?action=seasonsRetrieve&tvshowtitle=%s&year=%s&imdb=%s&tvdb=%s' % (sysaddon, systitle, year, imdb, tvdb)
+				url = self.parameterize(url)
+
 				if not fanart == '0' and not fanart == None: item.setProperty('Fanart_Image', fanart)
 				item.setArt(art)
 				item.setInfo(type = 'Video', infoLabels = tools.Media.metadataClean(meta))
-				item.addContextMenuItems([interface.Context(mode = interface.Context.ModeItem, type = self.type, kids = self.kids, create = True, watched = watched, metadata = meta, art = art, label = label, link = url, trailer = title, title = title, year = year, imdb = imdb, tvdb = tvdb).menu()])
+				item.addContextMenuItems([interface.Context(mode = interface.Context.ModeItem, type = self.type, kids = self.kids, create = True, watched = watched, metadata = meta, art = art, label = label, link = url, trailer = trailer, title = title, year = year, imdb = imdb, tvdb = tvdb).menu()])
 				control.addItem(handle = syshandle, url = url, listitem = item, isFolder = True)
 			except:
 				pass

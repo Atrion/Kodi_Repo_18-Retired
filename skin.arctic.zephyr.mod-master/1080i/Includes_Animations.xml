@@ -58,6 +58,15 @@
 			<effect type="fade" end="0" start="100" time="200" tween="sine" easing="out" />
 		</animation>
 	</include>
+
+	<include name="Animation.Weather">
+		<animation type="Visible" reversible="false">	
+			<effect type="fade" end="100" start="0" time="300" delay="250" />
+		</animation>
+		<animation type="Hidden" reversible="false">
+			<effect type="fade" end="0" start="100" time="300" />
+		</animation>	
+	</include>
 	
 	<include name="Animation.FileNameAndPath">
 		<animation type="Conditional" condition="Control.HasFocus(8) + ControlGroup(9000).HasFocus()" reversible="false">						
@@ -154,7 +163,14 @@
             <effect type="fade" start="50" end="100" time="970" delay="0"/>
 		</animation>
 	</include>
-	
+	<include name="Animation.RotatePlay">
+		<animation effect="rotatey" end="-360" start="0" center="50,0" time="800" loop="true" delay="30000" condition="!Skin.HasSetting(hideplayrotate)">Conditional</animation>
+		<animation effect="zoom" pulse="true" center="50,50" end="85" start="100" time="400" delay="30000" condition="!Skin.HasSetting(hideplayrotate)">Conditional</animation>
+	</include>
+	<include name="Animation.RotatePlay2">
+		<animation effect="rotatey" end="-360" start="0" center="50,0" time="800" loop="true" delay="30000" condition="!Skin.HasSetting(hideplayrotate)">Conditional</animation>
+		<animation effect="zoom" start="50,50,100,100" end="50,50,60,90" pulse="true" delay="30000" time="400" condition="!Skin.HasSetting(hideplayrotate)">Conditional</animation>	
+	</include>
     <include name="Animation.FadeIn">
         <animation effect="fade" start="0" end="100" time="350" tween="cubic" easing="inout">Visible</animation>
         <animation effect="fade" start="0" end="100" time="350" tween="cubic" easing="inout">WindowOpen</animation>
@@ -183,6 +199,10 @@
 	<include name="Animation.DelayFadeIn3">
         <animation effect="fade" start="0" end="100" time="650" delay="900" tween="cubic" easing="inout" reversible="false">Visible</animation>
         <animation effect="fade" start="0" end="100" time="650" delay="900" tween="cubic" easing="inout">WindowOpen</animation>
+    </include>
+	<include name="Animation.DelayFadeIn2">
+        <animation effect="fade" start="0" end="100" time="650" delay="600" tween="cubic" easing="inout" reversible="false">Visible</animation>
+        <animation effect="fade" start="0" end="100" time="650" delay="600" tween="cubic" easing="inout">WindowOpen</animation>
     </include>
 	<include name="Animation.DelayFadeInNew">
         <animation effect="fade" start="30" end="100" time="150" delay="100" reversible="false">Visible</animation>
@@ -241,9 +261,14 @@
 		<animation condition="!Container().OnNext + !Container().OnPrevious" effect="fade" start="50" end="100" time="500">Visible</animation>  		        	
     </include>
 	
+	
+	<include name="Animation.ViHi2">
+		<animation effect="fade" start="100" end="0" time="200">Hidden</animation> 
+		<animation effect="fade" start="0" delay="200" end="100" time="200">Visible</animation>  		        	
+    </include>
 	<include name="Animation.ViHi">
-		<animation effect="fade" start="100" end="0" time="100">Hidden</animation> 
-		<animation effect="fade" start="0" delay="100" end="100" time="100">Visible</animation>  		        	
+		<animation effect="fade" start="100" end="0" time="200">Hidden</animation> 
+		<animation effect="fade" start="0" delay="200" end="100" time="200">Visible</animation>  		        	
     </include>
 	<include name="Animation.ViHi.Settings">
 		<animation effect="fade" start="0" end="100" time="300">Visible</animation>
@@ -294,4 +319,20 @@
         <animation effect="fade" start="0" end="100" time="350" tween="cubic" easing="inout" condition="!Window.IsVisible(Custom_MovieSets.xml) + !Window.IsVisible(script-script.extendedinfo-DialogVideoInfo.xml) + !Window.IsVisible(script-script.extendedinfo-DialogInfo.xml) + ![Window.Previous(home) + Skin.HasSetting(home.vertical)] + ![Window.IsVisible(home) + Skin.HasSetting(home.vertical)]">WindowOpen</animation>
         <animation effect="fade" end="0" start="100" time="150" condition="!Window.IsVisible(script-script.extendedinfo-DialogVideoInfo.xml) + !Window.IsVisible(script-script.extendedinfo-DialogInfo.xml) + ![Window.Next(home) + Skin.HasSetting(home.vertical)] + ![Window.IsVisible(home) + Skin.HasSetting(home.vertical)]">WindowClose</animation>
     </include>
+	
+	<include name="Animation.TestIn">
+		<visible>!Container().OnNext + !Container().OnPrevious + !ListItem.IsCollection</visible>
+        <animation type="VisibleChange" reversible="false">                  
+			<effect type="fade" start="0" end="100" time="400" delay="2300" />                
+		</animation> 
+		<animation type="Conditional" condition="true" reversible="false">             
+			<effect type="fade" start="0" end="100" time="400" delay="2300" />                
+		</animation>     	
+    </include>
+	<include name="Animation.TestOut">
+        <animation type="Conditional" condition="!Container().OnNext + !Container().OnPrevious + !ListItem.IsCollection" reversible="false">                  
+			<effect type="fade" start="100" end="0" time="400" delay="2000" />                
+		</animation>  		        	
+    </include>
+	
 </includes>

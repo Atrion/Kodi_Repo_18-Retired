@@ -103,7 +103,10 @@ class OrionItem:
 	QualityOrder = [None] + OrionStream.QualityOrder
 	ChannelsOrder = [None] + OrionStream.ChannelsOrder
 
-	Editions = ['extended']
+	Editions = [OrionStream.EditionExtended, OrionStream.EditionCollector, OrionStream.EditionDirector, OrionStream.EditionCommentary, OrionStream.EditionMaking, OrionStream.EditionSpecial]
+
+	LimitLink = 1024
+	LimitMagnet = 65535
 
 	##############################################################################
 	# CONSTRUCTOR
@@ -129,6 +132,8 @@ class OrionItem:
 	##############################################################################
 
 	def _accessEqual(self, access1, access2):
+		if not len(access1.keys()) == len(access2.keys()):
+			return False
 		for key1, value1 in access1.iteritems():
 			for key2, value2 in access2.iteritems():
 				if key1 == key2 and not value1 == value2:
@@ -138,7 +143,7 @@ class OrionItem:
 	def _accessSave(self):
 		access = {}
 		for stream in self.mData['streams']:
-			access[OrionTools.hash(stream['stream']['link'])] = stream['access']
+			access[stream['id']] = stream['access']
 		OrionSettings.set('internal.api.access', access)
 
 	def _accessLoad(self):
@@ -146,20 +151,13 @@ class OrionItem:
 		if access:
 			streams = []
 			for stream in self.mData['streams']:
-				if not 'orion' in stream or not stream['orion']:
+				if not 'id' in stream or not stream['id']:
 					streams.append(stream)
-				elif 'orion' in stream and stream['orion']:
-					id = OrionTools.hash(stream['stream']['link'])
+				elif 'id' in stream and stream['id']:
 					try:
-						if not self._accessEqual(access[id], stream['access']):
+						if not self._accessEqual(access[stream['id']], stream['access']):
 							# Only send neccessary information
-							new = {'orion' : True, 'access' : stream['access']}
-							try:
-								if len(stream['file']['hash']) > 0:
-									new['file'] = {'hash' : stream['file']['hash']}
-							except:
-								try: new['stream'] = {'link' : stream['stream']['link']}
-								except: pass
+							new = {'id' : stream['id'], 'access' : stream['access']}
 							try: new['movie'] = {'id' : stream['movie']['id']}
 							except: pass
 							try: new['show'] = {'id' : stream['show']['id']}
@@ -195,9 +193,16 @@ class OrionItem:
 			# Invalid links
 			streams = []
 			for stream in self.mData['streams']:
-				link = stream['stream']['link']
+				link = stream['links']
+				if OrionTools.isArray(link):
+					for i in link:
+						if not OrionTools.linkIsMagnet(link):
+							link = i
+							break
+					if OrionTools.isArray(link):
+						link = link[0]
 				if link == None or link == '': continue
-				magnet = link.startswith('magnet:')
+				magnet = OrionTools.linkIsMagnet(link)
 
 				# Not a standard torrent magnet of HTTP/FTP link
 				if not magnet and not link.startswith('http://') and not link.startswith('https://') and not link.startswith('ftp://') and not link.startswith('ftps://'):
@@ -211,9 +216,9 @@ class OrionItem:
 					if '|' in link: continue
 
 					# Very long links which are most likely invalid or contain other cookie/session/headers data
-					if len(link) > 1024: continue
+					if len(link) > OrionItem.LimitLink: continue
 
-				if len(link) > 100000: continue
+				if len(link) > OrionItem.LimitMagnet: continue
 
 				streams.append(stream)
 			self.mData['streams'] = streams
@@ -272,9 +277,10 @@ class OrionItem:
 
 				access = FilterSettings,
 
+				filePack = FilterSettings,
+				fileName = FilterSettings,
 				fileSize = FilterSettings,
 				fileUnknown = FilterSettings,
-				filePack = FilterSettings,
 
 				metaRelease = FilterSettings,
 				metaUploader = FilterSettings,
@@ -388,9 +394,10 @@ class OrionItem:
 					if value in (2, 3, 5): access.append(OrionItem.AccessRealdebridTorrent)
 					if value in (2, 4, 6): access.append(OrionItem.AccessRealdebridUsenet)
 					if value in (3, 4, 7): access.append(OrionItem.AccessRealdebridHoster)
-			if filePack is OrionItem.FilterSettings: filePack = OrionItem.ChoiceIds[OrionSettings.getFiltersInteger('filters.stream.pack', app)]
-			if fileSize is OrionItem.FilterSettings: fileSize = [OrionSettings.getFiltersInteger('filters.stream.size.minimum', app), OrionSettings.getFiltersInteger('filters.stream.size.maximum', app)] if OrionSettings.getFiltersBoolean('filters.stream.size', app) else OrionItem.FilterNone
-			if fileUnknown is OrionItem.FilterSettings: fileUnknown = OrionSettings.getFiltersBoolean('filters.stream.unknown', app)
+			if filePack is OrionItem.FilterSettings: filePack = OrionItem.ChoiceIds[OrionSettings.getFiltersInteger('filters.file.pack', app)]
+			if fileName is OrionItem.FilterSettings: fileName = OrionItem.ChoiceIds[OrionSettings.getFiltersInteger('filters.file.name', app)]
+			if fileSize is OrionItem.FilterSettings: fileSize = [OrionSettings.getFiltersInteger('filters.file.size.minimum', app), OrionSettings.getFiltersInteger('filters.file.size.maximum', app)] if OrionSettings.getFiltersBoolean('filters.file.size', app) else OrionItem.FilterNone
+			if fileUnknown is OrionItem.FilterSettings: fileUnknown = OrionSettings.getFiltersBoolean('filters.file.size.unknown', app)
 			if metaRelease is OrionItem.FilterSettings: metaRelease = pick(app, 'getFiltersMetaRelease')
 			if metaUploader is OrionItem.FilterSettings: metaUploader = pick(app, 'getFiltersMetaUploader')
 			if metaEdition is OrionItem.FilterSettings: metaEdition = pick(app, 'getFiltersMetaEdition')
@@ -470,6 +477,14 @@ class OrionItem:
 				elif filePack is OrionItem.ChoiceRequire: filePack = True
 				elif filePack is OrionItem.ChoiceExclude: filePack = False
 				else: filePack = OrionItem.FilterNone
+			if not fileName is OrionItem.FilterNone:
+				if fileName is OrionItem.ChoiceInclude: fileName = OrionItem.FilterNone
+				elif fileName is OrionItem.ChoiceRequire: fileName = True
+				elif fileName is OrionItem.ChoiceExclude: fileName = False
+				elif OrionTools.isString(videoCodec) and not fileName == '': fileName = [fileName]
+				elif OrionTools.isList(fileName):
+					if len(fileName) == 0: fileName = OrionItem.FilterNone
+				else: fileName = OrionItem.FilterNone
 			if not fileSize is OrionItem.FilterNone:
 				# If given in MB.
 				try:
@@ -614,11 +629,12 @@ class OrionItem:
 				if OrionTools.isString(access): access = [access]
 				filters['access'] = access
 
-			if not fileSize == None or not fileUnknown == None or not filePack == None:
+			if not filePack == None or not fileName == None or not fileSize == None or not fileUnknown == None:
 				filters['file'] = {}
+				if not filePack == None: filters['file']['pack'] = filePack
+				if not fileName == None: filters['file']['name'] = fileName
 				if not fileSize == None: filters['file']['size'] = fileSize
 				if not fileUnknown == None: filters['file']['unknown'] = fileUnknown
-				if not filePack == None: filters['file']['pack'] = filePack
 
 			if not metaRelease == None or not metaUploader == None or not metaEdition == None:
 				filters['meta'] = {}
@@ -861,12 +877,8 @@ class OrionItem:
 	# REQUESTS
 	##############################################################################
 
-	def requestsTotalCount(self, default = None):
-		try: return self.mData['requests']['total']['count']
-		except: return default
-
-	def requestsTotalLinks(self, default = None):
-		try: return self.mData['requests']['total']['links']
+	def requestsTotal(self, default = None):
+		try: return self.mData['requests']['total']
 		except: return default
 
 	def requestsDailyLimit(self, default = None):

@@ -157,15 +157,29 @@ class OrionUser:
 		try: return self.mData['subscription']['package']['description']
 		except: return default
 
-	def subscriptionPackageLimit(self, default = None):
+	def subscriptionPackageLimitDuration(self, default = None):
+		try: return self.mData['subscription']['package']['limit']['duration']
+		except: return default
+
+	def subscriptionPackageLimitStreams(self, default = None):
 		try:
-			result = self.mData['subscription']['package']['limit']
+			result = self.mData['subscription']['package']['limit']['streams']
 			if result == None: return default
 			else: return result
 		except: return default
 
-	def subscriptionPackageDuration(self, default = None):
-		try: return self.mData['subscription']['package']['duration']
+	def subscriptionPackageLimitHashes(self, default = None):
+		try:
+			result = self.mData['subscription']['package']['limit']['hashes']
+			if result == None: return default
+			else: return result
+		except: return default
+
+	def subscriptionPackageLimitContainers(self, default = None):
+		try:
+			result = self.mData['subscription']['package']['limit']['containers']
+			if result == None: return default
+			else: return result
 		except: return default
 
 	def subscriptionPackagePrice(self, default = None):
@@ -215,32 +229,80 @@ class OrionUser:
 	# REQUESTS
 	##############################################################################
 
-	def requestsTotalCount(self, default = None):
-		try: return self.mData['requests']['total']['count']
+	def requestsCount(self, default = None):
+		try: return self.mData['requests']['count']
 		except: return default
 
-	def requestsTotalLinks(self, default = None):
-		try: return self.mData['requests']['total']['links']
+	def requestsStreamsTotal(self, default = None):
+		try: return self.mData['requests']['streams']['total']
 		except: return default
 
-	def requestsDailyLimit(self, default = None):
+	def requestsStreamsDailyLimit(self, default = None):
 		try:
-			if not self.mData['requests']['daily']['limit']: return default
-			return self.mData['requests']['daily']['limit']
+			if not self.mData['requests']['streams']['daily']['limit']: return default
+			return self.mData['requests']['streams']['daily']['limit']
 		except: return default
 
-	def requestsDailyUsed(self, default = None, percent = False):
+	def requestsStreamsDailyUsed(self, default = None, percent = False):
 		try:
-			if not self.mData['requests']['daily']['used']: return default
-			if percent: return self.mData['requests']['daily']['used'] / float(self.requestsDailyLimit(0))
-			else: return self.mData['requests']['daily']['used']
+			if not self.mData['requests']['streams']['daily']['used']: return default
+			if percent: return self.mData['requests']['streams']['daily']['used'] / float(self.requestsStreamsDailyLimit(0))
+			else: return self.mData['requests']['streams']['daily']['used']
 		except: return default
 
-	def requestsDailyRemaining(self, default = None, percent = False):
+	def requestsStreamsDailyRemaining(self, default = None, percent = False):
 		try:
-			if not self.mData['requests']['daily']['remaining']: return default
-			if percent: return self.mData['requests']['daily']['remaining'] / float(self.requestsDailyLimit(0))
-			else: return self.mData['requests']['daily']['remaining']
+			if not self.mData['requests']['streams']['daily']['remaining']: return default
+			if percent: return self.mData['requests']['streams']['daily']['remaining'] / float(self.requestsStreamsDailyLimit(0))
+			else: return self.mData['requests']['streams']['daily']['remaining']
+		except: return default
+
+	def requestsHashesTotal(self, default = None):
+		try: return self.mData['requests']['hashes']['total']
+		except: return default
+
+	def requestsHashesDailyLimit(self, default = None):
+		try:
+			if not self.mData['requests']['hashes']['daily']['limit']: return default
+			return self.mData['requests']['hashes']['daily']['limit']
+		except: return default
+
+	def requestsHashesDailyUsed(self, default = None, percent = False):
+		try:
+			if not self.mData['requests']['hashes']['daily']['used']: return default
+			if percent: return self.mData['requests']['hashes']['daily']['used'] / float(self.requestsHashesDailyLimit(0))
+			else: return self.mData['requests']['hashes']['daily']['used']
+		except: return default
+
+	def requestsHashesDailyRemaining(self, default = None, percent = False):
+		try:
+			if not self.mData['requests']['hashes']['daily']['remaining']: return default
+			if percent: return self.mData['requests']['hashes']['daily']['remaining'] / float(self.requestsHashesDailyLimit(0))
+			else: return self.mData['requests']['hashes']['daily']['remaining']
+		except: return default
+
+	def requestsContainersTotal(self, default = None):
+		try: return self.mData['requests']['containers']['total']
+		except: return default
+
+	def requestsContainersDailyLimit(self, default = None):
+		try:
+			if not self.mData['requests']['containers']['daily']['limit']: return default
+			return self.mData['requests']['containers']['daily']['limit']
+		except: return default
+
+	def requestsContainersDailyUsed(self, default = None, percent = False):
+		try:
+			if not self.mData['requests']['containers']['daily']['used']: return default
+			if percent: return self.mData['requests']['containers']['daily']['used'] / float(self.requestsContainersDailyLimit(0))
+			else: return self.mData['requests']['containers']['daily']['used']
+		except: return default
+
+	def requestsContainersDailyRemaining(self, default = None, percent = False):
+		try:
+			if not self.mData['requests']['containers']['daily']['remaining']: return default
+			if percent: return self.mData['requests']['containers']['daily']['remaining'] / float(self.requestsContainersDailyLimit(0))
+			else: return self.mData['requests']['containers']['daily']['remaining']
 		except: return default
 
 	##############################################################################
@@ -272,17 +334,24 @@ class OrionUser:
 		OrionSettings.set('account.label.api', '' if self.key('') == '' else (OrionUser.PasswordCharacter * OrionUser.KeyLength))
 		OrionSettings.set('account.label.status', self.status().capitalize() if valid else OrionTools.translate(32033))
 		if valid:
+			# NB: Strings must be cast with str(...), otherwise getting UnicodeDecodeError in Windows.
 			OrionSettings.set('account.label.email', self.email())
 			packageName = self.subscriptionPackageName()
-			packageLimit = self.subscriptionPackageLimit(OrionTools.translate(32030))
-			OrionSettings.set('account.label.package', packageName + ('' if packageName == packageLimit else ' (' + str(packageLimit) + ')'))
+			packageLimitStreams = self.subscriptionPackageLimitStreams(OrionTools.translate(32030))
+			packageLimitHashes = self.subscriptionPackageLimitHashes(OrionTools.translate(32030))
+			packageLimitContainers = self.subscriptionPackageLimitContainers(OrionTools.translate(32030))
+			OrionSettings.set('account.label.package', str(packageName))
 			OrionSettings.set('account.label.time', OrionTools.timeDays(timeTo = self.subscriptionTimeExpiration(0), format = True))
-			OrionSettings.set('account.label.limit', str(OrionTools.round(100 * self.requestsDailyUsed(0, True), 0)) + '% (' + str(self.requestsDailyUsed(0)) + ' ' + OrionTools.translate(32032) + ' ' + str(self.requestsDailyLimit(OrionTools.translate(32030))) + ')')
+			OrionSettings.set('account.label.limit.streams', str(OrionTools.round(100 * self.requestsStreamsDailyUsed(0, True), 0)) + '% (' + str(self.requestsStreamsDailyUsed(0)) + ' ' + OrionTools.translate(32032) + ' ' + str(self.requestsStreamsDailyLimit(OrionTools.translate(32030))) + ')')
+			OrionSettings.set('account.label.limit.hashes', str(OrionTools.round(100 * self.requestsHashesDailyUsed(0, True), 0)) + '% (' + str(self.requestsHashesDailyUsed(0)) + ' ' + OrionTools.translate(32032) + ' ' + str(self.requestsHashesDailyLimit(OrionTools.translate(32030))) + ')')
+			OrionSettings.set('account.label.limit.containers', str(OrionTools.round(100 * self.requestsContainersDailyUsed(0, True), 0)) + '% (' + str(self.requestsContainersDailyUsed(0)) + ' ' + OrionTools.translate(32032) + ' ' + str(self.requestsContainersDailyLimit(OrionTools.translate(32030))) + ')')
 		else:
 			OrionSettings.set('account.label.email', '')
 			OrionSettings.set('account.label.package', '')
 			OrionSettings.set('account.label.time', '')
-			OrionSettings.set('account.label.limit', '')
+			OrionSettings.set('account.label.limit.streams', '')
+			OrionSettings.set('account.label.limit.hashes', '')
+			OrionSettings.set('account.label.limit.containers', '')
 
 	##############################################################################
 	# ANONYMOUS
@@ -362,20 +431,42 @@ class OrionUser:
 					'items' :
 					[
 						{'title' : 32023, 'value' : self.subscriptionPackageName('')},
-						{'title' : 32026, 'value' : str(self.subscriptionPackageLimit(OrionTools.translate(32030)))},
+						{'title' : 32031, 'value' : str(self.subscriptionPackageLimitStreams(OrionTools.translate(32030)))},
+						{'title' : 32198, 'value' : str(self.subscriptionPackageLimitHashes(OrionTools.translate(32030)))},
+						{'title' : 32230, 'value' : str(self.subscriptionPackageLimitContainers(OrionTools.translate(32030)))},
 						{'title' : 32029, 'value' : OrionTools.timeDays(timeTo = self.subscriptionTimeExpiration(0), format = True)},
 						{'title' : 32024, 'value' : OrionTools.timeFormat(self.subscriptionTimeStarted(), format = OrionTools.FormatDate)},
 						{'title' : 32025, 'value' : OrionTools.timeFormat(self.subscriptionTimeExpiration(), format = OrionTools.FormatDate, default = 32120)},
 					],
 				},
 				{
-					'title' : 32031,
+					'title' : 32225,
 					'items' :
 					[
-						{'title' : 32027, 'value' : str(self.requestsTotalLinks(0))},
-						{'title' : 32026, 'value' : str(self.requestsDailyLimit(OrionTools.translate(32030)))},
-						{'title' : 32028, 'value' : str(OrionTools.round(100 * self.requestsDailyUsed(0, True), 0)) + '% (' + str(self.requestsDailyUsed(0)) + ' ' + OrionTools.translate(32032) + ' ' + str(self.requestsDailyLimit(OrionTools.translate(32030))) + ')'},
-						{'title' : 32029, 'value' : str(OrionTools.round(100 * self.requestsDailyRemaining(1, True), 0)) + '% (' + str(self.requestsDailyRemaining(0)) + ' ' + OrionTools.translate(32032) + ' ' + str(self.requestsDailyLimit(OrionTools.translate(32030))) + ')'},
+						{'title' : 32027, 'value' : str(self.requestsStreamsTotal(0))},
+						{'title' : 32026, 'value' : str(self.requestsStreamsDailyLimit(OrionTools.translate(32030)))},
+						{'title' : 32028, 'value' : str(OrionTools.round(100 * self.requestsStreamsDailyUsed(0, True), 0)) + '% (' + str(self.requestsStreamsDailyUsed(0)) + ' ' + OrionTools.translate(32032) + ' ' + str(self.requestsStreamsDailyLimit(OrionTools.translate(32030))) + ')'},
+						{'title' : 32029, 'value' : str(OrionTools.round(100 * self.requestsStreamsDailyRemaining(1, True), 0)) + '% (' + str(self.requestsStreamsDailyRemaining(0)) + ' ' + OrionTools.translate(32032) + ' ' + str(self.requestsStreamsDailyLimit(OrionTools.translate(32030))) + ')'},
+					],
+				},
+				{
+					'title' : 32226,
+					'items' :
+					[
+						{'title' : 32027, 'value' : str(self.requestsHashesTotal(0))},
+						{'title' : 32026, 'value' : str(self.requestsHashesDailyLimit(OrionTools.translate(32030)))},
+						{'title' : 32028, 'value' : str(OrionTools.round(100 * self.requestsHashesDailyUsed(0, True), 0)) + '% (' + str(self.requestsHashesDailyUsed(0)) + ' ' + OrionTools.translate(32032) + ' ' + str(self.requestsHashesDailyLimit(OrionTools.translate(32030))) + ')'},
+						{'title' : 32029, 'value' : str(OrionTools.round(100 * self.requestsHashesDailyRemaining(1, True), 0)) + '% (' + str(self.requestsHashesDailyRemaining(0)) + ' ' + OrionTools.translate(32032) + ' ' + str(self.requestsHashesDailyLimit(OrionTools.translate(32030))) + ')'},
+					],
+				},
+				{
+					'title' : 32231,
+					'items' :
+					[
+						{'title' : 32027, 'value' : str(self.requestsContainersTotal(0))},
+						{'title' : 32026, 'value' : str(self.requestsContainersDailyLimit(OrionTools.translate(32030)))},
+						{'title' : 32028, 'value' : str(OrionTools.round(100 * self.requestsContainersDailyUsed(0, True), 0)) + '% (' + str(self.requestsContainersDailyUsed(0)) + ' ' + OrionTools.translate(32032) + ' ' + str(self.requestsContainersDailyLimit(OrionTools.translate(32030))) + ')'},
+						{'title' : 32029, 'value' : str(OrionTools.round(100 * self.requestsContainersDailyRemaining(1, True), 0)) + '% (' + str(self.requestsContainersDailyRemaining(0)) + ' ' + OrionTools.translate(32032) + ' ' + str(self.requestsContainersDailyLimit(OrionTools.translate(32030))) + ')'},
 					],
 				},
 			])

@@ -110,6 +110,10 @@ elif action.startswith('movies'):
 		from resources.lib.indexers import movies
 		movies.movies(type = type, kids = kids).persons(url)
 
+	elif action == 'moviesHome':
+		from resources.lib.indexers import movies
+		movies.movies(type = type, kids = kids).home()
+
 	elif action == 'moviesArrivals':
 		from resources.lib.indexers import movies
 		movies.movies(type = type, kids = kids).arrivals()
@@ -164,11 +168,11 @@ elif action.startswith('movies'):
 
 	elif action == 'moviesWatch':
 		from resources.lib.indexers import movies
-		movies.movies.markWatch(imdb = imdb)
+		movies.movies.markWatch(imdb = imdb, tmdb = tmdb)
 
 	elif action == 'moviesUnwatch':
 		from resources.lib.indexers import movies
-		movies.movies.markUnwatch(imdb = imdb)
+		movies.movies.markUnwatch(imdb = imdb, tmdb = tmdb)
 
 ####################################################
 # TV
@@ -260,11 +264,11 @@ elif action.startswith('shows'):
 
 	elif action == 'showsYears':
 		from resources.lib.indexers import tvshows
-		tvshows.tvshows().years()
+		tvshows.tvshows(type = type, kids = kids).years()
 
 	elif action == 'showsLanguages':
 		from resources.lib.indexers import tvshows
-		tvshows.tvshows().languages()
+		tvshows.tvshows(type = type, kids = kids).languages()
 
 	elif action == 'showsWatch':
 		from resources.lib.indexers import tvshows
@@ -273,6 +277,10 @@ elif action.startswith('shows'):
 	elif action == 'showsUnwatch':
 		from resources.lib.indexers import tvshows
 		tvshows.tvshows.markUnwatch(title = title, imdb = imdb, tvdb = tvdb)
+
+	elif action == 'showsBinge':
+		from resources.lib.indexers import tvshows
+		tvshows.tvshows(type = type, kids = kids).next(scrape = True, title = title, year = year, imdb = imdb, tvdb = tvdb, season = season, episode = episode)
 
 ####################################################
 # SEASON
@@ -377,7 +385,6 @@ elif action.startswith('information'):
 	elif action == 'informationDialog':
 		imdb = params.get('imdb')
 		tvdb = params.get('tvdb')
-		title = params.get('title')
 		season = params.get('season')
 		episode = params.get('episode')
 		tools.Information.show(imdb = imdb, tvdb = tvdb, title = title, season = season, episode = episode)
@@ -426,22 +433,28 @@ elif action.startswith('play'):
 		from resources.lib.extensions import interface
 		from resources.lib.extensions import core
 		interface.Loader.show() # Immediately show the loader, since slow system will take long to show it in play().
+		try: binge = int(params.get('binge'))
+		except: binge = None
 		downloadType = params.get('downloadType')
 		downloadId = params.get('downloadId')
 		handleMode = params.get('handleMode')
-		core.Core(type = type, kids = kids).play(source = source, metadata = metadata, downloadType = downloadType, downloadId = downloadId, handleMode = handleMode)
+		core.Core(type = type, kids = kids).play(source = source, metadata = metadata, downloadType = downloadType, downloadId = downloadId, handleMode = handleMode, binge = binge)
 
 	if action == 'playCache':
 		from resources.lib.extensions import core
+		try: binge = int(params.get('binge'))
+		except: binge = None
 		handleMode = params.get('handleMode')
-		core.Core(type = type, kids = kids).playCache(source = source, metadata = metadata, handleMode = handleMode)
+		core.Core(type = type, kids = kids).playCache(source = source, metadata = metadata, handleMode = handleMode, binge = binge)
 
 	elif action == 'playLocal':
 		from resources.lib.extensions import core
+		try: binge = int(params.get('binge'))
+		except: binge = None
 		path = params.get('path')
 		downloadType = params.get('downloadType')
 		downloadId = params.get('downloadId')
-		core.Core(type = type, kids = kids).playLocal(path = path, source = source, metadata = metadata, downloadType = downloadType, downloadId = downloadId)
+		core.Core(type = type, kids = kids).playLocal(path = path, source = source, metadata = metadata, downloadType = downloadType, downloadId = downloadId, binge = binge)
 
 ####################################################
 # CLEAR
@@ -457,13 +470,13 @@ elif action.startswith('clear'):
 		from resources.lib.indexers import navigator
 		navigator.navigator(type = type, kids = kids).clearAll()
 
+	elif action == 'clearCache':
+		from resources.lib.indexers import navigator
+		navigator.navigator(type = type, kids = kids).clearCache()
+
 	elif action == 'clearProviders':
 		from resources.lib.indexers import navigator
 		navigator.navigator(type = type, kids = kids).clearProviders()
-
-	elif action == 'clearWebcache':
-		from resources.lib.indexers import navigator
-		navigator.navigator(type = type, kids = kids).clearWebcache()
 
 	elif action == 'clearHistory':
 		from resources.lib.indexers import navigator
@@ -476,6 +489,10 @@ elif action.startswith('clear'):
 	elif action == 'clearSearches':
 		from resources.lib.indexers import navigator
 		navigator.navigator(type = type, kids = kids).clearSearches()
+
+	elif action == 'clearTrailers':
+		from resources.lib.indexers import navigator
+		navigator.navigator(type = type, kids = kids).clearTrailers()
 
 	elif action == 'clearDownloads':
 		from resources.lib.indexers import navigator
@@ -994,6 +1011,24 @@ elif action.startswith('easynews'):
 		tools.Settings.launch(category = tools.Settings.CategoryAccounts)
 
 ####################################################
+# EMBY
+####################################################
+
+elif action.startswith('emby'):
+
+	if action == 'embyNavigator':
+		from resources.lib.indexers import navigator
+		navigator.navigator(type = type, kids = kids).embyNavigator()
+
+	elif action == 'embySettings':
+		from resources.lib.extensions import emby
+		emby.Emby().settings()
+
+	elif action == 'embyWebsite':
+		from resources.lib.extensions import emby
+		emby.Emby().website(open = True)
+
+####################################################
 # ELEMENTUM
 ####################################################
 
@@ -1247,6 +1282,25 @@ elif action.startswith('yodscrapers'):
 		tools.YodScrapers.enable(refresh = True)
 
 ####################################################
+# EXTENDEDINFO
+####################################################
+
+elif action.startswith('extendedinfo'):
+
+	if action == 'extendedinfoNavigator':
+		from resources.lib.indexers import navigator
+		navigator.navigator(type = type, kids = kids).extendedinfoNavigator()
+
+	elif action == 'extendedinfoSettings':
+		tools.ExtendedInfo.settings()
+
+	elif action == 'extendedinfoInstall':
+		tools.ExtendedInfo.enable()
+
+	elif action == 'extendedinfoLaunch':
+		tools.ExtendedInfo.launch()
+
+####################################################
 # YOUTUBE
 ####################################################
 
@@ -1388,6 +1442,10 @@ elif action.startswith('imdb'):
 		from resources.lib.indexers import navigator
 		navigator.navigator(type = type, kids = kids).imdbTv()
 
+	elif action == 'imdbExport':
+		from resources.lib.modules import trakt
+		trakt.imdbImport()
+
 ####################################################
 # TRAKT
 ####################################################
@@ -1428,6 +1486,10 @@ elif action.startswith('trakt'):
 	elif action == 'traktNavigator':
 		from resources.lib.indexers import navigator
 		navigator.navigator(type = type, kids = kids).traktNavigator()
+
+	elif action == 'traktImport':
+		from resources.lib.modules import trakt
+		trakt.imdbImport()
 
 	elif action == 'traktSettings':
 		tools.Trakt.settings()
@@ -1633,7 +1695,6 @@ elif action.startswith('shortcuts'):
 		location = params.get('location')
 		id = params.get('id')
 		link = params.get('link')
-		name = params.get('name')
 		create = tools.Converter.boolean(params.get('create'))
 		delete = tools.Converter.boolean(params.get('delete'))
 		shortcuts.Shortcuts().show(location = location, id = id, link = link, name = name, create = create, delete = delete)
@@ -1784,14 +1845,22 @@ elif action.startswith('scrape'):
 	if action == 'scrape':
 		from resources.lib.extensions import core
 		from resources.lib.extensions import interface
-		interface.Loader.show() # Already show here, since getConstants can take long when retrieving debrid service list.
+		from resources.lib.extensions import trailer
+		if not trailer.Trailer.cinemaEnabled() or tools.Settings.getBoolean('automatic.enabled'): interface.Loader.show() # Already show here, since getConstants can take long when retrieving debrid service list.
+		try: binge = int(params.get('binge'))
+		except: binge = None
 		library = tools.Converter.boolean(params.get('library'))
 		autoplay = tools.Converter.boolean(params.get('autoplay'), none = True)
 		preset = params.get('preset')
+		cache = tools.Converter.boolean(params.get('cache'), none = True)
 		try: seasoncount = int(params.get('seasoncount'))
 		except: seasoncount = None
 		items = params.get('items')
-		core.Core(type = type, kids = kids).scrape(title = title, year = year, imdb = imdb, tvdb = tvdb, season = season, episode = episode, tvshowtitle = tvshowtitle, premiered = premiered, metadata = metadata, autoplay = autoplay, library = library, preset = preset, seasoncount = seasoncount, items = items)
+		core.Core(type = type, kids = kids).scrape(title = title, year = year, imdb = imdb, tvdb = tvdb, season = season, episode = episode, tvshowtitle = tvshowtitle, premiered = premiered, metadata = metadata, autoplay = autoplay, library = library, preset = preset, binge = binge, cache = cache, seasoncount = seasoncount, items = items)
+
+	elif action == 'scrapeAgain':
+		from resources.lib.extensions import core
+		core.Core(type = type, kids = kids).scrapeAgain(link = link)
 
 	elif action == 'scrapeManual':
 		from resources.lib.extensions import core
@@ -1804,6 +1873,14 @@ elif action.startswith('scrape'):
 	elif action == 'scrapePreset':
 		from resources.lib.extensions import core
 		core.Core(type = type, kids = kids).scrapePreset(link = link)
+
+	elif action == 'scrapeSingle':
+		from resources.lib.extensions import core
+		core.Core(type = type, kids = kids).scrapeSingle(link = link)
+
+	elif action == 'scrapeBinge':
+		from resources.lib.extensions import core
+		core.Core(type = type, kids = kids).scrapeBinge(link = link)
 
 	elif action == 'scrapeExact':
 		from resources.lib.extensions import core
@@ -1828,7 +1905,9 @@ elif action.startswith('streams'):
 		new = tools.Converter.boolean(params.get('new'))
 		add = tools.Converter.boolean(params.get('add'))
 		process = tools.Converter.boolean(params.get('process'))
-		core.Core(type = type, kids = kids).showStreams(direct = direct, filter = filter, autoplay = autoplay, library = library, initial = initial, new = new, add = add, process = process)
+		try: binge = int(params.get('binge'))
+		except: binge = None
+		core.Core(type = type, kids = kids).showStreams(direct = direct, filter = filter, autoplay = autoplay, library = library, initial = initial, new = new, add = add, process = process, binge = binge)
 
 	elif action == 'streamsFilter':
 		from resources.lib.extensions import core
@@ -1839,8 +1918,9 @@ elif action.startswith('streams'):
 		metadatax.Metadata.showDialog(source = source, metadata = metadata)
 
 	elif action == 'streamsTrailer':
-		from resources.lib.modules import trailer
-		trailer.trailer().play(title, url)
+		from resources.lib.extensions import trailer
+		art = params.get('art')
+		trailer.Trailer(type = type, kids = kids).play(title = title, link = link, art = art)
 
 ####################################################
 # CONTEXT

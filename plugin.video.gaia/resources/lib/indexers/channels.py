@@ -20,7 +20,6 @@
 
 import sys,re,json,urllib,urlparse,datetime
 
-from resources.lib.modules import cache
 from resources.lib.modules import cleangenre
 from resources.lib.modules import control
 from resources.lib.modules import client
@@ -30,6 +29,7 @@ from resources.lib.modules import trakt
 from resources.lib.modules import playcount
 
 from resources.lib.extensions import tools
+from resources.lib.extensions import cache
 from resources.lib.extensions import interface
 from resources.lib.extensions import shortcuts
 
@@ -112,7 +112,7 @@ class channels:
 
 	def sky_channels(self):
 		try:
-			result = cache.get(client.request, 744, self.sky_channels_link)
+			result = cache.Cache().cacheLong(client.request, self.sky_channels_link)
 			result = json.loads(result)['channels']
 			channels = []
 			for i in self.groups:
@@ -141,7 +141,7 @@ class channels:
 				for i in self.channels.itervalues():
 					channels.extend(i)
 			url = self.sky_programme_link % (','.join(channels), (self.uk_datetime).strftime('%Y%m%d%H%M'))
-			result = cache.get(client.request, 0.25, url)
+			result = cache.Cache().cacheMini(client.request, url)
 			result = json.loads(result)['channels']
 			for i in result:
 				try:
@@ -159,7 +159,7 @@ class channels:
 
 	def items_list(self, i):
 		try:
-			item = cache.get(trakt.SearchAll, 3, urllib.quote_plus(i[1]), i[2], True)[0]
+			item = cache.Cache().cacheMedium(trakt.SearchAll, urllib.quote_plus(i[1]), i[2], True)[0]
 
 			content = item.get('movie')
 			if not content: content = item.get('show')
@@ -188,6 +188,8 @@ class channels:
 			if not genre: genre = '0'
 
 			duration = str(item.get('Runtime', 0))
+			try: duration = str(int(duration) * 60)
+			except: pass
 
 			rating = item.get('rating', '0')
 			if not rating or rating == '0.0': rating = '0'
@@ -281,10 +283,11 @@ class channels:
 		syshandle = int(sys.argv[1])
 
 		addonPoster, addonBanner = control.addonPoster(), control.addonBanner()
-		addonFanart, settingFanart = control.addonFanart(), tools.Settings.getBoolean('interface.fanart')
+		addonFanart, settingFanart = control.addonFanart(), tools.Settings.getBoolean('interface.theme.fanart')
 
 		indicators = playcount.getMovieIndicators()
 		isPlayable = 'true' if not 'plugin' in control.infoLabel('Container.PluginName') else 'false'
+		ratingsOwn = tools.Settings.getInteger('interface.ratings.type') == 1
 
 		for i in items:
 			try:
@@ -319,6 +322,10 @@ class channels:
 				watched = int(playcount.getMovieOverlay(indicators, imdb)) == 7
 				if watched: meta.update({'playcount': 1, 'overlay': 7})
 				else: meta.update({'playcount': 0, 'overlay': 6})
+				meta.update({'watched': int(watched)}) # Kodi's documentation says this value is deprecate. However, without this value, Kodi adds the watched checkmark over the remaining episode count.
+
+				if ratingsOwn and 'ratingown' in meta and not meta['ratingown'] == '0':
+					meta['rating'] = meta['ratingown']
 
 				item = control.item(label = label)
 

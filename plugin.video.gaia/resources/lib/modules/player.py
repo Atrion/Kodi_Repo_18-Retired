@@ -68,9 +68,13 @@ class player(xbmc.Player):
 	DownloadChunk = 8 # 8 B. The number of null bytes that are considered the end of file.
 	DownloadNull = '\x00' * DownloadChunk
 
+	BingeTime = 600 # Start binge scrape if 10 minutes are left on the current playback.
+
 	def __init__ (self, type = None, kids = None):
 		from resources.lib.extensions import core
 		xbmc.Player.__init__(self)
+		self.type = type
+		self.kids = kids
 		self.status = self.StatusIdle
 		self.core = core.Core(type = type, kids = kids)
 
@@ -80,18 +84,23 @@ class player(xbmc.Player):
 		try: xbmc.Player.__del__(self)
 		except: pass
 
-	def run(self, type, title, year, season, episode, imdb, tmdb, tvdb, url, meta, downloadType = None, downloadId = None, handle = None, source = None):
+	def run(self, type, title, year, season, episode, imdb, tmdb, tvdb, url, meta, downloadType = None, downloadId = None, handle = None, source = None, binge = None):
 		try:
 			control.sleep(200)
 
 			self.navigationStreamsSpecial = tools.Settings.getInteger('interface.navigation.streams') == 0
 
-			self.type = type
-			self.typeMovie = tools.Media.typeMovie(self.type)
-			self.typeTelevision = tools.Media.typeTelevision(self.type)
+			self.typeMedia = type
+			self.typeMovie = tools.Media.typeMovie(self.typeMedia)
+			self.typeTelevision = tools.Media.typeTelevision(self.typeMedia)
 
 			self.timeTotal = 0
 			self.timeCurrent = 0
+
+			self.idLocal = None
+			self.idImdb = imdb
+			self.idTmdb = tmdb
+			self.idTvdb = tvdb
 
 			self.metadata = meta
 			self.title = title
@@ -112,9 +121,12 @@ class player(xbmc.Player):
 				self.episode = None
 				self.episodeString = None
 
-			self.imdb = imdb
-			self.tmdb = tmdb
-			self.tvdb = tvdb
+			self.binge = episode and binge
+			self.bingeDelay = tools.Binge.settingsDelay()
+			self.bingeSuppress = tools.Binge.settingsSuppress()
+			self.bingeFinished = False
+			self.bingeItems = None
+			self.bingeMetadata = None
 
 			self.progressLock = threading.Lock()
 			self.progressBusy = False
@@ -125,10 +137,6 @@ class player(xbmc.Player):
 				thread.start()
 			else:
 				self.progress = 0
-
-			self.idLocal = None
-			self.idImdb = imdb if not imdb == None else '0'
-			self.idTvdb = tvdb if not tvdb == None else '0'
 
 			poster, thumb, meta = self.getMeta(meta)
 
@@ -174,6 +182,7 @@ class player(xbmc.Player):
 				delay = tools.Settings.getInteger('general.playback.retry.delay')
 			self.progressRemaining = self.progressTotal
 
+			success = False
 			xbmc.executebuiltin('Dialog.Close(notification,true)') # Hide the caching/download notification if still showing.
 			while self.progressRemaining > 0:
 				self.progressRemaining -= 1
@@ -198,23 +207,27 @@ class player(xbmc.Player):
 			if tvdb: ids['tvdb'] = tvdb
 			control.window.setProperty('script.trakt.ids', json.dumps(ids))
 			control.window.clearProperty('script.trakt.ids')
+			return success
 		except:
 			tools.Logger.error()
+			return False
 
 	def getMeta(self, meta):
 		try:
 			poster = '0'
-			if 'poster3' in meta: poster = meta['poster3']
+			if 'poster' in meta: poster = meta['poster']
 			elif 'poster2' in meta: poster = meta['poster2']
-			elif 'poster' in meta: poster = meta['poster']
+			elif 'poster3' in meta: poster = meta['poster3']
 
 			thumb = '0'
-			if 'thumb3' in meta: thumb = meta['thumb3']
+			if 'thumb' in meta: thumb = meta['thumb']
 			elif 'thumb2' in meta: thumb = meta['thumb2']
-			elif 'thumb' in meta: thumb = meta['thumb']
+			elif 'thumb3' in meta: thumb = meta['thumb3']
 
 			if poster == '0': poster = control.addonPoster()
 			if thumb == '0': thumb = control.addonThumb()
+
+			if not 'mediatype' in meta: meta.update({'mediatype': 'episode' if 'episode' in meta and meta['episode'] else 'movie'})
 
 			return (poster, thumb, meta)
 		except:
@@ -229,6 +242,7 @@ class player(xbmc.Player):
 
 			t = cleantitle.get(self.title)
 			meta = [i for i in meta if self.year == str(i['year']) and (t == cleantitle.get(i['title']) or t == cleantitle.get(i['originaltitle']))][0]
+			if not 'mediatype' in meta: meta.update({'mediatype': 'movie'})
 
 			for k, v in meta.iteritems():
 				if type(v) == list:
@@ -262,6 +276,7 @@ class player(xbmc.Player):
 			meta = control.jsonrpc('{"jsonrpc": "2.0", "method": "VideoLibrary.GetEpisodes", "params":{ "tvshowid": %d, "filter":{"and": [{"field": "season", "operator": "is", "value": "%s"}, {"field": "episode", "operator": "is", "value": "%s"}]}, "properties": ["title", "season", "episode", "showtitle", "firstaired", "runtime", "rating", "director", "writer", "plot", "thumbnail", "file"]}, "id": 1}' % (tvshowid, self.seasonString, self.episodeString))
 			meta = unicode(meta, 'utf-8', errors='ignore')
 			meta = json.loads(meta)['result']['episodes'][0]
+			if not 'mediatype' in meta: meta.update({'mediatype': 'episode'})
 
 			for k, v in meta.iteritems():
 				if type(v) == list:
@@ -284,7 +299,7 @@ class player(xbmc.Player):
 		return (poster, thumb, meta)
 
 	def _showStreams(self):
-		if not tools.Settings.getBoolean('automatic.enabled'):
+		if not self.binge and not tools.Settings.getBoolean('automatic.enabled'):
 			reload = tools.Settings.getInteger('interface.navigation.streams.reload')
 			if reload == 1 or (reload == 2 and self.status == self.StatusPaused):
 				from resources.lib.extensions import core
@@ -447,6 +462,67 @@ class player(xbmc.Player):
 			self.downloadCheck = False
 			return False
 
+	def _bingeCheck(self):
+		try:
+			if self.binge and not self.bingeFinished and self.timeTotal - self.timeCurrent < player.BingeTime:
+				self.bingeFinished = True
+				thread = threading.Thread(target = self._bingeScrape)
+				thread.start()
+		except:
+			tools.Logger.error()
+
+	def _bingeScrape(self):
+		try:
+			from resources.lib.extensions import core
+			from resources.lib.indexers import episodes
+			self.bingeMetadata = episodes.episodes().next(tvshowtitle = self.metadata['tvshowtitle'], year = self.metadata['year'], imdb = self.metadata['imdb'], tvdb = self.metadata['tvdb'], season = self.metadata['season'], episode = self.metadata['episode'])
+			self.bingeItems = core.Core(type = self.type, kids = self.kids, silent = True).scrape(title = self.bingeMetadata['title'], year = self.bingeMetadata['year'], imdb = self.bingeMetadata['imdb'], tvdb = self.bingeMetadata['tvdb'], season = self.bingeMetadata['season'], episode = self.bingeMetadata['episode'], tvshowtitle = self.bingeMetadata['tvshowtitle'], metadata = self.bingeMetadata)
+		except:
+			tools.Logger.error()
+
+	def _bingePlay(self):
+		try:
+			if self.binge and self.bingeItems:
+				next = True
+				if self.bingeSuppress:
+					thread = threading.Thread(target = self._bingeSuppress)
+					thread.start()
+				if self.bingeDelay > 0:
+					try: fanart = self.bingeMetadata['fanart'] if 'fanart' in self.bingeMetadata else self.bingeMetadata['fanart2'] if 'fanart2' in self.bingeMetadata else self.bingeMetadata['fanart3'] if 'fanart3' in self.bingeMetadata else None
+					except: fanart = None
+					next = window.WindowBinge.show(title = self.bingeMetadata['tvshowtitle'], season = self.bingeMetadata['season'], episode = self.bingeMetadata['episode'], background = fanart)
+				interface.Loader.show()
+				if next:
+					for i in range(len(self.bingeItems)):
+						metadata.Metadata.uninitialize(self.bingeItems[i])
+					tools.System.executePlugin(action = 'scrape', parameters = {
+						'type' : self.type,
+						'kids' : self.kids,
+						'binge' : tools.Binge.ModeContinue,
+						'title' : self.bingeMetadata['title'],
+						'tvshowtitle' : self.bingeMetadata['tvshowtitle'],
+						'year' : self.bingeMetadata['year'],
+						'imdb' : self.bingeMetadata['imdb'],
+						'tvdb' : self.bingeMetadata['tvdb'],
+						'season' : self.bingeMetadata['season'],
+						'episode' : self.bingeMetadata['episode'],
+						'premiered' : self.bingeMetadata['premiered'],
+						'metadata' : tools.Converter.jsonTo(self.bingeMetadata),
+						'items' : tools.Converter.jsonTo(self.bingeItems),
+					})
+		except:
+			tools.Logger.error()
+
+	def _bingeSuppress(self):
+		count = 0
+		while count < 100:
+			id = window.Window.current()
+			if id > window.Window.IdMaximum and not window.Window.currentGaia():
+				interface.Dialog.close(id)
+				break
+			count += 1
+			tools.Time.sleep(0.1)
+
 	def isVisible(self):
 		return window.Window.visible(window.Window.IdWindowPlayer) or window.Window.visible(window.Window.IdWindowPlayerFull)
 
@@ -463,7 +539,7 @@ class player(xbmc.Player):
 				if self.core.progressPlaybackCanceled(): break
 				interface.Loader.hide() # Busy icons pops up again in Kodi 18.
 				progress = 50 + int((i / float(timeout)) * 50) # Only half the progress, since the other half is from sources __init__.py.
-				self.core.progressPlaybackUpdate(progress = progress, title = title, message = message, status = status, substatus1 = substatus1, substatus2 = substatus2, total = self.progressTotal, remaining = self.progressRemaining)
+				self.core.progressPlaybackUpdate(progress = progress, title = title, message = message, status = status, substatus1 = substatus1, substatus2 = substatus2, total = self.progressTotal, remaining = self.progressRemaining, force = True)
 			else:
 				self._downloadCheck()
 			xbmc.sleep(500)
@@ -478,7 +554,7 @@ class player(xbmc.Player):
 		if self.typeMovie:
 			overlay = playcount.getMovieOverlay(playcount.getMovieIndicators(), self.idImdb)
 		elif self.typeTelevision:
-			overlay = playcount.getEpisodeOverlay(playcount.getTVShowIndicators(), self.idImdb, self.idTvdb, self.seasonString, self.episodeString)
+			overlay = playcount.getEpisodeOverlay(playcount.getShowIndicators(), self.idImdb, self.idTvdb, self.seasonString, self.episodeString)
 		else:
 			overlay = '6'
 
@@ -512,7 +588,7 @@ class player(xbmc.Player):
 		# Only show the notification if the player is not able to load the file at all.
 		if not self.isPlayback():
 			self.stop()
-			self.core.progressPlaybackUpdate(progress = 100, message = '', status = None) # Must be set to 100 for background dialog, otherwise it shows up in a later dialog.
+			self.core.progressPlaybackUpdate(progress = 100, message = '', status = None, force = True) # Must be set to 100 for background dialog, otherwise it shows up in a later dialog.
 			control.window.clearProperty(pname)
 			return False
 
@@ -532,24 +608,26 @@ class player(xbmc.Player):
 				property = control.window.getProperty(pname)
 
 				if watcher == True and not property == '7':
-					try: orionoid.Orionoid().streamVote(idItem = self.source['orion']['item'], idStream = self.source['orion']['stream'], vote = orionoid.Orionoid.VoteUp)
+					try: orionoid.Orionoid().streamVote(idItem = self.source['orion']['id']['item'], idStream = self.source['orion']['id']['stream'], vote = orionoid.Orionoid.VoteUp)
 					except: pass
 					control.window.setProperty(pname, '7')
 					if self.typeMovie:
-						playcount.markMovieDuringPlayback(self.idImdb, '7')
-						if addLibrary: library.Library(type = self.type).add(title = self.title, year = self.year, imdb = self.imdb, tmdb = self.tmdb, metadata = self.metadata)
+						playcount.markMovieDuringPlayback(imdb = self.idImdb, tmdb = self.idTmdb, watched = '7')
+						if addLibrary: library.Library(type = self.typeMedia).add(title = self.title, year = self.year, imdb = self.idImdb, tmdb = self.idTmdb, metadata = self.metadata)
 					else:
-						playcount.markEpisodeDuringPlayback(self.idImdb, self.idTvdb, self.seasonString, self.episodeString, '7')
-						if addLibrary: library.Library(type = self.type).add(title = self.title, year = self.year, imdb = self.imdb, tvdb = self.tvdb, metadata = self.metadata)
+						playcount.markEpisodeDuringPlayback(imdb = self.idImdb, tvdb = self.idTvdb, season = self.seasonString, episode = self.episodeString, watched = '7')
+						if addLibrary: library.Library(type = self.typeMedia).add(title = self.title, year = self.year, imdb = self.idImdb, tvdb = self.idTvdb, metadata = self.metadata)
 				elif watcher == False and not property == '6':
 					control.window.setProperty(pname, '6')
 					# Gaia
 					# Do not mark as unwatched, otherwise if the video was previously watched and later rewatched, if will mark it as unwatched when played the second time.
 					# Trakt can set multiple watches so that you can track on how many times you watched something.
-					#playcount.markMovieDuringPlayback(self.idImdb, '6')
-					#playcount.markEpisodeDuringPlayback(self.idImdb, self.idTvdb, self.seasonString, self.episodeString, '6')
+					#playcount.markMovieDuringPlayback(imdb = self.idImdb, tmdb = self.idTmdb, watched = '6')
+					#playcount.markEpisodeDuringPlayback(imdb = self.idImdb, tvdb = self.idTvdb, season = self.seasonString, episode = self.episodeString, watched = '6')
 			except:
 				pass
+
+			self._bingeCheck()
 
 			if self.navigationStreamsSpecial:
 				for i in range(4):
@@ -576,7 +654,7 @@ class player(xbmc.Player):
 		return True
 
 	def _progress(self):
-		progress = Playback().getProgress(type = self.type, imdb = self.imdb, tvdb = self.tvdb, season = self.season, episode = self.episode, wait = True)
+		progress = Playback().getProgress(type = self.typeMedia, imdb = self.idImdb, tvdb = self.idTvdb, season = self.season, episode = self.episode, wait = True)
 		try: self.progressLock.acquire()
 		except: pass
 		self.progress = progress
@@ -597,7 +675,7 @@ class player(xbmc.Player):
 			# Only update every 5 minutes, otherwise there are too many Trakt/database calls.
 			allow = (current - self.progressLast) > 300
 		if allow:
-			Playback().setProgress(action = action, type = self.type, imdb = self.imdb, tvdb = self.tvdb, season = self.season, episode = self.episode, progress = self.getProgress(), wait = False)
+			Playback().setProgress(action = action, type = self.typeMedia, imdb = self.idImdb, tvdb = self.idTvdb, season = self.season, episode = self.episode, progress = self.getProgress(), wait = False)
 		self.progressLast = current
 
 	def setProgress(self):
@@ -680,7 +758,8 @@ class player(xbmc.Player):
 		self._debridClear()
 		self._showStreams()
 		if control.window.getProperty('%s.player.overlay' % control.addonInfo('id')) == '7':
-			trakt.rateShow(imdb = self.imdb, tvdb = self.tvdb, season = self.season, episode = self.episode)
+			trakt.rateManual(imdb = self.idImdb, tvdb = self.idTvdb, season = self.season, episode = self.episode)
+		self._bingePlay()
 
 	def onPlayBackEnded(self):
 		self.onPlayBackStopped()

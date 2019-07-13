@@ -31,8 +31,8 @@ class source:
 		self.pack = True # Checked by provider.py
 		self.priority = 0
 		self.language = ['fr']
-		self.domains = ['yggtorrent.gg', 'yggtorrent.site', 'yggtorrent.is']
-		self.base_link = 'https://www2.yggtorrent.gg' # www subdomain does not work.
+		self.domains = ['yggtorrent.ch', 'yggtorrent.gg', 'yggtorrent.site', 'yggtorrent.is']
+		self.base_link = 'https://www2.yggtorrent.ch' # www subdomain does not work.
 		self.search_link = '/engine/search?category=%s&subcategory=%s&name=%s&page=%s&order=desc&sort=seed&do=search'
 		self.download_link = '/engine/download_torrent?id='
 		self.login_link = '/user/login'
@@ -45,6 +45,40 @@ class source:
 		self.password = tools.Settings.getString('accounts.providers.yggtorrent.pass')
 		self.inspection = tools.Settings.getBoolean('accounts.providers.yggtorrent.inspection')
 		self.enabled = tools.Settings.getBoolean('accounts.providers.yggtorrent.enabled') and self.username and self.password
+
+	def authenticationAdd(self, links):
+		result = []
+		for link in links:
+			if self._linkValid(link):
+				if self.enabled: result.append(link)
+			else:
+				result.append(link)
+		return result
+
+	def authenticationRemove(self, links):
+		for i in range(len(links)):
+			links[i] = network.Networker._linkClean(links[i])
+		return links
+
+	def _authentication(self, url):
+		if not '|Cookie' in url: # Avoid adding multiple cookies in case the URL is resolved multiple times.
+			link = self.base_link + self.login_link
+			data = {'id' : self.username, 'pass' : self.password}
+
+			# NB: Must make two requests.
+			# The first request does not have any CloudFlare cookies. YGG will return its own cookie, but it will be an unauthenticated-cookie.
+			# Make a second request with the CloudFlare cookies to get an authenticated-cookie.
+			# Both requests must use the same networker in order to share the cookie jar.
+			net = network.Networker()
+			cookies = net.cookies(link = link, parameters = data, raw = True, force = True)
+			cookies = net.cookies(link = link, parameters = data, raw = True, force = True, headers = {'Cookie' : cookies})
+
+			if cookies: url += '|Cookie=' + urllib.quote_plus(cookies)
+		return url
+
+	def _linkValid(self, link):
+		domain = network.Networker.linkDomain(link, subdomain = False, topdomain = True).lower()
+		return domain in self.domains
 
 	def movie(self, imdb, title, localtitle, year):
 		try:
@@ -86,13 +120,6 @@ class source:
 			try: self.tLock.release()
 			except: pass
 
-	def _authenticate(self, url):
-		login = self.base_link + self.login_link
-		form = urllib.urlencode({'id' : self.username, 'pass' : self.password})
-		cookie = client.request(login, post = form, output = 'cookie')
-		if cookie: url += '|Cookie=' + urllib.quote_plus(cookie)
-		return url
-
 	def sources(self, url, hostDict, hostprDict):
 		self.tSources = []
 		try:
@@ -102,8 +129,8 @@ class source:
 			if not self.enabled or self.username == '' or self.password == '':
 				raise Exception()
 
+			ignoreContains = None
 			data = urlparse.parse_qs(url)
-
 			data = dict([(i, data[i][0]) if data[i] else (i, '') for i in data])
 
 			show = 'tvshowtitle' in data
@@ -128,8 +155,14 @@ class source:
 				else: subcategory = self.subcategories_movie.values()[0] if len(self.subcategories_movie) == 1 else self.subcategory_any
 
 				if show:
-					if pack: query = '%s S%02d' % (title, season)
-					else: query = '%s S%02dE%02d' % (title, season, episode)
+					# Search special episodes by name. All special episodes are added to season 0 by Trakt and TVDb. Hence, do not search by filename (eg: S02E00), since the season is not known.
+					if (season == 0 or episode == 0) and ('title' in data and not data['title'] == None and not data['title'] == ''):
+						title = '%s %s' % (data['tvshowtitle'], data['title']) # Change the title for metadata filtering.
+						query = title
+						ignoreContains = len(data['title']) / float(len(title)) # Increase the required ignore ration, since otherwise individual episodes and season packs are found as well.
+					else:
+						if pack: query = '%s S%02d' % (title, season)
+						else: query = '%s S%02dE%02d' % (title, season, episode)
 				else:
 					query = '%s %d' % (title, year)
 				query = re.sub('(\\\|/| -|:|;|\*|\?|"|\'|<|>|\|)', ' ', query)
@@ -203,10 +236,10 @@ class source:
 
 						# Metadata
 						meta = metadata.Metadata(name = htmlName, title = title, year = year, season = season, episode = episode, pack = pack, packCount = packCount, link = htmlLink, size = htmlSize, seeds = htmlSeeds)
-						
+
 						# Ignore
-						if meta.ignore(True):
-							continue
+						meta.ignoreAdjust(contains = ignoreContains)
+						if meta.ignore(True): continue
 
 						# Add
 						self.tLock.acquire()
@@ -230,7 +263,7 @@ class source:
 				while True:
 					if timer.elapsed() > timerTimeout: break
 					if not any([thread.is_alive() for thread in threads]): break
-					tools.Time.sleep(0.3)
+					tools.Time.sleep(0.5)
 
 			try: self.tLock.release()
 			except: pass
@@ -243,4 +276,4 @@ class source:
 			return self.tSources
 
 	def resolve(self, url):
-		return self._authenticate(url)
+		return self._authentication(url)

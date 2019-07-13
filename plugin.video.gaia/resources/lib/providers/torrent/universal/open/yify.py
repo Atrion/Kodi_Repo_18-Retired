@@ -31,8 +31,8 @@ class source:
 		self.pack = False # Checked by provider.py
 		self.priority = 0
 		self.language = ['un']
-		self.domains = ['yts.am'] # Other YIFI domains do not have an API.
-		self.base_link = 'https://yts.am'
+		self.domains = ['yts.lt', 'yts.am', 'yts.ag'] # Other YIFI domains do not have an API.
+		self.base_link = 'https://yts.lt'
 		self.search_link = '/api/v2/list_movies.json?query_term=%s&limit=50&sort_by=seeds&order_by=desc&with_rt_ratings=false'
 
 	def movie(self, imdb, title, localtitle, year):
@@ -91,8 +91,7 @@ class source:
 				jsonLink = network.Container(jsonHash).torrentMagnet(title = meta.title(extended = True))
 
 				# Ignore
-				if meta.ignore(False):
-					continue
+				if meta.ignore(False): continue
 
 				# Add
 				sources.append({'url' : jsonLink, 'debridonly' : False, 'direct' : False, 'source' : 'torrent', 'language' : self.language[0], 'quality':  meta.videoQuality(), 'metadata' : meta, 'file' : jsonName})

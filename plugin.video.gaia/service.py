@@ -22,6 +22,7 @@ from resources.lib.extensions import tools
 from resources.lib.extensions import vpn
 from resources.lib.extensions import library
 from resources.lib.extensions import settings
+from resources.lib.extensions import server
 
 # Adapt Settings
 settings.Adaption.adapt()
@@ -37,3 +38,6 @@ tools.Lightpack().launchAutomatic()
 
 # Local Library Update
 library.Library.service()
+
+# Server
+#server.Server.run()

@@ -122,8 +122,10 @@ class OrionNotification:
 		message += OrionInterface.font(self.contentTitle(), bold = True, color = OrionInterface.ColorPrimary)
 		message += OrionInterface.fontNewline() + OrionInterface.fontNewline()
 		if promotion:
-			offer = ''
-			if promotion.limitMultiplier(): offer = str(promotion.limitMultiplier()) + 'x ' + OrionInterface.font(32198)
+			offer = []
+			if promotion.multiplierStreams(): offer.append(str(promotion.multiplierStreams()) + 'x ' + OrionInterface.font(32223))
+			if promotion.multiplierHashes(): offer.append(str(promotion.multiplierHashes()) + 'x ' + OrionInterface.font(32224))
+			offer = OrionInterface.fontSeparator().join(offer)
 			message += OrionInterface.font(OrionTools.translate(32197) + ': ', color = OrionInterface.ColorPrimary) + offer + OrionInterface.fontNewline()
 			message += OrionInterface.font(OrionTools.translate(32195) + ': ', color = OrionInterface.ColorPrimary) + OrionInterface.font(OrionTools.timeFormat(time = promotion.timeStart(), format = OrionTools.FormatDate) if promotion.timeStart() else 32199) + OrionInterface.fontNewline()
 			message += OrionInterface.font(OrionTools.translate(32196) + ': ', color = OrionInterface.ColorPrimary) + OrionInterface.font(OrionTools.timeFormat(time = promotion.timeEnd(), format = OrionTools.FormatDate) if promotion.timeEnd() else 32199)

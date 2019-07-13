@@ -1,36 +1,41 @@
-import logging
+# -*- coding: utf-8 -*-
+
 import random
 import re
-import subprocess
+import ssl
 import copy
 import time
-import cfdecoder
+import os
+from collections import OrderedDict
 
-# [GAIACODE/]
-#from requests.sessions import Session
 from resources.lib.externals.requests.sessions import Session
-# [/GAIACODE]
+from resources.lib.externals.requests.adapters import HTTPAdapter
+from resources.lib.externals.requests.compat import urlparse, urlunparse
+from resources.lib.externals.requests.exceptions import RequestException
 
-try:
-    from urlparse import urlparse
-    from urlparse import urlunparse
-except ImportError:
-    from urllib.parse import urlparse
-    from urllib.parse import urlunparse
+from resources.lib.externals.urllib3.util.ssl_ import create_urllib3_context, DEFAULT_CIPHERS
 
-__version__ = "1.9.7"
+from .user_agents import USER_AGENTS
+from .cfscrape_solver import solve_challenge
 
-DEFAULT_USER_AGENTS = [
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36",
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/65.0.3325.181 Chrome/65.0.3325.181 Safari/537.36",
-    "Mozilla/5.0 (Linux; Android 7.0; Moto G (5) Build/NPPS25.137-93-8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.137 Mobile Safari/537.36",
-    "Mozilla/5.0 (iPhone; CPU iPhone OS 7_0_4 like Mac OS X) AppleWebKit/537.51.1 (KHTML, like Gecko) Version/7.0 Mobile/11B554a Safari/9537.53",
-    "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:60.0) Gecko/20100101 Firefox/60.0",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:59.0) Gecko/20100101 Firefox/59.0",
-    "Mozilla/5.0 (Windows NT 6.3; Win64; x64; rv:57.0) Gecko/20100101 Firefox/57.0"
-]
+__version__ = "2.0.7"
 
-DEFAULT_USER_AGENT = random.choice(DEFAULT_USER_AGENTS)
+DEFAULT_USER_AGENT = random.choice(USER_AGENTS)
+
+DEFAULT_HEADERS = OrderedDict(
+    (
+        ("Host", None),
+        ("Connection", "keep-alive"),
+        ("Upgrade-Insecure-Requests", "1"),
+        ("User-Agent", DEFAULT_USER_AGENT),
+        (
+            "Accept",
+            "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+        ),
+        ("Accept-Language", "en-US,en;q=0.9"),
+        ("Accept-Encoding", "gzip, deflate"),
+    )
+)
 
 BUG_REPORT = """\
 Cloudflare may have changed their technique, or there may be a bug in the script.
@@ -49,64 +54,131 @@ If increasing the delay does not help, please open a GitHub issue at \
 https://github.com/Anorov/cloudflare-scrape/issues\
 """
 
+# Remove a few problematic TLSv1.0 ciphers from the defaults
+DEFAULT_CIPHERS += ":!ECDHE+SHA:!AES128-SHA"
+
+
+class CloudflareAdapter(HTTPAdapter):
+    """ HTTPS adapter that creates a SSL context with custom ciphers """
+
+    def get_connection(self, *args, **kwargs):
+        conn = super(CloudflareAdapter, self).get_connection(*args, **kwargs)
+
+        if conn.conn_kw.get("ssl_context"):
+            conn.conn_kw["ssl_context"].set_ciphers(DEFAULT_CIPHERS)
+        else:
+            context = create_urllib3_context(ciphers=DEFAULT_CIPHERS)
+            conn.conn_kw["ssl_context"] = context
+
+        return conn
+
+
+class CloudflareError(RequestException):
+    pass
+
 class CloudflareScraper(Session):
     def __init__(self, *args, **kwargs):
-        self._solve_count = 0
-        self.delay = kwargs.pop("delay", 8)
+        self.tries = 0
+        self.prev_resp = None
+        self.delay = kwargs.pop("delay", None)
+        # Use headers with a random User-Agent if no custom headers have been set
+        headers = OrderedDict(kwargs.pop("headers", DEFAULT_HEADERS))
+
+        # Set the User-Agent header if it was not provided
+        headers.setdefault("User-Agent", DEFAULT_USER_AGENT)
+
         super(CloudflareScraper, self).__init__(*args, **kwargs)
 
-        if "requests" in self.headers["User-Agent"]:
-            # Set a random User-Agent if no custom User-Agent has been set
-            self.headers["User-Agent"] = DEFAULT_USER_AGENT
+        # Define headers to force using an OrderedDict and preserve header order
+        self.headers = headers
 
-    def is_cloudflare_challenge(self, resp):
+        self.mount("https://", CloudflareAdapter())
+
+    @staticmethod
+    def is_cloudflare_iuam_challenge(resp, allow_empty_body=False):
         return (
-            resp.status_code == 503
+            resp.status_code in (503, 429)
             and resp.headers.get("Server", "").startswith("cloudflare")
-            and b"jschl_vc" in resp.content
-            and b"jschl_answer" in resp.content
+            and (allow_empty_body or (b"jschl_vc" in resp.content and b"jschl_answer" in resp.content))
+        )
+
+    @staticmethod
+    def is_cloudflare_captcha_challenge(resp):
+        return (
+            resp.status_code == 403
+            and resp.headers.get("Server", "").startswith("cloudflare")
+            and b"/cdn-cgi/l/chk_captcha" in resp.content
         )
 
     def request(self, method, url, *args, **kwargs):
         resp = super(CloudflareScraper, self).request(method, url, *args, **kwargs)
 
-        # Check if Cloudflare anti-bot is on
-        if self.is_cloudflare_challenge(resp):
-            if self._solve_count == 3:
-                raise Exception('Cloudflare challenge failed!')
-            self._solve_count += 1
+        # Check if Cloudflare captcha challenge is presented
+        if self.is_cloudflare_captcha_challenge(resp):
+            self.handle_captcha_challenge()
+
+        self.prev_resp = resp
+
+        # Check if Cloudflare anti-bot "I'm Under Attack Mode" is enabled
+        if self.is_cloudflare_iuam_challenge(resp):
+            if self.tries >= 3:
+                exception_message = 'Failed to solve Cloudflare challenge!'
+                if os.getenv('CI') == 'true':
+                    exception_message += '\n' + resp.text
+                raise Exception(exception_message)
+
             resp = self.solve_cf_challenge(resp, **kwargs)
 
         return resp
 
+    def cloudflare_is_bypassed(self, url, resp=None):
+        cookie_domain = ".{}".format(urlparse(url).netloc)
+        return (
+            self.cookies.get("cf_clearance", None, domain=cookie_domain) or
+            (resp and resp.cookies.get("cf_clearance", None, domain=cookie_domain))
+        )
+
+    def handle_captcha_challenge(self):
+        exception_message = 'Cloudflare returned captcha!'
+        if self.prev_resp is not None and os.getenv('CI') == 'true':
+            exception_message += '\n' + self.prev_resp.text
+        raise Exception(exception_message)
+
     def solve_cf_challenge(self, resp, **original_kwargs):
+        self.tries += 1
+        start_time = time.time()
+
         body = resp.text
         parsed_url = urlparse(resp.url)
         domain = parsed_url.netloc
         submit_url = "%s://%s/cdn-cgi/l/chk_jschl" % (parsed_url.scheme, domain)
 
         cloudflare_kwargs = copy.deepcopy(original_kwargs)
-        params = cloudflare_kwargs.setdefault("params", {})
+
         headers = cloudflare_kwargs.setdefault("headers", {})
         headers["Referer"] = resp.url
 
         try:
-            params["jschl_vc"] = re.search(r'name="jschl_vc" value="(\w+)"', body).group(1)
-            params["pass"] = re.search(r'name="pass" value="(.+?)"', body).group(1)
-            params["s"] = re.search(r'name="s"\svalue="(?P<s_value>[^"]+)', body).group('s_value')
+            params = cloudflare_kwargs["params"] = OrderedDict(
+                re.findall(r'name="(s|jschl_vc|pass)"(?: [^<>]*)? value="(.+?)"', body)
+            )
+
+            for k in ("jschl_vc", "pass"):
+                if k not in params:
+                    raise ValueError("%s is missing from challenge form" % k)
         except Exception as e:
             # Something is wrong with the page.
             # This may indicate Cloudflare has changed their anti-bot
             # technique. If you see this and are running the latest version,
             # please open a GitHub issue so I can update the code accordingly.
-            raise ValueError("Unable to parse Cloudflare anti-bots page: %s %s" % (e.message, BUG_REPORT))
+            raise ValueError(
+                "Unable to parse Cloudflare anti-bot IUAM page: %s %s"
+                % (e.message, BUG_REPORT)
+            )
 
         # Solve the Javascript challenge
-        request = {}
-        request['data'] = resp.text
-        request['url'] = resp.url
-        request['headers'] = resp.headers
-        cfdecoder.Cloudflare(request, params).get_url()
+        answer, delay = solve_challenge(body, domain)
+        params["jschl_answer"] = answer
 
         # Requests transforms any request into a GET after a redirect,
         # so the redirect has to be handled manually here to allow for
@@ -114,71 +186,23 @@ class CloudflareScraper(Session):
         method = resp.request.method
         cloudflare_kwargs["allow_redirects"] = False
 
-        redirect = self.request(method, submit_url, **cloudflare_kwargs)
+        # Cloudflare requires a delay before solving the challenge
+        time.sleep(max(delay - (time.time() - start_time), 0))
 
+        # Send the challenge response and handle the redirect manually
+        redirect = self.request(method, submit_url, **cloudflare_kwargs)
         redirect_location = urlparse(redirect.headers["Location"])
+
         if not redirect_location.netloc:
-            redirect_url = urlunparse((parsed_url.scheme, domain, redirect_location.path, redirect_location.params, redirect_location.query, redirect_location.fragment))
+            redirect_url = urlunparse(
+                (
+                    parsed_url.scheme,
+                    domain,
+                    redirect_location.path,
+                    redirect_location.params,
+                    redirect_location.query,
+                    redirect_location.fragment,
+                )
+            )
             return self.request(method, redirect_url, **original_kwargs)
         return self.request(method, redirect.headers["Location"], **original_kwargs)
-
-    @classmethod
-    def create_scraper(cls, sess=None, **kwargs):
-        """
-        Convenience function for creating a ready-to-go CloudflareScraper object.
-        """
-        scraper = cls(**kwargs)
-
-        if sess:
-            attrs = ["auth", "cert", "cookies", "headers", "hooks", "params", "proxies", "data"]
-            for attr in attrs:
-                val = getattr(sess, attr, None)
-                if val:
-                    setattr(scraper, attr, val)
-
-        return scraper
-
-
-    ## Functions for integrating cloudflare-scrape with other applications and scripts
-
-    @classmethod
-    def get_tokens(cls, url, user_agent=None, **kwargs):
-        scraper = cls.create_scraper()
-        if user_agent:
-            scraper.headers["User-Agent"] = user_agent
-
-        try:
-            resp = scraper.get(url, **kwargs)
-            resp.raise_for_status()
-        except Exception as e:
-            logging.error("'%s' returned an error. Could not collect tokens." % url)
-            raise
-
-        domain = urlparse(resp.url).netloc
-        cookie_domain = None
-
-        for d in scraper.cookies.list_domains():
-            if d.startswith(".") and d in ("." + domain):
-                cookie_domain = d
-                break
-        else:
-            raise ValueError("Unable to find Cloudflare cookies. Does the site actually have Cloudflare IUAM (\"I'm Under Attack Mode\") enabled?")
-
-        return ({
-                    "__cfduid": scraper.cookies.get("__cfduid", "", domain=cookie_domain),
-                    "cf_clearance": scraper.cookies.get("cf_clearance", "", domain=cookie_domain)
-                },
-                scraper.headers["User-Agent"]
-               )
-
-    @classmethod
-    def get_cookie_string(cls, url, user_agent=None, **kwargs):
-        """
-        Convenience function for building a Cookie HTTP header value.
-        """
-        tokens, user_agent = cls.get_tokens(url, user_agent=user_agent, **kwargs)
-        return "; ".join("=".join(pair) for pair in tokens.items()), user_agent
-
-create_scraper = CloudflareScraper.create_scraper
-get_tokens = CloudflareScraper.get_tokens
-get_cookie_string = CloudflareScraper.get_cookie_string

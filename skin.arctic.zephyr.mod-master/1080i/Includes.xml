@@ -25,6 +25,8 @@
 	<include file="View_507_Fanart.xml" />
 	<include file="View_509_Shift.xml" />
 	<include file="View_510_Minimal.xml" />
+	<include file="View_511_Double.xml" />
+	<include file="View_512_Double_Banner.xml" />
 	<include file="View_506_Slider.xml" />
     
     
@@ -513,8 +515,8 @@
 			<visible>Skin.HasSetting(EnableBlur)</visible>
 			<visible>Skin.HasSetting(FullsizeFanart510)</visible>
 			<visible>Control.IsVisible(510) + !Window.IsVisible(DialogVideoInfo.xml) + !Window.IsVisible(Custom_MovieSets.xml)</visible>
-            <width>1300</width>
-			<height>675</height>
+            <width>1350</width>
+			<height>705</height>
 			<aspectratio>scale</aspectratio>
             <texture diffuse="common/diffuse510fs.png">$VAR[GlobalFanart]</texture>
 			<right>0</right>
@@ -533,7 +535,7 @@
 			<height>1080</height>
 			<aspectratio>scale</aspectratio>
             <texture diffuse="common/diffuse510.png">$VAR[GlobalFanart]</texture>
-			<right>0</right>
+			<right>-50</right>
 			<top>0</top>
 			<fadetime>600</fadetime>
 			<animation effect="fade" start="100" end="60"time="0" condition="true">Conditional</animation>
@@ -753,6 +755,7 @@
 		<font>Small333</font>
 		<focusedcolor>$VAR[ColorHighlight]</focusedcolor>
 		<align>center</align>
+		<texturefocus>-</texturefocus>
 		<onclick>$VAR[ClickToJump]</onclick>
 	</include>
 	<variable name="ClickToJump">
@@ -772,6 +775,8 @@
 		<value condition="Control.IsVisible(55)">SetFocus(55)</value>
 		<value condition="Control.IsVisible(555)">SetFocus(555)</value>
 		<value condition="Control.IsVisible(509)">SetFocus(509)</value>
+		<value condition="Control.IsVisible(511)">SetFocus(511)</value>
+		<value condition="Control.IsVisible(512)">SetFocus(512)</value>
 	</variable>
 	
 	<include name="ScrollTextWidget">
@@ -1106,9 +1111,13 @@
 			<control type="radiobutton" id ="8">
 				<include>buttondimensions</include>
 				<onfocus>ClearProperty(content)</onfocus>
-				<include content="buttontextures">
-					<param name="icon" value="buttonsdialogs/play.png" />
-				</include>
+				<texturenofocus colordiffuse="Dark4" border="0">common/box.png</texturenofocus>
+				<texturefocus colordiffuse="$VAR[ColorHighlight]" border="0">common/box.png</texturefocus>
+				<textureradioonfocus colordiffuse="FFFFFFFF">buttonsdialogs/continue.png</textureradioonfocus>
+				<textureradioonnofocus colordiffuse="FFFFFFFF">buttonsdialogs/continue.png</textureradioonnofocus>
+				<textureradioofffocus colordiffuse="FFFFFFFF">buttonsdialogs/play.png</textureradioofffocus>
+				<textureradiooffnofocus colordiffuse="FFFFFFFF">buttonsdialogs/play.png</textureradiooffnofocus>
+				<selected>ListItem.IsResumable</selected>
 				<onfocus>ClearProperty(filminfo)</onfocus>
 				<onclick>Dialog.Close(1132)</onclick>					
 			</control>
@@ -2054,5 +2063,278 @@
 		<value condition="Control.HasFocus(9002) + String.IsEmpty(Window.Property(tracklist))">$LOCALIZE[182]</value>
 		<value condition="Control.HasFocus(9002) + !String.IsEmpty(Window.Property(tracklist))">$LOCALIZE[21887]</value>
 	</variable>
-
+	
+	<variable name="ListItemAudioCodec"> 
+		<value condition="String.Contains(ListItem.Filenameandpath,.atmos.)">atmos</value> 
+		<value condition="String.Contains(ListItem.Filenameandpath,.atmos-)">atmos</value> 
+		<value condition="String.Contains(ListItem.Filenameandpath,.dts-x.)">dts-x</value> 
+		<value condition="String.Contains(ListItem.Filenameandpath,.dts.x.)">dts-x</value> 
+		<value condition="String.Contains(ListItem.Filenameandpath,.dtsx.)">dts-x</value> 
+		<value condition="String.Contains(ListItem.Filenameandpath,.dts-x-)">dts-x</value> 
+		<value condition="String.Contains(ListItem.Filenameandpath,.dts.x-)">dts-x</value> 
+		<value condition="String.Contains(ListItem.Filenameandpath,.dtsx-)">dts-x</value> 
+		<value>$INFO[ListItem.AudioCodec]</value> 
+	</variable> 
+	
+	<variable name="ListItemAudioCodecPlayer"> 
+		<value condition="String.Contains(Player.Filename,.atmos.)">atmos</value> 
+		<value condition="String.Contains(Player.Filename,.atmos-)">atmos</value> 
+		<value condition="String.Contains(Player.Filename,.dts-x.)">dts-x</value> 
+		<value condition="String.Contains(Player.Filename,.dts.x.)">dts-x</value> 
+		<value condition="String.Contains(Player.Filename,.dtsx.)">dts-x</value> 
+		<value condition="String.Contains(Player.Filename,.dts-x-)">dts-x</value> 
+		<value condition="String.Contains(Player.Filename,.dts.x-)">dts-x</value> 
+		<value condition="String.Contains(Player.Filename,.dtsx-)">dts-x</value> 
+		<value>$INFO[VideoPlayer.AudioCodec]</value> 
+	</variable> 
+	
+	<variable name="LabelOSDhdr">
+		<value condition="String.Contains(Player.Filenameandpath,.hdr.) | String.Contains(Player.Filenameandpath,hdr)">hdr</value> 
+	</variable> 
+	
+	<variable name="LabelFurniturehdr">
+		<value condition="String.Contains(ListItem.Filenameandpath,.hdr.) | String.Contains(ListItem.Filenameandpath,hdr)">hdr</value>
+		<value condition="String.Contains(Container(9500).ListItem.Filenameandpath,.hdr.) | String.Contains(Container(9500).ListItem.Filenameandpath,hdr)">hdr</value>  
+	</variable> 
+	
+	<include name="weatherlist">
+		<control type="group">
+			<height>106</height>
+			<top>$PARAM[top]</top>
+			<control type="image">
+				<centertop>50%</centertop>
+				<centerleft>17%</centerleft>
+				<width>90</width>
+				<height>90</height>
+				<aspectratio align="center" aligny="center">keep</aspectratio>
+				<texture>resource://resource.images.weathericons.default/$INFO[Window(weather).Property(Hourly.$PARAM[DayId].FanartCode,,.png]</texture>
+				<visible>String.IsEmpty(Skin.String(weather.icons.path))</visible>		
+			</control>
+			<control type="image">
+				<centertop>50%</centertop>
+				<centerleft>17%</centerleft>
+				<width>90</width>
+				<height>90</height>
+				<aspectratio align="center" aligny="center">keep</aspectratio>
+				<texture>$INFO[Skin.String(weather.icons.path),,/]$INFO[Window(weather).Property(Hourly.$PARAM[DayId].FanartCode,,.png]</texture>
+				<visible>!String.IsEmpty(Skin.String(weather.icons.path))</visible>	
+			</control>
+			<control type="label">
+				<top>5</top>
+				<left>150</left>
+				<right>20</right>
+				<align>left</align>
+				<width>150</width>
+				<font>Small33</font>
+				<textcolor>PanelWhite100</textcolor>
+				<label>$INFO[Window.Property(Hourly.$PARAM[DayId].Time),[B],[/B]]</label>
+			</control>
+			<control type="label">
+				<top>35</top>
+				<left>150</left>
+				<right>20</right>
+				<align>left</align>
+				<width>160</width>
+				<font>Tiny</font>
+				<scroll>false</scroll>
+				<textcolor>PanelWhite100</textcolor>
+				<label>$INFO[Window.Property(Hourly.$PARAM[DayId].Outlook)]</label>
+			</control>
+			<control type="label">
+				<top>8</top>
+				<left>20</left>
+				<right>30</right>
+				<align>right</align>
+				<font>Medium</font>
+				<textcolor>PanelWhite100</textcolor>
+				<label>$INFO[Window.Property(Hourly.$PARAM[DayId].Temperature),[B],[/B]]</label>
+			</control>
+			<control type="label">
+				<top>8</top>
+				<left>20</left>
+				<right>40%</right>
+				<align>right</align>
+				<font>Tiny</font>
+				<textcolor>PanelWhite100</textcolor>
+				<visible>String.IsEmpty(Window.Property(Hourly.$PARAM[DayId].Temperature))</visible>
+				<label> - N/A - </label>
+			</control>
+		</control>
+	</include>
+	
+	<include name="weatherlisttop">
+		<width>$PARAM[weatherwidth]</width>
+		<height>PosterH</height>
+		<posy>PosterPad</posy>
+		<left>$PARAM[weatherleft]</left>
+		<control type="image">
+			<width>100%</width>
+			<height>100%</height>
+			<texture border="5" colordiffuse="Panel">common/box.png</texture>
+		</control>
+		<control type="image">
+			<left>0</left>
+			<top>0</top>
+			<right>0</right>
+			<bottom>0</bottom>                          
+			<texture colordiffuse="Box2" background="true">common/box13.png</texture>   
+			<visible>!Skin.HasSetting(thumbnails.white)</visible>                        
+		</control>
+		<control type="multiimage" description="Fanart">
+			<visible>!Skin.HasSetting(weather.hidefanart)</visible>
+			<width>100%</width>
+			<height>100%</height>
+			<fadetime>600</fadetime>
+			<timeperimage>12000</timeperimage>
+			<randomize>true</randomize>
+			<aspectratio>scale</aspectratio>
+			<animation effect="fade" start="100" end="10" condition="true">Conditional</animation>
+			<imagepath background="true">$INFO[Skin.String(weather.fanart.path)]$INFO[Window(Weather).Property(Hourly.$PARAM[weatherfanartcode].FanartCode)]/</imagepath>
+		</control> 
+	</include>
+	
+	<include name="weatherlistinput">
+		<posy>PosterPad</posy>
+		<left>SidePad</left>
+		<right>SidePad</right>
+		<height>PosterH</height>
+		<include>Animation.Weather</include>
+		<control type="image">
+			<width>1760</width>
+			<height>640</height>                         
+			<texture colordiffuse="Box2" background="true">common/box16.png</texture>   
+			<visible>!Skin.HasSetting(thumbnails.white)</visible>                        
+		</control> 
+		<control type="image">
+			<left>1</left>
+			<top>1</top>
+			<right>1</right>
+			<bottom>1</bottom> 
+			<width>1758</width>
+			<height>638</height> 
+			<texture border="5" colordiffuse="Panel">common/box.png</texture>
+		</control>              
+		<control type="image">
+			<left>1</left>
+			<top>1</top>
+			<right>1</right>
+			<bottom>1</bottom> 
+			<width>1758</width>
+			<height>638</height>
+			<texture>$INFO[Window.Property(Map.$PARAM[InputId].Area)]</texture>
+			<aspectratio align="center" aligny="center">scale</aspectratio>
+		</control>
+		<control type="image">
+			<left>1</left>
+			<top>1</top>
+			<right>1</right>
+			<bottom>1</bottom> 
+			<width>1758</width>
+			<height>638</height>
+			<texture>$INFO[Window.Property(Map.$PARAM[InputId].Layer)]</texture>
+			<aspectratio align="center" aligny="center">scale</aspectratio>
+			<animation type="Conditional" condition="true" reversible="false">						
+				<effect type="fade" end="40" start="100" time="0"  />
+			</animation>
+		</control>
+		<control type="label">
+			<top>510</top>
+			<width>1401</width>
+			<height>70</height>
+			<align>right</align>
+			<right>12</right>
+			<textcolor>B3000000</textcolor>
+			<shadowcolor>white</shadowcolor>
+			<font>Tiny</font>
+			<label>[B]$INFO[ListItem.Label][/B]</label>
+		</control>
+		<control type="image">
+			<top>569</top>
+			<width>1401</width>
+			<height>60</height>
+			<right>11</right>
+			<texture>$INFO[Window.Property(Map.$PARAM[InputId].Legend)]</texture>
+			<aspectratio align="right" aligny="bottom">keep</aspectratio>
+		</control>
+	</include>
+	
+	<include name="weatherlistinputpagetwo">
+		<control type="group">
+			<width>285</width>
+			<height>PosterH</height>
+			<posy>PosterPad</posy>
+			<left>$PARAM[weatherlistinputpagetwoleft]</left>
+			<control type="image">
+				<width>100%</width>
+				<height>100%</height>
+				<texture border="5" colordiffuse="Panel">common/box.png</texture>
+			</control>
+			<control type="image">
+				<left>0</left>
+				<top>0</top>
+				<right>0</right>
+				<bottom>0</bottom>                          
+				<texture colordiffuse="Box2" background="true">common/box13.png</texture>   
+				<visible>!Skin.HasSetting(thumbnails.white)</visible>                        
+			</control>
+			<control type="multiimage" description="Fanart">
+				<visible>!Skin.HasSetting(weather.hidefanart)</visible>
+				<width>100%</width>
+				<height>100%</height>
+				<fadetime>600</fadetime>
+				<timeperimage>12000</timeperimage>
+				<randomize>true</randomize>
+				<aspectratio>scale</aspectratio>
+				<animation effect="fade" start="100" end="10" condition="true">Conditional</animation>
+				<imagepath background="true">$INFO[Skin.String(weather.fanart.path)]$INFO[Window.Property(Daily.$PARAM[Daily].FanartCode)]/</imagepath>
+			</control>
+			<control type="image">
+				<centertop>35%</centertop>
+				<centerleft>50%</centerleft>
+				<width>285</width>
+				<height>285</height>
+				<aspectratio align="center" aligny="center">keep</aspectratio>
+				<texture>$INFO[Skin.String(weather.icons.path),,/]$INFO[Window.Property(Daily.$PARAM[Daily].FanartCode),,.png]</texture>
+				<visible>!String.IsEmpty(Skin.String(weather.icons.path))</visible>
+			</control>
+			<control type="image">
+				<centertop>35%</centertop>
+				<centerleft>50%</centerleft>
+				<width>240</width>
+				<height>240</height>
+				<aspectratio align="center" aligny="center">keep</aspectratio>
+				<texture>resource://resource.images.weathericons.default/$INFO[Window.Property(Daily.$PARAM[Daily].FanartCode),,.png]</texture>
+				<visible>String.IsEmpty(Skin.String(weather.icons.path))</visible>
+			</control>
+			<control type="label">
+				<top>20</top>
+				<left>20</left>
+				<right>20</right>
+				<align>center</align>
+				<font>Small</font>
+				<textcolor>PanelWhite100</textcolor>
+				<label fallback="161">$INFO[Window.Property(Daily.$PARAM[Daily].LongDay)]</label>
+			</control>
+			<control type="label">
+				<centertop>65%</centertop>
+				<left>20</left>
+				<right>20</right>
+				<align>center</align>
+				<font>LargeBold</font>
+				<textcolor>PanelWhite100</textcolor>
+				<label fallback="N/A">$INFO[Window.Property(Daily.$PARAM[Daily].HighTemperature),[B],[/B]]$INFO[Window.Property(Daily.$PARAM[Daily].lowTemperature),  ,]</label>
+			</control>
+			<control type="textbox">
+				<top>76%</top>
+				<height>130</height>
+				<left>20</left>
+				<right>20</right>
+				<align>center</align>
+				<font>Tiny</font>
+				<textcolor>PanelWhite100</textcolor>
+				<label fallback="161">$INFO[Window(Weather).Property(Daily.$PARAM[Daily].Outlook)]</label>
+			</control>
+		</control>
+	</include>
+	
 </includes>

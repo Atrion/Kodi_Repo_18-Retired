@@ -90,8 +90,7 @@ class source:
 
 					# Ignore
 					meta.mIgnoreLength = 10
-					if meta.ignore(True):
-						continue
+					if meta.ignore(True): continue
 
 					# Add
 					sources.append({'url' : htmlLink, 'debridonly' : False, 'direct' : False, 'source' : 'torrent', 'language' : self.language[0], 'quality': meta.videoQuality(), 'metadata' : meta, 'file' : htmlName})

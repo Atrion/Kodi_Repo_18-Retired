@@ -20,9 +20,8 @@
 
 
 import urllib,json
-
-from resources.lib.modules import cache
 from resources.lib.modules import client
+from resources.lib.extensions import cache
 
 
 class tvMaze:
@@ -52,7 +51,7 @@ class tvMaze:
 
 			# Send the request and get the response
 			# Get the results from cache if available
-			response = cache.get(client.request, 24, request)
+			response = cache.Cache().cacheMedium(client.request, request)
 
 			# Retrun the result as a dictionary
 			return json.loads(response)

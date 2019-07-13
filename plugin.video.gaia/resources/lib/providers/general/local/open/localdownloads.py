@@ -127,7 +127,15 @@ class source:
 			if 'exact' in data and data['exact']:
 				title = data['tvshowtitle'] if 'tvshowtitle' in data else data['title']
 			else:
-				title = '%s S%02dE%02d' % (data['tvshowtitle'], int(data['season']), int(data['episode'])) if type == 'episode' else '%s %s' % (data['title'], data['year'])
+				if type == 'episode':
+					# Search special episodes by name. All special episodes are added to season 0 by Trakt and TVDb. Hence, do not search by filename (eg: S02E00), since the season is not known.
+					if (season == 0 or episode == 0) and ('title' in data and not data['title'] == None and not data['title'] == ''):
+						title = '%s %s' % (data['tvshowtitle'], data['title']) # Change the title for metadata filtering.
+					else:
+						title = '%s S%02dE%02d' % (data['tvshowtitle'], int(data['season']), int(data['episode']))
+				else:
+					title = '%s %s' % (data['title'], str(data['year']))
+
 				title = re.sub('(\\\|/| -|:|;|\*|\?|"|\'|<|>|\|)', ' ', title)
 
 			files = self._find(path, title)

@@ -18,7 +18,7 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
-import re,urllib,urlparse
+import re,urllib,urlparse,threading
 from resources.lib.modules import cleantitle
 from resources.lib.modules import client
 from resources.lib.extensions import metadata
@@ -64,12 +64,27 @@ class source:
 		except:
 			return
 
+	def _link(self, link):
+		try:
+			html = BeautifulSoup(client.request(link))
+			htmlLinks = html.find_all('a')
+			for i in range(len(htmlLinks)):
+				resolved = htmlLinks[i]['href']
+				if resolved.lower().startswith('magnet:'):
+					self.tLock.acquire()
+					self.tLinks[link] = resolved
+					self.tLock.release()
+					break
+		except:
+			pass
+
 	def sources(self, url, hostDict, hostprDict):
 		sources = []
 		try:
 			if url == None:
 				raise Exception()
 
+			ignoreContains = None
 			data = urlparse.parse_qs(url)
 			data = dict([(i, data[i][0]) if data[i] else (i, '') for i in data])
 
@@ -89,8 +104,14 @@ class source:
 				packCount = data['packcount'] if 'packcount' in data else None
 
 				if 'tvshowtitle' in data:
-					if pack: query = '%s %d' % (title, season)
-					else: query = '%s S%02dE%02d' % (title, season, episode)
+					# Search special episodes by name. All special episodes are added to season 0 by Trakt and TVDb. Hence, do not search by filename (eg: S02E00), since the season is not known.
+					if (season == 0 or episode == 0) and ('title' in data and not data['title'] == None and not data['title'] == ''):
+						title = '%s %s' % (data['tvshowtitle'], data['title']) # Change the title for metadata filtering.
+						query = title
+						ignoreContains = len(data['title']) / float(len(title)) # Increase the required ignore ration, since otherwise individual episodes and season packs are found as well.
+					else:
+						if pack: query = '%s %d' % (title, season)
+						else: query = '%s S%02dE%02d' % (title, season, episode)
 				else:
 					query = '%s %d' % (title, year)
 				query = re.sub('(\\\|/| -|:|;|\*|\?|"|\'|<|>|\|)', ' ', query)
@@ -104,6 +125,10 @@ class source:
 
 			page = 0 # Pages start at 0
 			added = False
+
+			threads = []
+			self.tLinks = {}
+			self.tLock = threading.Lock()
 
 			timerEnd = tools.Settings.getInteger('scraping.providers.timeout') - 8
 			timer = tools.Time(start = True)
@@ -140,7 +165,6 @@ class source:
 					try:
 						htmlRow = htmlRows[i]
 						htmlColumns = htmlRow.find_all('th')
-						tools.Logger.log("FFFGGGx: "+str(len(htmlColumns)))
 
 						# Name
 						htmlName = htmlRow.find_all('td', recursive = False)[0].getText().strip()
@@ -159,8 +183,13 @@ class source:
 						meta = metadata.Metadata(name = htmlName, title = title, year = year, season = season, episode = episode, pack = pack, packCount = packCount, link = htmlLink, size = htmlSize, seeds = htmlSeeds)
 
 						# Ignore
-						if meta.ignore(True):
-							continue
+						meta.ignoreAdjust(contains = ignoreContains)
+						if meta.ignore(True): continue
+
+						# Resolve
+						thread = threading.Thread(target = self._link, args = (htmlLink,))
+						threads.append(thread)
+						thread.start()
 
 						# Add
 						sources.append({'url' : htmlLink, 'debridonly' : False, 'direct' : False, 'source' : 'torrent', 'language' : self.language[0], 'quality': meta.videoQuality(), 'metadata' : meta, 'file' : htmlName})
@@ -170,16 +199,22 @@ class source:
 
 				if not added: # Last page reached with a working torrent
 					break
-
-			return sources
 		except:
-			return sources
+			pass
+
+		while True:
+			if timer.elapsed() > timerEnd: break
+			if not any([thread.is_alive() for thread in threads]): break
+			tools.Time.sleep(0.5)
+		result = []
+		self.tLock.acquire()
+		for i in range(len(sources)):
+			link = sources[i]['url']
+			if link in self.tLinks:
+				sources[i]['url'] = self.tLinks[link]
+				result.append(sources[i])
+		self.tLock.release()
+		return result
 
 	def resolve(self, url):
-		html = BeautifulSoup(client.request(url))
-		htmlLinks = html.find_all('a')
-		for htmlLink in htmlLinks:
-			link = htmlLink['href']
-			if link.startswith('magnet:'):
-				return link
-		return None
+		return url

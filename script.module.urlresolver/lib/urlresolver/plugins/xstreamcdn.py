@@ -12,7 +12,7 @@ from urlresolver.resolver import UrlResolver, ResolverError
 class XStreamCDNResolver(UrlResolver):
     name = 'XStreamCDN'
     domains = ['xstreamcdn.com']
-    pattern = '(?://|\.)(xstreamcdn\.com)/v/(\w+)' # Host and media-id pattern.
+    pattern = '(?://|\.)(xstreamcdn\.com)/v/([\w-]+)' # Host and media-id pattern.
  
     def __init__(self):
         self.net = Net()

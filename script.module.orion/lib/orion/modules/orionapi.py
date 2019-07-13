@@ -41,11 +41,6 @@ class OrionApi:
 	TypesNonessential = ['exception', 'success', 'streammissing']
 	TypesBlock = ['streamvoteabuse', 'streamremoveabuse']
 
-	IgnoreExcludes = ['alluc', 'alluc.ee', 'prontv', 'pron.tv', 'llucy', 'llucy.net']
-
-	SuccessStreamVote = 'streamvote'
-	SuccessStreamRemove = 'streamremove'
-
 	ParameterMode = 'mode'
 	ParameterAction = 'action'
 	ParameterKeyApp = 'keyapp'
@@ -55,6 +50,7 @@ class OrionApi:
 	ParameterEmail = 'email'
 	ParameterPassword = 'password'
 	ParameterLink = 'link'
+	ParameterLinks = 'links'
 	ParameterResult = 'result'
 	ParameterQuery = 'query'
 	ParameterStatus = 'status'
@@ -66,8 +62,9 @@ class OrionApi:
 	ParameterMessage = 'message'
 	ParameterData = 'data'
 	ParameterCount = 'count'
-	ParameterFiltered = 'filtered'
 	ParameterTotal = 'total'
+	ParameterRequested = 'requested'
+	ParameterRetrieved = 'retrieved'
 	ParameterTime = 'time'
 	ParameterDirection = 'direction'
 	ParameterVersion = 'version'
@@ -79,6 +76,7 @@ class OrionApi:
 	StatusError = 'error'
 
 	ModeStream = 'stream'
+	ModeContainer = 'container'
 	ModeApp = 'app'
 	ModeUser = 'user'
 	ModeNotification = 'notification'
@@ -88,8 +86,10 @@ class OrionApi:
 	ActionUpdate = 'update'
 	ActionRetrieve = 'retrieve'
 	ActionAnonymous = 'anonymous'
+	ActionDownload = 'download'
 	ActionLogin = 'login'
 	ActionRemove = 'remove'
+	ActionHash = 'hash'
 	ActionVote = 'vote'
 	ActionTest = 'test'
 
@@ -173,7 +173,7 @@ class OrionApi:
 			if not OrionSettings.silent():
 				query = copy.deepcopy(parameters)
 				if query:
-					truncate = [OrionApi.ParameterId, OrionApi.ParameterKey, OrionApi.ParameterKeyApp, OrionApi.ParameterKeyUser, OrionApi.ParameterData]
+					truncate = [OrionApi.ParameterId, OrionApi.ParameterKey, OrionApi.ParameterKeyApp, OrionApi.ParameterKeyUser, OrionApi.ParameterData, OrionApi.ParameterLink, OrionApi.ParameterLinks]
 					for key, value in query.iteritems():
 						if key in truncate: query[key] = '-- truncated --'
 				OrionTools.log('ORION API REQUEST: ' + OrionTools.jsonTo(query))
@@ -185,6 +185,7 @@ class OrionApi:
 				agent = OrionNetworker.AgentOrion,
 				debug = not OrionSettings.silent()
 			)
+
 			data = networker.request()
 			if raw: return {'status' : networker.status(), 'headers' : networker.headers(), 'body' : data, 'response' : networker.response()}
 			json = OrionTools.jsonFrom(data)
@@ -206,18 +207,27 @@ class OrionApi:
 				if not OrionSettings.silent():
 					OrionTools.log('ORION API SUCCESS: ' + self._logMessage())
 				if not silent and OrionSettings.silentAllow(self.mStatus):
-					if self.mType == OrionApi.SuccessStreamVote:
-						OrionInterface.dialogNotification(title = 32202, message = 33029, icon = OrionInterface.IconSuccess)
-					elif self.mType == OrionApi.SuccessStreamRemove:
-						OrionInterface.dialogNotification(title = 32203, message = 33030, icon = OrionInterface.IconSuccess)
-					else:
-						try:
-							if self.mData and OrionApi.ParameterCount in self.mData:
-								count = self.mData[OrionApi.ParameterCount]
-								message = OrionTools.translate(32062) + ': ' + str(count[OrionApi.ParameterTotal]) + ' • ' + OrionTools.translate(32063) + ': ' + str(count[OrionApi.ParameterFiltered])
-								OrionTools.log('ORION STREAMS FOUND: ' + message)
-								OrionInterface.dialogNotification(title = 32060, message = message, icon = OrionInterface.IconSuccess)
-						except: pass
+					if mode == self.ModeStream:
+						if action == self.ActionVote:
+							OrionInterface.dialogNotification(title = 32202, message = 33029, icon = OrionInterface.IconSuccess)
+						elif action == self.ActionRemove:
+							OrionInterface.dialogNotification(title = 32203, message = 33030, icon = OrionInterface.IconSuccess)
+						elif action == self.ActionRetrieve:
+							count = self.mData[OrionApi.ParameterCount]
+							message = OrionTools.translate(32062) + ': ' + str(count[OrionApi.ParameterTotal]) + ' • ' + OrionTools.translate(32063) + ': ' + str(count[OrionApi.ParameterRetrieved])
+							OrionTools.log('ORION STREAMS FOUND: ' + message)
+							OrionInterface.dialogNotification(title = 32060, message = message, icon = OrionInterface.IconSuccess)
+					elif mode == self.ModeContainer:
+						if action == self.ActionRetrieve:
+							count = self.mData[OrionApi.ParameterCount]
+							message = OrionTools.translate(32232) + ': ' + str(count[OrionApi.ParameterRequested]) + ' • ' + OrionTools.translate(32233) + ': ' + str(count[OrionApi.ParameterRetrieved])
+							OrionTools.log('ORION CONTAINERS FOUND: ' + message)
+						elif action == self.ActionHash:
+							count = self.mData[OrionApi.ParameterCount]
+							message = OrionTools.translate(32228) + ': ' + str(count[OrionApi.ParameterRequested]) + ' • ' + OrionTools.translate(32229) + ': ' + str(count[OrionApi.ParameterRetrieved])
+							OrionTools.log('ORION HASHES FOUND: ' + message)
+							# Do not show a notification if hashes are found, especailly if they are requested in chunks, too many popups.
+							#OrionInterface.dialogNotification(title = 32227, message = message, icon = OrionInterface.IconSuccess)
 		except:
 			try:
 				self.mStatus = OrionApi.StatusError
@@ -356,6 +366,21 @@ class OrionApi:
 
 	def streamRemove(self, item, stream, silent = True):
 		return self._request(mode = OrionApi.ModeStream, action = OrionApi.ActionRemove, parameters = {OrionApi.ParameterItem : item, OrionApi.ParameterStream : stream}, silent = silent)
+
+	##############################################################################
+	# CONTAINER
+	##############################################################################
+
+	def containerRetrieve(self, links):
+		return self._request(mode = OrionApi.ModeContainer, action = OrionApi.ActionRetrieve, parameters = {OrionApi.ParameterLinks : links})
+
+	def containerHash(self, links):
+		return self._request(mode = OrionApi.ModeContainer, action = OrionApi.ActionHash, parameters = {OrionApi.ParameterLinks : links})
+
+	def containerDownload(self, id):
+		data = self._request(mode = OrionApi.ModeContainer, action = OrionApi.ActionDownload, parameters = {OrionApi.ParameterId : id}, raw = True)['body']
+		if OrionTools.jsonFrom(data) == None: return data # When JSON API error is returned.
+		else: return None
 
 	##############################################################################
 	# NOTIFICATION

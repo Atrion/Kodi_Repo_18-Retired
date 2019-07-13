@@ -228,6 +228,7 @@
                     <texture colordiffuse="Dark1">progress/play.png</texture>
                     <animation effect="fade" start="0" end="100" time="150">VisibleChange</animation>
                     <visible>!Player.Paused</visible>
+					<include>Animation.RotatePlay</include>
                 </control>
                 <control type="image" description="Pause">
                     <left>0</left>
@@ -306,6 +307,7 @@
                     <texture colordiffuse="Dark1">progress/play.png</texture>
                     <animation effect="fade" start="0" end="100" time="150">VisibleChange</animation>
                     <visible>!Player.Paused</visible>
+					<include>Animation.RotatePlay</include>
                 </control>
                 <control type="image" description="Pause">
                     <left>0</left>
@@ -798,7 +800,7 @@
                     <width>324</width>
                     <height>324</height>
                     <fadetime>350</fadetime>
-                    <aspectratio scalediffuse="false">scale</aspectratio>
+                    <aspectratio scalediffuse="false">keep</aspectratio>
                     <texture diffuse="diffuse/widgetposter.png" fallback="DefaultAddonNone.png">$VAR[WidgetImage]</texture>
                 </control>
       			<control type="group">
@@ -1514,7 +1516,7 @@
 					<top>9</top>			
 					<bottom>9</bottom> 
 					<width>239</width>                        
-					<texture colordiffuse="BoxWidget" background="true">common/box3white.png</texture>   
+					<texture colordiffuse="BoxWidget" background="true">common/box20white.png</texture>   
 					<visible>!Skin.HasSetting(thumbnails.white)</visible>                        
 				</control>
 				<control type="image">
@@ -1522,7 +1524,7 @@
                     <width>237</width>
                     <bottom>10</bottom>
                     <top>10</top>
-                    <aspectratio scalediffuse="false">scale</aspectratio>
+                    <aspectratio scalediffuse="false">keep</aspectratio>
                     <texture diffuse="diffuse/wall.png" fallback="DefaultAddonNone.png" background="true">$VAR[PosterImage]</texture>
                 </control>
             </itemlayout>
@@ -1532,7 +1534,7 @@
 					<top>9</top>			
 					<bottom>9</bottom> 
 					<width>239</width>                        
-					<texture colordiffuse="BoxWidget" background="true">common/box3white.png</texture>   
+					<texture colordiffuse="BoxWidget" background="true">common/box20white.png</texture>   
 					<visible>!Skin.HasSetting(thumbnails.white)</visible>                        
 				</control>
 				<control type="image">
@@ -1540,7 +1542,7 @@
                     <width>237</width>
                     <bottom>10</bottom>
                     <top>10</top>
-                    <aspectratio scalediffuse="false">scale</aspectratio>
+                    <aspectratio scalediffuse="false">keep</aspectratio>
                     <texture diffuse="diffuse/wall.png" fallback="DefaultAddonNone.png" background="true">$VAR[PosterImage]</texture>
                 </control>
                 <control type="image">
@@ -2186,6 +2188,15 @@
                 <texture colordiffuse="Dark3">$INFO[ListItem.Icon]</texture>
                 <visible>String.Contains(ListItem.Icon,special://skin/extras/icons)</visible>
             </control>
+			<control type="image">
+                <width>100</width>
+                <height>100</height>
+                <centerleft>50%</centerleft>
+                <centertop>45%</centertop>
+				<aspectratio>keep</aspectratio>
+                <texture colordiffuse="Dark3">$INFO[ListItem.Icon]</texture>
+                <visible>!String.Contains(ListItem.Icon,special://skin/extras/icons)</visible>
+            </control>
             <control type="label">
                 <align>center</align>
                 <aligny>top</aligny>
@@ -2206,6 +2217,15 @@
                 <centertop>45%</centertop>
                 <texture colordiffuse="$VAR[ColorHighlight]">$INFO[ListItem.Icon]</texture>
                 <visible>String.Contains(ListItem.Icon,special://skin/extras/icons)</visible>
+            </control>
+			<control type="image">
+                <width>100</width>
+                <height>100</height>
+                <centerleft>50%</centerleft>
+                <centertop>45%</centertop>
+                <aspectratio>keep</aspectratio>
+                <texture colordiffuse="$VAR[ColorHighlight]">$INFO[ListItem.Icon]</texture>
+                <visible>!String.Contains(ListItem.Icon,special://skin/extras/icons)</visible>
             </control>
             <control type="label">
                 <align>center</align>
@@ -2965,7 +2985,7 @@
 					<top>9</top>
 					<right>9</right>
 					<bottom>9</bottom>                         
-					<texture colordiffuse="BoxWidget" background="true">common/box3white.png</texture>   
+					<texture colordiffuse="BoxWidget" background="true">common/box20white.png</texture>   
 					<visible>!Skin.HasSetting(thumbnails.white)</visible>                        
 				</control>
                 <control type="image">
@@ -2973,7 +2993,7 @@
                     <top>10</top>
                     <right>10</right>
                     <bottom>10</bottom>
-                    <aspectratio scalediffuse="false">scale</aspectratio>
+                    <aspectratio scalediffuse="false">keep</aspectratio>
                     <texture diffuse="diffuse/wall.png" background="true" fallback="DefaultMovies.png">$VAR[PosterImage]</texture>
                 </control>
                 <control type="image">
@@ -3087,7 +3107,7 @@
 					<top>9</top>
 					<right>9</right>
 					<bottom>9</bottom>                         
-					<texture colordiffuse="BoxWidget" background="true">common/box3white.png</texture>   
+					<texture colordiffuse="BoxWidget" background="true">common/box20white.png</texture>   
 					<visible>!Skin.HasSetting(thumbnails.white)</visible>                        
 				</control>
                 <control type="image">
@@ -3095,7 +3115,7 @@
                     <top>10</top>
                     <right>10</right>
                     <bottom>10</bottom>
-                    <aspectratio scalediffuse="false">scale</aspectratio>
+                    <aspectratio scalediffuse="false">keep</aspectratio>
                     <texture diffuse="diffuse/wall.png" background="true" fallback="DefaultMovies.png">$VAR[PosterImage]</texture>
                 </control>
                 <control type="image">

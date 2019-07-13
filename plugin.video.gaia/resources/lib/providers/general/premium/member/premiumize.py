@@ -26,6 +26,9 @@ from resources.lib.extensions import tools
 from resources.lib.extensions import debrid
 
 class source:
+
+	FeedsName = 'Feed Downloads'
+
 	def __init__(self):
 		self.pack = True # Checked by provider.py
 		self.priority = 0
@@ -111,8 +114,9 @@ class source:
 			for item in items:
 				id = item['id']
 				if not id in ids:
-					meta = metadata.Metadata(name = item['name'], title = title, year = year, season = season, episode = episode, pack = pack)
-					if not meta.ignore(size = False):
+					# The RSS feed directory returns the same episodes individually and as a pack. Only add it once.
+					meta = metadata.Metadata(name = item['name'], title = title, year = year, season = season, episode = episode)
+					if (not pack and item['name'] == source.FeedsName) or not pack and not meta.ignore(size = False):
 						if item['type'] == 'file':
 							item['video'] = item
 							self.items.append(item)

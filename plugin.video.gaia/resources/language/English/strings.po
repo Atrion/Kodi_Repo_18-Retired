@@ -1589,7 +1589,7 @@ msgid "Special Episodes"
 msgstr ""
 
 msgctxt "#33237"
-msgid "Fanart Backdrops"
+msgid "XXXXXXXXXXXXXXXXXXXXXX"
 msgstr ""
 
 msgctxt "#33238"
@@ -2053,7 +2053,7 @@ msgid "The %s account is invalid. Ensure the account details were correctly ente
 msgstr ""
 
 msgctxt "#33353"
-msgid "Webcache"
+msgid "Rescrape"
 msgstr ""
 
 msgctxt "#33354"
@@ -5317,7 +5317,7 @@ msgid "Automatically deletes transfers and files from your account on the RealDe
 msgstr ""
 
 msgctxt "#34169"
-msgid "Sorts the Trakt progress and calendar lists according to release date. If disabled, the current show sorting setting is used."
+msgid "Sorts the Trakt show progress lists according to a specific attribute.""
 msgstr ""
 
 msgctxt "#34170"
@@ -6234,6 +6234,74 @@ msgstr ""
 
 msgctxt "#34406"
 msgid "Enable or disable individual OpenScrapers providers."
+msgstr ""
+
+msgctxt "#34407"
+msgid "Automatically scrape the next episode in the background while still watching the previous episode. Allows to immediately watch the next episodes once the current playback has finished. Initiate binge watching automatically or manually through the context menu."
+msgstr ""
+
+msgctxt "#34408"
+msgid "The account is used by a provider to retrieve local and remote Emby content."
+msgstr ""
+
+msgctxt "#34409"
+msgid "Manages the Emby servers."
+msgstr ""
+
+msgctxt "#34410"
+msgid "Uses a cinematic experience by playing random trailers while waiting for scraping to finish and playback to start."
+msgstr ""
+
+msgctxt "#34411"
+msgid "Shows scraping and playback progress notifications while playing the trailers."
+msgstr ""
+
+msgctxt "#34412"
+msgid "Interrupts the currently playing trailer if scraping is done. Otherwise the trailer playback is finished before continuing."
+msgstr ""
+
+msgctxt "#34413"
+msgid "Sorts the Trakt show calendar lists according to a specific attribute."
+msgstr ""
+
+msgctxt "#34414"
+msgid "Shows a timeout window for a number of seconds, asking if you want to continue to the next episode. Set to 0 to immediately continue without any delay."
+msgstr ""
+
+msgctxt "#34415"
+msgid "Suppresses external dialogs, such as the Trakt rating, when the binge continuation window is showing."
+msgstr ""
+
+msgctxt "#34416"
+msgid "Shows theater curtains on special windows."
+msgstr ""
+
+msgctxt "#34417"
+msgid "Terminates the scraping process once a certain number of local streams were found according to the given specifications."
+msgstr ""
+
+msgctxt "#34418"
+msgid "Terminates the scraping process once a certain number of premium streams were found according to the given specifications."
+msgstr ""
+
+msgctxt "#34419"
+msgid "Terminates the scraping process once a certain number of torrent streams were found according to the given specifications."
+msgstr ""
+
+msgctxt "#34420"
+msgid "Terminates the scraping process once a certain number of usenet streams were found according to the given specifications."
+msgstr ""
+
+msgctxt "#34421"
+msgid "Terminates the scraping process once a certain number of hoster streams were found according to the given specifications."
+msgstr ""
+
+msgctxt "#34422"
+msgid "The type of rating to show. Either show the average rating cast by the public, or your own rating if available."
+msgstr ""
+
+msgctxt "#34423"
+msgid "The maximum number of movies or shows listed per page before requiring to navigate to the next page."
 msgstr ""
 
 
@@ -7429,7 +7497,7 @@ msgid "YouTube"
 msgstr ""
 
 msgctxt "#35297"
-msgid "The addon allows for YouTube streaming through ResolveUrl or UrlResolver. The addon is only necessary if you want to stream YouTube content without a supporting debrid service."
+msgid "The addon allows you to play YouTube videos used for trailers, cinematic experience, and streaming through ResolveUrl or UrlResolver."
 msgstr ""
 
 msgctxt "#35298"
@@ -7569,7 +7637,7 @@ msgid "Universal Scrapers"
 msgstr ""
 
 msgctxt "#35332"
-msgid "NoobsAndNerds Scrapers"
+msgid "NaN Scrapers"
 msgstr ""
 
 msgctxt "#35333"
@@ -7641,7 +7709,7 @@ msgid "UniversalScrapers Providers"
 msgstr ""
 
 msgctxt "#35350"
-msgid "NoobsAndNerds Providers"
+msgid "NanScrapers Providers"
 msgstr ""
 
 msgctxt "#35351"
@@ -7681,7 +7749,7 @@ msgid "UniversalScrapers"
 msgstr ""
 
 msgctxt "#35360"
-msgid "NoobsAndNerds"
+msgid "NanScrapers"
 msgstr ""
 
 msgctxt "#35361"
@@ -8442,4 +8510,272 @@ msgstr ""
 
 msgctxt "#35550"
 msgid "OpenScrapers Providers"
+msgstr ""
+
+msgctxt "#35551"
+msgid "Emby"
+msgstr ""
+
+msgctxt "#35552"
+msgid "Servers"
+msgstr ""
+
+msgctxt "#35553"
+msgid "Server"
+msgstr ""
+
+msgctxt "#35554"
+msgid "Add Server"
+msgstr ""
+
+msgctxt "#35555"
+msgid "Remove Server"
+msgstr ""
+
+msgctxt "#35556"
+msgid "Server Host"
+msgstr ""
+
+msgctxt "#35557"
+msgid "Server Port"
+msgstr ""
+
+msgctxt "#35558"
+msgid "Server Encryption"
+msgstr ""
+
+msgctxt "#35559"
+msgid "Remote"
+msgstr ""
+
+msgctxt "#35560"
+msgid "Direct Streaming"
+msgstr ""
+
+msgctxt "#35561"
+msgid "Default Transcoding"
+msgstr ""
+
+msgctxt "#35562"
+msgid "Ultra Transcoding"
+msgstr ""
+
+msgctxt "#35563"
+msgid "High Transcoding"
+msgstr ""
+
+msgctxt "#35564"
+msgid "Medium Transcoding"
+msgstr ""
+
+msgctxt "#35565"
+msgid "Low Transcoding"
+msgstr ""
+
+msgctxt "#35566"
+msgid "Trailers"
+msgstr ""
+
+msgctxt "#35567"
+msgid "Cinematic Experience"
+msgstr ""
+
+msgctxt "#35568"
+msgid "Progress Notifications"
+msgstr ""
+
+msgctxt "#35569"
+msgid "Interrupt Trailers"
+msgstr ""
+
+msgctxt "#35570"
+msgid "This addon allows you to view extended movie and show information and resources."
+msgstr ""
+
+msgctxt "#35571"
+msgid "ExtendedInfo"
+msgstr ""
+
+msgctxt "#35572"
+msgid "Progress Sorting"
+msgstr ""
+
+msgctxt "#35573"
+msgid "Calendar Sorting"
+msgstr ""
+
+msgctxt "#35574"
+msgid "Do you want to enabled SSL/TLS encryption for the server? Most local servers do not use encryption."
+msgstr ""
+
+msgctxt "#35575"
+msgid "Transcoded"
+msgstr ""
+
+msgctxt "#35576"
+msgid "Original File"
+msgstr ""
+
+msgctxt "#35577"
+msgid "Emby Defaults"
+msgstr ""
+
+msgctxt "#35578"
+msgid "The Emby authentication failed. Make sure you entered the details correctly and that you have access to the server."
+msgstr ""
+
+msgctxt "#35579"
+msgid "Binge Playback"
+msgstr ""
+
+msgctxt "#35580"
+msgid "Binge"
+msgstr ""
+
+msgctxt "#35581"
+msgid "Continuation Delay"
+msgstr ""
+
+msgctxt "#35581"
+msgid "Continuation Delay"
+msgstr ""
+
+msgctxt "#35582"
+msgid "Next Episode In"
+msgstr ""
+
+msgctxt "#35583"
+msgid "Suppress Dialogs"
+msgstr ""
+
+msgctxt "#35584"
+msgid "Theater Curtains"
+msgstr ""
+
+msgctxt "#35585"
+msgid "Single Scrape"
+msgstr ""
+
+msgctxt "#35586"
+msgid "Binge Scrape"
+msgstr ""
+
+msgctxt "#35587"
+msgid "No Unwatched Episode Available For Binge Watching"
+msgstr ""
+
+msgctxt "#35588"
+msgid "Movie Minimum Streams"
+msgstr ""
+
+msgctxt "#35589"
+msgid "Show Minimum Streams"
+msgstr ""
+
+msgctxt "#35590"
+msgid "Movie Video Quality"
+msgstr ""
+
+msgctxt "#35591"
+msgid "Show Video Quality"
+msgstr ""
+
+msgctxt "#35592"
+msgid "Movie Video Codec"
+msgstr ""
+
+msgctxt "#35593"
+msgid "Show Video Codec"
+msgstr ""
+
+msgctxt "#35594"
+msgid "Movie Audio Channels"
+msgstr ""
+
+msgctxt "#35595"
+msgid "Show Audio Channels"
+msgstr ""
+
+msgctxt "#35596"
+msgid "Movie Audio Codec"
+msgstr ""
+
+msgctxt "#35597"
+msgid "Show Audio Codec"
+msgstr ""
+
+msgctxt "#35598"
+msgid "Movie Stream Type"
+msgstr ""
+
+msgctxt "#35599"
+msgid "Show Stream Type"
+msgstr ""
+
+msgctxt "#35600"
+msgid "Container"
+msgstr ""
+
+msgctxt "#35601"
+msgid "Container Download Failed"
+msgstr ""
+
+msgctxt "#35602"
+msgid "Ratings"
+msgstr ""
+
+msgctxt "#35603"
+msgid "Rating Type"
+msgstr ""
+
+msgctxt "#35604"
+msgid "Public"
+msgstr ""
+
+msgctxt "#35605"
+msgid "Own"
+msgstr ""
+
+msgctxt "#35606"
+msgid "Recheck"
+msgstr ""
+
+msgctxt "#35607"
+msgid "Count"
+msgstr ""
+
+msgctxt "#35608"
+msgid "Your IMDb watchlist does not seem to be public. Login to IMDb's website, select your watchlist, and change the privacy option to [I]public[/I] under the list's settings."
+msgstr ""
+
+msgctxt "#35609"
+msgid "Your IMDb ratings list does not seem to be public. Login to IMDb's website, select your ratings list, and change the privacy option to [I]public[/I] under the list's settings."
+msgstr ""
+
+msgctxt "#35610"
+msgid "This option exports your IMDb watchlist and ratings to your Trakt account. A few shows and episodes might not synchronize, due to IMDb limitations. Do you want to continue?"
+msgstr ""
+
+msgctxt "#35611"
+msgid "Movies and shows from your ratings list can be marked as watched, even if they do not appear in your watchlist. Do you want to add items from your ratings list to your watchlist?"
+msgstr ""
+
+msgctxt "#35612"
+msgid "Do you want to synchronize your IMDb account with your Trakt account now?"
+msgstr ""
+
+msgctxt "#35613"
+msgid "Your IMDb and Trakt accounts are now synchronized."
+msgstr ""
+
+msgctxt "#35614"
+msgid "Addon"
+msgstr ""
+
+msgctxt "#35615"
+msgid "Settings For Slow Devices"
+msgstr ""
+
+msgctxt "#35616"
+msgid "Settings For Fast Devices"
 msgstr ""

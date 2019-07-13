@@ -53,6 +53,9 @@ class source:
 	def verify(self):
 		return self.orion.serverTest()
 
+	def silent(self, silent = True):
+		self.orion = orionoid.Orionoid(silent = silent)
+
 	def movie(self, imdb, title, localtitle, year):
 		try:
 			url = {'imdb': imdb, 'title': title, 'year': year}
@@ -118,14 +121,17 @@ class source:
 			streams = streams['streams']
 			for stream in streams:
 				try:
+					links = stream['links']
+					try: link = links[0]
+					except: continue
+
 					meta = metadata.Metadata()
 
 					try: meta.setOrion(True)
 					except: pass
-
 					try: meta.setPopularity(stream['popularity']['percent'])
 					except: pass
-					try: meta.setLink(stream['stream']['link'])
+					try: meta.setLink(link)
 					except: pass
 
 					try:
@@ -180,8 +186,8 @@ class source:
 						if stream['subtitle']['type'] == orionoid.Orionoid.SubtitleHard: meta.setSubtitlesHard()
 					except: pass
 
-					try: link = stream['stream']['link']
-					except: continue
+					try: reference = stream['stream']['reference']
+					except: reference = None
 
 					try: direct = stream['access']['direct']
 					except: direct = False
@@ -206,7 +212,7 @@ class source:
 							if stream['stream']['hoster']:
 								source = stream['stream']['hoster']
 							else:
-								source = network.Networker.linkDomain(stream['stream']['link'], subdomain = False, ip = False).lower()
+								source = network.Networker.linkDomain(link, subdomain = False, ip = False).lower()
 								if source:
 									if 'gvideo' in source or ('google' in source and 'vid' in source) or ('google' in source and 'link' in source):
 										source = 'GoogleVideo'
@@ -239,13 +245,12 @@ class source:
 					try: hash = stream['file']['hash']
 					except: hash = None
 
-					orion = {}
-					try: orion['stream'] = stream['id']
-					except: pass
-					try: orion['item'] = item
-					except: pass
+					orion = {
+						'item' : item,
+						'stream' : stream['id'],
+					}
 
-					sources.append({'orion' : orion, 'url' : link, 'direct' : direct, 'cache' : cache, 'origin' : origin, 'source' : source, 'provider' : provider, 'hash' : hash, 'language' : language, 'quality': quality, 'file' : filename, 'metadata' : meta, 'pack' : meta.pack(), 'external' : True})
+					sources.append({'orion' : orion, 'url' : link, 'links' : links, 'direct' : direct, 'cache' : cache, 'origin' : origin, 'source' : source, 'provider' : provider, 'hash' : hash, 'language' : language, 'quality': quality, 'file' : filename, 'metadata' : meta, 'pack' : meta.pack(), 'external' : True})
 				except:
 					tools.Logger.error()
 

@@ -26,11 +26,14 @@ from resources.lib.modules import trakt
 from resources.lib.modules import views
 from resources.lib.extensions import api
 from resources.lib.extensions import tools
+from resources.lib.extensions import cache
 from resources.lib.extensions import search
+from resources.lib.extensions import trailer
 from resources.lib.extensions import interface
 from resources.lib.extensions import downloader
 from resources.lib.extensions import library
 from resources.lib.extensions import debrid
+from resources.lib.extensions import emby
 from resources.lib.extensions import handler
 from resources.lib.extensions import network
 from resources.lib.extensions import shortcuts
@@ -190,13 +193,17 @@ class navigator:
 		interface.Loader.show()
 		items = []
 		histories = historyx.History().retrieve(type = self.mType, kids = self.mKids)
-		for history in histories:
-			metadata = tools.Converter.dictionary(history[4])
-			item = tools.Converter.dictionary(history[5])
-			if isinstance(item, list): item = item[0]
-			item['meta'] = metadata
-			items.append(item)
-		core.Core(type = self.mType, kids = self.mKids).scrape(items = items, process = False)
+		if len(histories) > 0:
+			for history in histories:
+				metadata = tools.Converter.dictionary(history[4])
+				item = tools.Converter.dictionary(history[5])
+				if isinstance(item, list): item = item[0]
+				item['meta'] = metadata
+				items.append(item)
+			core.Core(type = self.mType, kids = self.mKids).scrape(items = items, process = False)
+		else:
+			interface.Dialog.notification(title = 32036, message = 33049, icon = interface.Dialog.IconInformation)
+			interface.Loader.hide()
 
 	def favourites(self):
 		self.addDirectoryItem(32001, self.parameterize('moviesFavourites', type = tools.Media.TypeMovie), 'moviesfavourites.png', 'DefaultFavourite.png')
@@ -369,11 +376,12 @@ class navigator:
 
 	def clearNavigator(self):
 		self.addDirectoryItem(33029, 'clearAll', 'clear.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
+		self.addDirectoryItem(33016, 'clearCache', 'clearcache.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
 		self.addDirectoryItem(33014, 'clearProviders', 'clearproviders.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
-		self.addDirectoryItem(33353, 'clearWebcache', 'clearcache.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
 		self.addDirectoryItem(32036, 'clearHistory', 'clearhistory.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
 		self.addDirectoryItem(35119, 'clearShortcuts', 'clearshortcuts.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
 		self.addDirectoryItem(33041, 'clearSearches', 'clearsearches.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
+		self.addDirectoryItem(35566, 'clearTrailers', 'clearplay.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
 		self.addDirectoryItem(32009, 'clearDownloads', 'cleardownloads.png', 'DefaultAddonProgram.png')
 		self.addDirectoryItem(33466, 'clearTemporary', 'cleartemporary.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
 		self.addDirectoryItem(33012, 'clearViews', 'clearviews.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
@@ -391,15 +399,21 @@ class navigator:
 
 	def clearAll(self, force = False):
 		if force or self._clearConfirm():
+			self.clearCache(confirm = False)
 			self.clearProviders(confirm = False)
-			self.clearWebcache(confirm = False)
 			self.clearHistory(confirm = False)
 			self.clearShortcuts(confirm = False)
 			self.clearSearches(confirm = False)
+			self.clearTrailers(confirm = False)
 			self.clearDownloads(confirm = False, automatic = True)
 			self.clearTemporary(confirm = False)
 			self.clearViews(confirm = False)
 			self._clearNotify()
+
+	def clearCache(self, confirm = True):
+		if not confirm or self._clearConfirm():
+			cache.Cache().clear(confirm = False)
+			if confirm: self._clearNotify()
 
 	def clearProviders(self, confirm = True):
 		if not confirm or self._clearConfirm():
@@ -408,12 +422,6 @@ class navigator:
 			core.Core().clearSources(confirm = False)
 			provider.Provider.databaseClear()
 			provider.Provider.failureClear()
-			if confirm: self._clearNotify()
-
-	def clearWebcache(self, confirm = True):
-		if not confirm or self._clearConfirm():
-			from resources.lib.modules import cache
-			cache.cache_clear()
 			if confirm: self._clearNotify()
 
 	def clearHistory(self, confirm = True):
@@ -429,6 +437,11 @@ class navigator:
 	def clearSearches(self, confirm = True):
 		if not confirm or self._clearConfirm():
 			search.Searches().clear(confirm = False)
+			if confirm: self._clearNotify()
+
+	def clearTrailers(self, confirm = True):
+		if not confirm or self._clearConfirm():
+			trailer.Trailer().clear(confirm = False)
 			if confirm: self._clearNotify()
 
 	def clearDownloads(self, confirm = True, automatic = False):
@@ -489,6 +502,7 @@ class navigator:
 		self.addDirectoryItem(interface.Translation.string(33566) + full, 'linkOpen&link=%s' % debrid.Premiumize.website(), 'premiumize.png', 'DefaultAddonProgram.png')
 		self.addDirectoryItem(interface.Translation.string(35200) + full, 'linkOpen&link=%s' % debrid.OffCloud.website(), 'offcloud.png', 'DefaultAddonProgram.png')
 		self.addDirectoryItem(interface.Translation.string(33567) + full, 'linkOpen&link=%s' % debrid.RealDebrid.website(), 'realdebrid.png', 'DefaultAddonProgram.png')
+		self.addDirectoryItem(interface.Translation.string(35551) + full, 'linkOpen&link=%s' % emby.Emby.website(), 'emby.png', 'DefaultAddonProgram.png')
 		self.addDirectoryItem(interface.Translation.string(33794) + limited, 'linkOpen&link=%s' % debrid.EasyNews.website(), 'easynews.png', 'DefaultAddonProgram.png')
 		self.addDirectoryItem(interface.Translation.string(33568) + minimal, 'linkOpen&link=%s' % debrid.AllDebrid.website(), 'alldebrid.png', 'DefaultAddonProgram.png')
 		self.addDirectoryItem(interface.Translation.string(33569) + minimal, 'linkOpen&link=%s' % debrid.RapidPremium.website(), 'rapidpremium.png', 'DefaultAddonProgram.png')
@@ -551,16 +565,20 @@ class navigator:
 
 	def imdbMovies(self):
 		if self.imdbAccount():
-			self.addDirectoryItem(32032, self.parameterize('moviesRetrieve&url=imdbwatchlist'), 'imdbcollections.png', 'DefaultAddonWebSkin.png', library = 'imdbwatchlist')
-			self.addDirectoryItem(32033, self.parameterize('moviesRetrieve&url=imdbwatchlist2'), 'imdblists.png', 'DefaultAddonWebSkin.png', library = 'imdbwatchlist2')
-			self.addDirectoryItem(32035, self.parameterize('moviesRetrieve&url=featured'), 'imdbfeatured.png', 'DefaultAddonWebSkin.png', library = 'featured')
+			self.addDirectoryItem(32032, self.parameterize('moviesRetrieve&url=imdbwatchlist'), 'imdbcollections.png', 'DefaultMovies.png', library = 'imdbwatchlist')
+			self.addDirectoryItem(32033, self.parameterize('moviesRetrieve&url=imdbwatchlist2'), 'imdblists.png', 'DefaultMovies.png', library = 'imdbwatchlist2')
+			self.addDirectoryItem(35602, self.parameterize('moviesRetrieve&url=imdbratings'), 'imdbrated.png', 'DefaultMovies.png', library = 'imdbratings')
+			self.addDirectoryItem(32035, self.parameterize('moviesRetrieve&url=featured'), 'imdbfeatured.png', 'DefaultMovies.png', library = 'featured')
+			self.addDirectoryItem(35212, self.parameterize('imdbExport'), 'imdbexport.png', 'DefaultTVShows.png')
 			self.endDirectory()
 
 	def imdbTv(self):
 		if self.imdbAccount():
 			self.addDirectoryItem(32032, self.parameterize('showsRetrieve&url=imdbwatchlist'), 'imdbcollections.png', 'DefaultTVShows.png', library = 'imdbwatchlist')
 			self.addDirectoryItem(32033, self.parameterize('showsRetrieve&url=imdbwatchlist2'), 'imdblists.png', 'DefaultTVShows.png', library = 'imdbwatchlist2')
+			self.addDirectoryItem(35602, self.parameterize('showsRetrieve&url=imdbratings'), 'imdbrated.png', 'DefaultTVShows.png', library = 'imdbratings')
 			self.addDirectoryItem(32035, self.parameterize('showsRetrieve&url=featured'), 'imdbfeatured.png', 'DefaultTVShows.png', library = 'featured')
+			self.addDirectoryItem(35212, self.parameterize('imdbExport'), 'imdbexport.png', 'DefaultTVShows.png')
 			self.endDirectory()
 
 	def moviesCategories(self):
@@ -797,7 +815,7 @@ class navigator:
 
 	def downloadsClear(self, type):
 		self.addDirectoryItem(33029, 'downloadsClear&downloadType=%s&downloadStatus=%s' % (type, downloader.Downloader.StatusAll), 'clearlist.png', 'DefaultAddonProgram.png')
-		self.addDirectoryItem(33291, 'downloadsClear&downloadType=%s&downloadStatus=%s' % (type, downloader.Downloader.StatusBusy), 'clearbusy.png', 'DefaultAddonProgram.png')
+		self.addDirectoryItem(33291, 'downloadsClear&downloadType=%s&downloadStatus=%s' % (type, downloader.Downloader.StatusBusy), 'clearplay.png', 'DefaultAddonProgram.png')
 		self.addDirectoryItem(33292, 'downloadsClear&downloadType=%s&downloadStatus=%s' % (type, downloader.Downloader.StatusPaused), 'clearpaused.png', 'DefaultAddonProgram.png')
 		self.addDirectoryItem(33294, 'downloadsClear&downloadType=%s&downloadStatus=%s' % (type, downloader.Downloader.StatusCompleted), 'clearcompleted.png', 'DefaultAddonProgram.png')
 		self.addDirectoryItem(33295, 'downloadsClear&downloadType=%s&downloadStatus=%s' % (type, downloader.Downloader.StatusFailed), 'clearfailed.png', 'DefaultAddonProgram.png')
@@ -817,6 +835,7 @@ class navigator:
 		self.addDirectoryItem(35200, 'offcloudNavigator', 'offcloud.png', 'DefaultAddonProgram.png')
 		self.addDirectoryItem(33567, 'realdebridNavigator', 'realdebrid.png', 'DefaultAddonProgram.png')
 		self.addDirectoryItem(33794, 'easynewsNavigator', 'easynews.png', 'DefaultAddonProgram.png')
+		self.addDirectoryItem(35551, 'embyNavigator', 'emby.png', 'DefaultAddonProgram.png')
 		self.endDirectory()
 
 	def servicesScraperNavigator(self):
@@ -844,6 +863,7 @@ class navigator:
 	def servicesUtilityNavigator(self):
 		self.addDirectoryItem(32315, 'traktNavigator', 'trakt.png', 'DefaultAddonProgram.png')
 		self.addDirectoryItem(35296, 'youtubeNavigator', 'youtube.png', 'DefaultAddonProgram.png')
+		self.addDirectoryItem(35571, 'extendedinfoNavigator', 'extendedinfo.png', 'DefaultAddonProgram.png')
 		self.addDirectoryItem(35203, 'metahandlerNavigator', 'metahandler.png', 'DefaultAddonProgram.png')
 		self.endDirectory()
 
@@ -935,6 +955,11 @@ class navigator:
 			self.addDirectoryItem(33339, 'easynewsAccount', 'easynewsaccount.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
 			self.addDirectoryItem(33030, 'speedtestEasyNews', 'easynewsspeed.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
 		self.addDirectoryItem(33354, 'easynewsWebsite', 'easynewsweb.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
+		self.endDirectory()
+
+	def embyNavigator(self):
+		self.addDirectoryItem(33011, 'embySettings', 'embysettings.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
+		self.addDirectoryItem(33354, 'embyWebsite', 'embyweb.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
 		self.endDirectory()
 
 	def elementumNavigator(self):
@@ -1039,6 +1064,14 @@ class navigator:
 			self.addDirectoryItem(33011, 'yodscrapersSettings', 'yodscraperssettings.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
 		else:
 			self.addDirectoryItem(33474, 'yodscrapersInstall', 'yodscrapersinstall.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
+		self.endDirectory()
+
+	def extendedinfoNavigator(self):
+		if tools.ExtendedInfo.installed():
+			self.addDirectoryItem(33256, 'extendedinfoLaunch', 'extendedinfolaunch.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
+			self.addDirectoryItem(33011, 'extendedinfoSettings', 'extendedinfosettings.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
+		else:
+			self.addDirectoryItem(33474, 'extendedinfoInstall', 'extendedinfoinstall.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
 		self.endDirectory()
 
 	def youtubeNavigator(self):

@@ -103,8 +103,13 @@ class source:
 				packCount = data['packcount'] if 'packcount' in data else None
 
 				if 'tvshowtitle' in data:
-					if pack: query = '%s saison %d' % (title, season)
-					else: query = '%s S%02d E%02d' % (title, season, episode) # Add space between season and episode, otherwise does not find anything.
+					# Search special episodes by name. All special episodes are added to season 0 by Trakt and TVDb. Hence, do not search by filename (eg: S02E00), since the season is not known.
+					if (season == 0 or episode == 0) and ('title' in data and not data['title'] == None and not data['title'] == ''):
+						title = '%s %s' % (data['tvshowtitle'], data['title']) # Change the title for metadata filtering.
+						query = title
+					else:
+						if pack: query = '%s saison %d' % (title, season)
+						else: query = '%s S%02d E%02d' % (title, season, episode) # Add space between season and episode, otherwise does not find anything.
 				else:
 					query = title # Do not include year, otherwise there are few results.
 				query = re.sub('(\\\|/| -|:|;|\*|\?|"|\'|<|>|\|)', ' ', query)

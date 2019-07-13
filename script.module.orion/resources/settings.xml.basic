@@ -5,6 +5,7 @@
 		<setting id="internal.backup" type="bool" default="false" visible="false" />
 
 		<setting id="internal.link" type="text" default="https://orionoid.com" visible="false" />
+		<setting id="internal.providers" type="text" default="https://providers.orionoid.com" visible="false" />
 		<setting id="internal.domain" type="text" default="orionoid.com" visible="false" />
 		<setting id="internal.ip" type="text" default="188.241.58.223" visible="false" />
 
@@ -94,7 +95,9 @@
 		<setting id="account.label.email" label="32020" type="action" option="close" action="RunPlugin(plugin://script.module.orion/?action=settingsAccountRefresh)" visible="eq(-17,true)" />
 		<setting id="account.label.package" label="32023" type="action" option="close" action="RunPlugin(plugin://script.module.orion/?action=settingsAccountRefresh)" visible="eq(-18,true)" />
 		<setting id="account.label.time" label="32029" type="action" option="close" action="RunPlugin(plugin://script.module.orion/?action=settingsAccountRefresh)" visible="eq(-19,true)" />
-		<setting id="account.label.limit" label="32026" type="action" option="close" action="RunPlugin(plugin://script.module.orion/?action=settingsAccountRefresh)" visible="eq(-20,true)" />
+		<setting id="account.label.limit.streams" label="32031" type="action" option="close" action="RunPlugin(plugin://script.module.orion/?action=settingsAccountRefresh)" visible="eq(-20,true)" />
+		<setting id="account.label.limit.hashes" label="32198" type="action" option="close" action="RunPlugin(plugin://script.module.orion/?action=settingsAccountRefresh)" visible="eq(-21,true)" />
+		<setting id="account.label.limit.containers" label="32230" type="action" option="close" action="RunPlugin(plugin://script.module.orion/?action=settingsAccountRefresh)" visible="eq(-22,true)" />
 
 		<setting type="sep" />
 		<setting type="bool" visible="false" />
@@ -147,49 +150,53 @@
 			<setting id="filters.stream.source" type="text" default="" visible="false" />
 		<setting id="filters.stream.hoster.label" label="32173" type="action" option="close" default="449 $ADDON[script.module.orion 32096]" action="RunPlugin(plugin://script.module.orion/?action=settingsFiltersStreamHoster&type=universal)" visible="eq(-28,true)" />
 			<setting id="filters.stream.hoster" type="text" default="" visible="false" />
-		<setting id="filters.stream.pack" label="32110" type="enum" lvalues="32101|32102|32103" default="0" visible="eq(-30,true)" />
-		<setting id="filters.stream.size" label="32076" type="bool" default="false" visible="eq(-31,true)" />
-		<setting id="filters.stream.size.minimum" label="32111" type="number" default="200" subsetting="true" visible="eq(-32,true) + eq(-1,true)" />
-		<setting id="filters.stream.size.maximum" label="32112" type="number" default="5000" subsetting="true" visible="eq(-33,true) + eq(-2,true)" />
-		<setting id="filters.stream.unknown" label="32184" type="bool" default="true" subsetting="true" visible="eq(-34,true) + eq(-3,true)" />
 
-		<setting type="lsep" label="[UPPERCASE][B]$ADDON[script.module.orion 32113][/B][/UPPERCASE]" visible="eq(-35,true)" />
-		<setting type="sep" visible="eq(-36,true)" />
-		<setting id="filters.meta.release.label" label="32114" type="action" option="close" default="27 $ADDON[script.module.orion 32096]" action="RunPlugin(plugin://script.module.orion/?action=settingsFiltersMetaRelease&type=universal)" visible="eq(-37,true)" />
+		<setting type="lsep" label="[UPPERCASE][B]$ADDON[script.module.orion 32236][/B][/UPPERCASE]" visible="eq(-30,true)" />
+		<setting type="sep" visible="eq(-31,true)" />
+		<setting id="filters.file.pack" label="32110" type="enum" lvalues="32101|32102|32103" default="0" visible="eq(-32,true)" />
+		<setting id="filters.file.name" label="32234" type="enum" lvalues="32101|32102|32103" default="0" visible="eq(-33,true)" />
+		<setting id="filters.file.size" label="32076" type="bool" default="false" visible="eq(-34,true)" />
+		<setting id="filters.file.size.minimum" label="32111" type="number" default="200" subsetting="true" visible="eq(-35,true) + eq(-1,true)" />
+		<setting id="filters.file.size.maximum" label="32112" type="number" default="5000" subsetting="true" visible="eq(-36,true) + eq(-2,true)" />
+		<setting id="filters.file.size.unknown" label="32184" type="bool" default="true" subsetting="true" visible="eq(-37,true) + eq(-3,true)" />
+
+		<setting type="lsep" label="[UPPERCASE][B]$ADDON[script.module.orion 32113][/B][/UPPERCASE]" visible="eq(-38,true)" />
+		<setting type="sep" visible="eq(-39,true)" />
+		<setting id="filters.meta.release.label" label="32114" type="action" option="close" default="27 $ADDON[script.module.orion 32096]" action="RunPlugin(plugin://script.module.orion/?action=settingsFiltersMetaRelease&type=universal)" visible="eq(-40,true)" />
 			<setting id="filters.meta.release" type="text" default="" visible="false" />
-		<setting id="filters.meta.uploader.label" label="32115" type="action" option="close" default="278 $ADDON[script.module.orion 32096]" action="RunPlugin(plugin://script.module.orion/?action=settingsFiltersMetaUploader&type=universal)" visible="eq(-39,true)" />
+		<setting id="filters.meta.uploader.label" label="32115" type="action" option="close" default="278 $ADDON[script.module.orion 32096]" action="RunPlugin(plugin://script.module.orion/?action=settingsFiltersMetaUploader&type=universal)" visible="eq(-42,true)" />
 			<setting id="filters.meta.uploader" type="text" default="" visible="false" />
-		<setting id="filters.meta.edition.label" label="32116" type="action" option="close" default="2 $ADDON[script.module.orion 32096]" action="RunPlugin(plugin://script.module.orion/?action=settingsFiltersMetaEdition&type=universal)" visible="eq(-41,true)" />
+		<setting id="filters.meta.edition.label" label="32116" type="action" option="close" default="2 $ADDON[script.module.orion 32096]" action="RunPlugin(plugin://script.module.orion/?action=settingsFiltersMetaEdition&type=universal)" visible="eq(-44,true)" />
 			<setting id="filters.meta.edition" type="text" default="" visible="false" />
 
-		<setting type="lsep" label="[UPPERCASE][B]$ADDON[script.module.orion 32095][/B][/UPPERCASE]" visible="eq(-43,true)" />
-		<setting type="sep" visible="eq(-44,true)" />
-		<setting id="filters.video.quality" label="32074" type="bool" default="false" visible="eq(-45,true)" />
-		<setting id="filters.video.quality.minimum" label="32117" type="enum" lvalues="32120|32121|32122|32123|32124|32125|32126|32127|32128|32129|32130|32131|32132|32133" default="7" subsetting="true" visible="eq(-46,true) + eq(-1,true)" />
-		<setting id="filters.video.quality.maximum" label="32118" type="enum" lvalues="32120|32121|32122|32123|32124|32125|32126|32127|32128|32129|32130|32131|32132|32133" default="11" subsetting="true" visible="eq(-47,true) + eq(-2,true)" />
-		<setting id="filters.video.codec.label" label="32134" type="action" option="close" default="14 $ADDON[script.module.orion 32096]" action="RunPlugin(plugin://script.module.orion/?action=settingsFiltersVideoCodec&type=universal)" visible="eq(-48,true)" />
+		<setting type="lsep" label="[UPPERCASE][B]$ADDON[script.module.orion 32095][/B][/UPPERCASE]" visible="eq(-46,true)" />
+		<setting type="sep" visible="eq(-47,true)" />
+		<setting id="filters.video.quality" label="32074" type="bool" default="false" visible="eq(-48,true)" />
+		<setting id="filters.video.quality.minimum" label="32117" type="enum" lvalues="32120|32121|32122|32123|32124|32125|32126|32127|32128|32129|32130|32131|32132|32133" default="7" subsetting="true" visible="eq(-49,true) + eq(-1,true)" />
+		<setting id="filters.video.quality.maximum" label="32118" type="enum" lvalues="32120|32121|32122|32123|32124|32125|32126|32127|32128|32129|32130|32131|32132|32133" default="11" subsetting="true" visible="eq(-50,true) + eq(-2,true)" />
+		<setting id="filters.video.codec.label" label="32134" type="action" option="close" default="14 $ADDON[script.module.orion 32096]" action="RunPlugin(plugin://script.module.orion/?action=settingsFiltersVideoCodec&type=universal)" visible="eq(-51,true)" />
 			<setting id="filters.video.codec" type="text" default="" visible="false" />
-		<setting id="filters.video.3d" label="32135" type="enum" lvalues="32101|32102|32103" default="0" visible="eq(-50,true)" />
+		<setting id="filters.video.3d" label="32135" type="enum" lvalues="32101|32102|32103" default="0" visible="eq(-53,true)" />
 
-		<setting type="lsep" label="[UPPERCASE][B]$ADDON[script.module.orion 32136][/B][/UPPERCASE]" visible="eq(-51,true)" />
-		<setting type="sep" visible="eq(-52,true)" />
-		<setting id="filters.audio.type.label" label="32137" type="action" option="close" default="2 $ADDON[script.module.orion 32096]" action="RunPlugin(plugin://script.module.orion/?action=settingsFiltersAudioType&type=universal)" visible="eq(-53,true)" />
+		<setting type="lsep" label="[UPPERCASE][B]$ADDON[script.module.orion 32136][/B][/UPPERCASE]" visible="eq(-54,true)" />
+		<setting type="sep" visible="eq(-55,true)" />
+		<setting id="filters.audio.type.label" label="32137" type="action" option="close" default="2 $ADDON[script.module.orion 32096]" action="RunPlugin(plugin://script.module.orion/?action=settingsFiltersAudioType&type=universal)" visible="eq(-56,true)" />
 			<setting id="filters.audio.type" type="text" default="" visible="false" />
-		<setting id="filters.audio.channels" label="32138" type="bool" default="false" visible="eq(-55,true)" />
-		<setting id="filters.audio.channels.minimum" label="32139" type="enum" lvalues="32120|32141|32142|32143|32144|32145|32146" default="2" subsetting="true" visible="eq(-56,true) + eq(-1,true)" />
-		<setting id="filters.audio.channels.maximum" label="32140" type="enum" lvalues="32120|32141|32142|32143|32144|32145|32146" default="5" subsetting="true" visible="eq(-57,true) + eq(-2,true)" />
-		<setting id="filters.audio.system.label" label="32200" type="action" option="close" default="7 $ADDON[script.module.orion 32096]" action="RunPlugin(plugin://script.module.orion/?action=settingsFiltersAudioSystem&type=universal)" visible="eq(-58,true)" />
+		<setting id="filters.audio.channels" label="32138" type="bool" default="false" visible="eq(-58,true)" />
+		<setting id="filters.audio.channels.minimum" label="32139" type="enum" lvalues="32120|32141|32142|32143|32144|32145|32146" default="2" subsetting="true" visible="eq(-59,true) + eq(-1,true)" />
+		<setting id="filters.audio.channels.maximum" label="32140" type="enum" lvalues="32120|32141|32142|32143|32144|32145|32146" default="5" subsetting="true" visible="eq(-60,true) + eq(-2,true)" />
+		<setting id="filters.audio.system.label" label="32200" type="action" option="close" default="7 $ADDON[script.module.orion 32096]" action="RunPlugin(plugin://script.module.orion/?action=settingsFiltersAudioSystem&type=universal)" visible="eq(-61,true)" />
 			<setting id="filters.audio.system" type="text" default="" visible="false" />
-		<setting id="filters.audio.codec.label" label="32147" type="action" option="close" default="36 $ADDON[script.module.orion 32096]" action="RunPlugin(plugin://script.module.orion/?action=settingsFiltersAudioCodec&type=universal)" visible="eq(-60,true)" />
+		<setting id="filters.audio.codec.label" label="32147" type="action" option="close" default="36 $ADDON[script.module.orion 32096]" action="RunPlugin(plugin://script.module.orion/?action=settingsFiltersAudioCodec&type=universal)" visible="eq(-63,true)" />
 			<setting id="filters.audio.codec" type="text" default="" visible="false" />
-		<setting id="filters.audio.languages.label" label="32148" type="action" option="close" default="184 $ADDON[script.module.orion 32096]" action="RunPlugin(plugin://script.module.orion/?action=settingsFiltersAudioLanguages&type=universal)" visible="eq(-62,true)" />
+		<setting id="filters.audio.languages.label" label="32148" type="action" option="close" default="184 $ADDON[script.module.orion 32096]" action="RunPlugin(plugin://script.module.orion/?action=settingsFiltersAudioLanguages&type=universal)" visible="eq(-65,true)" />
 			<setting id="filters.audio.languages" type="text" default="" visible="false" />
 
-		<setting type="lsep" label="[UPPERCASE][B]$ADDON[script.module.orion 32152][/B][/UPPERCASE]" visible="eq(-64,true)" />
-		<setting type="sep" visible="eq(-65,true)" />
-		<setting id="filters.subtitle.type.label" label="32153" type="action" option="close" default="2 $ADDON[script.module.orion 32096]" action="RunPlugin(plugin://script.module.orion/?action=settingsFiltersSubtitleType&type=universal)" visible="eq(-66,true)" />
+		<setting type="lsep" label="[UPPERCASE][B]$ADDON[script.module.orion 32152][/B][/UPPERCASE]" visible="eq(-67,true)" />
+		<setting type="sep" visible="eq(-68,true)" />
+		<setting id="filters.subtitle.type.label" label="32153" type="action" option="close" default="2 $ADDON[script.module.orion 32096]" action="RunPlugin(plugin://script.module.orion/?action=settingsFiltersSubtitleType&type=universal)" visible="eq(-69,true)" />
 			<setting id="filters.subtitle.type" type="text" default="" visible="false" />
-		<setting id="filters.subtitle.languages.label" label="32154" type="action" option="close" default="184 $ADDON[script.module.orion 32096]" action="RunPlugin(plugin://script.module.orion/?action=settingsFiltersSubtitleLanguages&type=universal)" visible="eq(-68,true)" />
+		<setting id="filters.subtitle.languages.label" label="32154" type="action" option="close" default="184 $ADDON[script.module.orion 32096]" action="RunPlugin(plugin://script.module.orion/?action=settingsFiltersSubtitleLanguages&type=universal)" visible="eq(-71,true)" />
 			<setting id="filters.subtitle.languages" type="text" default="" visible="false" />
 
 		<setting type="sep" />

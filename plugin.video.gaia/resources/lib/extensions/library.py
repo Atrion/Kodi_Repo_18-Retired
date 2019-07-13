@@ -309,7 +309,7 @@ class Library(object):
 			if generic:
 				# Do not save the metadata to file. The link becomes too long and Kodi cuts it off.
 				#metadata = urllib.quote_plus(tools.Converter.jsonTo(metadata))
-				#link = '%s?action=scrape&title=%s&year=%s&imdb=%s&tmdb=%s&meta=%s' % (sys.argv[0], urllib.quote_plus(title), year, imdb, tmdb, metadata)
+				#link = '%s?action=scrape&title=%s&year=%s&imdb=%s&tmdb=%s&metadata=%s' % (sys.argv[0], urllib.quote_plus(title), year, imdb, tmdb, metadata)
 				link = '%s?action=scrape&title=%s&year=%s&imdb=%s&tmdb=%s' % (sys.argv[0], title, year, imdb, tmdb)
 			else:
 				data = link
@@ -390,7 +390,7 @@ class Library(object):
 				self._televisionFiles(item = i, metadata = metadata, link = link)
 				count += 1
 			except:
-				tools.Logger.error()
+				pass
 
 		return count
 
@@ -481,7 +481,7 @@ class Library(object):
 			if generic:
 				# Do not save the metadata to file. The link becomes too long and Kodi cuts it off.
 				#metadata = urllib.quote_plus(tools.Converter.jsonTo(metadata))
-				#link = '%s?action=scrape&title=%s&year=%s&imdb=%s&tvdb=%s&season=%s&episode=%s&tvshowtitle=%s&premiered=%s&meta=%s' % (sys.argv[0], title, year, imdb, tvdb, season, episode, showtitle, premiered, metadata)
+				#link = '%s?action=scrape&title=%s&year=%s&imdb=%s&tvdb=%s&season=%s&episode=%s&tvshowtitle=%s&premiered=%s&metadata=%s' % (sys.argv[0], title, year, imdb, tvdb, season, episode, showtitle, premiered, metadata)
 				if seasoncount: link = '%s?action=scrape&title=%s&year=%s&imdb=%s&tvdb=%s&season=%s&episode=%s&tvshowtitle=%s&premiered=%s&seasoncount=%i' % (sys.argv[0], title, year, imdb, tvdb, season, episode, showtitle, premiered, seasoncount)
 				else: link = '%s?action=scrape&title=%s&year=%s&imdb=%s&tvdb=%s&season=%s&episode=%s&tvshowtitle=%s&premiered=%s' % (sys.argv[0], title, year, imdb, tvdb, season, episode, showtitle, premiered)
 			else:

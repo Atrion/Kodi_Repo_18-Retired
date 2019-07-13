@@ -43,6 +43,7 @@ class Database(object):
 
 	def __init__(self, name, addon = None, default = None, path = None, connect = True):
 		try:
+			self.mName = name
 			self.mAddon = addon
 			self.mDatabase = None
 			if name == None: name = hashlib.sha256(path).hexdigest().upper()
@@ -133,6 +134,8 @@ class Database(object):
 	def _execute(self, query, parameters = None):
 		try:
 			self.mLock.acquire()
+			try: query = query % self.mName
+			except: pass
 			if parameters == None: self.mDatabase.execute(query)
 			else: self.mDatabase.execute(query, parameters)
 			return True
@@ -234,6 +237,10 @@ class Database(object):
 		if result and commit:
 			result = self._commit()
 		return result
+
+	def _deleteFile(self):
+		from resources.lib.extensions import tools
+		return tools.File.delete(self.mPath)
 
 	# Drops single table.
 	def _drop(self, table, parameters = None, commit = True):

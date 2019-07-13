@@ -113,8 +113,7 @@ class source:
 						meta = metadata.Metadata(name = jsonName, title = title, year = year, season = season, episode = episode, quality = quality, link = jsonLink, size = jsonSize, seeds = jsonSeeds)
 
 						# Ignore
-						if meta.ignore(False):
-							continue
+						if meta.ignore(False): continue
 
 						# Add
 						sources.append({'url' : jsonLink, 'debridonly' : False, 'direct' : False, 'source' : 'torrent', 'language' : language, 'quality':  meta.videoQuality(), 'metadata' : meta, 'file' : jsonName})

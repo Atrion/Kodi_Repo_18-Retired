@@ -533,13 +533,12 @@ class Provider(object):
 	def providers(self, description = None, enabled = True, local = True, genres = None, excludes = None, orion = True):
 		# Extremley important. Only detect providers the first time.
 		# If the providers are searched every time, this creates a major overhead and slow-down during the prechecks: sources.sourcesResolve() through the networker.
-		if Provider.Providers == None:
-			self.initialize(description = description, enabled = enabled)
+		if Provider.Providers == None: self.initialize(description = description, enabled = enabled)
 
 		sources = []
 		for i in range(len(Provider.Providers)):
-
 			source = Provider.Providers[i]
+
 			if enabled and not source['enabled']:
 				continue
 

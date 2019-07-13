@@ -37,10 +37,17 @@ def fetch(items, lang, user):
 
 	for i in range(0, len(items)):
 		try:
-			dbcur.execute("SELECT * FROM meta WHERE (imdb = '%s' and lang = '%s' and user = '%s' and not imdb = '0') or (tvdb = '%s' and lang = '%s' and user = '%s' and not tvdb = '0')" % (items[i]['imdb'], lang, user, items[i]['tvdb'], lang, user))
-			match = dbcur.fetchone()
+			imdb = '0' if items[i]['imdb'] == 'tt' else items[i]['imdb']
+			# NB: First lookup by TVDb and then my IMDb, since there are some incorrect shows on Trakt that have the same IMDb ID, but different TVDb IDs (eg: Gotham).
+			try:
+				dbcur.execute("SELECT * FROM meta WHERE (imdb = '%s' and tvdb = '%s' and lang = '%s' and user = '%s' and not imdb = '0' and not tvdb = '0')" % (imdb, items[i]['tvdb'], lang, user))
+				match = dbcur.fetchone()
+				t1 = int(match[5])
+			except:
+				dbcur.execute("SELECT * FROM meta WHERE (imdb = '%s' and lang = '%s' and user = '%s' and not imdb = '0') OR (tvdb = '%s' and lang = '%s' and user = '%s' and not tvdb = '0')" % (imdb, lang, user, items[i]['tvdb'], lang, user))
+				match = dbcur.fetchone()
+				t1 = int(match[5])
 
-			t1 = int(match[5])
 			update = (abs(t2 - t1) / 3600) >= 720
 			if update == True: raise Exception()
 
@@ -65,9 +72,15 @@ def insert(meta):
 		for m in meta:
 			try:
 				i = repr(m['item'])
-				try: dbcur.execute("DELETE FROM meta WHERE (imdb = '%s' and lang = '%s' and user = '%s' and not imdb = '0') or (tvdb = '%s' and lang = '%s' and user = '%s' and not tvdb = '0')" % (m['imdb'], m['lang'], m['user'], m['tvdb'], m['lang'], m['user']))
-				except: pass
-				dbcur.execute("INSERT INTO meta Values (?, ?, ?, ?, ?, ?)", (m['imdb'], m['tvdb'], m['lang'], m['user'], i, t))
+				imdb = '0' if m['imdb'] == 'tt' else m['imdb']
+
+				# NB: First lookup by TVDb and then my IMDb, since there are some incorrect shows on Trakt that have the same IMDb ID, but different TVDb IDs (eg: Gotham).
+				try: dbcur.execute("DELETE FROM meta WHERE (imdb = '%s' and tvdb = '%s' and lang = '%s' and user = '%s' and not imdb = '0' and not tvdb = '0')" % (imdb, m['tvdb'], m['lang'], m['user']))
+				except:
+					try: dbcur.execute("DELETE FROM meta WHERE (imdb = '%s' and lang = '%s' and user = '%s' and not imdb = '0') OR (tvdb = '%s' and lang = '%s' and user = '%s' and not tvdb = '0')" % (imdb, m['lang'], m['user'], m['tvdb'], m['lang'], m['user']))
+					except: pass
+
+				dbcur.execute("INSERT INTO meta Values (?, ?, ?, ?, ?, ?)", (imdb, m['tvdb'], m['lang'], m['user'], i, t))
 			except:
 				pass
 

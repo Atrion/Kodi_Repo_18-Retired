@@ -1,19 +1,11 @@
 from setuptools import setup, find_packages
-from io import open
 
-version = '2.0.0.dev0'
+version = '1.5.2'
 
-with open("README.rst", 'rt', encoding='UTF-8') as file:
-    long_description = file.read() + '\n\n'
-
-with open("CHANGES.txt", 'rt', encoding='UTF-8') as file:
-    long_description += file.read()
-
-
-setup(name='tzlocal',
+setup(name='tzlocal42',
       version=version,
       description="tzinfo object for the local timezone",
-      long_description=long_description,
+      long_description=open('README.rst', 'rt').read() + '\n\n' + open('CHANGES.txt', 'rt').read(),
       classifiers=[
           'Development Status :: 5 - Production/Stable',
           'License :: OSI Approved :: MIT License',
@@ -39,5 +31,5 @@ setup(name='tzlocal',
       tests_require=[
           'mock',
       ],
-      test_suite='tests',
+      test_suite='tzlocal.tests',
       )

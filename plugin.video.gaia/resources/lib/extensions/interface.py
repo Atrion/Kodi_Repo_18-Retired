@@ -529,21 +529,21 @@ class Core(object):
 		self.mRunning = False
 
 	def _set(self, type = None, dialog = None, title = None, message = None, progress = None, background = None, dots = None):
-		if not type == None: self.mType = type
-		if not dots == None: self.mDots = dots
-		if not dialog == None: self.mDialog = dialog
+		if not type is None: self.mType = type
+		if not dots is None: self.mDots = dots
+		if not dialog is None: self.mDialog = dialog
 
-		if not title == None: self.mTitle = title
-		if self.mTitle == None: self.mTitle = 35302
+		if not title is None: self.mTitle = title
+		if self.mTitle is None: self.mTitle = 35302
 		self.mTitleBold = Format.fontBold(self.mTitle)
 
-		if not message == None: self.mMessage = message
-		if self.mMessage == None: self.mMessage = 35302
+		if not message is None: self.mMessage = message
+		if self.mMessage is None: self.mMessage = 35302
 
-		if not progress == None: self.mProgress = progress
-		if self.mProgress == None: self.mProgress = 0
+		if not progress is None: self.mProgress = progress
+		if self.mProgress is None: self.mProgress = 0
 
-		if not background == None: self.mBackground = background
+		if not background is None: self.mBackground = background
 		else: self.mBackground = self.backgroundSetting()
 
 	@classmethod
@@ -930,7 +930,7 @@ class Dialog(object):
 	#	]
 	# With actions:
 	#	[
-	#		{'title' : 'Category 1', 'items' : [{'title' : 'Name 1', 'value' : 'Value 1', 'link' : True, 'action' : function, 'close' : True, 'return' : 'return value'}, {'title' : 'Name 2', 'value' : 'Value 2', 'action' : function, 'close' : True}]},
+	#		{'title' : 'Category 1', 'items' : [{'title' : 'Name 1', 'value' : 'Value 1', 'link' : True, 'action' : function, 'parameters' : {}, 'close' : True, 'return' : 'return value'}, {'title' : 'Name 2', 'value' : 'Value 2', 'action' : function, 'close' : True}]},
 	#		{'title' : 'Category 2', 'items' : [{'title' : 'Name 3', 'value' : 'Value 3', 'link' : False, 'action' : function, 'close' : True, 'return' : 'return value'}, {'title' : 'Name 4', 'value' : 'Value 4', 'action' : function, 'close' : True}]},
 	#	]
 	@classmethod
@@ -958,6 +958,7 @@ class Dialog(object):
 		def create(items):
 			result = []
 			actions = []
+			parameters = []
 			closes = []
 			returns = []
 			for item in items:
@@ -970,28 +971,33 @@ class Dialog(object):
 							returns.append(None)
 						result.append(decorate(item))
 						actions.append(item['action'] if 'action' in item else None)
+						parameters.append(item['parameters'] if 'parameters' in item else None)
 						closes.append(item['close'] if 'close' in item else False)
 						returns.append(item['return'] if 'return' in item else None)
 						for i in item['items']:
 							if not i == None:
 								result.append(decorate(i))
 								actions.append(i['action'] if 'action' in i else None)
+								parameters.append(i['parameters'] if 'parameters' in i else None)
 								closes.append(i['close'] if 'close' in i else False)
 								returns.append(i['return'] if 'return' in i else None)
 					else:
 						result.append(decorate(item))
 						actions.append(item['action'] if 'action' in item else None)
+						parameters.append(item['parameters'] if 'parameters' in item else None)
 						closes.append(item['close'] if 'close' in item else False)
 						returns.append(item['return'] if 'return' in item else None)
-			return result, actions, closes, returns
+			return result, actions, parameters, closes, returns
 
-		items, actions, closes, returns = create(items)
+		items, actions, parameters, closes, returns = create(items)
 		if any(i for i in actions):
 			while True:
 				choice = self.select(items = items, title = title)
 				if choice < 0: break
-				if actions[choice]: actions[choice]()
-				if closes[choice]: break
+				if actions[choice]:
+					if parameters[choice]: actions[choice](**parameters[choice])
+					else: actions[choice]()
+				if closes[choice]: return returns[choice]
 				elif refresh: items, actions, closes, returns = create(refresh())
 		elif any(i for i in returns):
 			choice = self.select(items, title = title)
@@ -1009,7 +1015,7 @@ class Dialog(object):
 		title = '' if titleless else tools.System.name().encode('utf-8')
 		if not extension == None:
 			if not titleless:
-				title += Format.divider()
+				title += Format.separator()
 			title += self.__translate(extension)
 		if bold:
 			title = Format.fontBold(title)
@@ -1730,6 +1736,11 @@ class Loader(object):
 		return xbmc.getCondVisibility('Window.IsActive(busydialog)') == 1
 
 
+class Item(xbmcgui.ListItem):
+
+	pass
+
+
 # Kodi Directory Interface
 class Directory(object):
 
@@ -1752,7 +1763,7 @@ class Directory(object):
 	# Optional 'command' parameter to specify a custom command instead of construction one from action and parameters.
 	def add(self, label, action = None, parameters = None, context = [], folder = False, icon = None, iconDefault = None, iconSpecial = None, fanart = None):
 		link = tools.System.commandPlugin(action = action, parameters = parameters, call = False)
-		item = xbmcgui.ListItem(label = Translation.string(label))
+		item = Item(label = Translation.string(label))
 
 		if len(context) > 0:
 			contextMenu = []
@@ -1781,12 +1792,27 @@ class Directory(object):
 		xbmcplugin.setContent(self.mHandle, self.mContent)
 		xbmcplugin.endOfDirectory(self.mHandle, cacheToDisc = self.mCache)
 
-	# Clear: Clear the path history.
+	# clear: Clear the path history.
+	# position: After refresh, go to the previously selected position, becuase Kodi always jumps back to the top after refresh. Not perfect, since the list can become unfocused, or the user moves the mosue over another item before this code is executed.
 	@classmethod
-	def refresh(self, clear = False):
+	def refresh(self, clear = False, position = False):
+		if position: index = int(tools.System.infoLabel('Container.CurrentItem'))
 		tools.System.execute('Container.Refresh')
 		if clear: tools.System.execute('Container.Update(path,replace)')
-
+		if position and index >= 0:
+			try:
+				# Refreshing takes some time. Wait until done.
+				count = 0
+				while count < 15:
+					count += 1
+					if not Loader.visible(): break
+					tools.Time.sleep(0.2)
+				# For some reason Kodi freezes when executing the below statements in a single line of code.
+				# Kepp each statement separate.
+				window = xbmcgui.Window(xbmcgui.getCurrentWindowId())
+				list = window.getFocus()
+				list.selectItem(index)
+			except: pass
 
 class Legal(object):
 
@@ -1841,16 +1867,84 @@ class Legal(object):
 
 class Player(xbmc.Player):
 
+	EventNone = None
+	EventAvChange = 1
+	EventAvStarted = 2
+	EventPlaybackEnded = 3
+	EventPlaybackError = 4
+	EventPlaybackPaused = 5
+	EventPlaybackResumed = 6
+	EventPlaybackSeek = 7
+	EventPlaybackSeekChapter = 8
+	EventPlaybackSpeedChanged = 9
+	EventPlaybackStarted = 10
+	EventPlaybackStopped = 11
+	EventQueueNext = 12
+
 	def __init__ (self):
 		xbmc.Player.__init__(self)
+		self.mCallbacks = {}
 
 	def __del__(self):
 		try: xbmc.Player.__del__(self)
 		except: pass
 
 	@classmethod
-	def playNow(self, link):
-		Player().play(link)
+	def playNow(self, link, item = None):
+		Player().play(link, item)
+
+	def callbacksClear(self, event = EventNone):
+		try:
+			if event == Player.EventNone: self.mCallbacks = {}
+			else: del self.mCallbacks[event]
+		except: pass
+
+	def callback(self, event, function):
+		if not event in self.mCallbacks: self.mCallbacks[event] = []
+		self.mCallbacks[event].append(function)
+
+	def _callback(self, event, *arguments):
+		try:
+			for callback in self.mCallbacks[event]:
+				try: callback(*arguments)
+				except: callback()
+		except: pass
+
+	def onAVChange(self):
+		self._callback(Player.EventAvChange)
+
+	def onAVStarted(self):
+		self._callback(Player.EventAvStarted)
+
+	def onPlayBackEnded(self):
+		self._callback(Player.EventPlaybackEnded)
+
+	def onPlayBackError(self):
+		self._callback(Player.EventPlaybackError)
+
+	def onPlayBackPaused(self):
+		self._callback(Player.EventPlaybackPaused)
+
+	def onPlayBackResumed(self):
+		self._callback(Player.EventPlaybackResumed)
+
+	def onPlayBackSeek(self, time, seekOffset):
+		self._callback(Player.EventPlaybackSeek, time, seekOffset)
+
+	def onPlayBackSeekChapter(self, chapter):
+		self._callback(Player.EventPlaybackSeekChapter, chapter)
+
+	def onPlayBackSpeedChanged(self, speed):
+		self._callback(Player.EventPlaybackSpeedChanged, speed)
+
+	def onPlayBackStarted(self):
+		self._callback(Player.EventPlaybackStarted)
+
+	def onPlayBackStopped(self):
+		self._callback(Player.EventPlaybackStopped)
+
+	def onQueueNextItem(self):
+		self._callback(Player.EventQueueNext)
 
 
 class Context(object):
@@ -1875,6 +1969,7 @@ class Context(object):
 	EnabledLibrary = None
 	EnabledPresets = None
 	EnabledAutoplay = None
+	EnabledBinge = None
 	EnabledDownloadCloud = None
 	EnabledDownloadManual = None
 	EnabledDownloadCache = None
@@ -1886,51 +1981,54 @@ class Context(object):
 		if not mode == self.ModeNone: self._load(mode = mode, items = items, source = source, metadata = metadata, art = art, link = link, trailer = trailer, label = label, title = title, year = year, season = season, episode = episode, imdb = imdb, tmdb = tmdb, tvdb = tvdb, id = id, orion = orion, location = location, create = create, delete = delete, library = library, queue = queue, watched = watched, refresh = refresh, type = type, kids = kids, loader = loader)
 
 	def _load(self, mode = ModeNone, items = None, source = None, metadata = None, art = None, link = None, trailer = None, label = None, title = None, year = None, season = None, episode = None, imdb = None, tmdb = None, tvdb = None, id = None, orion = None, location = None, create = None, delete = None, library = None, queue = None, watched = None, refresh = None, type = None, kids = None, loader = False):
-		self.mMode = mode
-		self.mType = type
-		self.mKids = kids
+		try:
+			self.mMode = mode
+			self.mType = type
+			self.mKids = kids
 
-		if isinstance(items, basestring): items = tools.Converter.jsonFrom(items)
-		self.mItems = items if items else []
-		self.mData = None
+			if isinstance(items, basestring): items = tools.Converter.jsonFrom(items)
+			self.mItems = items if items else []
+			self.mData = None
 
-		if isinstance(source, dict): source = tools.Converter.quoteTo(tools.Converter.jsonTo(source))
-		self.mSource = source
+			if isinstance(source, dict): source = tools.Converter.quoteTo(tools.Converter.jsonTo(source))
+			self.mSource = source
 
-		if isinstance(metadata, dict): metadata = tools.Converter.quoteTo(tools.Converter.jsonTo(metadata))
-		self.mMetadata = metadata
+			if isinstance(metadata, dict): metadata = tools.Converter.quoteTo(tools.Converter.jsonTo(metadata))
+			self.mMetadata = metadata
 
-		if isinstance(art, dict): art = tools.Converter.quoteTo(tools.Converter.jsonTo(art))
-		self.mArt = art
+			if isinstance(art, dict): art = tools.Converter.quoteTo(tools.Converter.jsonTo(art))
+			self.mArt = art
 
-		if isinstance(orion, dict): orion = tools.Converter.quoteTo(tools.Converter.jsonTo(orion))
-		self.mOrion = orion
+			if isinstance(orion, dict): orion = tools.Converter.quoteTo(tools.Converter.jsonTo(orion))
+			self.mOrion = orion
 
-		self.mLink = tools.Converter.quoteTo(link) # Important to quote (for scrape options, shortcuts, etc).
-		self.mTrailer = trailer
-		self.mLabel = label
-		self.mTitle = title
-		self.mYear = year
-		self.mSeason = season
-		self.mEpisode = episode
-		self.mImdb = imdb
-		self.mTmdb = tmdb
-		self.mTvdb = tvdb
+			self.mLink = tools.Converter.quoteTo(link) # Important to quote (for scrape options, shortcuts, etc).
+			self.mTrailer = trailer
+			self.mLabel = label
+			self.mTitle = title
+			self.mYear = year
+			self.mSeason = season
+			self.mEpisode = episode
+			self.mImdb = imdb
+			self.mTmdb = tmdb
+			self.mTvdb = tvdb
 
-		self.mId = id
-		self.mLocation = location
-		self.mCreate = create
-		self.mDelete = delete
-		self.mLibrary = library
-		self.mQueue = queue
-		self.mWatched = watched
-		self.mRefresh = refresh
+			self.mId = id
+			self.mLocation = location
+			self.mCreate = create
+			self.mDelete = delete
+			self.mLibrary = library
+			self.mQueue = queue
+			self.mWatched = watched
+			self.mRefresh = refresh
 
-		self._initialize()
-		if len(self.mItems) == 0:
-			if self.mMode == Context.ModeGeneric: self.addGeneric()
-			elif self.mMode == Context.ModeItem: self.addItem()
-			elif self.mMode == Context.ModeStream: self.addStream()
+			self._initialize()
+			if len(self.mItems) == 0:
+				if self.mMode == Context.ModeGeneric: self.addGeneric()
+				elif self.mMode == Context.ModeItem: self.addItem()
+				elif self.mMode == Context.ModeStream: self.addStream()
+		except:
+			tools.Logger.error()
 
 	def _initialize(self):
 		if Context.LabelMenu == None:
@@ -1945,6 +2043,7 @@ class Context(object):
 			Context.EnabledYoutube = tools.YouTube.installed()
 			Context.EnabledLibrary = tools.Settings.getBoolean('library.enabled')
 			Context.EnabledPresets = tools.Settings.getBoolean('providers.customization.presets.enabled')
+			Context.EnabledBinge = tools.Binge.settingsType()
 			Context.EnabledAutoplay = tools.Settings.getBoolean('automatic.enabled')
 			Context.EnabledDownloadCloud = debrid.Debrid.enabled()
 			Context.EnabledDownloadManual = tools.Settings.getBoolean('downloads.manual.enabled')
@@ -1992,6 +2091,13 @@ class Context(object):
 	def _command(self, parameters = {}):
 		if not self.mType == None: parameters['type'] = self.mType
 		if not self.mKids == None: parameters['kids'] = self.mKids
+
+		# Could contains special characters like & (eg "Love, Death & Robots").
+		# Quoting is not done automatically, since we are using "basic" with commandPlugin.
+		# Maybe other parameters as well?
+		if 'title' in parameters: parameters['title'] = tools.Converter.quoteTo(parameters['title'])
+		if 'label' in parameters: parameters['label'] = tools.Converter.quoteTo(parameters['label'])
+
 		return dict((key, value) for key, value in parameters.iteritems() if not value is None)
 
 	def _commandPlugin(self, action, parameters = {}, basic = True):
@@ -2081,10 +2187,13 @@ class Context(object):
 		return self._commandPlugin(action = 'showsUnwatch', parameters = {'imdb' : self.mImdb, 'tvdb' : self.mTvdb, 'title' : self.mTitle, 'season' : self.mSeason, 'episode' : self.mEpisode})
 
 	def commandMarkMovieWatch(self):
-		return self._commandPlugin(action = 'moviesWatch', parameters = {'imdb' : self.mImdb})
+		return self._commandPlugin(action = 'moviesWatch', parameters = {'imdb' : self.mImdb, 'tmdb' : self.mTmdb})
 
 	def commandMarkMovieUnwatch(self):
-		return self._commandPlugin(action = 'moviesUnwatch', parameters = {'imdb' : self.mImdb})
+		return self._commandPlugin(action = 'moviesUnwatch', parameters = {'imdb' : self.mImdb, 'tmdb' : self.mTmdb})
+
+	def commandScrapeAgain(self):
+		return self._commandPlugin(action = 'scrapeAgain', parameters = {'link' : self.mLink})
 
 	def commandScrapeManual(self):
 		return self._commandPlugin(action = 'scrapeManual', parameters = {'link' : self.mLink})
@@ -2094,6 +2203,15 @@ class Context(object):
 
 	def commandScrapePreset(self):
 		return self._commandPlugin(action = 'scrapePreset', parameters = {'link' : self.mLink})
+
+	def commandScrapeSingle(self):
+		return self._commandPlugin(action = 'scrapeSingle', parameters = {'link' : self.mLink})
+
+	def commandScrapeBinge(self):
+		return self._commandPlugin(action = 'scrapeBinge', parameters = {'link' : self.mLink})
+
+	def commandBinge(self):
+		return self._commandPlugin(action = 'showsBinge', parameters = {'imdb' : self.mImdb, 'tvdb' : self.mTvdb, 'title' : self.mTitle, 'year' : self.mYear, 'season' : self.mSeason, 'episode' : self.mEpisode})
 
 	def commandPlaylistShow(self):
 		return self._commandPlugin(action = 'playlistShow')
@@ -2108,7 +2226,7 @@ class Context(object):
 		return self._commandPlugin(action = 'playlistRemove', parameters = {'label' : label})
 
 	def commandTrailer(self):
-		return self._commandContainer(action = 'streamsTrailer', parameters = {'title' : self.mTrailer, 'imdb' : self.mImdb})
+		return self._commandContainer(action = 'streamsTrailer', parameters = {'title' : self.mTrailer, 'imdb' : self.mImdb, 'art' : self.mArt})
 
 	def commandRefresh(self):
 		return self._commandContainer(action = 'navigatorRefresh')
@@ -2233,45 +2351,58 @@ class Context(object):
 		return self._commandPlugin(action = 'libraryUpdate', parameters = {'force' : True})
 
 	def add(self, label, action = None, command = None, condition = None, loader = None, items = None):
-		item = {'label' : self._translate(label)}
-		if action: item['action'] = action
-		if command: item['command'] = command
-		if condition: item['condition'] = condition
-		if loader: item['loader'] = loader
-		if items: item['items'] = [i for i in items if i]
-		self.mItems.append(item)
+		try:
+			item = {'label' : self._translate(label)}
+			if action: item['action'] = action
+			if command: item['command'] = command
+			if condition: item['condition'] = condition
+			if loader: item['loader'] = loader
+			if items: item['items'] = [i for i in items if i]
+			self.mItems.append(item)
+		except:
+			tools.Logger.error()
 
 	def addGeneric(self):
-		self.addLibrary()
-		self.addPlaylist()
-		self.addShortcut()
+		try:
+			self.addLibrary()
+			self.addPlaylist()
+			self.addShortcut()
+		except:
+			tools.Logger.error()
 
 	def addItem(self):
-		self.addInformation()
-		self.addTrailer()
-		self.addRefresh()
-		self.addBrowse()
-		self.addScrape()
-		self.addMark()
-		self.addTrakt()
-		self.addLibrary()
-		self.addPlaylist()
-		self.addShortcut()
-		self.addDownloads()
+		try:
+			self.addInformation()
+			self.addTrailer()
+			self.addRefresh()
+			self.addBrowse()
+			self.addBinge()
+			self.addScrape()
+			self.addMark()
+			self.addTrakt()
+			self.addLibrary()
+			self.addPlaylist()
+			self.addShortcut()
+			self.addDownloads()
+		except:
+			tools.Logger.error()
 
 	def addStream(self):
-		self.addInformation()
-		self.addFilters()
-		self.addCache()
-		self.addPlay()
-		self.addLink()
-		self.addMark()
-		self.addTrakt()
-		self.addOrion()
-		self.addLibrary()
-		self.addPlaylist()
-		self.addShortcut()
-		self.addManual()
+		try:
+			self.addInformation()
+			self.addFilters()
+			self.addCache()
+			self.addPlay()
+			self.addLink()
+			self.addMark()
+			self.addTrakt()
+			self.addOrion()
+			self.addLibrary()
+			self.addPlaylist()
+			self.addShortcut()
+			self.addManual()
+		except:
+			tools.Logger.error()
 
 	def addInformation(self):
 		items = []
@@ -2306,11 +2437,19 @@ class Context(object):
 
 	def addScrape(self):
 		if self.mTvdb == None or not self.mEpisode == None:
+			television = tools.Media.typeTelevision(self.mType)
 			self.add(label = 35514, items = [
+				{'label' : 33353, 'command' : 'commandScrapeAgain', 'loader' : True},
 				{'label' : 35522, 'command' : 'commandScrapeManual', 'loader' : True},
-				{'label' : 35523, 'command' : 'commandScrapeAutomatic', 'condition' : 'Context.EnabledAutoplay', 'loader' : True},
+				{'label' : 35523, 'command' : 'commandScrapeAutomatic', 'loader' : True},
 				{'label' : 35524, 'command' : 'commandScrapePreset', 'condition' : 'Context.EnabledPresets', 'loader' : True},
+				{'label' : 35585, 'command' : 'commandScrapeSingle', 'condition' : 'tools.Binge.settingsAutomatic(Context.EnabledBinge)', 'loader' : True} if television else None,
+				{'label' : 35586, 'command' : 'commandScrapeBinge', 'condition' : 'tools.Binge.settingsManual(Context.EnabledBinge)', 'loader' : True} if television else None,
 			])
+
+	def addBinge(self):
+		if tools.Media.typeTelevision(self.mType):
+			self.add(label = 35580, command = 'commandBinge', condition = 'tools.Binge.settingsEnabled(Context.EnabledBinge)', loader = True)
 
 	def addPlaylist(self):
 		# NB: Do not add the custom context menu to items in the playlist.
@@ -2929,7 +3068,7 @@ class Filters(object):
 	@classmethod
 	def audioLanguage(self, value = None, label = None):
 		if value == '': value = 0
-		elif isinstance(value, basestring): value = tools.Language.language(value, index = True)
+		elif isinstance(value, basestring): value = tools.Language.index(value)
 		return self._itemSelection(filter = Filters.FilterAudioLanguage, items = self._audioLanguageList, value = value, label = label)
 
 	@classmethod

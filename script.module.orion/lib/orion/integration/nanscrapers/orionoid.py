@@ -84,11 +84,11 @@ class orionoid(Scraper):
 		parameters = ' | '.join([str(parameter) for parameter in parameters])
 		xbmc.log('NAN SCRAPERS ORION [ERROR]: ' + parameters, xbmc.LOGERROR)
 
-	def _settings(self):
+	def _settings(self, full = True):
 		settings = []
 		for i in range(1, 16):
 			setting = int(self.addon.getSetting('Orion_info.' + str(i)))
-			if setting > 0: settings.append(setting)
+			if full or setting > 0: settings.append(setting)
 		return settings
 
 	def _cacheSave(self, data):
@@ -110,6 +110,13 @@ class orionoid(Scraper):
 			if i['url'] == url:
 				return i
 		return None
+
+	def _link(self, data):
+		links = data['links']
+		for link in links:
+			if link.lower().startswith('magnet:'):
+				return link
+		return links[0]
 
 	def _quality(self, data):
 		try:
@@ -151,8 +158,8 @@ class orionoid(Scraper):
 	def _size(self, data):
 		size = data['file']['size']
 		if size:
-			if size < source.SizeGigaByte: return '%d MB' % int(size / float(source.SizeMegaByte))
-			else: return '%0.1f GB' % (size / float(source.SizeGigaByte))
+			if size < orionoid.SizeGigaByte: return '%d MB' % int(size / float(orionoid.SizeMegaByte))
+			else: return '%0.1f GB' % (size / float(orionoid.SizeGigaByte))
 		return None
 
 	def _seeds(self, data):
@@ -163,7 +170,7 @@ class orionoid(Scraper):
 		return None
 
 	def _days(self, data):
-		try: days = (time.time() - data['time']['updated']) / float(source.TimeDays)
+		try: days = (time.time() - data['time']['updated']) / float(orionoid.TimeDays)
 		except: days = 0
 		days = int(days)
 		return str(days) + ' Day' + ('' if days == 1 else 's')
@@ -179,7 +186,7 @@ class orionoid(Scraper):
 			if url == None: raise Exception()
 			orion = Orion(base64.b64decode(base64.b64decode(base64.b64decode(self.key))).replace(' ', ''))
 			if not orion.userEnabled() or not orion.userValid(): raise Exception()
-			settings = self._settings()
+			settings = self._settings(full = False)
 
 			data = urlparse.parse_qs(url)
 			data = dict([(i, data[i][0]) if data[i] else (i, '') for i in data])
@@ -221,55 +228,55 @@ class orionoid(Scraper):
 
 					info = [self.name]
 					for setting in settings:
-						if setting == source.SettingStreamProvider:
+						if setting == orionoid.SettingStreamProvider:
 							try: info.append(data['stream']['source'])
 							except: pass
-						elif setting == source.SettingStreamHoster:
+						elif setting == orionoid.SettingStreamHoster:
 							try: info.append(data['stream']['hoster'])
 							except: pass
-						elif setting == source.SettingStreamSeeds:
+						elif setting == orionoid.SettingStreamSeeds:
 							try: info.append(self._seeds(data))
 							except: pass
-						elif setting == source.SettingFileSize:
+						elif setting == orionoid.SettingFileSize:
 							try: info.append(self._size(data))
 							except: pass
-						elif setting == source.SettingFilePack:
+						elif setting == orionoid.SettingFilePack:
 							try: info.append('Pack' if data['file']['pack'] else None)
 							except: pass
-						elif setting == source.SettingMetaEdition:
+						elif setting == orionoid.SettingMetaEdition:
 							try: info.append(data['meta']['edition'])
 							except: pass
-						elif setting == source.SettingMetaRelease:
+						elif setting == orionoid.SettingMetaRelease:
 							try: info.append(data['meta']['release'])
 							except: pass
-						elif setting == source.SettingMetaUploader:
+						elif setting == orionoid.SettingMetaUploader:
 							try: info.append(data['meta']['uploader'])
 							except: pass
-						elif setting == source.SettingVideoQuality:
+						elif setting == orionoid.SettingVideoQuality:
 							try: info.append(data['video']['quality'].upper())
 							except: pass
-						elif setting == source.SettingVideoCodec:
+						elif setting == orionoid.SettingVideoCodec:
 							try: info.append(data['video']['codec'].upper())
 							except: pass
-						elif setting == source.SettingVideo3D:
+						elif setting == orionoid.SettingVideo3D:
 							try: info.append('3D' if data['video']['3d'] else None)
 							except: pass
-						elif setting == source.SettingAudioChannels:
+						elif setting == orionoid.SettingAudioChannels:
 							try: info.append('%d CH' % data['audio']['channels'] if data['audio']['channels'] else None)
 							except: pass
-						elif setting == source.SettingAudioSystem:
+						elif setting == orionoid.SettingAudioSystem:
 							try: info.append(data['audio']['system'].upper())
 							except: pass
-						elif setting == source.SettingAudioCodec:
+						elif setting == orionoid.SettingAudioCodec:
 							try: info.append(data['audio']['codec'].upper())
 							except: pass
-						elif setting == source.SettingAudioLanguages:
+						elif setting == orionoid.SettingAudioLanguages:
 							try: info.append('-'.join(data['audio']['languages'].upper()))
 							except: pass
-						elif setting == source.SettingPopularity:
+						elif setting == orionoid.SettingPopularity:
 							try: info.append(self._popularity(data))
 							except: pass
-						elif setting == source.SettingAge:
+						elif setting == orionoid.SettingAge:
 							try: info.append(self._days(data))
 							except: pass
 					info = [i for i in info if i]
@@ -287,7 +294,7 @@ class orionoid(Scraper):
 						'source' : source,
 						'quality' : self._quality(data),
 						'language' : self._language(data),
-						'url' : data['stream']['link'],
+						'url' : self._link(data),
 						'direct' : data['access']['direct'],
 						'debridonly' : not data['access']['direct'] and debrid and source in debridDomains
 					})

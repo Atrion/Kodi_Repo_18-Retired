@@ -26,6 +26,7 @@ from resources.lib.externals.beautifulsoup import BeautifulSoup
 
 class source:
 	def __init__(self):
+		self.pack = False # Checked by provider.py
 		self.priority = 0
 		self.language = ['un']
 		self.domains = ['www.youtube.com']
@@ -66,6 +67,7 @@ class source:
 			if url == None:
 				raise Exception()
 
+			ignoreContains = None
 			data = urlparse.parse_qs(url)
 			data = dict([(i, data[i][0]) if data[i] else (i, '') for i in data])
 
@@ -79,7 +81,18 @@ class source:
 				year = int(data['year']) if 'year' in data and not data['year'] == None else None
 				season = int(data['season']) if 'season' in data and not data['season'] == None else None
 				episode = int(data['episode']) if 'episode' in data and not data['episode'] == None else None
-				query = '%s S%02dE%02d' % (title, season, episode) if 'tvshowtitle' in data else '%s %d' % (title, year)
+
+				if 'tvshowtitle' in data:
+					# Search special episodes by name. All special episodes are added to season 0 by Trakt and TVDb. Hence, do not search by filename (eg: S02E00), since the season is not known.
+					if (season == 0 or episode == 0) and ('title' in data and not data['title'] == None and not data['title'] == ''):
+						title = '%s %s' % (data['tvshowtitle'], data['title']) # Change the title for metadata filtering.
+						query = title
+						ignoreContains = len(data['title']) / float(len(title)) # Increase the required ignore ration, since otherwise individual episodes and season packs are found as well.
+					else:
+						query = '%s S%02dE%02d' % (title, season, episode)
+				else:
+					query = '%s %d' % (title, year)
+
 			query = urllib.quote_plus(query)
 
 			# The returned website is different to the normal website.
@@ -129,8 +142,8 @@ class source:
 				meta = metadata.Metadata(name = htmlName, title = title, year = year, season = season, episode = episode, link = htmlLink)
 
 				# Ignore
-				if meta.ignore(False):
-					continue
+				meta.ignoreAdjust(contains = ignoreContains)
+				if meta.ignore(False): continue
 
 				# Add
 				sources.append({'url' : htmlLink, 'debridonly' : False, 'direct' : False, 'source' : 'youtube', 'language' : self.language[0], 'quality': meta.videoQuality(), 'metadata' : meta, 'file' : htmlName})

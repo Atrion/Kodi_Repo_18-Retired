@@ -30,8 +30,8 @@ class source:
 		self.priority = 0
 		self.language = ['un']
 		self.domains = ['nzbstars.com']
-		self.base_link = 'http://www.nzbstars.com'
-		self.search_link = '/?search[value][]=Title:%s&sortby=&sortdir=ASC'
+		self.base_link = 'http://nzbstars.com'
+		self.search_link = '/?search%5Btree%5D=cat0_z0&search[value][]=filesize:>:DEF:0&search[value][]=filesize:<:DEF:274877906944&search[value][]=Title:=:DEF:'
 
 	def movie(self, imdb, title, localtitle, year):
 		try:
@@ -71,6 +71,7 @@ class source:
 			# Otherwise the month in the date might be read in a different language.
 			locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
 
+			ignoreContains = None
 			data = urlparse.parse_qs(url)
 			data = dict([(i, data[i][0]) if data[i] else (i, '') for i in data])
 
@@ -90,13 +91,19 @@ class source:
 				packCount = data['packcount'] if 'packcount' in data else None
 
 				if 'tvshowtitle' in data:
-					if pack: query = '%s %d' % (title, season)
-					else: query = '%s S%02dE%02d' % (title, season, episode)
+					# Search special episodes by name. All special episodes are added to season 0 by Trakt and TVDb. Hence, do not search by filename (eg: S02E00), since the season is not known.
+					if (season == 0 or episode == 0) and ('title' in data and not data['title'] == None and not data['title'] == ''):
+						title = '%s %s' % (data['tvshowtitle'], data['title']) # Change the title for metadata filtering.
+						query = title
+						ignoreContains = len(data['title']) / float(len(title)) # Increase the required ignore ration, since otherwise individual episodes and season packs are found as well.
+					else:
+						if pack: query = '%s %d' % (title, season)
+						else: query = '%s S%02dE%02d' % (title, season, episode)
 				else:
 					query = '%s %d' % (title, year)
 				query = re.sub('(\\\|/| -|:|;|\*|\?|"|\'|<|>|\|)', ' ', query)
 
-			url = urlparse.urljoin(self.base_link, self.search_link) % (urllib.quote_plus(query))
+			url = self.base_link + self.search_link + urllib.quote_plus(query)
 			html = BeautifulSoup(client.request(url))
 
 			htmlTable = html.find_all('tbody', id = 'spots')[0]
@@ -142,6 +149,7 @@ class source:
 				meta = metadata.Metadata(name = htmlName, title = title, year = year, season = season, episode = episode, pack = pack, packCount = packCount, link = htmlLink, size = htmlSize, age = htmlAge)
 
 				# Ignore
+				meta.ignoreAdjust(contains = ignoreContains)
 				if meta.ignore(False):
 					continue
 

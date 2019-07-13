@@ -20,13 +20,15 @@
 
 import re,sys,cookielib,urllib,urllib2,urlparse,gzip,StringIO,HTMLParser,time,random,base64
 
-from resources.lib.modules import cache
 from resources.lib.modules import workers
 from resources.lib.modules import dom_parser
 from resources.lib.modules import log_utils
+from resources.lib.extensions import cache
 
 def request(url, close=True, redirect=True, error=False, proxy=None, post=None, headers=None, mobile=False, XHR=False, limit=None, referer=None, cookie=None, compression=True, output='', timeout='30', ignoreSsl = False, flare = True, ignoreErrors = None):
 	try:
+		timeout = str(timeout)
+
 		# Gaia
 		if url == None: return None
 		handlers = []
@@ -61,7 +63,7 @@ def request(url, close=True, redirect=True, error=False, proxy=None, post=None, 
 			pass
 		elif not mobile == True:
 			#headers['User-Agent'] = agent()
-			headers['User-Agent'] = cache.get(randomagent, 1)
+			headers['User-Agent'] = cache.Cache().cacheShort(randomagent)
 		else:
 			headers['User-Agent'] = 'Apple-iPhone/701.341'
 		if 'Referer' in headers:
@@ -113,7 +115,7 @@ def request(url, close=True, redirect=True, error=False, proxy=None, post=None, 
 			try: ignore = ignoreErrors and (int(response.code) == ignoreErrors or int(response.code) in ignoreErrors)
 			except: ignore = False
 			if not ignore:
-				if response.code == 503:
+				if response.code in [301, 307, 308, 503]:
 					cf_result = response.read(5242880)
 					try: encoding = response.info().getheader('Content-Encoding')
 					except: encoding = None
@@ -141,18 +143,12 @@ def request(url, close=True, redirect=True, error=False, proxy=None, post=None, 
 							tools.Logger.error()
 
 					elif 'cf-browser-verification' in cf_result:
-
 						netloc = '%s://%s' % (urlparse.urlparse(url).scheme, urlparse.urlparse(url).netloc)
-
 						ua = headers['User-Agent']
-
-						cf = cache.get(cfcookie().get, 168, netloc, ua, timeout)
-
+						cf = cache.Cache().cacheLong(cfcookie().get, netloc, ua, timeout)
 						headers['Cookie'] = cf
-
 						request = urllib2.Request(url, data=post)
 						_add_request_header(request, headers)
-
 						response = urllib2.urlopen(request, timeout=int(timeout))
 					else:
 						log_utils.log('Request-Error (%s): %s' % (str(response.code), url), log_utils.LOGDEBUG)
@@ -226,8 +222,7 @@ def request(url, close=True, redirect=True, error=False, proxy=None, post=None, 
 		if 'Blazingfast.io' in result and 'xhr.open' in result:
 			netloc = '%s://%s' % (urlparse.urlparse(url).scheme, urlparse.urlparse(url).netloc)
 			ua = headers['User-Agent']
-			headers['Cookie'] = cache.get(bfcookie().get, 168, netloc, ua, timeout)
-
+			headers['Cookie'] = cache.Cache().cacheLong(bfcookie().get, netloc, ua, timeout)
 			result = _basic_request(url, headers=headers, post=post, timeout=timeout, limit=limit)
 
 		if output == 'extended':
@@ -245,7 +240,6 @@ def request(url, close=True, redirect=True, error=False, proxy=None, post=None, 
 			if close == True: response.close()
 			return result
 	except Exception as e:
-		# Gaia
 		from resources.lib.extensions import tools
 		tools.Logger.error()
 		log_utils.log('Request-Error: (%s) => %s' % (str(e), url), log_utils.LOGDEBUG)

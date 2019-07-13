@@ -18,16 +18,16 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
-import xbmc,xbmcgui,xbmcvfs,sys,pkgutil,re,json,urllib,urlparse,random,datetime,time,os,copy,threading
+import xbmc,xbmcgui,xbmcvfs,sys,pkgutil,re,json,urllib,urlparse,datetime,time,os,copy,threading
 
 from resources.lib.modules import control
 from resources.lib.modules import cleantitle
 from resources.lib.modules import client
-from resources.lib.modules import cache
 from resources.lib.modules import debrid
 from resources.lib.modules import workers
 from resources.lib.modules import trakt
 from resources.lib.modules import tvmaze
+from resources.lib.extensions import cache
 from resources.lib.extensions import network
 from resources.lib.extensions import interface
 from resources.lib.extensions import window
@@ -36,6 +36,7 @@ from resources.lib.extensions import convert
 from resources.lib.extensions import handler
 from resources.lib.extensions import downloader
 from resources.lib.extensions import history
+from resources.lib.extensions import trailer
 from resources.lib.extensions import provider
 from resources.lib.extensions import orionoid
 from resources.lib.extensions import debrid as debridx
@@ -47,10 +48,11 @@ except: from pysqlite2 import dbapi2 as database
 
 class Core:
 
-	def __init__(self, type = tools.Media.TypeNone, kids = tools.Selection.TypeUndefined):
+	def __init__(self, type = tools.Media.TypeNone, kids = tools.Selection.TypeUndefined, silent = False):
 		self.getConstants()
 		self.type = type
 		self.kids = kids
+		self.silent = silent
 		self.sources = []
 		self.providers = []
 		self.termination = False
@@ -63,6 +65,11 @@ class Core:
 
 		self.autoplay = tools.Settings.getBoolean('automatic.enabled')
 		self.propertyNotification = 'GaiaStreamsNofitifcation'
+
+		self.navigationCinema = trailer.Trailer.cinemaEnabled()
+		self.navigationCinemaProgress = self.navigationCinema and trailer.Trailer.cinemaProgress()
+		self.navigationCinemaInerrupt = self.navigationCinema and trailer.Trailer.cinemaInterrupt()
+		if self.navigationCinema: self.navigationCinemaTrailer = trailer.Trailer()
 
 		self.navigationScrape = tools.Settings.getInteger('interface.navigation.scrape')
 		self.navigationScrapeSpecial = self.navigationScrape == 0
@@ -88,9 +95,16 @@ class Core:
 	def kidsOnly(self):
 		return self.kids == tools.Selection.TypeInclude
 
+	def loaderShow(self):
+		if not self.silent: interface.Loader.show()
+
+	def loaderHide(self):
+		if not self.silent: interface.Loader.hide()
+
 	def progressFailure(self, single = False):
-		interface.Loader.hide()
-		interface.Dialog.notification(title = 33448, message = 32401 if single else 32402, icon = interface.Dialog.IconError)
+		if not self.silent:
+			self.loaderHide()
+			interface.Dialog.notification(title = 33448, message = 32401 if single else 32402, icon = interface.Dialog.IconError)
 
 	def progressNotification(self, loader = False, force = False):
 		# Check if the dialog was already shown.
@@ -98,126 +112,149 @@ class Core:
 		#    1. Streams are shown in the directory structure.
 		#    2. Playback fails or cache download starts.
 		# If playback doesn't start, the directory structure is reloaded and showStreams() is called again.
-		if not tools.Converter.boolean(window.Window.propertyGlobal(self.propertyNotification)) or force:
-			self.progressClose(force = True, loader = loader)
-			if self.countInitial == 0:
-				interface.Dialog.notification(title = 33448, message = 35372, icon = interface.Dialog.IconError)
-			else:
-				counts = []
-				counts.append((35452, self.countInitial))
-
-				filterRemovalDuplicates = interface.Filters.removalDuplicates()
-				if filterRemovalDuplicates == None: filterRemovalDuplicates = tools.Settings.getBoolean('scraping.providers.duplicates')
-				if filterRemovalDuplicates: counts.append((35453, self.countDuplicates))
-
-				filterRemovalUnsupported = interface.Filters.removalUnsupported()
-				if filterRemovalUnsupported == None: filterRemovalUnsupported = tools.Settings.getBoolean('scraping.providers.unsupported')
-				if filterRemovalUnsupported: counts.append((35454, self.countSupported))
-
-				counts.append((35455, self.countFilters))
-				counts = ' • '.join(['%s: %d' % (interface.Translation.string(i[0]), i[1]) for i in counts])
-				interface.Dialog.notification(title = 35373, message = counts, icon = interface.Dialog.IconWarning if self.countFilters == 0 else interface.Dialog.IconSuccess, time = 5000)
-				if self.countFilters == 0 and self.countSupported > 0:
-					interface.Loader.hide()
-					result = interface.Dialog.option(title = 33448, message = 35380)
-					if result: interface.Loader.show()
-					return result
+		if not self.silent:
+			if not tools.Converter.boolean(window.Window.propertyGlobal(self.propertyNotification)) or force:
+				self.progressClose(force = True, loader = loader)
+				if self.countInitial == 0:
+					interface.Dialog.notification(title = 33448, message = 35372, icon = interface.Dialog.IconError)
 				else:
-					window.Window.propertyGlobalSet(self.propertyNotification, True)
+					counts = []
+					counts.append((35452, self.countInitial))
+
+					filterRemovalDuplicates = interface.Filters.removalDuplicates()
+					if filterRemovalDuplicates == None: filterRemovalDuplicates = tools.Settings.getBoolean('scraping.providers.duplicates')
+					if filterRemovalDuplicates: counts.append((35453, self.countDuplicates))
+
+					filterRemovalUnsupported = interface.Filters.removalUnsupported()
+					if filterRemovalUnsupported == None: filterRemovalUnsupported = tools.Settings.getBoolean('scraping.providers.unsupported')
+					if filterRemovalUnsupported: counts.append((35454, self.countSupported))
+
+					counts.append((35455, self.countFilters))
+					counts = ' • '.join(['%s: %d' % (interface.Translation.string(i[0]), i[1]) for i in counts])
+					interface.Dialog.notification(title = 35373, message = counts, icon = interface.Dialog.IconWarning if self.countFilters == 0 else interface.Dialog.IconSuccess, time = 5000)
+					if self.countFilters == 0 and self.countSupported > 0:
+						self.loaderHide()
+						result = interface.Dialog.option(title = 33448, message = 35380)
+						if result: self.loaderShow()
+						return result
+					else:
+						window.Window.propertyGlobalSet(self.propertyNotification, True)
 		return False
 
 	def progressClose(self, loader = True, force = False):
-		if self.navigationScrapeSpecial:
-			if force or not self.navigationStreamsSpecial or self.autoplay:
-				window.WindowScrape.update(finished = True)
-				window.WindowScrape.close()
-		else:
-			interface.Core.close()
-			if force: interface.Dialog.closeAllProgress() # If called from another process, the interface.Core instance might be lost. Close all progress dialogs.
-		if loader: interface.Loader.hide()
+		if not self.silent:
+			if self.navigationScrapeSpecial:
+				if force or not self.navigationStreamsSpecial or self.autoplay:
+					window.WindowScrape.update(finished = True)
+					window.WindowScrape.close()
+			else:
+				interface.Core.close()
+				if force: interface.Dialog.closeAllProgress() # If called from another process, the interface.Core instance might be lost. Close all progress dialogs.
+			if loader: self.loaderHide()
 
 	def progressCanceled(self):
-		if self.navigationScrapeSpecial:
-			try:
-				if xbmc.abortRequested:
-					sys.exit()
-					return True
-			except: pass
-			return not window.WindowScrape.visible()
-		else:
-			if interface.Core.background():
-				return False
-			else:
+		if not self.silent:
+			if self.navigationCinema:
+				return self.navigationCinemaTrailer.cinemaCanceled()
+			elif self.navigationScrapeSpecial:
 				try:
 					if xbmc.abortRequested:
 						sys.exit()
 						return True
 				except: pass
-				return interface.Core.canceled()
+				return not window.WindowScrape.visible()
+			else:
+				if interface.Core.background():
+					return False
+				else:
+					try:
+						if xbmc.abortRequested:
+							sys.exit()
+							return True
+					except: pass
+					return interface.Core.canceled()
+		return False
 
 	def progressPlaybackEnabled(self):
 		return self.navigationPlaybackSpecial
 
-	def progressPlaybackInitialize(self, title = None, message = None, metadata = None):
-		if self.navigationPlaybackSpecial:
-			self.progressClose() # For autoplay.
-			try: background = metadata['fanart']
-			except:
-				try: background = metadata['fanart2']
-				except:
-					try: background = metadata['fanart3']
-					except: background = None
-			window.WindowPlayback.show(background = background, status = message)
-		else:
-			interface.Core.create(type = interface.Core.TypePlayback, title = title, message = message, progress = 0)
-			if interface.Core.background(): interface.Loader.hide()
+	def progressPlaybackInitialize(self, title = None, message = None, metadata = None, force = False, loader = True):
+		if not self.silent:
+			if not force and (self.navigationCinema and self.autoplay):
+				self.mLastTitle = title
+				interface.Dialog.notification(title = title, message = message, icon = interface.Dialog.IconInformation)
+			else:
+				if self.navigationPlaybackSpecial:
+					self.progressClose(loader = loader) # For autoplay.
+					try: background = metadata['fanart']
+					except:
+						try: background = metadata['fanart2']
+						except:
+							try: background = metadata['fanart3']
+							except: background = None
+					window.WindowPlayback.show(background = background, status = message)
+				else:
+					if message == None: message = ''
+					else: message = interface.Format.fontBold(message) + '%s'
+					interface.Core.create(type = interface.Core.TypePlayback, background = self.navigationPlaybackBar, title = title, message = message, progress = 0)
+					if interface.Core.background() and loader: self.loaderHide()
 
-	def progressPlaybackUpdate(self, progress = None, title = None, message = None, status = None, substatus1 = None, substatus2 = None, total = None, remaining = None):
-		if self.navigationPlaybackSpecial:
-			if status == None: status = message
-			window.WindowPlayback.update(progress = progress, status = status, substatus1 = substatus1, substatus2 = substatus2, total = total, remaining = remaining)
-		else:
-			if message == None: message = ''
-			else: message = interface.Format.fontBold(message) + '%s'
-			interface.Core.update(progress = progress, title = title, message = message)
+	def progressPlaybackUpdate(self, progress = None, title = None, message = None, status = None, substatus1 = None, substatus2 = None, total = None, remaining = None, force = False):
+		if not self.silent:
+			if force or not self.navigationCinema or not self.autoplay:
+				if self.navigationPlaybackSpecial:
+					if status == None: status = message
+					window.WindowPlayback.update(progress = progress, status = status, substatus1 = substatus1, substatus2 = substatus2, total = total, remaining = remaining)
+				else:
+					if message == None: message = ''
+					else: message = interface.Format.fontBold(message) + '%s'
+					interface.Core.update(progress = progress, title = title, message = message)
 
 	def progressPlaybackClose(self, loader = True, force = False):
-		if self.navigationPlaybackSpecial:
-			window.WindowPlayback.update(finished = True)
-			window.WindowPlayback.close()
-		else:
-			interface.Core.close()
-			if force: interface.Dialog.closeAllProgress() # If called from another process, the interface.Core instance might be lost. Close all progress dialogs.
-		if loader: interface.Loader.hide()
+		if not self.silent:
+			if self.navigationPlaybackSpecial:
+				window.WindowPlayback.update(finished = True)
+				window.WindowPlayback.close()
+			else:
+				interface.Core.close()
+				if force: interface.Dialog.closeAllProgress() # If called from another process, the interface.Core instance might be lost. Close all progress dialogs.
+			if loader: self.loaderHide()
 
 	def progressPlaybackCanceled(self):
-		if self.downloadCanceled:
-			return True
-		elif self.navigationPlaybackSpecial:
-			try:
-				if xbmc.abortRequested:
-					sys.exit()
-					return True
-			except: pass
-			return not window.WindowPlayback.visible()
-		else:
-			if interface.Core.background():
-				return False
-			else:
+		if not self.silent:
+			if self.downloadCanceled:
+				return True
+			elif self.navigationPlaybackSpecial:
 				try:
 					if xbmc.abortRequested:
 						sys.exit()
 						return True
 				except: pass
-				return interface.Core.canceled()
+				return not window.WindowPlayback.visible()
+			else:
+				if interface.Core.background():
+					return False
+				else:
+					try:
+						if xbmc.abortRequested:
+							sys.exit()
+							return True
+					except: pass
+					return interface.Core.canceled()
+		return False
 
-	def scrape(self, title = None, year = None, imdb = None, tvdb = None, season = None, episode = None, tvshowtitle = None, premiered = None, metadata = None, autoplay = None, preset = None, seasoncount = None, library = False, exact = False, items = None, process = True):
+	def scrape(self, title = None, year = None, imdb = None, tvdb = None, season = None, episode = None, tvshowtitle = None, premiered = None, metadata = None, autoplay = None, preset = None, seasoncount = None, library = False, exact = False, items = None, process = True, binge = None, cache = True):
 		try:
-			tools.Donations.popup()
+			# External addons (eg OpenMeta) does not call functions correctly, and the type might not be set.
+			if self.type is None: self.type = tools.Media.TypeShow if season or episode else tools.Media.TypeMovie
+
+			if not self.silent: tools.Donations.popup()
 
 			new = items == None
-			interface.Loader.show()
+			if not self.navigationCinema: self.loaderShow()
 			window.Window.propertyGlobalClear(self.propertyNotification)
+			if binge is None: binge = tools.Binge.ModeFirst if tools.Binge.settingsAutomatic() else tools.Binge.ModeNone
+			if cache is None: cache = True
 
 			# When the play action is called from the skin's widgets.
 			# Otherwise the directory with streams is not shown.
@@ -242,15 +279,19 @@ class Core:
 			if not metadata:
 				if tvshowtitle:
 					from resources.lib.indexers import tvshows
-					metadata = tvshows.tvshows().metadataRetrieve(title = title, year = year, imdb = imdb, tvdb = tvdb)
+					# TODO: The episode metadata should be retrieved, not the show metadata.
+					# Currently the metadata is always passed as a parameter, but if that changes, this has to be fixed.
+					metadata = tvshows.tvshows().metadataRetrieve(tvshowtitle = tvshowtitle, title = title, year = year, imdb = imdb, tvdb = tvdb, season = season, episode = episode)
 				else:
 					from resources.lib.indexers import movies
 					metadata = movies.movies().metadataRetrieve(imdb = imdb)
 
 			if new:
-				tools.Logger.log('Initializing Scraping ...', name = 'CORE', level = tools.Logger.TypeNotice)
+				if not self.silent and self.navigationCinema: self.navigationCinemaTrailer.cinemaStart(type = self.type)
+				label = tools.Media.titleUniversal(metadata = metadata, title = title if tvshowtitle is None else tvshowtitle, year = year, season = season, episode = episode)
+				tools.Logger.log('Initializing Scraping [' + label + '] ...', name = 'CORE', level = tools.Logger.TypeNotice)
 				start = tools.Time.timestamp()
-				result = self.scrapeItem(title = title, year = year, imdb = imdb, tvdb = tvdb, season = season, episode = episode, tvshowtitle = tvshowtitle, premiered = premiered, metadata = metadata, preset = preset, seasoncount = seasoncount, exact = exact, autoplay = autoplay)
+				result = self.scrapeItem(title = title, year = year, imdb = imdb, tvdb = tvdb, season = season, episode = episode, tvshowtitle = tvshowtitle, premiered = premiered, metadata = metadata, preset = preset, seasoncount = seasoncount, exact = exact, autoplay = autoplay, cache = cache)
 				if result == None or self.progressCanceled(): # Avoid the no-streams notification right after the unavailable notification
 					self.progressClose(force = True)
 					return None
@@ -278,8 +319,11 @@ class Core:
 			if new and tools.Settings.getBoolean('scraping.termination.enabled') and tools.Settings.getInteger('scraping.termination.mode') == 3:
 				autoplay = self.termination or (tools.Time.timestamp() - start) < tools.Settings.getInteger('scraping.providers.timeout')
 
-			self._showClear()
-			self.showStreams(items = self.sources, metadata = metadata, autoplay = autoplay, initial = True, library = library, direct = exact, new = new, process = process)
+			if not self.silent:
+				self._showClear()
+				self.showStreams(items = self.sources, metadata = metadata, autoplay = autoplay, initial = True, library = library, direct = exact, new = new, process = process, binge = binge)
+
+			return self.sources
 		except:
 			tools.Logger.error()
 			self.progressClose(force = True)
@@ -295,7 +339,7 @@ class Core:
 
 	def scrapePreset(self, link):
 		try:
-			interface.Loader.show()
+			if not self.navigationCinema: self.loaderShow()
 			items = []
 
 			for i in range(1, 6):
@@ -304,7 +348,7 @@ class Core:
 
 			itemCount = len(items)
 			if itemCount == 0:
-				interface.Loader.hide()
+				self.loaderHide()
 				interface.Dialog.notification(title = 35058, message = 35059, icon = interface.Dialog.IconError)
 			else:
 				labelManual = interface.Format.bold(interface.Translation.string(33110) + ': ')
@@ -328,7 +372,10 @@ class Core:
 					control.execute('RunPlugin(%s&autoplay=%d&preset=%d)' % (link, autoplay, preset))
 		except:
 			pass
-		interface.Loader.hide()
+		self.loaderHide()
+
+	def scrapeAgain(self, link):
+		tools.System.execute('RunPlugin(%s&cache=%d)' % (link, False))
 
 	def scrapeManual(self, link):
 		tools.System.execute('RunPlugin(%s&autoplay=%d)' % (link, False))
@@ -336,10 +383,16 @@ class Core:
 	def scrapeAutomatic(self, link):
 		tools.System.execute('RunPlugin(%s&autoplay=%d)' % (link, True))
 
+	def scrapeSingle(self, link):
+		tools.System.execute('RunPlugin(%s&binge=%d)' % (link, tools.Binge.ModeNone))
+
+	def scrapeBinge(self, link):
+		tools.System.execute('RunPlugin(%s&binge=%d)' % (link, tools.Binge.ModeFirst))
+
 	def scrapeAlternative(self, link):
 		tools.System.execute('RunPlugin(%s&autoplay=%d)' % (link, False if self.autoplay else True))
 
-	def scrapeItem(self, title, year, imdb, tvdb, season, episode, tvshowtitle, premiered, metadata = None, preset = None, seasoncount = None, exact = False, autoplay = False):
+	def scrapeItem(self, title, year, imdb, tvdb, season, episode, tvshowtitle, premiered, metadata = None, preset = None, seasoncount = None, exact = False, autoplay = False, cache = True):
 		try:
 			def titleClean(value):
 				if value == None: return None
@@ -363,49 +416,63 @@ class Core:
 				return value
 
 			def _progressShow(title, message, metadata = None):
-				self.mLastMessage1 = message
-				if self.navigationScrapeSpecial:
-					try: background = metadata['fanart']
-					except:
-						try: background = metadata['fanart2']
-						except:
-							try: background = metadata['fanart3']
-							except: background = None
-					window.WindowScrape.show(background = background, status = message)
-				else:
-					interface.Core.create(type = interface.Core.TypeScrape, title = title, message = message)
+				if not self.silent:
+					self.mLastMessage1 = message
+					if self.navigationCinemaProgress:
+						self.mLastTitle = title
+						interface.Dialog.notification(title = title, message = message, icon = interface.Dialog.IconInformation)
+					elif not self.navigationCinema:
+						if self.navigationScrapeSpecial:
+							try: background = metadata['fanart']
+							except:
+								try: background = metadata['fanart2']
+								except:
+									try: background = metadata['fanart3']
+									except: background = None
+							window.WindowScrape.show(background = background, status = message)
+						else:
+							interface.Core.create(type = interface.Core.TypeScrape, background = self.navigationScrapeBar, title = title, message = message)
 
 			def _progressUpdate(percentage, message1, message2 = None, message2Alternative = None, showElapsed = True):
-				if percentage == None: percentage = self.progressPercentage
-				else: self.progressPercentage = max(percentage, self.progressPercentage) # Do not let the progress bar go back if more streams are added while precheck is running.
+				if not self.silent:
+					if percentage == None: percentage = self.progressPercentage
+					else: self.progressPercentage = max(percentage, self.progressPercentage) # Do not let the progress bar go back if more streams are added while precheck is running.
 
-				if self.navigationScrapeSpecial:
-					self.mLastMessage1 = message1
-					window.WindowScrape.update(
-						status = message1, progress = self.progressPercentage, time = _progressElapsed(),
-						streamsTotal = self.streamsTotal, streamsHdUltra = self.streamsHdUltra, streamsHd1080 = self.streamsHd1080, streamsHd720 = self.streamsHd720, streamsSd = self.streamsSd, streamsLd = self.streamsCam + self.streamsScr,
-						streamsTorrent = self.streamsTorrent, streamsUsenet = self.streamsUsenet, streamsHoster = self.streamsHoster,
-						streamsCached = self.streamsCached, streamsDebrid = self.streamsDebrid, streamsDirect = self.streamsDirect, streamsPremium = self.streamsPremium, streamsLocal = self.streamsLocal,
-						streamsFinished = self.streamsFinished, streamsBusy = self.streamsBusy,
-						providersFinished = self.providersFinished, providersBusy = self.providersBusy, providersLabels = self.providersLabels
-					)
-				else:
-					if not message2: message2 = ''
-					if interface.Core.background():
-						messageNew = self.mLastName + message1
-						if message2Alternative: message2 = message2Alternative
-						# Do last, because of message2Alternative. Must be done BEFORE dialog update, otherwise stream count sometimes jumps back.
+					if self.navigationCinemaProgress:
+						percentageChange = (self.progressPercentage - self.progressPercentageLast) > 20
+						messageChange = not self.mLastMessage1 == message1
 						self.mLastMessage1 = message1
-						self.mLastMessage2 = message2
-						elapsedTime = _progressElapsed(mini = True) + interface.Format.separator() if showElapsed else ''
-						interface.Core.update(progress = self.progressPercentage, title = messageNew, message = elapsedTime + message2)
-					else:
-						messageNew = interface.Format.fontBold(message1) + '%s'
-						# Do last, because of message2Alternative. Must be done BEFORE dialog update, otherwise stream count sometimes jumps back.
-						self.mLastMessage1 = message1
-						self.mLastMessage2 = message2
-						elapsedTime = _progressElapsed(full = True) if showElapsed else ' '
-						interface.Core.update(progress = self.progressPercentage, message = interface.Format.newline().join([messageNew, elapsedTime, message2]))
+						if percentageChange or messageChange or self.progressPercentage == 100:
+							self.progressPercentageLast = self.progressPercentage
+							interface.Dialog.notification(title = self.mLastTitle, message = interface.Format.fontSeparator().join([self.mLastMessage1, str(int(self.progressPercentage)) + '%']), icon = interface.Dialog.IconInformation)
+					elif not self.navigationCinema:
+						if self.navigationScrapeSpecial:
+							self.mLastMessage1 = message1
+							window.WindowScrape.update(
+								status = message1, progress = self.progressPercentage, time = _progressElapsed(),
+								streamsTotal = self.streamsTotal, streamsHdUltra = self.streamsHdUltra, streamsHd1080 = self.streamsHd1080, streamsHd720 = self.streamsHd720, streamsSd = self.streamsSd, streamsLd = self.streamsCam + self.streamsScr,
+								streamsTorrent = self.streamsTorrent, streamsUsenet = self.streamsUsenet, streamsHoster = self.streamsHoster,
+								streamsCached = self.streamsCached, streamsDebrid = self.streamsDebrid, streamsDirect = self.streamsDirect, streamsPremium = self.streamsPremium, streamsLocal = self.streamsLocal,
+								streamsFinished = self.streamsFinished, streamsBusy = self.streamsBusy,
+								providersFinished = self.providersFinished, providersBusy = self.providersBusy, providersLabels = self.providersLabels
+							)
+						else:
+							if not message2: message2 = ''
+							if interface.Core.background():
+								messageNew = self.mLastName + message1
+								if message2Alternative: message2 = message2Alternative
+								# Do last, because of message2Alternative. Must be done BEFORE dialog update, otherwise stream count sometimes jumps back.
+								self.mLastMessage1 = message1
+								self.mLastMessage2 = message2
+								elapsedTime = _progressElapsed(mini = True) + interface.Format.separator() if showElapsed and message2 else ''
+								interface.Core.update(progress = self.progressPercentage, title = messageNew, message = elapsedTime + message2)
+							else:
+								messageNew = interface.Format.fontBold(message1) + '%s'
+								# Do last, because of message2Alternative. Must be done BEFORE dialog update, otherwise stream count sometimes jumps back.
+								self.mLastMessage1 = message1
+								self.mLastMessage2 = message2
+								elapsedTime = _progressElapsed(full = True) if showElapsed else ' '
+								interface.Core.update(progress = self.progressPercentage, message = interface.Format.newline().join([messageNew, elapsedTime, message2]))
 
 			def _progressTime():
 				while not self.stopThreads:
@@ -451,7 +518,7 @@ class Core:
 					tmdbApi = tools.Settings.getString('accounts.informants.tmdb.api') if tools.Settings.getBoolean('accounts.informants.tmdb.enabled') else ''
 					if tmdbApi == '': tmdbApi = tools.System.obfuscate(tools.Settings.getString('internal.tmdb.api', raw = True))
 					if not tmdbApi == '':
-						result = cache.get(client.request, 240, 'http://api.themoviedb.org/3/find/%s?api_key=%s&external_source=imdb_id' % (imdb, tmdbApi))
+						result = cache.Cache().cacheLong(client.request, 'http://api.themoviedb.org/3/find/%s?api_key=%s&external_source=imdb_id' % (imdb, tmdbApi))
 						self.progressInformationCharacters = 25
 						result = json.loads(result)
 						if 'original_title' in result: # Movies
@@ -461,7 +528,7 @@ class Core:
 
 					if not self.titleOriginal:
 						self.progressInformationCharacters = 50
-						result = cache.get(client.request, 240, 'http://www.imdb.com/title/%s' % (imdb))
+						result = cache.Cache().cacheLong(client.request, 'http://www.imdb.com/title/%s' % imdb)
 						self.progressInformationCharacters = 75
 						result = BeautifulSoup(result)
 						resultTitle = result.find_all('div', class_ = 'originalTitle')
@@ -559,6 +626,10 @@ class Core:
 
 			threads = []
 
+			title = titleClean(title)
+			tvshowtitle = titleClean(tvshowtitle)
+			movie = tvshowtitle == None if self.type == None else (self.type == tools.Media.TypeMovie or self.type == self.type == tools.Media.TypeDocumentary or self.type == self.type == tools.Media.TypeShort)
+
 			self.streamsTotal = 0
 			self.streamsHdUltra = 0
 			self.streamsHd1080 = 0
@@ -585,8 +656,6 @@ class Core:
 			self.threadsAdjusted = []
 			self.sourcesAdjusted = []
 			self.statusAdjusted = []
-			self.cachedAdjusted = 0
-			self.cachedAdjustedBusy = False
 			self.priortityAdjusted = []
 			self.threadsLock = threading.Lock()
 			self.dataLock = threading.Lock()
@@ -597,61 +666,117 @@ class Core:
 			self.terminationLock = threading.Lock()
 			self.terminationPrevious = 0
 			self.terminationMode = tools.Settings.getInteger('scraping.termination.mode')
-			self.terminationEnabled = tools.Settings.getBoolean('scraping.termination.enabled') and (self.terminationMode == 0 or self.terminationMode == 3 or (self.terminationMode == 1 and not autoplay) or (self.terminationMode == 2 and autoplay))
-			self.terminationCount = tools.Settings.getInteger('scraping.termination.count')
-			self.terminationType = tools.Settings.getInteger('scraping.termination.type')
-			self.terminationVideoQuality = tools.Settings.getInteger('scraping.termination.video.quality')
-			self.terminationVideoCodec = tools.Settings.getInteger('scraping.termination.video.codec')
-			self.terminationAudioChannels = tools.Settings.getInteger('scraping.termination.audio.channels')
-			self.terminationAudioCodec = tools.Settings.getInteger('scraping.termination.audio.codec')
+			self.terminationEnabled = {}
+			self.terminationCount = {}
+			self.terminationType = {}
+			self.terminationTypeHas = {}
+			self.terminationVideoQuality = {}
+			self.terminationVideoQualityHas = {}
+			self.terminationVideoCodec = {}
+			self.terminationVideoCodecHas = {}
+			self.terminationAudioChannels = {}
+			self.terminationAudioChannelsHas = {}
+			self.terminationAudioCodec = {}
+			self.terminationAudioCodecHas = {}
+			if tools.Settings.getBoolean('scraping.termination.enabled') and (self.terminationMode == 0 or self.terminationMode == 3 or (self.terminationMode == 1 and not autoplay) or (self.terminationMode == 2 and autoplay)):
+				terminationCategory = 'movies' if movie else 'shows'
+				for i in ['local', 'premium', 'torrent', 'usenet', 'hoster']:
+					self.terminationEnabled[i] = tools.Settings.getBoolean('scraping.termination.' + i + '.enabled') and (self.terminationMode == 0 or self.terminationMode == 3 or (self.terminationMode == 1 and not autoplay) or (self.terminationMode == 2 and autoplay))
 
-			terminationTemporary = {}
-			if self.terminationType in [1, 4, 5, 7]:
-				terminationTemporary['premium'] = True
-			if self.terminationType in [2, 4, 6, 7]:
-				terminationTemporary['cache'] = True
-			if self.terminationType in [3, 5, 6, 7]:
-				terminationTemporary['direct'] = True
-			self.terminationType = terminationTemporary
-			self.terminationTypeHas = len(self.terminationType) > 0
+					self.terminationCount[i] = tools.Settings.getInteger('scraping.termination.' + i + '.count')
+					if self.terminationCount[i] == 0: self.terminationCount[i] = tools.Settings.getInteger('scraping.termination.' + i + '.count.' + terminationCategory)
 
-			terminationTemporary = []
-			if self.terminationVideoQuality > 0:
-				for i in range(self.terminationVideoQuality - 1, len(metadatax.Metadata.VideoQualityOrder)):
-					terminationTemporary.append(metadatax.Metadata.VideoQualityOrder[i])
-			self.terminationVideoQuality = terminationTemporary
-			self.terminationVideoQualityHas = len(self.terminationVideoQuality) > 0
+					self.terminationType[i] = tools.Settings.getInteger('scraping.termination.' + i + '.type') - 1
+					if self.terminationType[i] < 0: self.terminationType[i] = tools.Settings.getInteger('scraping.termination.' + i + '.type.' + terminationCategory)
 
-			terminationTemporary = []
-			if self.terminationVideoCodec > 0:
-				if self.terminationVideoCodec in [1, 3]:
-					terminationTemporary.append('H264')
-				if self.terminationVideoCodec in [1, 2]:
-					terminationTemporary.append('H265')
-			self.terminationVideoCodec = terminationTemporary
-			self.terminationVideoCodecHas = len(self.terminationVideoCodec) > 0
+					self.terminationVideoQuality[i] = tools.Settings.getInteger('scraping.termination.' + i + '.video.quality') - 1
+					if self.terminationVideoQuality[i] < 0: self.terminationVideoQuality[i] = tools.Settings.getInteger('scraping.termination.' + i + '.video.quality.' + terminationCategory)
 
-			terminationTemporary = []
-			if self.terminationAudioChannels > 0:
-				if self.terminationAudioChannels in [1, 2]:
-					terminationTemporary.append('8CH')
-				if self.terminationAudioChannels in [1, 3]:
-					terminationTemporary.append('6CH')
-				if self.terminationAudioChannels in [4]:
-					terminationTemporary.append('2CH')
-			self.terminationAudioChannels = terminationTemporary
-			self.terminationAudioChannelsHas = len(self.terminationAudioChannels) > 0
+					self.terminationVideoCodec[i] = tools.Settings.getInteger('scraping.termination.' + i + '.video.codec') - 1
+					if self.terminationVideoCodec[i] < 0: self.terminationVideoCodec[i] = tools.Settings.getInteger('scraping.termination.' + i + '.video.codec.' + terminationCategory)
 
-			terminationTemporary = []
-			if self.terminationAudioCodec > 0:
-				if self.terminationAudioCodec in [1, 2, 3]:
-					terminationTemporary.append('DTS')
-				if self.terminationAudioCodec in [1, 2, 4]:
-					terminationTemporary.append('DD')
-				if self.terminationAudioCodec in [1, 5]:
-					terminationTemporary.append('AAC')
-			self.terminationAudioCodec = terminationTemporary
-			self.terminationAudioCodecHas = len(self.terminationAudioCodec) > 0
+					self.terminationAudioChannels[i] = tools.Settings.getInteger('scraping.termination.' + i + '.audio.channels') - 1
+					if self.terminationAudioChannels[i] < 0: self.terminationAudioChannels[i] = tools.Settings.getInteger('scraping.termination.' + i + '.audio.channels.' + terminationCategory)
+
+					self.terminationAudioCodec[i] = tools.Settings.getInteger('scraping.termination.' + i + '.audio.codec') - 1
+					if self.terminationAudioCodec[i] < 0: self.terminationAudioCodec[i] = tools.Settings.getInteger('scraping.termination.' + i + '.audio.codec.' + terminationCategory)
+
+					terminationTemporary = {}
+					if (i == 'torrent' or i == 'usenet') and self.terminationType[i] in [1]:
+						terminationTemporary['cache'] = True
+					if i == 'hoster':
+						if self.terminationType[i] in [1, 3]: terminationTemporary['cache'] = True
+						elif self.terminationType[i] in [2, 3]: terminationTemporary['direct'] = True
+					self.terminationType[i] = terminationTemporary
+					self.terminationTypeHas[i] = len(self.terminationType[i]) > 0
+
+					terminationTemporary = []
+					if self.terminationVideoQuality[i] > 0:
+						for j in range(self.terminationVideoQuality[i] - 1, len(metadatax.Metadata.VideoQualityOrder)):
+							terminationTemporary.append(metadatax.Metadata.VideoQualityOrder[j])
+					self.terminationVideoQuality[i] = terminationTemporary
+					self.terminationVideoQualityHas[i] = len(self.terminationVideoQuality[i]) > 0
+
+					terminationTemporary = []
+					if self.terminationVideoCodec[i] > 0:
+						if self.terminationVideoCodec[i] in [1, 3]: terminationTemporary.append('H264')
+						if self.terminationVideoCodec[i] in [1, 2]: terminationTemporary.append('H265')
+					self.terminationVideoCodec[i] = terminationTemporary
+					self.terminationVideoCodecHas[i] = len(self.terminationVideoCodec[i]) > 0
+
+					terminationTemporary = []
+					if self.terminationAudioChannels[i] > 0:
+						if self.terminationAudioChannels[i] in [1, 2]: terminationTemporary.append('8CH')
+						if self.terminationAudioChannels[i] in [1, 3]: terminationTemporary.append('6CH')
+						if self.terminationAudioChannels[i] in [4]: terminationTemporary.append('2CH')
+					self.terminationAudioChannels[i] = terminationTemporary
+					self.terminationAudioChannelsHas[i] = len(self.terminationAudioChannels[i]) > 0
+
+					terminationTemporary = []
+					if self.terminationAudioCodec[i] > 0:
+						if self.terminationAudioCodec[i] in [1, 2, 3]: terminationTemporary.append('DTS')
+						if self.terminationAudioCodec[i] in [1, 2, 4]: terminationTemporary.append('DD')
+						if self.terminationAudioCodec[i] in [1, 5]: terminationTemporary.append('AAC')
+					self.terminationAudioCodec[i] = terminationTemporary
+					self.terminationAudioCodecHas[i] = len(self.terminationAudioCodec[i]) > 0
+
+			self.cacheCount = 0
+			self.cacheBusy = False
+			self.cacheEnabled = tools.Settings.getBoolean('scraping.cache.enabled')
+			if self.cacheEnabled:
+				self.cacheOrion = orionoid.Orionoid()
+				if not self.cacheOrion.accountValid(): self.cacheOrion = None
+				try: self.cacheTimeout = tools.Settings.getInteger('scraping.cache.timeout')
+				except: self.cacheTimeout = 45
+				self.cacheTypes = []
+				self.cacheObjects = []
+				if tools.Settings.getBoolean('scraping.cache.premiumize'):
+					premiumize = debridx.Premiumize()
+					if premiumize.accountValid():
+						if tools.Settings.getBoolean('streaming.torrent.premiumize.enabled'):
+							self.cacheTypes.append(handler.Handler.TypeTorrent)
+							self.cacheObjects.append(premiumize)
+						if tools.Settings.getBoolean('streaming.usenet.premiumize.enabled') and (self.cacheOrion or tools.Settings.getBoolean('scraping.cache.preload.usenet')):
+							self.cacheTypes.append(handler.Handler.TypeUsenet)
+							self.cacheObjects.append(premiumize)
+						if tools.Settings.getBoolean('streaming.hoster.premiumize.enabled'):
+							self.cacheTypes.append(handler.Handler.TypeHoster)
+							self.cacheObjects.append(premiumize)
+				if tools.Settings.getBoolean('scraping.cache.offcloud'):
+					offcloud = debridx.OffCloud()
+					if offcloud.accountValid():
+						if tools.Settings.getBoolean('streaming.torrent.offcloud.enabled'):
+							self.cacheTypes.append(handler.Handler.TypeTorrent)
+							self.cacheObjects.append(offcloud)
+						if tools.Settings.getBoolean('streaming.usenet.offcloud.enabled') and (self.cacheOrion or tools.Settings.getBoolean('scraping.cache.preload.usenet')):
+							self.cacheTypes.append(handler.Handler.TypeUsenet)
+							self.cacheObjects.append(offcloud)
+				if tools.Settings.getBoolean('scraping.cache.realdebrid'):
+					realdebrid = debridx.RealDebrid()
+					if realdebrid.accountValid() and tools.Settings.getBoolean('streaming.torrent.realdebrid.enabled'):
+						self.cacheTypes.append(handler.Handler.TypeTorrent)
+						self.cacheObjects.append(realdebrid)
+				self.cacheEnabled = len(self.cacheTypes) > 0
 
 			# Limit the number of running threads.
 			# Can be more than actual core count, since threads in python are run on a single core.
@@ -688,6 +813,7 @@ class Core:
 			self.progressInformationLanguage = 0
 			self.progressInformationCharacters = 0
 			self.progressPercentage = 0
+			self.progressPercentageLast = 0
 			self.progressCache = 0
 
 			percentageDone = 0
@@ -713,17 +839,13 @@ class Core:
 			heading = 'Stream Search'
 			message = 'Initializing Providers'
 			_progressShow(title = heading, message = message, metadata = metadata)
-			interface.Loader.hide()
+			self.loaderHide()
 
 			timer.start()
 			# Ensures that the elapsed time in the dialog is updated more frequently.
 			# Otherwise the update is laggy if many threads run.
 			timeThread = workers.Thread(_progressTime)
 			timeThread.start()
-
-			title = titleClean(title)
-			tvshowtitle = titleClean(tvshowtitle)
-			movie = tvshowtitle == None if self.type == None else (self.type == tools.Media.TypeMovie or self.type == self.type == tools.Media.TypeDocumentary or self.type == self.type == tools.Media.TypeShort)
 
 			# Clear old sources from database.
 			# Due to long links and metadata, the database entries can grow very large, not only wasting disk space, but also reducing search/insert times.
@@ -755,10 +877,10 @@ class Core:
 						threadOrion = None
 						if movie:
 							title = cleantitle.normalize(title)
-							threadOrion = workers.Thread(self.scrapeMovie, title, self.titleLocal, self.titleAliases, year, imdb, providerOrion, exact)
+							threadOrion = workers.Thread(self.scrapeMovie, title, self.titleLocal, self.titleAliases, year, imdb, providerOrion, exact, cache)
 						else:
 							tvshowtitle = cleantitle.normalize(tvshowtitle)
-							threadOrion = workers.Thread(self.scrapeEpisode, title, self.titleLocal, self.titleAliases, year, imdb, tvdb, season, episode, seasoncount, tvshowtitle, premiered, providerOrion, exact)
+							threadOrion = workers.Thread(self.scrapeEpisode, title, self.titleLocal, self.titleAliases, year, imdb, tvdb, season, episode, seasoncount, tvshowtitle, premiered, providerOrion, exact, cache)
 
 						threadOrion.start()
 						timerSingle.start()
@@ -806,7 +928,7 @@ class Core:
 					del thread
 
 				if len(self.providers) == 0 and not self.progressCanceled():
-					interface.Dialog.notification(message = 'No Providers Available', icon = interface.Dialog.IconError)
+					if not self.silent: interface.Dialog.notification(message = 'No Providers Available', icon = interface.Dialog.IconError)
 					self.stopThreads = True
 					time.sleep(0.3) # Ensure the time thread (0.2 interval) is stopped.
 					if len(self.sourcesAdjusted) == 0: return None # Orion found a few links, but not enough, causing other providers to be searched.
@@ -816,7 +938,6 @@ class Core:
 					return None
 
 				_progressUpdate(int(percentageInitialize * 100), message) # In case the initialization finishes early.
-
 				if not exact and not self.progressCanceled() and self.enabledForeign:
 					percentageDone = percentageInitialize
 					message = 'Retrieving Additional Information'
@@ -839,14 +960,17 @@ class Core:
 						time.sleep(0.3) # Ensure the time thread (0.2 interval) is stopped.
 						return None
 
+				self.titleAlternatives = {key : value for key, value in self.titleAlternatives.iteritems() if not titleClean(value) == title} # Only if the title is differnt to main title.
+				self.titleAlternatives = {key : list(set(value)) for key, value in self.titleAlternatives.iteritems()} # Remove duplicates.
+
 				if movie:
 					title = cleantitle.normalize(title)
 					for source in self.providers:
-						threads.append(workers.Thread(self.scrapeMovieAlternatives, self.titleAlternatives, title, self.titleLocal, self.titleAliases, year, imdb, source, exact)) # Only language title for the first thread.
+						threads.append(workers.Thread(self.scrapeMovieAlternatives, self.titleAlternatives, title, self.titleLocal, self.titleAliases, year, imdb, source, exact, cache)) # Only language title for the first thread.
 				else:
 					tvshowtitle = cleantitle.normalize(tvshowtitle)
 					for source in self.providers:
-						threads.append(workers.Thread(self.scrapeEpisodeAlternatives, self.titleAlternatives, title, self.titleLocal, self.titleAliases, year, imdb, tvdb, season, episode, seasoncount, tvshowtitle, premiered, source, exact)) # Only language title for the first thread.
+						threads.append(workers.Thread(self.scrapeEpisodeAlternatives, self.titleAlternatives, title, self.titleLocal, self.titleAliases, year, imdb, tvdb, season, episode, seasoncount, tvshowtitle, premiered, source, exact, cache)) # Only language title for the first thread.
 
 				sourceLabel = [i['label'] for i in self.providers]
 				[i.start() for i in threads]
@@ -960,9 +1084,9 @@ class Core:
 						if timerSingle.elapsed() >= timeout:
 							break
 
-						totalThreads = self.cachedAdjusted + len(self.threadsAdjusted)
+						totalThreads = self.cacheCount + len(self.threadsAdjusted)
 						aliveCount = len([x for x in self.threadsAdjusted if x.is_alive()])
-						self.streamsFinished = self.cachedAdjusted + len([x for x in self.statusAdjusted if x == 'done'])
+						self.streamsFinished = self.cacheCount + len([x for x in self.statusAdjusted if x == 'done'])
 						self.streamsBusy = totalThreads - self.streamsFinished
 
 						if aliveCount == 0:
@@ -996,9 +1120,9 @@ class Core:
 						if timerSingle.elapsed() >= timeout:
 							break
 
-						totalThreads = self.cachedAdjusted + len(self.threadsAdjusted)
+						totalThreads = self.cacheCount + len(self.threadsAdjusted)
 						aliveCount = len([x for x in self.threadsAdjusted if x.is_alive()])
-						self.streamsFinished = self.cachedAdjusted + len([x for x in self.statusAdjusted if x == 'done'])
+						self.streamsFinished = self.cacheCount + len([x for x in self.statusAdjusted if x == 'done'])
 						self.streamsBusy = totalThreads - self.streamsFinished
 
 						if aliveCount == 0:
@@ -1032,9 +1156,9 @@ class Core:
 						if self.progressCanceled() or elapsedTime >= timeout:
 							break
 
-						totalThreads = self.cachedAdjusted + len(self.threadsAdjusted)
+						totalThreads = self.cacheCount + len(self.threadsAdjusted)
 						aliveCount = len([x for x in self.threadsAdjusted if x.is_alive()])
-						self.streamsFinished = self.cachedAdjusted + len([x for x in self.statusAdjusted if x == 'done'])
+						self.streamsFinished = self.cacheCount + len([x for x in self.statusAdjusted if x == 'done'])
 						self.streamsBusy = totalThreads - self.streamsFinished
 
 						if aliveCount == 0:
@@ -1158,16 +1282,16 @@ class Core:
 			tools.Logger.error()
 			return None
 
-	def scrapeMovieAlternatives(self, alternativetitles, title, localtitle, aliases, year, imdb, source, exact):
+	def scrapeMovieAlternatives(self, alternativetitles, title, localtitle, aliases, year, imdb, source, exact, cache):
 		threads = []
-		threads.append(workers.Thread(self.scrapeMovie, title, localtitle, aliases, year, imdb, source, exact))
+		threads.append(workers.Thread(self.scrapeMovie, title, localtitle, aliases, year, imdb, source, exact, cache))
 		if not source['id'] == 'oriscrapers': # Do not scrape alternative titles for Orion.
 			for key, value in alternativetitles.iteritems():
-				threads.append(workers.Thread(self.scrapeMovie, value, localtitle, aliases, year, imdb, source, exact, key))
+				threads.append(workers.Thread(self.scrapeMovie, value, localtitle, aliases, year, imdb, source, exact, cache, key))
 		[thread.start() for thread in threads]
 		[thread.join() for thread in threads]
 
-	def scrapeMovie(self, title, localtitle, aliases, year, imdb, source, exact, mode = None):
+	def scrapeMovie(self, title, localtitle, aliases, year, imdb, source, exact, cache, mode = None):
 		connection = None
 		try:
 			# Replace symbols with spaces. Eg: K.C. Undercover
@@ -1196,7 +1320,7 @@ class Core:
 			pass
 
 		try:
-			if not sourceType == provider.Provider.TypeLocal:
+			if cache and not sourceType == provider.Provider.TypeLocal:
 				sources = []
 				try:
 					connection, cursor = self.databaseOpen()
@@ -1206,7 +1330,7 @@ class Core:
 				finally: self.databaseClose(connection)
 				t1 = int(match[6])
 				t2 = tools.Time.timestamp()
-				update = abs(t2 - t1) > 7200
+				update = abs(t2 - t1) > 21600 # 6 hours.
 				if update == False:
 					sources = json.loads(match[5])
 					self.addSources(sources, False)
@@ -1230,10 +1354,19 @@ class Core:
 			if url == None:
 				try: url = sourceObject.movie(imdb, title, localtitle, year)
 				except: url = sourceObject.movie(imdb, title, localtitle, aliases, year)
+				if url == None: raise Exception()
 				if exact:
 					try: url += '&exact=1'
 					except: pass
-				if url == None: raise Exception()
+				try:
+					urlNew = urlparse.parse_qs(url)
+					urlNew = dict([(i, urlNew[i][0]) if urlNew[i] else (i, '') for i in urlNew])
+					try: # Some movies have no year. Reset to empty string, since urlencode cannot handle None values.
+						if urlNew['year'] == None or urlNew['year'] == str(None):
+							urlNew['year'] = ''
+					except: pass
+					url = urllib.urlencode(urlNew)
+				except: pass
 				try:
 					connection, cursor = self.databaseOpen()
 					cursor.execute("DELETE FROM links WHERE source = '%s' AND mode = '%s' AND imdb = '%s' AND season = '%s' AND episode = '%s'" % (sourceId, mode, imdb, '', ''))
@@ -1244,6 +1377,10 @@ class Core:
 			pass
 
 		try:
+			if self.silent:
+				try: sourceObject.silent()
+				except: pass
+
 			sources = []
 			sources = sourceObject.sources(url, self.hostDict, self.hostprDict)
 
@@ -1300,7 +1437,10 @@ class Core:
 
 					# Change language
 					if 'language' in source and sources[i]['language']:
-						sources[i]['language'] = sources[i]['language'].lower()
+						if isinstance(sources[i]['language'], (list, tuple)):
+							sources[i]['language'] = [language.lower() for language in sources[i]['language']]
+						else:
+							sources[i]['language'] = sources[i]['language'].lower()
 
 					# Update Google
 					sources[i]['source'] = self.adjustRename(sources[i]['source'])
@@ -1319,16 +1459,16 @@ class Core:
 		except:
 			tools.Logger.error()
 
-	def scrapeEpisodeAlternatives(self, alternativetitles, title, localtitle, aliases, year, imdb, tvdb, season, episode, seasoncount, tvshowtitle, premiered, source, exact):
+	def scrapeEpisodeAlternatives(self, alternativetitles, title, localtitle, aliases, year, imdb, tvdb, season, episode, seasoncount, tvshowtitle, premiered, source, exact, cache):
 		threads = []
-		threads.append(workers.Thread(self.scrapeEpisode, title, localtitle, aliases, year, imdb, tvdb, season, episode, seasoncount, tvshowtitle, premiered, source, exact))
+		threads.append(workers.Thread(self.scrapeEpisode, title, localtitle, aliases, year, imdb, tvdb, season, episode, seasoncount, tvshowtitle, premiered, source, exact, cache))
 		if not source['id'] == 'oriscrapers': # Do not scrape alternative titles for Orion.
 			for key, value in alternativetitles.iteritems():
-				threads.append(workers.Thread(self.scrapeEpisode, title, localtitle, aliases, year, imdb, tvdb, season, episode, seasoncount, value, premiered, source, exact, key))
+				threads.append(workers.Thread(self.scrapeEpisode, title, localtitle, aliases, year, imdb, tvdb, season, episode, seasoncount, value, premiered, source, exact, cache, key))
 		[thread.start() for thread in threads]
 		[thread.join() for thread in threads]
 
-	def scrapeEpisode(self, title, localtitle, aliases, year, imdb, tvdb, season, episode, seasoncount, tvshowtitle, premiered, source, exact, mode = None):
+	def scrapeEpisode(self, title, localtitle, aliases, year, imdb, tvdb, season, episode, seasoncount, tvshowtitle, premiered, source, exact, cache, mode = None):
 		connection = None
 		try:
 			# Replace symbols with spaces. Eg: K.C. Undercover
@@ -1359,7 +1499,7 @@ class Core:
 			pass
 
 		try:
-			if not sourceType == provider.Provider.TypeLocal:
+			if cache and not sourceType == provider.Provider.TypeLocal:
 				sources = []
 				try:
 					connection, cursor = self.databaseOpen()
@@ -1369,7 +1509,7 @@ class Core:
 				finally: self.databaseClose(connection)
 				t1 = int(match[6])
 				t2 = tools.Time.timestamp()
-				update = abs(t2 - t1) > 7200
+				update = abs(t2 - t1) > 21600 # 6 hours.
 				if update == False:
 					sources = json.loads(match[5])
 					self.addSources(sources, False)
@@ -1393,10 +1533,10 @@ class Core:
 			if url == None:
 				try: url = sourceObject.tvshow(imdb, tvdb, tvshowtitle, localtitle, year)
 				except: url = sourceObject.tvshow(imdb, tvdb, tvshowtitle, localtitle, aliases, year)
+				if url == None: raise Exception()
 				if exact:
 					try: url += '&exact=1'
 					except: pass
-				if url == None: raise Exception()
 				try:
 					connection, cursor = self.databaseOpen()
 					cursor.execute("DELETE FROM links WHERE source = '%s' AND mode = '%s' AND imdb = '%s' AND season = '%s' AND episode = '%s'" % (sourceId, mode, imdb, '', ''))
@@ -1420,8 +1560,22 @@ class Core:
 
 		try:
 			if url == None: raise Exception()
+
+			if self.silent:
+				try: sourceObject.silent()
+				except: pass
+
 			if ep_url == None: ep_url = sourceObject.episode(url, imdb, tvdb, title, premiered, season, episode)
 			if ep_url == None: return
+			try:
+				urlNew = urlparse.parse_qs(ep_url)
+				urlNew = dict([(i, urlNew[i][0]) if urlNew[i] else (i, '') for i in urlNew])
+				try: # Some shows have no year. Reset to empty string, since urlencode cannot handle None values.
+					if urlNew['year'] == None or urlNew['year'] == str(None):
+						urlNew['year'] = ''
+				except: pass
+				ep_url = urllib.urlencode(urlNew)
+			except: pass
 			try:
 				connection, cursor = self.databaseOpen()
 				cursor.execute("DELETE FROM links WHERE source = '%s' AND mode = '%s' AND imdb = '%s' AND season = '%s' AND episode = '%s'" % (sourceId, mode, imdb, season, episode))
@@ -1499,7 +1653,11 @@ class Core:
 								sources[i]['origin'] = sourceAddon
 
 							# Change language
-							sources[i]['language'] = sources[i]['language'].lower()
+							if 'language' in source and sources[i]['language']:
+								if isinstance(sources[i]['language'], (list, tuple)):
+									sources[i]['language'] = [language.lower() for language in sources[i]['language']]
+								else:
+									sources[i]['language'] = sources[i]['language'].lower()
 
 							# Update Google
 							sources[i]['source'] = self.adjustRename(sources[i]['source'])
@@ -1538,7 +1696,8 @@ class Core:
 			currentSources += _scrapeEpisode(new_url_encoded, mode, sourceId, sourceObject, sourceName, tvshowtitle, season, episode, imdb, currentSources, False, seasoncount, exact)
 
 			# Get season packs
-			if tools.Settings.getBoolean('scraping.packs.enabled') and source['pack'] and not source['external']:
+			# Do not get season packs for special episodes.
+			if tools.Settings.getBoolean('scraping.packs.enabled') and source['pack'] and not source['external'] and not season == 0 and not episode == 0:
 				try:
 					new_url['pack'] = True
 					new_url_encoded = urllib.urlencode(new_url)
@@ -1646,16 +1805,18 @@ class Core:
 	def showFilters(self):
 		interface.Filters.show()
 
-	def showStreams(self, items = None, extras = None, metadata = None, direct = False, filter = True, autoplay = False, clear = False, library = False, initial = False, new = True, add = False, process = True):
+	def showStreams(self, items = None, extras = None, metadata = None, direct = False, filter = True, autoplay = False, clear = False, library = False, initial = False, new = True, add = False, process = True, binge = None):
 		try:
+			if not process: autoplay = False
+
 			if clear: self._showClear()
 
 			if self.navigationScrapeDialog and self.navigationStreamsDirectory:
 				# Important to close here and not later.
-				self.progressClose(loader = self.navigationStreamsSpecial and new)
+				self.progressClose(loader = self.navigationStreamsSpecial and new and not autoplay)
 
-			if not direct and self.navigationStreamsDirectory:
-				return self._showStreamsDirectory(filter = filter and new, autoplay = autoplay, library = library, initial = initial, new = new, add = add, process = process)
+			if not direct and self.navigationStreamsDirectory and not(self.navigationCinema and autoplay):
+				return self._showStreamsDirectory(filter = filter and (new or binge), autoplay = autoplay, library = library, initial = initial, new = new, add = add, process = process, binge = binge)
 
 			if items == None:
 				items = window.Window.propertyGlobal(self.propertyItems)
@@ -1688,9 +1849,9 @@ class Core:
 					else: itemsFiltered = items
 					if len(itemsFiltered) == 0:
 						if not new or self.progressNotification():
-							return self.showStreams(items = items, extras = extras, metadata = metadata, direct = True, library = library, filter = False, autoplay = False, clear = True, new = new, add = add)
+							return self.showStreams(items = items, extras = extras, metadata = metadata, direct = True, library = library, filter = False, autoplay = False, clear = True, new = new, add = add, binge = binge)
 						else:
-							self.progressClose(force = True, loader = self.navigationStreamsSpecial and new)
+							self.progressClose(force = True, loader = self.navigationStreamsSpecial and new and not autoplay)
 							return False
 				else:
 					if process: itemsFiltered = self.sourcesFilter(items = items, metadata = metadata, apply = False, autoplay = False)
@@ -1703,18 +1864,18 @@ class Core:
 				itemsFiltered = extras + itemsFiltered
 
 			if autoplay:
-				result = self._showAutoplay(items = itemsFiltered, metadata = metadata)
+				result = self._showAutoplay(items = itemsFiltered, metadata = metadata, binge = binge)
 				if result:
 					self.progressClose(force = True)
 					return result
 				else:
-					return self.showStreams(items = items, extras = extras, metadata = metadata, direct = True, library = library, filter = False, autoplay = False, clear = True, new = new, add = add)
+					return self.showStreams(items = items, extras = extras, metadata = metadata, direct = True, library = library, filter = False, autoplay = False, clear = True, new = new, add = add, binge = binge)
 
 			if self.navigationStreamsDialog:
 				if new: self.progressNotification()
-				result = self._showStreamsDialog(items = itemsFiltered, metadata = metadata)
+				result = self._showStreamsDialog(items = itemsFiltered, metadata = metadata, binge = binge)
 			else:
-				result = self._showStreams(items = itemsFiltered, metadata = metadata, initial = initial, library = library, add = add)
+				result = self._showStreams(items = itemsFiltered, metadata = metadata, initial = initial, library = library, add = add, binge = binge)
 				if new: self.progressNotification()
 
 			self.progressClose(force = True, loader = self.navigationStreamsSpecial and new)
@@ -1727,17 +1888,18 @@ class Core:
 	def _showClear(self, filter = False, autoplay = False):
 		interface.Filters.clear()
 
-	def _showStreamsDirectory(self, filter = False, autoplay = False, library = False, initial = False, new = True, add = False, process = True):
+	def _showStreamsDirectory(self, filter = False, autoplay = False, library = False, initial = False, new = True, add = False, process = True, binge = None):
 		try:
-			interface.Loader.show()
+			if not self.navigationCinema: self.loaderShow()
 			tools.Time.sleep(0.2)
 			# NB: Use "filterx" and not "filter" as parameters.
 			# Otherwise for some weird reason the back button in the directory does not work.
 			# Maybe Kodi uses that parameter name internally (eg: left side menu "Filter" option).
-			command = '%s?action=streamsShow&direct=%d&filterx=%d&autoplay=%d&library=%d&initial=%d&new=%d&add=%d&process=%d' % (sys.argv[0], True, filter, autoplay, library, initial, new, add, process)
+			command = '%s?action=streamsShow&direct=%d&filterx=%d&autoplay=%d&library=%d&initial=%d&new=%d&add=%d&process=%d&binge=%d' % (sys.argv[0], True, filter, autoplay, library, initial, new, add, process, bool(binge))
 			command = self.parameterize(command)
 			self.progressClose(force = True, loader = False) # Important to close to free up window memory, since Container.Update is in a separate process which does not know the window anymore.
-			interface.Loader.show()
+			if not self.navigationCinema: self.loaderShow()
+			if self.navigationCinema and not autoplay: self.navigationCinemaTrailer.cinemaStop() # Must happen here, otherwise the player won't stop.
 			if autoplay: result = tools.System.execute('RunPlugin(%s)' % command)
 			else: result = tools.System.execute('Container.Update(%s)' % command)
 			return result
@@ -1745,7 +1907,7 @@ class Core:
 			tools.Logger.error()
 			return None
 
-	def _showStreamsDialog(self, items, metadata):
+	def _showStreamsDialog(self, items, metadata, binge = None):
 		try:
 			try: multi = 'meta' in items[0]
 			except: multi = False
@@ -1793,20 +1955,20 @@ class Core:
 				labels.append(label)
 			choice = control.selectDialog(labels)
 			if choice < 0: return None
-			self.play(items[choice], metadata = metadata)
+			self.play(items[choice], metadata = metadata, binge = binge)
 			return None
 		except:
 			tools.Logger.error()
 			return None
 
-	def _showStreams(self, items = None, metadata = None, library = False, initial = False, add = False):
-		metadataKodi = tools.Media.metadataClean(metadata)
+	def _showStreams(self, items = None, metadata = None, library = False, initial = False, add = False, binge = None):
+		metadataKodi = tools.Media.metadataClean(metadata, exclude = True) # Exclude attributes to save some space in the interface.
 		sysaddon = sys.argv[0]
 		syshandle = int(sys.argv[1])
 		sysmeta = tools.Converter.quoteTo(tools.Converter.jsonTo(metadata))
 		duration = self._duration(metadata)
 
-		hasFanart = tools.Settings.getBoolean('interface.fanart')
+		hasFanart = tools.Settings.getBoolean('interface.theme.fanart')
 		addonPoster = control.addonPoster()
 		addonBanner = control.addonBanner()
 		addonFanart = control.addonFanart()
@@ -1862,6 +2024,8 @@ class Core:
 		if not hasFanart or (fanart == '0' or fanart == None): fanart = addonFanart
 
 		if self.navigationStreamsSpecial:
+			if self.navigationCinema and not self.navigationCinemaInerrupt:
+				self.navigationCinemaTrailer.cinemaStop()
 			window.WindowStreams.show(background = fanart, status = 'Loading Streams', close = not initial)
 
 			window.Window.propertyGlobalSet('GaiaPosterStatic', tools.Settings.getInteger('interface.navigation.streams.poster') == 0)
@@ -1916,7 +2080,7 @@ class Core:
 				try:
 					if multi:
 						metadata = itemJson['meta']
-						metadataKodi = tools.Media.metadataClean(metadata)
+						metadataKodi = tools.Media.metadataClean(metadata, exclude = True) # Exclude attributes to save some space in the interface.
 						sysmeta = urllib.quote_plus(json.dumps(metadata))
 						duration = self._duration(metadata)
 
@@ -1941,7 +2105,7 @@ class Core:
 						try: tvdb = metadata['tvdb']
 						except: tvdb = None
 
-						extra = interface.Format.font(tools.Media.title(metadata = metadata, title = title, year = year, season = season, episode = episode), bold = True, color = interface.Format.ColorOrion)
+						extra = interface.Format.font(title + ' ' + tools.Media.title(metadata = None, title = '', year = year, season = season, episode = episode).strip(), bold = True, color = interface.Format.ColorOrion)
 						if not self.navigationStreamsSpecial: extra += interface.Format.separator()
 
 						try: poster = metadata['poster'] if 'poster' in metadata else metadata['poster2'] if 'poster2' in metadata else metadata['poster3'] if 'poster3' in metadata else None
@@ -1965,8 +2129,8 @@ class Core:
 					tools.Logger.error()
 
 				# ACTION URL.
-				if not meta.local() and enabledCache: url = '%s?action=playCache&handleMode=%s&source=%s&metadata=%s' % (sysaddon, handler.Handler.ModeDefault, syssource, sysmeta)
-				else: url = '%s?action=play&handleMode=%s&source=%s&metadata=%s' % (sysaddon, handler.Handler.ModeDefault, syssource, sysmeta)
+				if not meta.local() and enabledCache: url = '%s?action=playCache&handleMode=%s&source=%s&metadata=%s&binge=%d' % (sysaddon, handler.Handler.ModeDefault, syssource, sysmeta, bool(binge))
+				else: url = '%s?action=play&handleMode=%s&source=%s&metadata=%s&binge=%d' % (sysaddon, handler.Handler.ModeDefault, syssource, sysmeta, bool(binge))
 				url = self.parameterize(url)
 				sysurl = tools.Converter.quoteTo(url)
 
@@ -2015,7 +2179,7 @@ class Core:
 						elif not name: name = link
 					elif not name:
 						name = link
-					hoster = None if itemJson['source'].lower() == itemJson['providerlabel'].lower() else itemJson['source'] if meta.isHoster() else None
+					hoster = None if itemJson['source'].lower() == itemJson['providerlabel'].lower() else itemJson['source'] if meta.isHoster() or meta.isPremium() else None
 					provider = window.WindowStreams.separator([meta.labelOrion(), interface.Format.font(itemJson['providerlabel'], uppercase = True, bold = True), interface.Format.font(hoster, uppercase = True, bold = True)], color = True)
 					stream = window.WindowStreams.separator([extra if extra else None, meta.labelOrion(), interface.Format.font(itemJson['providerlabel'], uppercase = True, bold = True), interface.Format.font(hoster, uppercase = True, bold = True)], color = True)
 					access = metadatax.Metadata.labelFill(window.WindowStreams.separator([meta.labelDirect(), meta.labelCached(), meta.labelDebrid(), meta.labelOpen()], color = True))
@@ -2045,7 +2209,6 @@ class Core:
 					item.setProperty('GaiaPoster1', poster1 if poster1 else '')
 					item.setProperty('GaiaPoster2', poster2 if poster2 else '')
 					item.setProperty('GaiaPoster3', poster3 if poster3 else '')
-
 					item.setProperty('GaiaAction', url)
 					item.setProperty('GaiaNumber', str(i + 1))
 					item.setProperty('GaiaExtra', extra)
@@ -2088,8 +2251,16 @@ class Core:
 		else:
 			control.addItems(handle = syshandle, items = controls)
 			control.content(syshandle, 'files')
-			control.directory(syshandle, cacheToDisc = True, updateListing = not initial)
-			self.progressClose(force = True, loader = (add or self.navigationScrapeBar))
+			control.directory(syshandle, cacheToDisc = True, updateListing = not initial or binge == tools.Binge.ModeContinue)
+			self.progressClose(force = True, loader = False)
+			def closeLoader():
+				tools.Time.sleep(3)
+				self.loaderHide()
+			threadLoader = threading.Thread(target = closeLoader)
+			threadLoader.start()
+
+		if self.navigationCinema:
+			self.navigationCinemaTrailer.cinemaStop()
 
 		# When launching from the local library, Kodi shows an OK dialog and/or a notification stating that the item couldn't be played, or that it coudln't find the next item in the playlist.
 		# These popups happen random and sometimes not at all. It probably depends on the time it takes to scrape/launch Gaia.
@@ -2101,10 +2272,12 @@ class Core:
 					interface.Dialog.closeNotification()
 					tools.Time.sleep(0.05)
 				self.progressNotification(force = True) # Reopen.
-			thread = threading.Thread(target = closePopups)
-			thread.start()
+			threadLibrary = threading.Thread(target = closePopups)
+			threadLibrary.start()
 
-	def _showAutoplay(self, items, metadata):
+	def _showAutoplay(self, items, metadata, binge = None):
+		self.loaderShow()
+
 		filter = [i for i in items if i['source'].lower() in self.hostcapDict and not any(j for j in i['debrid'].itervalues())]
 		items = [i for i in items if not i in filter]
 
@@ -2125,11 +2298,10 @@ class Core:
 		autoHandler = handler.Handler()
 		heading = interface.Translation.string(33451)
 		message = interface.Translation.string(33452)
-		self.progressPlaybackInitialize(title = heading, message = message, metadata = metadata)
-
 		for i in range(len(items)):
-			if self.progressPlaybackCanceled(): break
-			percentage = int(((i + 1) / float(len(items))) * 100)
+			self.progressPlaybackInitialize(title = heading, message = message, metadata = metadata, loader = False)
+			if not self.navigationCinema and self.progressPlaybackCanceled(): break
+			percentage = int(((i / float(len(items))) * 30) + 20)
 			self.progressPlaybackUpdate(progress = percentage, title = heading, message = message)
 			try:
 				handle = autoHandler.serviceDetermine(mode = handler.Handler.ModeDefault, item = items[i], popups = False)
@@ -2138,13 +2310,21 @@ class Core:
 					items[i]['urlresolved'] = result['link']
 					items[i]['stream'] = result
 					if result['success']:
-						if self.progressPlaybackCanceled(): break
+						history.History().insert(type = self.type, kids = self.kids, link = items[i]['url'], metadata = metadata, source = items[i])
+						if not self.navigationCinema and self.progressPlaybackCanceled(): break
+						if self.navigationCinema:
+							self.navigationCinemaTrailer.cinemaStop()
+							self.loaderShow()
+							self.progressPlaybackInitialize(title = heading, message = message, metadata = metadata, force = True) # Make sure it is shown after the trailer playback stops.
+							self.progressPlaybackUpdate(progress = percentage, title = heading, message = message, force = True)
 						from resources.lib.modules.player import player
-						player(type = self.type, kids = self.kids).run(self.type, title, year, season, episode, imdb, tmdb, tvdb, items[i]['urlresolved'], metadata, handle = handle, source = items[i])
-						return items[i]
+						success = player(type = self.type, kids = self.kids).run(self.type, title, year, season, episode, imdb, tmdb, tvdb, items[i]['urlresolved'], metadata, handle = handle, source = items[i], binge = binge)
+						if success: return items[i]
+						else: continue
 			except:
 				tools.Logger.error()
 
+		if self.navigationCinema: self.navigationCinemaTrailer.cinemaStop()
 		self.progressPlaybackClose()
 		interface.Dialog.notification(title = 33448, message = 33574, sound = False, icon = interface.Dialog.IconInformation)
 		return None
@@ -2153,11 +2333,10 @@ class Core:
 		try: return int(metadata['duration'])
 		except: return 1800 if 'episode' in metadata else 7200
 
-	def play(self, source, metadata = None, downloadType = None, downloadId = None, handle = None, handleMode = None, index = None):
+	def play(self, source, metadata = None, downloadType = None, downloadId = None, handle = None, handleMode = None, index = None, binge = None):
 		try:
 			self.downloadCanceled = False
-
-			sequential = tools.Settings.getBoolean('general.playback.sequential.enabled')
+			sequential = tools.Settings.getBoolean('general.playback.sequential')
 			if sequential:
 				items = json.loads(control.window.getProperty(self.propertyItems))
 				if index == None:
@@ -2165,12 +2344,13 @@ class Core:
 						if items[i]['url'] == source['url']:
 							index = i
 							break
-				try:
-					source = items[index]
-				except:
-					tools.Logger.error()
-					self.progressClose(force = True)
-					return
+				if not index == None: # Ignore for locally dowloaded files (files played from the download manager while the sequential playback option is enabled).
+					try:
+						source = items[index]
+					except:
+						tools.Logger.error()
+						self.progressClose(force = True)
+						return
 
 			try:
 				if metadata == None:
@@ -2282,7 +2462,7 @@ class Core:
 							tools.Logger.error()
 
 					if handle == handler.Handler.ReturnUnavailable or handle == handler.Handler.ReturnExternal or handle == handler.Handler.ReturnCancel:
-						interface.Loader.hide()
+						self.loaderHide()
 						return None
 
 				self.progressPlaybackInitialize(title = heading, message = message, metadata = metadata)
@@ -2300,7 +2480,7 @@ class Core:
 
 				try:
 					if self.progressPlaybackCanceled():
-						interface.Loader.hide()
+						self.loaderHide()
 						return None
 				except: pass
 
@@ -2308,6 +2488,7 @@ class Core:
 
 				local = 'local' in item and item['local']
 				if item['source'] == block: raise Exception()
+				self.tProcessed = False
 				self.tResolved = None
 
 				# OffCloud cloud downloads require a download, even if it is a hoster. Only instant downloads on OffCloud do not need this.
@@ -2334,10 +2515,24 @@ class Core:
 								provider.Provider.initialize(forceAll = True)
 								pro = provider.Provider.provider(item['providerid'], enabled = False, local = True)['object']
 
-							link = item['url']
-							try: link = pro.resolve(link, internal = internal)
-							except: link = pro.resolve(link)
-							network.Container(link = link, download = True).hash()
+							container = item['source'] == 'torrent' or item['source'] == 'usenet'
+							if 'links' in item: links = item['links']
+							else: links = [item['url']]
+
+							for link in links:
+								try: link = pro.resolve(link, internal = internal)
+								except: link = pro.resolve(link)
+								if link:
+									if container:
+										hash = network.Container(link = link, download = True).hash()
+										if hash: self.tProcessed = True
+									else:
+										self.tProcessed = True
+									if self.tProcessed:
+										item['url'] = link
+										break
+
+							if not self.tProcessed: interface.Dialog.notification(title = 35600, message = 35601, icon = interface.Dialog.IconError)
 						except:
 							tools.Logger.error()
 
@@ -2349,19 +2544,22 @@ class Core:
 						try:
 							if xbmc.abortRequested == True:
 								sys.exit()
-								interface.Loader.hide()
+								self.loaderHide()
 								return None
 							if self.progressPlaybackCanceled():
 								self.progressPlaybackClose()
 								return None
 						except:
-							interface.Loader.hide()
+							self.loaderHide()
 
 						progress += 0.25
 						progressCurrent = 5 + min(int(progress), 30)
 						self.progressPlaybackUpdate(progress = progressCurrent, title = heading, message = labelTransferring)
-
 						time.sleep(0.5)
+
+					if not self.tProcessed:
+						self.progressPlaybackClose()
+						return None
 
 					self.progressPlaybackUpdate(progress = 30, title = heading, message = 35537)
 					self.tResolved = self.sourcesResolve(item, info = True, handle = handle, handleMode = handleMode, handleClose = False)
@@ -2386,13 +2584,13 @@ class Core:
 						try:
 							if xbmc.abortRequested == True:
 								sys.exit()
-								interface.Loader.hide()
+								self.loaderHide()
 								return None
 							if self.progressPlaybackCanceled():
 								self.progressPlaybackClose()
 								return None
 						except:
-							interface.Loader.hide()
+							self.loaderHide()
 
 						if not control.condVisibility('Window.IsActive(virtualkeyboard)') and not control.condVisibility('Window.IsActive(yesnoDialog)'):
 							break
@@ -2408,13 +2606,13 @@ class Core:
 							try:
 								if xbmc.abortRequested == True:
 									sys.exit()
-									interface.Loader.hide()
+									self.loaderHide()
 									return None
 								if self.progressPlaybackCanceled():
 									self.progressPlaybackClose()
 									return None
 							except:
-								interface.Loader.hide()
+								self.loaderHide()
 
 							if not w.is_alive(): break
 
@@ -2431,13 +2629,13 @@ class Core:
 								try:
 									if xbmc.abortRequested == True:
 										sys.exit()
-										interface.Loader.hide()
+										self.loaderHide()
 										return None
 									if self.progressPlaybackCanceled():
 										self.progressPlaybackClose()
 										return None
 								except:
-									interface.Loader.hide()
+									self.loaderHide()
 
 								if not w.is_alive(): break
 
@@ -2467,7 +2665,7 @@ class Core:
 
 				if not self.tResolved['success']:
 					if sequential:
-						return self.play(source = source, metadata = metadata, downloadType = downloadType, downloadId = downloadId, handle = handle, handleMode = handleMode, index = index + 1)
+						return self.play(source = source, metadata = metadata, downloadType = downloadType, downloadId = downloadId, handle = handle, handleMode = handleMode, index = index + 1, binge = binge)
 					else:
 						self.progressPlaybackClose()
 						return None
@@ -2486,15 +2684,15 @@ class Core:
 				# NB: This seems to not be neccessary with the new interface.Core. However, enable again if the problems are observed.
 				#if interface.Core.background():
 				#	interface.Core.close()
-				#	interface.Loader.show() # Since there is no dialog anymore.
+				#	self.loaderShow() # Since there is no dialog anymore.
 
 				from resources.lib.modules.player import player
-				player(type = self.type, kids = self.kids).run(self.type, title, year, season, episode, imdb, tmdb, tvdb, self.url, metadata, downloadType = downloadType, downloadId = downloadId, handle = handle, source = item)
+				player(type = self.type, kids = self.kids).run(self.type, title, year, season, episode, imdb, tmdb, tvdb, self.url, metadata, downloadType = downloadType, downloadId = downloadId, handle = handle, source = item, binge = binge)
 
 				return self.url
 			except:
 				tools.Logger.error()
-				interface.Loader.hide()
+				self.loaderHide()
 
 			self.progressPlaybackClose()
 			self.progressFailure(single = True)
@@ -2504,10 +2702,10 @@ class Core:
 			self.progressPlaybackClose()
 			return False
 
-	def playCache(self, source, metadata = None, handleMode = None):
+	def playCache(self, source, metadata = None, handleMode = None, binge = None):
 		try:
 			if tools.Settings.getBoolean('downloads.cache.enabled'):
-				interface.Loader.show()
+				self.loaderShow()
 
 				if metadata == None:
 					metadata = control.window.getProperty(self.propertyMeta)
@@ -2519,7 +2717,7 @@ class Core:
 
 				handle = handler.Handler().serviceDetermine(mode = handleMode, item = item, popups = True)
 				if handle == handler.Handler.ReturnUnavailable or handle == handler.Handler.ReturnExternal or handle == handler.Handler.ReturnCancel:
-					interface.Loader.hide()
+					self.loaderHide()
 					return None
 
 				result = self.sourcesResolve(item, handle = handle, handleMode = handleMode, handleClose = False) # Do not use item['urlresolved'], because it has the | HTTP header part removed, which is needed by the downloader.
@@ -2532,7 +2730,7 @@ class Core:
 				source['stream'] = result
 
 				if 'local' in item and item['local']: # Must be after self.sourcesResolve.
-					self.play(source = source, metadata = metadata, handle = handle)
+					self.play(source = source, metadata = metadata, handle = handle, binge = binge)
 					return
 
 				downloadType = None
@@ -2548,20 +2746,20 @@ class Core:
 						time.sleep(3) # Allow a few seconds for the download to start. Otherwise the download was queued but not started and the file was not created yet.
 						downer.refresh()
 
-				interface.Loader.hide()
-				self.playLocal(path = path, source = source, metadata = metadata, downloadType = downloadType, downloadId = downloadId)
+				self.loaderHide()
+				self.playLocal(path = path, source = source, metadata = metadata, downloadType = downloadType, downloadId = downloadId, binge = binge)
 			else:
-				self.play(source = source, metadata = metadata)
+				self.play(source = source, metadata = metadata, binge = binge)
 		except:
-			interface.Loader.hide()
+			self.loaderHide()
 			tools.Logger.error()
 
 	# Used by downloader.
-	def playLocal(self, path, source, metadata, downloadType = None, downloadId = None):
+	def playLocal(self, path, source, metadata, downloadType = None, downloadId = None, binge = None):
 		source['url'] = tools.File.translate(path)
 		source['local'] = True
 		source['source'] = '0'
-		self.play(source = source, metadata = metadata, downloadType = downloadType, downloadId = downloadId)
+		self.play(source = source, metadata = metadata, downloadType = downloadType, downloadId = downloadId, binge = binge)
 
 	def databaseOpen(self, timeout = 30):
 		# NB: Very often the execution on the databases throws an exception if multiple threads access the database at the same time.
@@ -2670,7 +2868,7 @@ class Core:
 						self.statusAdjusted.append('queued')
 						self.threadsAdjusted.append(thread)
 					else:
-						self.cachedAdjusted += 1
+						self.cacheCount += 1
 
 				self.adjustSourceStart()
 				thread = workers.Thread(self.adjustSourceCache, None, True)
@@ -2688,7 +2886,7 @@ class Core:
 			source = 'GoogleDocs'
 		elif ('google' in name and 'drive' in name) or 'gdrive' in name:
 			source = 'GoogleDrive'
-		return source
+		return source.lower().rsplit('.', 1)[0]
 
 	def adjustLock(self):
 		# NB: For some reason Python somtimes throws an exception saying that a unlocked/locked lock (tried) to aquire/release. Always keep these statements in a try-catch.
@@ -2713,11 +2911,9 @@ class Core:
 			self.adjustTerminationLock()
 
 			if self.terminationEnabled:
-				self.adjustLock()
 
 				# No new streams.
-				if self.terminationPrevious == len(self.sourcesAdjusted):
-					return
+				if self.terminationPrevious == len(self.sourcesAdjusted): return
 				self.terminationPrevious = len(self.sourcesAdjusted)
 
 				counter = 0
@@ -2725,56 +2921,62 @@ class Core:
 					source = self.sourcesAdjusted[i]
 					metadata = source['metadata']
 
-					# Type
-					if self.terminationTypeHas:
-						found = False
-						for key, value in self.terminationType.iteritems():
-							if key in source:
-								result = source[key]
-								if isinstance(result, dict): # cache
-									for value2 in result.itervalues():
-										if value2 == value:
-											found = True
-											break
-									if found: break
-								elif result == value:
-									found = True
-									break
-						if not found: continue
+					if 'local' in source and source['local']: type = 'local'
+					elif 'premium' in source and source['premium']: type = 'premium'
+					elif source['source'] == 'torrent': type = 'torrent'
+					elif source['source'] == 'usenet': type = 'usenet'
+					else: type = 'hoster'
 
-					# Video Quality
-					if self.terminationVideoQualityHas:
-						if not source['quality'] in self.terminationVideoQuality:
-							continue
+					if type in self.terminationEnabled and self.terminationEnabled[type]:
 
-					# Video Codec
-					if self.terminationVideoCodecHas:
-						videoCodec = metadata.videoCodec()
-						if not any([videoCodec == i for i in self.terminationVideoCodec]):
-							continue
+						# Type
+						if self.terminationTypeHas[type]:
+							found = False
+							for key, value in self.terminationType[type].iteritems():
+								if key in source:
+									result = source[key]
+									if isinstance(result, dict): # cache
+										for value2 in result.itervalues():
+											if value2 == value:
+												found = True
+												break
+										if found: break
+									elif result == value:
+										found = True
+										break
+							if not found: continue
 
-					# Audio Channels
-					if self.terminationAudioChannelsHas:
-						audioChannels = metadata.audioChannels()
-						if not any([audioChannels == i for i in self.terminationAudioChannels]):
-							continue
+						# Video Quality
+						if self.terminationVideoQualityHas[type]:
+							if not source['quality'] in self.terminationVideoQuality[type]:
+								continue
 
-					# Audio Codec
-					if self.terminationAudioCodecHas:
-						audioSystem = metadata.audioSystem(full = False)
-						audioCodec = metadata.audioCodec(full = False)
-						if not any([(audioSystem == i or audioCodec == i) for i in self.terminationAudioCodec]):
-							continue
+						# Video Codec
+						if self.terminationVideoCodecHas[type]:
+							videoCodec = metadata.videoCodec()
+							if not any([videoCodec == i for i in self.terminationVideoCodec[type]]):
+								continue
 
-					counter += 1
-					if counter >= self.terminationCount:
-						return True
+						# Audio Channels
+						if self.terminationAudioChannelsHas[type]:
+							audioChannels = metadata.audioChannels()
+							if not any([audioChannels == i for i in self.terminationAudioChannels[type]]):
+								continue
+
+						# Audio Codec
+						if self.terminationAudioCodecHas[type]:
+							audioSystem = metadata.audioSystem(full = False)
+							audioCodec = metadata.audioCodec(full = False)
+							if not any([(audioSystem == i or audioCodec == i) for i in self.terminationAudioCodec[type]]):
+								continue
+
+						counter += 1
+						if counter >= self.terminationCount[type]:
+							return True
 		except:
 			tools.Logger.error()
 		finally:
 			try: self.adjustTerminationUnlock()
-			except: pass
-			try: self.adjustUnlock()
 			except: pass
 		return False
 
@@ -2782,63 +2984,38 @@ class Core:
 		# Premiumize seems to take long to verify usenet hashes.
 		# Split torrents and usenet up, with the hope that torrents will complete, even when usenet takes very long.
 		# Can also be due to expensive local hash calculation for NZBs.
-		if tools.Settings.getBoolean('scraping.cache.enabled'):
-			debridTypes = []
-			debridObjects = []
-			if tools.Settings.getBoolean('scraping.cache.premiumize'):
-				premiumize = debridx.Premiumize()
-				if premiumize.accountValid():
-					if tools.Settings.getBoolean('streaming.torrent.premiumize.enabled'):
-						debridTypes.append(handler.Handler.TypeTorrent)
-						debridObjects.append(premiumize)
-					if tools.Settings.getBoolean('streaming.usenet.premiumize.enabled') and tools.Settings.getBoolean('scraping.cache.preload.usenet'):
-						debridTypes.append(handler.Handler.TypeUsenet)
-						debridObjects.append(premiumize)
-					if tools.Settings.getBoolean('streaming.hoster.premiumize.enabled'):
-						debridTypes.append(handler.Handler.TypeHoster)
-						debridObjects.append(premiumize)
+		if self.cacheEnabled:
+			if partial and self.cacheBusy: return # If it is the final full inspection, always execute, even if another partial inspection is still busy.
 
-			if tools.Settings.getBoolean('scraping.cache.offcloud'):
-				offcloud = debridx.OffCloud()
-				if offcloud.accountValid():
-					if tools.Settings.getBoolean('streaming.torrent.offcloud.enabled'):
-						debridTypes.append(handler.Handler.TypeTorrent)
-						debridObjects.append(offcloud)
-					if tools.Settings.getBoolean('streaming.usenet.offcloud.enabled') and tools.Settings.getBoolean('scraping.cache.preload.usenet'):
-						debridTypes.append(handler.Handler.TypeUsenet)
-						debridObjects.append(offcloud)
+			self.adjustLock()
+			self.cacheBusy = True
 
-			if tools.Settings.getBoolean('scraping.cache.realdebrid'):
-				realdebrid = debridx.RealDebrid()
-				if realdebrid.accountValid() and tools.Settings.getBoolean('streaming.torrent.realdebrid.enabled'):
-					debridTypes.append(handler.Handler.TypeTorrent)
-					debridObjects.append(realdebrid)
+			if timeout == None: timeout = self.cacheTimeout
 
-			if len(debridTypes) > 0:
-				if partial: # If it is the final full inspection, always execute, even if another partial inspection is still busy.
-					self.adjustLock()
-					busy = self.cachedAdjustedBusy
-					self.adjustUnlock()
-					if busy: return
+			if self.cacheOrion:
+				links = []
+				for source in self.sourcesAdjusted:
+					if not 'hash' in source and (source['source'] == handler.Handler.TypeTorrent or source['source'] == handler.Handler.TypeUsenet):
+						links.append(source['url'])
+				hashes = self.cacheOrion.hashes(links = links, chunked = partial)
+				for link, hash in hashes.iteritems():
+					for i in range(len(self.sourcesAdjusted)):
+						if self.sourcesAdjusted[i]['url'] == link:
+							self.sourcesAdjusted[i]['hash'] = hash
+							break
 
-				if timeout == None:
-					try: timeout = tools.Settings.getInteger('scraping.cache.timeout')
-					except: timeout = 45
+			threads = []
+			for i in range(len(self.cacheTypes)):
+				threads.append(workers.Thread(self._adjustSourceCache, self.cacheObjects[i], self.cacheTypes[i], timeout, partial))
 
-				threads = []
-				for i in range(len(debridTypes)):
-					threads.append(workers.Thread(self._adjustSourceCache, debridObjects[i], debridTypes[i], timeout, partial))
+			self.adjustUnlock()
 
-				self.adjustLock()
-				self.cachedAdjustedBusy = True
-				self.adjustUnlock()
+			[thread.start() for thread in threads]
+			[thread.join() for thread in threads]
 
-				[thread.start() for thread in threads]
-				[thread.join() for thread in threads]
-
-				self.adjustLock()
-				self.cachedAdjustedBusy = False
-				self.adjustUnlock()
+			self.adjustLock()
+			self.cacheBusy = False
+			self.adjustUnlock()
 
 	def _adjustSourceCache(self, debrid, type, timeout, partial = False):
 		try:
@@ -3143,8 +3320,7 @@ class Core:
 
 				container = network.Container(link = link, download = download)
 				hash = container.hash()
-				if not hash == None:
-					self.adjustSourceUpdate(index, hash = hash)
+				if not hash == None: self.adjustSourceUpdate(index, hash = hash)
 
 			# Precheck
 			if not special and self.enabledPrecheck:
@@ -3174,7 +3350,7 @@ class Core:
 	def clearSources(self, confirm = False):
 		try:
 			if confirm:
-				interface.Loader.show()
+				self.loaderShow()
 				yes = interface.Dialog.option(33042)
 				if not yes: return
 
@@ -3200,7 +3376,7 @@ class Core:
 	def clearSourcesOld(self, wait = True):
 		def _clearSourcesOld():
 			try:
-				timestamp = tools.Time.timestamp() - 7200 # Must be the same delay as for retrieving the sources, that is 120 minutes.
+				timestamp = tools.Time.timestamp() - 10800 # Must be the same delay as for retrieving the sources, that is 3 hours.
 				control.makeFile(control.dataPath)
 				dbcon = database.connect(control.providercacheFile)
 				dbcur = dbcon.cursor()
@@ -3672,6 +3848,7 @@ class Core:
 			# FILTERS - AUDIO LANGUAGE
 
 			filterAudioLanguage = interface.Filters.audioLanguage(label = True)
+			filterAudioLanguageHas = not _filterInvalid(filterAudioLanguage)
 			if _filterInvalid(filterAudioLanguage):
 				filterAudioLanguage = _filterSetting('audio.language')
 				filterAudioLanguage = 0 if _filterInvalid(filterAudioLanguage) else int(filterAudioLanguage)
@@ -3682,7 +3859,6 @@ class Core:
 					if filterAudioLanguage == labelNone: filterAudioLanguage = None
 			elif filterAudioLanguage == labelAny:
 				filterAudioLanguage = None
-			filterAudioLanguageHas = not _filterInvalid(filterAudioLanguage)
 			if filterAudioLanguageHas: filterAudioLanguage = tools.Language.code(filterAudioLanguage)
 			interface.Filters.audioLanguage('' if filterAudioLanguage == None else filterAudioLanguage)
 
@@ -3893,7 +4069,10 @@ class Core:
 							if languages == None or len(languages) == 0:
 								languages = []
 							else:
-								languages = [l[0] for l in languages]
+								codes = []
+								for l in languages:
+									codes.extend(l['code'])
+								languages = list(set(codes))
 							if any(l in audioLanguages for l in languages):
 								filter.append(i)
 					items = filter
@@ -4042,7 +4221,7 @@ class Core:
 					filter = []
 					for i in items:
 						if handlePremiumize.supported(i):
-							try: cost = premiumize.service(i['source'].lower().rsplit('.', 1)[0])['usage']['cost']['value']
+							try: cost = premiumize.service(i['source'].lower().rsplit('.', 1)[0])['usage']['factor']['value']
 							except: cost = None
 							if cost == None or cost <= costMaximum:
 								filter.append(i)
@@ -4402,7 +4581,6 @@ class Core:
 				premiumize = debridx.Premiumize()
 				premiumizeEnabled = premiumize.accountValid()
 
-				debridLabel = interface.Translation.string(33209)
 				premiumInformation = tools.Settings.getBoolean('interface.information.premium.enabled')
 
 				# Use the same object, because otherwise it will send a lot of account status request to the Premiumize server, each time a new Premiumize instance is created inside the for-loop.
@@ -4469,7 +4647,7 @@ class Core:
 					try: duration = self._duration(items[i]['meta'])
 					except: pass
 
-					source = items[i]['source'].lower().rsplit('.', 1)[0]
+					source = items[i]['source']
 					pro = re.sub('v\d+$', '', items[i]['providerlabel'])
 					meta = items[i]['metadata']
 
@@ -4502,7 +4680,7 @@ class Core:
 						infos.append(value)
 
 					if layoutSource > 0 and not source == None and not source == '' and not source == '0' and not source == pro:
-						if not source == 'torrent' and not source == 'usenet' and not ('local' in items[i] and items[i]['local']) and not ('premium' in items[i] and items[i]['premium']):
+						if not source == 'torrent' and not source == 'usenet' and not ('local' in items[i] and items[i]['local']):
 							try: same = source.lower() == pro.lower()
 							except: same = False
 							if not same:
@@ -4686,7 +4864,7 @@ class Core:
 
 			sourceHandler = handler.Handler()
 			if handle == None:
-				handle = sourceHandler.serviceDetermine(mode = handleMode, item = item, popups = popups)
+				handle = sourceHandler.serviceDetermine(mode = handleMode, item = item, popups = popups, cloud = cloud)
 				if handle == handler.Handler.ReturnUnavailable or handle == handler.Handler.ReturnExternal or handle == handler.Handler.ReturnCancel:
 					info = False
 					url = None
@@ -4736,74 +4914,10 @@ class Core:
 			return result
 		except:
 			if log: tools.Logger.error()
-			if info == True:
-				interface.Dialog.notification(title = 33448, message = 33449, icon = interface.Dialog.IconError)
+			if info == True: interface.Dialog.notification(title = 33448, message = 33449, icon = interface.Dialog.IconError)
 			try: orionoid.Orionoid().streamVote(idItem = item['orion']['item'], idStream = item['orion']['stream'], vote = orionoid.Orionoid.VoteDown)
 			except: pass
 			return self.sourcesResult(link = url, error = 'unknown')
-
-	def sourcesDialog(self, items, metadata, handleMode = None):
-		try:
-			self.progressClose()
-			labels = [re.sub(' +', ' ', i['label'].replace(interface.Format.newline(), ' %s ' % interface.Format.separator()).strip()) for i in items]
-			choice = control.selectDialog(labels)
-			if choice < 0: return ''
-			self.play(items[choice], metadata = metadata, handleMode = handleMode)
-			return ''
-		except:
-			tools.Logger.error()
-
-
-	def sourcesDirect(self, items, title, year, season, episode, imdb, tvdb, meta):
-		def _filterDebrid(source):
-			return any(i for i in source['debrid'].itervalues())
-
-		filter = [i for i in items if i['source'].lower() in self.hostcapDict and not _filterDebrid(i)]
-		items = [i for i in items if not i in filter]
-
-		filter = [i for i in items if i['source'].lower() in self.hostblockDict and not _filterDebrid(i)]
-		items = [i for i in items if not i in filter]
-
-		items = [i for i in items if ('autoplay' in i and i['autoplay'] == True) or not 'autoplay' in i]
-		url = None
-
-		tmdb = meta['tmdb'] if 'tmdb' in meta else None
-		tmdb = meta['tmdb'] if 'tmdb' in meta else None
-		tmdb = meta['tmdb'] if 'tmdb' in meta else None
-
-		try:
-			tools.Time.sleep(1)
-			heading = interface.Translation.string(33451)
-			message = interface.Translation.string(33452)
-			self.progressPlaybackInitialize(title = heading, message = message, metadata = meta)
-		except:
-			pass
-
-		autoHandler = handler.Handler()
-		for i in range(len(items)):
-			if self.progressPlaybackCanceled(): break
-			if xbmc.abortRequested == True: break
-			percentage = int(((i + 1) / float(len(items))) * 100)
-			self.progressPlaybackUpdate(progress = percentage, title = heading, message = message)
-			try:
-				handle = autoHandler.serviceDetermine(mode = handler.Handler.ModeDefault, item = items[i], popups = False)
-				if not handle == handler.Handler.ReturnUnavailable:
-					result = self.sourcesResolve(items[i], handle = handle, info = False)
-					items[i]['urlresolved'] = result['link']
-					items[i]['stream'] = result
-					if result['success']:
-						if self.progressPlaybackCanceled(): break
-						if xbmc.abortRequested == True: break
-						from resources.lib.modules.player import player
-						player(type = self.type, kids = self.kids).run(self.type, title, year, season, episode, imdb, tmdb, tvdb, items[i]['urlresolved'], meta, handle = handle, source = items[i])
-						return items[i]
-			except:
-				tools.Logger.error()
-
-		self.progressPlaybackClose()
-		interface.Dialog.notification(title = 33448, message = 33574, sound = False, icon = interface.Dialog.IconInformation)
-		return None
-
 
 	def getConstants(self, loader = False):
 		self.propertyItems = 'GaiaItems'
@@ -4836,26 +4950,23 @@ class Core:
 	def getLocalTitle(self, title, imdb, tvdb, content):
 		language = self.getLanguage()
 		if not language: return title
-		if content.startswith('movie'):
-			titleForeign = trakt.getMovieTranslation(imdb, language)
-		else:
-			titleForeign = tvmaze.tvMaze().getTVShowTranslation(tvdb, language)
+		if content.startswith('movie'): titleForeign = trakt.getMovieTranslation(imdb, language)
+		else: titleForeign = tvmaze.tvMaze().getTVShowTranslation(tvdb, language)
 		return titleForeign or title
-
 
 	def getAliasTitles(self, imdb, localtitle, content):
 		try:
 			localtitle = localtitle.lower()
-			language = self.getLanguage()
+			country = self.getCountry()
 			titleForeign = trakt.getMovieAliases(imdb) if content.startswith('movie') else trakt.getTVShowAliases(imdb)
-			return [i for i in titleForeign if i.get('country', '').lower() in [language, '', 'us'] and not i.get('title', '').lower() == localtitle]
+			return [i.get('title') for i in titleForeign if i.get('country', '').lower() in [country, '', 'us'] and not i.get('title', '').lower() == localtitle]
 		except:
 			return []
 
-
 	def getLanguage(self):
-		if tools.Language.customization():
-			language = tools.Settings.getString('scraping.foreign.language')
-		else:
-			language = tools.Language.Alternative
+		if tools.Language.customization(): language = tools.Settings.getString('scraping.foreign.language')
+		else: language = tools.Language.Alternative
 		return tools.Language.code(language)
+
+	def getCountry(self):
+		return tools.Language.country(self.getLanguage())

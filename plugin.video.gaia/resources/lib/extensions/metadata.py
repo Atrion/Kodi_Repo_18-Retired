@@ -485,27 +485,44 @@ class Metadata(object):
 		('TAiCHi', ['taichi']),
 	])
 
-	VideoQualityDefault = 'SD'
 	VideoQualityUltra = 'HDULTRA'
-	VideoQualityOrder = ['CAM', 'CAM720', 'CAM1080', 'SCR', 'SCR720', 'SCR1080', 'SD', 'HD720', 'HD1080', 'HD2K', 'HD4K', 'HD6K', 'HD8K']
+	VideoQualityHd8k = 'HD8K'
+	VideoQualityHd6k = 'HD6K'
+	VideoQualityHd4k = 'HD4K'
+	VideoQualityHd2k = 'HD2K'
+	VideoQualityHd1080 = 'HD1080'
+	VideoQualityHd720 = 'HD720'
+	VideoQualitySd = 'SD'
+	VideoQualitySd480 = 'SD480'
+	VideoQualitySd360 = 'SD360'
+	VideoQualitySd240 = 'SD240'
+	VideoQualitySd144 = 'SD144'
+	VideoQualityScr1080 = 'SCR1080'
+	VideoQualityScr720 = 'SCR720'
+	VideoQualityScr = 'SCR'
+	VideoQualityCam1080 = 'CAM1080'
+	VideoQualityCam720 = 'CAM720'
+	VideoQualityCam = 'CAM'
+	VideoQualityDefault = VideoQualitySd
+	VideoQualityOrder = [VideoQualityCam, VideoQualityCam720, VideoQualityCam1080, VideoQualityScr, VideoQualityScr720, VideoQualityScr1080, VideoQualitySd, VideoQualityHd720, VideoQualityHd1080, VideoQualityHd2k, VideoQualityHd4k, VideoQualityHd6k, VideoQualityHd8k]
 
 	# Must be ordered from best to worst. Especially if HD is in the title, it should default to 720, but the true HD quality might be somewhere else in the title.
 	# Always check for SCR and CAM first, because later CAM versions are often 720p or 1080p, but should not be detected as HD quality. Eg: The.Great.Wall.2016.1080p.HC.HDRip.X264.AC3-EVO[EtHD]
 	DictionaryVideoQuality = OrderedDict([
-		('CAM1080' , [['camrip', 'cam rip', 'tsrip', 'ts rip', 'hdcam', 'hd cam', 'hdts', 'hd ts', 'dvdcam', 'dvd cam', 'dvdts', 'dvd ts', 'cam', 'telesync', 'tele sync', 'ts', 'pdvd', 'camrip ', 'tsrip ', 'hdcam ', 'hdts ', 'dvdcam ', 'dvdts ', 'telesync ', 'hdtc', 'hd tc', 'telecine'], ['1080', '1080p', '1080i', 'hd1080', '1080hd', '1080 ', '1080p ', '1080i ', 'hd1080 ', '1080hd ', '1200p', '1200i', 'hd1200', '1200hd', '1200p ', '1200i ', 'hd1200 ', '1200hd ']]),
-		('CAM720' , [['camrip', 'cam rip', 'tsrip', 'ts rip', 'hdcam', 'hd cam', 'hdts', 'hd ts', 'dvdcam', 'dvd cam', 'dvdts', 'dvd ts', 'cam', 'telesync', 'tele sync', 'ts', 'pdvd', 'camrip ', 'tsrip ', 'hdcam ', 'hdts ', 'dvdcam ', 'dvdts ', 'telesync ', 'hdtc', 'hd tc', 'telecine'], ['720', '720p', '720i', 'hd720', '720hd', 'hd', '720 ', '720p ', '720i ', 'hd720 ', '720hd ']]),
-		('CAM' , ['camrip', 'cam rip', 'tsrip', 'ts rip', 'hdcam', 'hd cam', 'hdts', 'hd ts', 'dvdcam', 'dvd cam', 'dvdts', 'dvd ts', 'cam', 'telesync', 'tele sync', 'ts', 'pdvd', 'camrip ', 'tsrip ', 'hdcam ', 'hdts ', 'dvdcam ', 'dvdts ', 'telesync ', 'hdtc', 'hd tc', 'telecine']),
-		('SCR1080' , [['dvdscr', 'dvdscreener', 'screener', 'scr', 'bdscr', 'r5', 'dvdscr ', 'r5 ', 'ddc'], ['1080', '1080p', '1080i', 'hd1080', '1080hd', '1080 ', '1080p ', '1080i ', 'hd1080 ', '1080hd ', '1200p', '1200i', 'hd1200', '1200hd', '1200p ', '1200i ', 'hd1200 ', '1200hd ']]),
-		('SCR720' , [['dvdscr', 'dvdscreener', 'screener', 'scr', 'bdscr', 'r5', 'dvdscr ', 'r5 ', 'ddc'], ['720', '720p', '720i', 'hd720', '720hd', 'hd', '720 ', '720p ', '720i ', 'hd720 ', '720hd ']]),
-		('SCR' , ['dvdscr', 'dvdscreener', 'screener', 'scr', 'bdscr', 'r5', 'dvdscr ', 'r5 ', 'ddc']),
+		(VideoQualityCam1080 , [['camrip', 'cam rip', 'tsrip', 'ts rip', 'hdcam', 'hd cam', 'hdts', 'hd ts', 'dvdcam', 'dvd cam', 'dvdts', 'dvd ts', 'cam', 'telesync', 'tele sync', 'ts', 'pdvd', 'camrip ', 'tsrip ', 'hdcam ', 'hdts ', 'dvdcam ', 'dvdts ', 'telesync ', 'hdtc', 'hd tc', 'telecine'], ['1080', '1080p', '1080i', 'hd1080', '1080hd', '1080 ', '1080p ', '1080i ', 'hd1080 ', '1080hd ', '1200p', '1200i', 'hd1200', '1200hd', '1200p ', '1200i ', 'hd1200 ', '1200hd ']]),
+		(VideoQualityCam720 , [['camrip', 'cam rip', 'tsrip', 'ts rip', 'hdcam', 'hd cam', 'hdts', 'hd ts', 'dvdcam', 'dvd cam', 'dvdts', 'dvd ts', 'cam', 'telesync', 'tele sync', 'ts', 'pdvd', 'camrip ', 'tsrip ', 'hdcam ', 'hdts ', 'dvdcam ', 'dvdts ', 'telesync ', 'hdtc', 'hd tc', 'telecine'], ['720', '720p', '720i', 'hd720', '720hd', 'hd', '720 ', '720p ', '720i ', 'hd720 ', '720hd ']]),
+		(VideoQualityCam , ['camrip', 'cam rip', 'tsrip', 'ts rip', 'hdcam', 'hd cam', 'hdts', 'hd ts', 'dvdcam', 'dvd cam', 'dvdts', 'dvd ts', 'cam', 'telesync', 'tele sync', 'ts', 'pdvd', 'camrip ', 'tsrip ', 'hdcam ', 'hdts ', 'dvdcam ', 'dvdts ', 'telesync ', 'hdtc', 'hd tc', 'telecine']),
+		(VideoQualityScr1080 , [['dvdscr', 'dvdscreener', 'screener', 'scr', 'bdscr', 'r5', 'dvdscr ', 'r5 ', 'ddc'], ['1080', '1080p', '1080i', 'hd1080', '1080hd', '1080 ', '1080p ', '1080i ', 'hd1080 ', '1080hd ', '1200p', '1200i', 'hd1200', '1200hd', '1200p ', '1200i ', 'hd1200 ', '1200hd ']]),
+		(VideoQualityScr720 , [['dvdscr', 'dvdscreener', 'screener', 'scr', 'bdscr', 'r5', 'dvdscr ', 'r5 ', 'ddc'], ['720', '720p', '720i', 'hd720', '720hd', 'hd', '720 ', '720p ', '720i ', 'hd720 ', '720hd ']]),
+		(VideoQualityScr , ['dvdscr', 'dvdscreener', 'screener', 'scr', 'bdscr', 'r5', 'dvdscr ', 'r5 ', 'ddc']),
 
-		('HD8K' , ['8k', 'hd8k', 'hd8k ', '8khd', '8khd ', '4320p', '4320i', 'hd4320', '4320hd', '4320p ', '4320i ', 'hd4320 ', '4320hd ', '5120p', '5120i', 'hd5120', '5120hd', '5120p ', '5120i ', 'hd5120 ', '5120hd ', '8192p', '8192i', 'hd8192', '8192hd', '8192p ', '8192i ', 'hd8192 ', '8192hd ']),
-		('HD6K' , ['6k', 'hd6k', 'hd6k ', '6khd', '6khd ', '3160p', '3160i', 'hd3160', '3160hd', '3160p ', '3160i ', 'hd3160 ', '3160hd ', '4096p', '4096i', 'hd4096', '4096hd', '4096p ', '4096i ', 'hd4096 ', '4096hd ']),
-		('HD4K' , ['4k', 'hd4k', 'hd4k ', '4khd', '4khd ', 'uhd', 'ultrahd', 'ultra hd', 'ultra high', '2160', '2160p', '2160i', 'hd2160', '2160hd', '2160 ', '2160p ', '2160i ', 'hd2160 ', '2160hd ', '1716p', '1716i', 'hd1716', '1716hd', '1716p ', '1716i ', 'hd1716 ', '1716hd ', '2664p', '2664i', 'hd2664', '2664hd', '2664p ', '2664i ', 'hd2664 ', '2664hd ', '3112p', '3112i', 'hd3112', '3112hd', '3112p ', '3112i ', 'hd3112 ', '3112hd ', '2880p', '2880i', 'hd2880', '2880hd', '2880p ', '2880i ', 'hd2880 ', '2880hd ']),
-		('HD2K' , ['2k', 'hd2k', 'hd2k ', '2khd', '2khd ', '2048p', '2048i', 'hd2048', '2048hd', '2048p ', '2048i ', 'hd2048 ', '2048hd ', '1332p', '1332i', 'hd1332', '1332hd', '1332p ', '1332i ', 'hd1332 ', '1332hd ', '1440p', '1440i', 'hd1440', '1440hd', '1440p ', '1440i ', 'hd1440 ', '1440hd ', '1556p', '1556i', 'hd1556', '1556hd', '1556p ', '1556i ', 'hd1556 ', '1556hd ', ]),
-		('HD1080' , ['1080', '1080p', '1080i', 'hd1080', '1080hd', '1080 ', '1080p ', '1080i ', 'hd1080 ', '1080hd ', '1200p', '1200i', 'hd1200', '1200hd', '1200p ', '1200i ', 'hd1200 ', '1200hd ']),
-		('HD720' , ['720', '720p', '720i', 'hd720', '720hd', 'hd', '720 ', '720p ', '720i ', 'hd720 ', '720hd ']),
-		('SD' , ['sd', '576', '576p', '576i', 'sd576', '576sd', '576 ', '576p ', '576i ', 'sd576 ', '576sd ', '480', '480p', '480i', 'sd480', '480sd', '480 ', '480p ', '480i ', 'sd480 ', '480sd ', '360', '360p', '360i', 'sd360', '360sd', '360 ', '360p ', '360i ', 'sd360 ', '360sd ', '240', '240p', '240i', 'sd240', '240sd', '240 ', '240p ', '240i ', 'sd240 ', '240sd ']),
+		(VideoQualityHd8k , ['8k', 'hd8k', 'hd8k ', '8khd', '8khd ', '4320p', '4320i', 'hd4320', '4320hd', '4320p ', '4320i ', 'hd4320 ', '4320hd ', '5120p', '5120i', 'hd5120', '5120hd', '5120p ', '5120i ', 'hd5120 ', '5120hd ', '8192p', '8192i', 'hd8192', '8192hd', '8192p ', '8192i ', 'hd8192 ', '8192hd ']),
+		(VideoQualityHd6k , ['6k', 'hd6k', 'hd6k ', '6khd', '6khd ', '3160p', '3160i', 'hd3160', '3160hd', '3160p ', '3160i ', 'hd3160 ', '3160hd ', '4096p', '4096i', 'hd4096', '4096hd', '4096p ', '4096i ', 'hd4096 ', '4096hd ']),
+		(VideoQualityHd4k , ['4k', 'hd4k', 'hd4k ', '4khd', '4khd ', 'uhd', 'ultrahd', 'ultra hd', 'ultra high', '2160', '2160p', '2160i', 'hd2160', '2160hd', '2160 ', '2160p ', '2160i ', 'hd2160 ', '2160hd ', '1716p', '1716i', 'hd1716', '1716hd', '1716p ', '1716i ', 'hd1716 ', '1716hd ', '2664p', '2664i', 'hd2664', '2664hd', '2664p ', '2664i ', 'hd2664 ', '2664hd ', '3112p', '3112i', 'hd3112', '3112hd', '3112p ', '3112i ', 'hd3112 ', '3112hd ', '2880p', '2880i', 'hd2880', '2880hd', '2880p ', '2880i ', 'hd2880 ', '2880hd ']),
+		(VideoQualityHd2k , ['2k', 'hd2k', 'hd2k ', '2khd', '2khd ', '2048p', '2048i', 'hd2048', '2048hd', '2048p ', '2048i ', 'hd2048 ', '2048hd ', '1332p', '1332i', 'hd1332', '1332hd', '1332p ', '1332i ', 'hd1332 ', '1332hd ', '1440p', '1440i', 'hd1440', '1440hd', '1440p ', '1440i ', 'hd1440 ', '1440hd ', '1556p', '1556i', 'hd1556', '1556hd', '1556p ', '1556i ', 'hd1556 ', '1556hd ', ]),
+		(VideoQualityHd1080 , ['1080', '1080p', '1080i', 'hd1080', '1080hd', '1080 ', '1080p ', '1080i ', 'hd1080 ', '1080hd ', '1200p', '1200i', 'hd1200', '1200hd', '1200p ', '1200i ', 'hd1200 ', '1200hd ']),
+		(VideoQualityHd720 , ['720', '720p', '720i', 'hd720', '720hd', 'hd', '720 ', '720p ', '720i ', 'hd720 ', '720hd ']),
+		(VideoQualitySd , ['sd', '576', '576p', '576i', 'sd576', '576sd', '576 ', '576p ', '576i ', 'sd576 ', '576sd ', '480', '480p', '480i', 'sd480', '480sd', '480 ', '480p ', '480i ', 'sd480 ', '480sd ', '360', '360p', '360i', 'sd360', '360sd', '360 ', '360p ', '360i ', 'sd360 ', '360sd ', '240', '240p', '240i', 'sd240', '240sd', '240 ', '240p ', '240i ', 'sd240 ', '240sd ']),
 	])
 
 	DictionaryVideoCodec = OrderedDict([
@@ -530,7 +547,12 @@ class Metadata(object):
 	])
 
 	DictionaryEdition = OrderedDict([
-		('Extended' , ['ee', 'see', 'ece', 'ext', 'exted', 'extendededition', 'extended', 'extendedcut', 'directors', 'directorsedition', 'directorscut', 'special', 'specialedition', 'specialcut', 'collector', 'collectoredition', 'collectorcut', 'collectors', 'collectorsedition', 'collectorscut']),
+		('Collector' ,	['collector', 'collectoredition', 'collectorversion', 'collectorcut', 'collectors', 'collectorsedition', 'collectorsversion', 'collectorscut']),
+		('Director' ,	['directors', 'directorsedition', 'directorsversion', 'directorscut']),
+		('Commentary' ,	['commentary', 'commentaryedition', 'commentaryversion', 'commentarycut']),
+		('Making' ,		['making', 'makingedition', 'makingversion', 'makingcut', 'makingof', 'makingofedition', 'makingofversion', 'makingofcut', 'making of']),
+		('Extended' ,	['ee', 'see', 'ece', 'ext', 'exted', 'extended', 'extendededition', 'extendedversion', 'extendedcut']),
+		('Special' ,	['special', 'specialedition', 'specialversion', 'specialcut']),
 	])
 
 	DictionaryAudioChannels = OrderedDict([
@@ -561,12 +583,10 @@ class Metadata(object):
 	DictionaryAudioCodec = OrderedDict([
 		# DD
 		('AMSTHD|Atmos TrueHD' ,								[['dolbydigitalatmos', 'dolbyatmos', 'ddatmos', 'dolby digital atmos', 'dolby atmos', 'dd atmos', 'atmos', 'dolbydigitalatmos ', 'dolbyatmos ', 'ddatmos ', 'dolby digital atmos ', 'dolby atmos ', 'dd atmos ', 'atmos '], ['dolbydigitaltruehd', 'dolbytruehd', 'ddtruehd', 'truehd', 'dolbydigitaltrue', 'dolbytrue', 'ddtrue', 'dolbydigitalhd', 'dolbyhd', 'dolby digital truehd', 'dolby truehd', 'dd truehd', 'dolby digital true', 'dolby true', 'dd true', 'dolby digital hd', 'true hd', 'ddhd', 'dolbydigitaltruehd ', 'dolbytruehd ', 'ddtruehd ', 'truehd ', 'dolbydigitaltrue ', 'dolbytrue ', 'ddtrue ', 'dolbydigitalhd ', 'dolbyhd ', 'dolby digital truehd ', 'dolby truehd ', 'dd truehd ', 'dolby digital true ', 'dolby true ', 'dd true ', 'dolby digital hd ', 'true hd ', 'ddhd ']]),
-		('AMSPLS|Atmos Plus' ,									[['dolbydigitalatmos', 'dolbyatmos', 'ddatmos', 'dolby digital atmos', 'dolby atmos', 'dd atmos', 'atmos', 'dolbydigitalatmos ', 'dolbyatmos ', 'ddatmos ', 'dolby digital atmos ', 'dolby atmos ', 'dd atmos ', 'atmos '], ['dolbydigitaleac3', 'dolbyeac3', 'ddeac3', 'dolby digital eac3', 'dolby eac3', 'dd eac3', 'eac3', 'eac 3', 'dolbydigitalplus', 'dolbyplus', 'ddplus', 'dolby digital plus', 'dolby plus', 'dd plus', 'dolbydigitaleac3 ', 'dolbyeac3 ', 'ddeac3 ', 'dolby digital eac3 ', 'dolby eac3 ', 'dd eac3 ', 'eac3 ', 'eac 3 ', 'dolbydigitalplus ', 'dolbyplus ', 'ddplus ', 'dolby digital plus ', 'dolby plus ', 'dd plus ']]),
+		('AMSPLS|Atmos Plus' ,									[['dolbydigitalatmos', 'dolbyatmos', 'ddatmos', 'dolby digital atmos', 'dolby atmos', 'dd atmos', 'atmos', 'dolbydigitalatmos ', 'dolbyatmos ', 'ddatmos ', 'dolby digital atmos ', 'dolby atmos ', 'dd atmos ', 'atmos '], ['dolbydigitaleac3', 'dolbyeac3', 'ddeac3', 'dolby digital eac3', 'dolby eac3', 'dd eac3', 'eac3', 'eac 3', 'dolbydigitalplus', 'dolbyplus', 'ddplus', 'dolby digital plus', 'dolby plus', 'dd plus', 'dolbydigitaleac3 ', 'dolbyeac3 ', 'ddeac3 ', 'dolby digital eac3 ', 'dolby eac3 ', 'dd eac3 ', 'eac3 ', 'eac 3 ', 'dolbydigitalplus ', 'dolbyplus ', 'ddplus ', 'dolby digital plus ', 'dolby plus ', 'dd plus ', 'dolbydigitalp ', 'dolbyp ', 'dolby digital p ', 'dolby p ', 'ddp ']]),
 		('AMS|Atmos' ,											['dolbydigitalatmos', 'dolbyatmos', 'ddatmos', 'dolby digital atmos', 'dolby atmos', 'dd atmos', 'atmos', 'dolbydigitalatmos ', 'dolbyatmos ', 'ddatmos ', 'dolby digital atmos ', 'dolby atmos ', 'dd atmos ', 'atmos ']),
 		('THD|TrueHD' ,											['dolbydigitaltruehd', 'dolbytruehd', 'ddtruehd', 'truehd', 'dolbydigitaltrue', 'dolbytrue', 'ddtrue', 'dolbydigitalhd', 'dolbyhd', 'dolby digital truehd', 'dolby truehd', 'dd truehd', 'dolby digital true', 'dolby true', 'dd true', 'dolby digital hd', 'true hd', 'ddhd', 'dolbydigitaltruehd ', 'dolbytruehd ', 'ddtruehd ', 'truehd ', 'dolbydigitaltrue ', 'dolbytrue ', 'ddtrue ', 'dolbydigitalhd ', 'dolbyhd ', 'dolby digital truehd ', 'dolby truehd ', 'dd truehd ', 'dolby digital true ', 'dolby true ', 'dd true ', 'dolby digital hd ', 'true hd ', 'ddhd ']),
-		('PLS|Plus' ,											['dolbydigitaleac3', 'dolbyeac3', 'ddeac3', 'dolby digital eac3', 'dolby eac3', 'dd eac3', 'eac3', 'eac 3', 'dolbydigitalplus', 'dolbyplus', 'ddplus', 'dolby digital plus', 'dolby plus', 'dd plus', 'dolbydigitalp', 'dolbyp', 'dolby digital p', 'dolby p', 'ddp'
-
-		, 'dolbydigitaleac3 ', 'dolbyeac3 ', 'ddeac3 ', 'dolby digital eac3 ', 'dolby eac3 ', 'dd eac3 ', 'eac3 ', 'eac 3 ', 'dolbydigitalplus ', 'dolbyplus ', 'ddplus ', 'dolby digital plus ', 'dolby plus ', 'dd plus ', 'dolbydigitalp ', 'dolbyp ', 'dolby digital p ', 'dolby p ', 'ddp ']),
+		('PLS|Plus' ,											['dolbydigitaleac3', 'dolbyeac3', 'ddeac3', 'dolby digital eac3', 'dolby eac3', 'dd eac3', 'eac3', 'eac 3', 'dolbydigitalplus', 'dolbyplus', 'ddplus', 'dolby digital plus', 'dolby plus', 'dd plus', 'dolbydigitalp', 'dolbyp', 'dolby digital p', 'dolby p', 'ddp', 'dolbydigitaleac3 ', 'dolbyeac3 ', 'ddeac3 ', 'dolby digital eac3 ', 'dolby eac3 ', 'dd eac3 ', 'eac3 ', 'eac 3 ', 'dolbydigitalplus ', 'dolbyplus ', 'ddplus ', 'dolby digital plus ', 'dolby plus ', 'dd plus ', 'dolbydigitalp ', 'dolbyp ', 'dolby digital p ', 'dolby p ', 'ddp ']),
 		('LVE|Live' ,											['dolbydigitallive', 'dolbylive', 'ddlive', 'dolby digital live', 'dolby live', 'dd live', 'dolbydigitallive ', 'dolbylive ', 'ddlive ', 'dolby digital live ', 'dolby live ', 'dd live ']),
 		('SEX|Surround EX' ,									['dolbydigitalsurroundex', 'dolbysurroundex', 'ddsurroundex', 'dolby digital surroundex', 'dolby surroundex', 'dd surroundex', 'dolby digital surround ex', 'dolby surround ex', 'dd surround ex', 'dolbydigitalsurroundex ', 'dolbysurroundex ', 'ddsurroundex ', 'dolby digital surroundex ', 'dolby surroundex ', 'dd surroundex ', 'dolby digital surround ex ', 'dolby surround ex ', 'dd surround ex ']),
 		('EX|EX' ,												['dolbydigitalex', 'dolbyex', 'ddex', 'dolbydigitalpro', 'dolbypro', 'ddpro', 'dolby digital ex', 'dolby digital pro', 'dolby pro', 'dd pro', 'dolbydigitalex ', 'dolbyex ', 'ddex ', 'dolbydigitalpro ', 'dolbypro ', 'ddpro ', 'dolby digital ex ', 'dolby digital pro ', 'dolby pro ', 'dd pro ']),
@@ -619,7 +639,7 @@ class Metadata(object):
 	])
 
 	DictionarySubtitles = OrderedDict([
-		('Hard Subs' , ['hc', 'hardsubs', 'hard subs', 'hardcoded', 'hard coded', 'hardcodedsubs', 'hard coded subs']),
+		('Hard Subs' , ['hc', 'hardsub', 'hard sub', 'hardcodedsub', 'hard coded sub', 'hardsubs', 'hard subs', 'hardcodedsubs', 'hard coded subs', 'hardcoded', 'hard coded']),
 		('Soft Subs' , ['sub', 'subs', 'subtitle', 'sub title', 'subtitles', 'sub titles', 'ensub', 'esub', 'aarsub', 'abksub', 'acesub', 'achsub', 'adasub', 'adysub', 'afasub', 'afhsub', 'afrsub', 'ainsub', 'akasub', 'akksub', 'albsub', 'sqisub', 'alesub', 'algsub', 'altsub', 'amhsub', 'angsub', 'anpsub', 'apasub', 'arasub', 'arcsub', 'argsub', 'armsub', 'hyesub', 'arnsub', 'arpsub', 'artsub', 'arwsub', 'asmsub', 'astsub', 'athsub', 'aussub', 'avasub', 'avesub', 'awasub', 'aymsub', 'azesub', 'badsub', 'baisub', 'baksub', 'balsub', 'bamsub', 'bansub', 'baqsub', 'eussub', 'bassub', 'batsub', 'bejsub', 'belsub', 'bemsub', 'bensub', 'bersub', 'bhosub', 'bihsub', 'biksub', 'binsub', 'bissub', 'blasub', 'bntsub', 'tibsub', 'bodsub', 'bossub', 'brasub', 'bresub', 'btksub', 'buasub', 'bugsub', 'bulsub', 'bursub', 'myasub', 'bynsub', 'cadsub', 'caisub', 'carsub', 'catsub', 'causub', 'cebsub', 'celsub', 'czesub', 'cessub', 'chasub', 'chbsub', 'chesub', 'chgsub', 'chisub', 'zhosub', 'chksub', 'chmsub', 'chnsub', 'chosub', 'chpsub', 'chrsub', 'chusub', 'chvsub', 'chysub', 'cmcsub', 'copsub', 'corsub', 'cossub', 'cpesub', 'cpfsub', 'cppsub', 'cresub', 'crhsub', 'crpsub', 'csbsub', 'cussub', 'welsub', 'cymsub', 'daksub', 'dansub', 'darsub', 'daysub', 'delsub', 'densub', 'gersub', 'deusub', 'dgrsub', 'dinsub', 'divsub', 'doisub', 'drasub', 'dsbsub', 'duasub', 'dumsub', 'dutsub', 'nldsub', 'dyusub', 'dzosub', 'efisub', 'egysub', 'ekasub', 'gresub', 'ellsub', 'elxsub', 'engsub', 'enmsub', 'eposub', 'estsub', 'ewesub', 'ewosub', 'fansub', 'faosub', 'persub', 'fassub', 'fatsub', 'fijsub', 'filsub', 'finsub', 'fiusub', 'fonsub', 'fresub', 'frasub', 'frmsub', 'frosub', 'frrsub', 'frssub', 'frysub', 'fulsub', 'fursub', 'gaasub', 'gaysub', 'gbasub', 'gemsub', 'geosub', 'katsub', 'gezsub', 'gilsub', 'glasub', 'glesub', 'glgsub', 'glvsub', 'gmhsub', 'gohsub', 'gonsub', 'gorsub', 'gotsub', 'grbsub', 'grcsub', 'grnsub', 'gswsub', 'gujsub', 'gwisub', 'haisub', 'hatsub', 'hausub', 'hawsub', 'hebsub', 'hersub', 'hilsub', 'himsub', 'hinsub', 'hitsub', 'hmnsub', 'hmosub', 'hrvsub', 'hsbsub', 'hunsub', 'hupsub', 'ibasub', 'ibosub', 'icesub', 'islsub', 'idosub', 'iiisub', 'ijosub', 'ikusub', 'ilesub', 'ilosub', 'inasub', 'incsub', 'indsub', 'inesub', 'inhsub', 'ipksub', 'irasub', 'irosub', 'itasub', 'javsub', 'jbosub', 'jpnsub', 'jprsub', 'jrbsub', 'kaasub', 'kabsub', 'kacsub', 'kalsub', 'kamsub', 'kansub', 'karsub', 'kassub', 'kausub', 'kawsub', 'kazsub', 'kbdsub', 'khasub', 'khisub', 'khmsub', 'khosub', 'kiksub', 'kinsub', 'kirsub', 'kmbsub', 'koksub', 'komsub', 'konsub', 'korsub', 'kossub', 'kpesub', 'krcsub', 'krlsub', 'krosub', 'krusub', 'kuasub', 'kumsub', 'kursub', 'kutsub', 'ladsub', 'lahsub', 'lamsub', 'laosub', 'latsub', 'lavsub', 'lezsub', 'limsub', 'linsub', 'litsub', 'lolsub', 'lozsub', 'ltzsub', 'luasub', 'lubsub', 'lugsub', 'luisub', 'lunsub', 'luosub', 'lussub', 'macsub', 'mkdsub', 'madsub', 'magsub', 'mahsub', 'maisub', 'maksub', 'malsub', 'mansub', 'maosub', 'mrisub', 'mapsub', 'marsub', 'massub', 'maysub', 'msasub', 'mdfsub', 'mdrsub', 'mensub', 'mgasub', 'micsub', 'minsub', 'missub', 'mkhsub', 'mlgsub', 'mltsub', 'mncsub', 'mnisub', 'mnosub', 'mohsub', 'monsub', 'mossub', 'mulsub', 'munsub', 'mussub', 'mwlsub', 'mwrsub', 'mynsub', 'myvsub', 'nahsub', 'naisub', 'napsub', 'nausub', 'navsub', 'nblsub', 'ndesub', 'ndosub', 'ndssub', 'nepsub', 'newsub', 'niasub', 'nicsub', 'niusub', 'nnosub', 'nobsub', 'nogsub', 'nonsub', 'norsub', 'nqosub', 'nsosub', 'nubsub', 'nwcsub', 'nyasub', 'nymsub', 'nynsub', 'nyosub', 'nzisub', 'ocisub', 'ojisub', 'orisub', 'ormsub', 'osasub', 'osssub', 'otasub', 'otosub', 'paasub', 'pagsub', 'palsub', 'pamsub', 'pansub', 'papsub', 'pausub', 'peosub', 'phisub', 'phnsub', 'plisub', 'polsub', 'ponsub', 'porsub', 'prasub', 'prosub', 'pussub', 'quesub', 'rajsub', 'rapsub', 'rarsub', 'roasub', 'rohsub', 'romsub', 'rumsub', 'ronsub', 'runsub', 'rupsub', 'russub', 'sadsub', 'sagsub', 'sahsub', 'saisub', 'salsub', 'samsub', 'sansub', 'sassub', 'satsub', 'scnsub', 'scosub', 'selsub', 'semsub', 'sgasub', 'sgnsub', 'shnsub', 'sidsub', 'sinsub', 'siosub', 'sitsub', 'slasub', 'slosub', 'slksub', 'slvsub', 'smasub', 'smesub', 'smisub', 'smjsub', 'smnsub', 'smosub', 'smssub', 'snasub', 'sndsub', 'snksub', 'sogsub', 'somsub', 'sonsub', 'sotsub', 'spasub', 'srdsub', 'srnsub', 'srpsub', 'srrsub', 'ssasub', 'sswsub', 'suksub', 'sunsub', 'sussub', 'suxsub', 'swasub', 'swesub', 'sycsub', 'syrsub', 'tahsub', 'taisub', 'tamsub', 'tatsub', 'telsub', 'temsub', 'tersub', 'tetsub', 'tgksub', 'tglsub', 'thasub', 'tigsub', 'tirsub', 'tivsub', 'tklsub', 'tlhsub', 'tlisub', 'tmhsub', 'togsub', 'tonsub', 'tpisub', 'tsisub', 'tsnsub', 'tsosub', 'tuksub', 'tumsub', 'tupsub', 'tursub', 'tutsub', 'tvlsub', 'twisub', 'tyvsub', 'udmsub', 'ugasub', 'uigsub', 'ukrsub', 'umbsub', 'undsub', 'urdsub', 'uzbsub', 'vaisub', 'vensub', 'viesub', 'volsub', 'votsub', 'waksub', 'walsub', 'warsub', 'wassub', 'wensub', 'wlnsub', 'wolsub', 'xalsub', 'xhosub', 'yaosub', 'yapsub', 'yidsub', 'yorsub', 'ypksub', 'zapsub', 'zblsub', 'zensub', 'zghsub', 'zhasub', 'zndsub', 'zulsub', 'zunsub', 'zxxsub', 'zzasub', 'aarsubs', 'abksubs', 'acesubs', 'achsubs', 'adasubs', 'adysubs', 'afasubs', 'afhsubs', 'afrsubs', 'ainsubs', 'akasubs', 'akksubs', 'albsubs', 'sqisubs', 'alesubs', 'algsubs', 'altsubs', 'amhsubs', 'angsubs', 'anpsubs', 'apasubs', 'arasubs', 'arcsubs', 'argsubs', 'armsubs', 'hyesubs', 'arnsubs', 'arpsubs', 'artsubs', 'arwsubs', 'asmsubs', 'astsubs', 'athsubs', 'aussubs', 'avasubs', 'avesubs', 'awasubs', 'aymsubs', 'azesubs', 'badsubs', 'baisubs', 'baksubs', 'balsubs', 'bamsubs', 'bansubs', 'baqsubs', 'eussubs', 'bassubs', 'batsubs', 'bejsubs', 'belsubs', 'bemsubs', 'bensubs', 'bersubs', 'bhosubs', 'bihsubs', 'biksubs', 'binsubs', 'bissubs', 'blasubs', 'bntsubs', 'tibsubs', 'bodsubs', 'bossubs', 'brasubs', 'bresubs', 'btksubs', 'buasubs', 'bugsubs', 'bulsubs', 'bursubs', 'myasubs', 'bynsubs', 'cadsubs', 'caisubs', 'carsubs', 'catsubs', 'causubs', 'cebsubs', 'celsubs', 'czesubs', 'cessubs', 'chasubs', 'chbsubs', 'chesubs', 'chgsubs', 'chisubs', 'zhosubs', 'chksubs', 'chmsubs', 'chnsubs', 'chosubs', 'chpsubs', 'chrsubs', 'chusubs', 'chvsubs', 'chysubs', 'cmcsubs', 'copsubs', 'corsubs', 'cossubs', 'cpesubs', 'cpfsubs', 'cppsubs', 'cresubs', 'crhsubs', 'crpsubs', 'csbsubs', 'cussubs', 'welsubs', 'cymsubs', 'daksubs', 'dansubs', 'darsubs', 'daysubs', 'delsubs', 'densubs', 'gersubs', 'deusubs', 'dgrsubs', 'dinsubs', 'divsubs', 'doisubs', 'drasubs', 'dsbsubs', 'duasubs', 'dumsubs', 'dutsubs', 'nldsubs', 'dyusubs', 'dzosubs', 'efisubs', 'egysubs', 'ekasubs', 'gresubs', 'ellsubs', 'elxsubs', 'engsubs', 'enmsubs', 'eposubs', 'estsubs', 'ewesubs', 'ewosubs', 'fansubs', 'faosubs', 'persubs', 'fassubs', 'fatsubs', 'fijsubs', 'filsubs', 'finsubs', 'fiusubs', 'fonsubs', 'fresubs', 'frasubs', 'frmsubs', 'frosubs', 'frrsubs', 'frssubs', 'frysubs', 'fulsubs', 'fursubs', 'gaasubs', 'gaysubs', 'gbasubs', 'gemsubs', 'geosubs', 'katsubs', 'gezsubs', 'gilsubs', 'glasubs', 'glesubs', 'glgsubs', 'glvsubs', 'gmhsubs', 'gohsubs', 'gonsubs', 'gorsubs', 'gotsubs', 'grbsubs', 'grcsubs', 'grnsubs', 'gswsubs', 'gujsubs', 'gwisubs', 'haisubs', 'hatsubs', 'hausubs', 'hawsubs', 'hebsubs', 'hersubs', 'hilsubs', 'himsubs', 'hinsubs', 'hitsubs', 'hmnsubs', 'hmosubs', 'hrvsubs', 'hsbsubs', 'hunsubs', 'hupsubs', 'ibasubs', 'ibosubs', 'icesubs', 'islsubs', 'idosubs', 'iiisubs', 'ijosubs', 'ikusubs', 'ilesubs', 'ilosubs', 'inasubs', 'incsubs', 'indsubs', 'inesubs', 'inhsubs', 'ipksubs', 'irasubs', 'irosubs', 'itasubs', 'javsubs', 'jbosubs', 'jpnsubs', 'jprsubs', 'jrbsubs', 'kaasubs', 'kabsubs', 'kacsubs', 'kalsubs', 'kamsubs', 'kansubs', 'karsubs', 'kassubs', 'kausubs', 'kawsubs', 'kazsubs', 'kbdsubs', 'khasubs', 'khisubs', 'khmsubs', 'khosubs', 'kiksubs', 'kinsubs', 'kirsubs', 'kmbsubs', 'koksubs', 'komsubs', 'konsubs', 'korsubs', 'kossubs', 'kpesubs', 'krcsubs', 'krlsubs', 'krosubs', 'krusubs', 'kuasubs', 'kumsubs', 'kursubs', 'kutsubs', 'ladsubs', 'lahsubs', 'lamsubs', 'laosubs', 'latsubs', 'lavsubs', 'lezsubs', 'limsubs', 'linsubs', 'litsubs', 'lolsubs', 'lozsubs', 'ltzsubs', 'luasubs', 'lubsubs', 'lugsubs', 'luisubs', 'lunsubs', 'luosubs', 'lussubs', 'macsubs', 'mkdsubs', 'madsubs', 'magsubs', 'mahsubs', 'maisubs', 'maksubs', 'malsubs', 'mansubs', 'maosubs', 'mrisubs', 'mapsubs', 'marsubs', 'massubs', 'maysubs', 'msasubs', 'mdfsubs', 'mdrsubs', 'mensubs', 'mgasubs', 'micsubs', 'minsubs', 'missubs', 'mkhsubs', 'mlgsubs', 'mltsubs', 'mncsubs', 'mnisubs', 'mnosubs', 'mohsubs', 'monsubs', 'mossubs', 'mulsubs', 'munsubs', 'mussubs', 'mwlsubs', 'mwrsubs', 'mynsubs', 'myvsubs', 'nahsubs', 'naisubs', 'napsubs', 'nausubs', 'navsubs', 'nblsubs', 'ndesubs', 'ndosubs', 'ndssubs', 'nepsubs', 'newsubs', 'niasubs', 'nicsubs', 'niusubs', 'nnosubs', 'nobsubs', 'nogsubs', 'nonsubs', 'norsubs', 'nqosubs', 'nsosubs', 'nubsubs', 'nwcsubs', 'nyasubs', 'nymsubs', 'nynsubs', 'nyosubs', 'nzisubs', 'ocisubs', 'ojisubs', 'orisubs', 'ormsubs', 'osasubs', 'osssubs', 'otasubs', 'otosubs', 'paasubs', 'pagsubs', 'palsubs', 'pamsubs', 'pansubs', 'papsubs', 'pausubs', 'peosubs', 'phisubs', 'phnsubs', 'plisubs', 'polsubs', 'ponsubs', 'porsubs', 'prasubs', 'prosubs', 'pussubs', 'quesubs', 'rajsubs', 'rapsubs', 'rarsubs', 'roasubs', 'rohsubs', 'romsubs', 'rumsubs', 'ronsubs', 'runsubs', 'rupsubs', 'russubs', 'sadsubs', 'sagsubs', 'sahsubs', 'saisubs', 'salsubs', 'samsubs', 'sansubs', 'sassubs', 'satsubs', 'scnsubs', 'scosubs', 'selsubs', 'semsubs', 'sgasubs', 'sgnsubs', 'shnsubs', 'sidsubs', 'sinsubs', 'siosubs', 'sitsubs', 'slasubs', 'slosubs', 'slksubs', 'slvsubs', 'smasubs', 'smesubs', 'smisubs', 'smjsubs', 'smnsubs', 'smosubs', 'smssubs', 'snasubs', 'sndsubs', 'snksubs', 'sogsubs', 'somsubs', 'sonsubs', 'sotsubs', 'spasubs', 'srdsubs', 'srnsubs', 'srpsubs', 'srrsubs', 'ssasubs', 'sswsubs', 'suksubs', 'sunsubs', 'sussubs', 'suxsubs', 'swasubs', 'swesubs', 'sycsubs', 'syrsubs', 'tahsubs', 'taisubs', 'tamsubs', 'tatsubs', 'telsubs', 'temsubs', 'tersubs', 'tetsubs', 'tgksubs', 'tglsubs', 'thasubs', 'tigsubs', 'tirsubs', 'tivsubs', 'tklsubs', 'tlhsubs', 'tlisubs', 'tmhsubs', 'togsubs', 'tonsubs', 'tpisubs', 'tsisubs', 'tsnsubs', 'tsosubs', 'tuksubs', 'tumsubs', 'tupsubs', 'tursubs', 'tutsubs', 'tvlsubs', 'twisubs', 'tyvsubs', 'udmsubs', 'ugasubs', 'uigsubs', 'ukrsubs', 'umbsubs', 'undsubs', 'urdsubs', 'uzbsubs', 'vaisubs', 'vensubs', 'viesubs', 'volsubs', 'votsubs', 'waksubs', 'walsubs', 'warsubs', 'wassubs', 'wensubs', 'wlnsubs', 'wolsubs', 'xalsubs', 'xhosubs', 'yaosubs', 'yapsubs', 'yidsubs', 'yorsubs', 'ypksubs', 'zapsubs', 'zblsubs', 'zensubs', 'zghsubs', 'zhasubs', 'zndsubs', 'zulsubs', 'zunsubs', 'zxxsubs', 'zzasubs']),
 	])
 
@@ -641,8 +661,9 @@ class Metadata(object):
 
 	DictionaryIgnore = OrderedDict([
 		('Extras' , ['extra', 'extras']),
-		('Soundtrack' , ['ost', 'soundtrack', 'soundtracks', 'thememusic', 'theme music', 'themesong', 'themesongs', 'theme song', 'theme songs', 'album', 'albums', 'mp3', 'flac']),
-		('Trailer' , ['trailer', 'trailers', 'preview', 'previews']),
+		('Soundtrack' , ['ost', 'soundtrack', 'soundtracks', 'thememusic', 'theme music', 'themesong', 'themesongs', 'theme song', 'theme songs', 'music', 'album', 'albums', 'mp3', 'flac']),
+		('Trailer' , ['trailer', 'trailers']),
+		('Sample' , ['sample', 'samples', 'preview', 'previews']),
 	])
 
 	def __init__(self, name = None, title = None, year = None, season = None, episode = None, pack = None, packCount = None, link = None, quality = None, size = None, languageAudio = None, seeds = None, age = None, popularity = None, source = None):
@@ -799,7 +820,7 @@ class Metadata(object):
 			if not audioLanguages or audioLanguages[0] == tools.Language.UniversalCode:
 				audioLanguages = unknown
 			else:
-				audioLanguages = ', '.join([i[1] for i in meta.audioLanguages()])
+				audioLanguages = ', '.join([i['name'] for i in meta.audioLanguages()])
 
 			audioSystem = None
 			if meta.audioSystem():
@@ -968,6 +989,18 @@ class Metadata(object):
 					return key
 		return Metadata.VideoQualityDefault
 
+	@classmethod
+	def videoCodecConvert(self, codec):
+		return self.__searchFind(codec, Metadata.DictionaryVideoCodec)
+
+	@classmethod
+	def audioCodecConvert(self, codec):
+		return self.__searchFind(codec, Metadata.DictionaryAudioCodec).split('|')[0]
+
+	@classmethod
+	def audioChannelsConvert(self, channels):
+		return str(channels) + 'CH'
+
 	def videoQualityRange(self, quality, qualityFrom = None, qualityTo = None):
 		if quality == None:
 			return False
@@ -1030,7 +1063,7 @@ class Metadata(object):
 		else: self.mVideoQuality = self.__searchFind(quality, Metadata.DictionaryVideoQuality)
 
 	def setVideoCodec(self, codec):
-		self.mVideoCodec = self.__searchFind(codec, Metadata.DictionaryVideoCodec)
+		self.mVideoCodec = self.videoCodecConvert(codec)
 
 	def setVideo3D(self, video3d):
 		if video3d == True:
@@ -1046,7 +1079,7 @@ class Metadata(object):
 		else:
 			self.mAudioLanguages.extend([tools.Language.language(languages)])
 		if len(self.mAudioLanguages) > 1:
-			self.mAudioLanguages = list(set(self.mAudioLanguages))
+			self.mAudioLanguages = tools.Language.clean(self.mAudioLanguages)
 			if len(self.mAudioLanguages) > 1:
 				result = []
 				for i in range(len(self.mAudioLanguages)):
@@ -1057,8 +1090,7 @@ class Metadata(object):
 							result.append(self.mAudioLanguages[i])
 				self.mAudioLanguages = result
 
-		self.mAudioLanguages = list(set(self.mAudioLanguages))
-		self.mAudioLanguages = [i for i in self.mAudioLanguages if i]
+		self.mAudioLanguages = tools.Language.clean(self.mAudioLanguages)
 		if len(self.mAudioLanguages) > 0:
 			languages = []
 			for i in range(len(self.mAudioLanguages)): # Move English to front.
@@ -1084,13 +1116,23 @@ class Metadata(object):
 		else: self.mAudioSystem = self.__searchFind(system, Metadata.DictionaryAudioSystem)
 
 	def setAudioCodec(self, codec):
-		lower = codec.lower()
-		if lower == 'dd' or lower == 'dts':
-			self.mAudioCodec = None
-			self.setAudioSystem(codec)
+		if codec == None:
+			self.mAudioCodec = codec
 		else:
-			self.mAudioCodec = self.__searchFind(codec, Metadata.DictionaryAudioCodec)
-			if self.mAudioSystem  == None: self.setAudioSystem()
+			lower = codec.lower()
+			if lower == 'dd' or lower == 'dts':
+				self.mAudioCodec = None
+				self.setAudioSystem(codec)
+			else:
+				codecExact = None
+				for key, values in Metadata.DictionaryAudioCodec.iteritems(): # Important when the codec abbriviation is set.
+					keys = [i.lower() for i in key.split('|')]
+					if lower in keys:
+						codecExact = key
+						break
+				if codecExact == None: self.mAudioCodec = self.__searchFind(codec, Metadata.DictionaryAudioCodec)
+				else: self.mAudioCodec = codecExact
+				if self.mAudioSystem == None: self.setAudioSystem()
 
 	def setAudioDubbed(self, dubbed = True):
 		self.mAudioDubbed = Metadata.DictionaryAudioDubbed[0][0] if dubbed else None
@@ -1190,7 +1232,7 @@ class Metadata(object):
 	def audioLanguages(self, universal = False):
 		if not self.mAudioLanguages: return self.mAudioLanguages
 		elif universal: return self.mAudioLanguages
-		else: return tools.Language.ununiversalze(self.mAudioLanguages)
+		else: return tools.Language.ununiversalize(self.mAudioLanguages)
 
 	def audioDubbed(self, boolean = True):
 		if boolean: return not(self.mAudioDubbed == False or self.mAudioDubbed == None or self.mAudioDubbed == '')
@@ -1362,6 +1404,12 @@ class Metadata(object):
 		elif self.isHoster(): return Metadata.TypeHoster
 		else: return Metadata.TypeNone
 
+	def ignoreAdjust(self, difference = None, contains = None, length = None, size = None):
+		if difference: self.mIgnoreDifference = min(0.9, self.mIgnoreDifference * (1 + difference))
+		if contains: self.mIgnoreContains = min(0.9, self.mIgnoreContains * (1 + contains))
+		if length: self.mIgnoreLength *= (1 + length)
+		if size: self.mIgnoreSize *= (1 + size)
+
 	# extended: adds metadata to title
 	# prefix: adds Gaia name to the front
 	def title(self, extended = False, prefix = False, raw = False, pack = False):
@@ -1518,7 +1566,10 @@ class Metadata(object):
 		label = None
 		if setting == None:
 			setting = tools.Settings.getInteger('interface.information.edition')
-		if self.mEdition and not self.isEpisode():
+		# Allow editions for episodes as well.
+		# Allows special episodes to be label (eg: Black Mirror White Christmas Special)
+		#if self.mEdition and not self.isEpisode():
+		if self.mEdition:
 			try:
 				label = self.mEdition
 				if setting == Metadata.LabelMini: label = label[:2]
@@ -1772,6 +1823,10 @@ class Metadata(object):
 		if self.mSeason == None or self.mEpisode == None: # Eg: movie, does not contain season/episode.
 			return True
 
+		# Special seasons and episodes.
+		if self.mSeason == 0 or self.mEpisode == 0:
+			return True
+
 		splitName = self.mNameSplit
 		joinedName = ' '.join(splitName)
 
@@ -1803,8 +1858,7 @@ class Metadata(object):
 		if self.mSeason == None and self.mEpisode == None:
 			try: index = split.index(str(self.mYear))
 			except: index = -1
-			if index > 0:
-				skip = index > total * self.mIgnoreLength
+			if index > 0: skip = index > total * self.mIgnoreLength
 
 		setting = tools.Settings.getInteger('scraping.providers.filename')
 		for i in self.mTitleSplit:
@@ -1965,10 +2019,13 @@ class Metadata(object):
 				self.setPopularity(popularity)
 				self.setVideoQuality(quality)
 
-			self.__loadValues()
-			self.__extract()
+			self.loadExtract()
 		except:
 			tools.Logger.error()
+
+	def loadExtract(self):
+		self.__loadValues()
+		self.__extract()
 
 	def update(self, source):
 		try:
@@ -2053,8 +2110,7 @@ class Metadata(object):
 						self.mName = None
 				if not self.mName: self.mName = ''
 				self.setName(self.mName)
-				self.__loadValues()
-				self.__extract()
+				self.loadExtract()
 		except:
 			tools.Logger.error()
 
@@ -2094,8 +2150,7 @@ class Metadata(object):
 
 			self.mName = name
 			self.setName(self.mName)
-			self.__loadValues()
-			self.__extract()
+			self.loadExtract()
 		except:
 			pass
 
@@ -2122,8 +2177,7 @@ class Metadata(object):
 						self.mName += ' ' + meta['mime']
 					self.setName(self.mName)
 					if not self.mName == '':
-						self.__loadValues()
-						self.__extract()
+						self.loadExtract()
 				if not self.mSize or self.mSize == 0:
 					if 'size' in meta:
 						self.mSize = meta['size']
@@ -2174,7 +2228,7 @@ class Metadata(object):
 
 	def __loadValue(self, value, splitAll = True):
 		if value:
-			value = value.lower()
+			value = value.encode('utf-8').lower()
 			value = client.replaceHTMLCodes(value)
 			value = value.replace("\n", '') # Double quotes with escape characters.
 			if splitAll: split = [item for item in re.split('\.|\,|\(|\)|\[|\]|\s|\-|\_|\+|\/|\\\'|\"', value) if not item == '']
@@ -2214,6 +2268,7 @@ class Metadata(object):
 	def __loadNumber(self, value):
 		return float(re.sub('[^0-9\.]', '', value))
 
+	@classmethod
 	def __searchFind(self, item, dictionary):
 		if not item: return None
 		item = item.lower()
@@ -2295,9 +2350,9 @@ class Metadata(object):
 			if language == None:
 				return results
 			elif len(language) <= 1:
-				try: result = tools.Language.language(language[0][0])
+				try: result = tools.Language.language(language[0])
 				except: result = None
-				if result == None or tools.Language.isUniversal(result[0]):
+				if result == None or tools.Language.isUniversal(result):
 					languages = tools.Language.detection()
 
 					# Do not use a language that appears in the title, eg: "French Love"
@@ -2317,7 +2372,7 @@ class Metadata(object):
 				else:
 					results = language
 			elif len(language) > 1:
-				results = [tools.Language.language(l[0]) for l in language]
+				results = [tools.Language.language(l['code'][tools.Language.CodeDefault]) for l in language]
 		except:
 			tools.Logger.error()
 
@@ -2482,7 +2537,7 @@ class Metadata(object):
 			if audioLanguages:
 				languages = []
 				for l in audioLanguages:
-					if l: languages.append(l[0].upper())
+					if l: languages.append(l['code'][tools.Language.CodePrimary].upper())
 				if len(languages) > 1 or (len(languages) == 1 and not tools.Language.isUniversal(languages[0])):
 					if len(languages) == 1:
 						result.append(languages[0])

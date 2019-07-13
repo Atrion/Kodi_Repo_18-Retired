@@ -18,14 +18,14 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
+from resources.lib.modules import client
+from resources.lib.modules import debrid as debridold
 from resources.lib.extensions import tools
+from resources.lib.extensions import cache
 from resources.lib.extensions import network
 from resources.lib.extensions import debrid
 from resources.lib.extensions import interface
 from resources.lib.extensions import window
-from resources.lib.modules import client
-from resources.lib.modules import cache
-from resources.lib.modules import debrid as debridold
 
 # NB: Only initialize the services once, otherwise it takes about 150ms each time Handler._initialize is called, because the objects have to be created and the settings be read from file.
 # NB: Do not declare these variables as class variables in Handler, because if no object of Handler exists, it will delete the class variables.
@@ -278,17 +278,17 @@ class Handler(object):
 						return service
 		return None
 
-	def supported(self, item = None):
+	def supported(self, item = None, cloud = False):
 		if item == None:
 			return len(self.mServices) > 0
 		else:
 			self._initialize(item)
 			for service in self.mServices:
-				if service.supported(item):
+				if service.supported(item, cloud = cloud):
 					return True
 			return False
 
-	def supportedCount(self, item = None):
+	def supportedCount(self, item = None, cloud = False):
 		if item == None:
 			return len(self.mServices)
 		else:
@@ -296,15 +296,15 @@ class Handler(object):
 			self._initialize(item)
 			for service in self.mServices:
 				try:
-					if service.supported(item):
+					if service.supported(item, cloud = cloud):
 						count += 1
 				except: pass
 			return count
 
-	def serviceBest(self, item, cached = True):
+	def serviceBest(self, item, cached = True, cloud = False):
 		try:
 			self._initialize(item)
-			services = [i.id() for i in self.mServices if i.supported(item)]
+			services = [i.id() for i in self.mServices if i.supported(item, cloud = cloud)]
 
 			if not 'cache' in item or not any([i for i in item['cache'].iteritems()]): cached = False
 			if cached: cache = item['cache']
@@ -316,19 +316,19 @@ class Handler(object):
 					return selection
 
 			# If no service was found that has the link cached, search again for the the best sevice but do not check if it is cached this time.
-			if cached: return self.serviceBest(item = item, cached = False)
+			if cached: return self.serviceBest(item = item, cached = False, cloud = cloud)
 
 			return None
 		except:
 			tools.Logger.error()
 
-	def serviceDetermine(self, mode, item, popups = False, all = False):
+	def serviceDetermine(self, mode, item, popups = False, all = False, cloud = False):
 		try:
 			self._initialize(item)
 
 			service = None
 			if all: services = self.mServices
-			else: services = [i for i in self.mServices if i.supported(item)]
+			else: services = [i for i in self.mServices if i.supported(item, cloud = cloud)]
 
 			if len(services) == 1:
 				service = services[0].name()
@@ -336,29 +336,29 @@ class Handler(object):
 				if popups:
 					if mode == Handler.ModeNone or mode == Handler.ModeDefault:
 						if self.mDefault == Handler.ModeNone or self.mDefault == Handler.ModeSelection or self.mDefault == Handler.ModeFile:
-							service = self.options(item = item, popups = popups, all = all)
+							service = self.options(item = item, popups = popups, all = all, cloud = cloud)
 						else:
 							try: service = self.mDefault.name()
-							except: service = self.options(item = item, popups = popups, all = all)
+							except: service = self.options(item = item, popups = popups, all = all, cloud = cloud)
 					else:
-						service = self.options(item = item, popups = popups, all = all)
+						service = self.options(item = item, popups = popups, all = all, cloud = cloud)
 				elif mode == Handler.ModeDefault: # Autoplay
 					try:
 						service = self.mDefault.name()
 					except:
-						service = self.serviceBest(item = item)
+						service = self.serviceBest(item = item, cloud = cloud)
 
 			if service == None:
-				service = self.options(item = item, popups = popups, all = all)
+				service = self.options(item = item, popups = popups, all = all, cloud = cloud)
 			if service == None:
 				return Handler.ReturnUnavailable
 			elif service == Handler.ReturnCancel:
 				return service
 			else:
-				if self.service(name = service).supported(item):
+				if self.service(name = service).supported(item, cloud = cloud):
 					return service
 				else:
-					return self.serviceBest(item = item)
+					return self.serviceBest(item = item, cloud = cloud)
 		except:
 			tools.Logger.error()
 
@@ -369,7 +369,7 @@ class Handler(object):
 			except: return False
 		return service == HandleElementum().name().lower() or service == HandleQuasar().name().lower()
 
-	def options(self, item, popups = False, all = False):
+	def options(self, item, popups = False, all = False, cloud = False):
 		if popups:
 			self._initialize(item)
 
@@ -378,7 +378,7 @@ class Handler(object):
 			else: title = 33488
 
 			if all: services = self.mServices
-			else: services = [i for i in self.mServices if i.supported(item)]
+			else: services = [i for i in self.mServices if i.supported(item, cloud = cloud)]
 			servicesCount = len(services)
 
 			if servicesCount == 1:
@@ -395,6 +395,10 @@ class Handler(object):
 						extra = interface.Format.font(33884, color = interface.Format.ColorSpecial)
 					elif i.debrid():
 						extra = interface.Format.font(33209, color = interface.Format.colorLighter(color = interface.Format.ColorSpecial, change = 30))
+					elif i.open():
+						extra = interface.Format.font(33211, color = interface.Format.colorLighter(color = interface.Format.ColorSpecial, change = 50))
+					elif i.addon():
+						extra = interface.Format.font(35614, color = interface.Format.colorLighter(color = interface.Format.ColorSpecial, change = 50))
 					if not extra == '':
 						extra = interface.Format.fontSeparator() + interface.Format.font(extra, bold = True, uppercase = True)
 					items.append(interface.Format.fontBold(i.name()) + extra)
@@ -409,7 +413,7 @@ class Handler(object):
 		self._initialize(item)
 
 		if popups and name == None:
-			name = self.options(item = item, popups = popups)
+			name = self.options(item = item, popups = popups, cloud = cloud)
 			if name == Handler.ReturnUnavailable or name == Handler.ReturnCancel:
 				return name
 
@@ -440,11 +444,13 @@ class Handler(object):
 
 class Handle(object):
 
-	def __init__(self, name, id = None, abbreviation = None, debrid = False):
+	def __init__(self, name, id = None, abbreviation = None, debrid = False, open = False, addon = False):
 		self.mId = name.lower() if id == None else id
 		self.mName = name
 		self.mAbbreviation = abbreviation
 		self.mDebrid = debrid
+		self.mOpen = open
+		self.mAddon = addon
 
 	def id(self):
 		return self.mId
@@ -458,7 +464,13 @@ class Handle(object):
 	def debrid(self):
 		return self.mDebrid
 
-	def supported(self, item):
+	def open(self):
+		return self.mOpen
+
+	def addon(self):
+		return self.mAddon
+
+	def supported(self, item, cloud = False):
 		try:
 			services = self.services()
 			if services == None:
@@ -494,11 +506,10 @@ class HandleDirect(Handle):
 		if provider == 'realdebrid': return HandleRealDebrid().handle(link = link, item = item, download = download, popups = popups, close = close, select = select, cloud = cloud)
 		else: return debrid.Debrid.addResult(link = link)
 
-	def supported(self, item):
-		if isinstance(item, dict) and 'direct' in item and item['direct'] == True:
-			return True
-		else:
-			return False
+	def supported(self, item, cloud = False):
+		if cloud: return False
+		elif isinstance(item, dict) and 'direct' in item and item['direct'] == True: return True
+		else: return False
 
 	def services(self):
 		return None
@@ -506,7 +517,7 @@ class HandleDirect(Handle):
 class HandleResolveUrl(Handle):
 
 	def __init__(self):
-		Handle.__init__(self, interface.Translation.string(35310))
+		Handle.__init__(self, interface.Translation.string(35310), open = True)
 		self.mServices = None
 
 	def handle(self, link, item, download = False, popups = False, close = True, select = False, cloud = False):
@@ -537,11 +548,10 @@ class HandleResolveUrl(Handle):
 		except:
 			return debrid.Debrid.addResult(link = None)
 
-	def supported(self, item):
-		if isinstance(item, dict) and 'direct' in item and item['direct'] == True:
-			return True
-		else:
-			return Handle.supported(self, item)
+	def supported(self, item, cloud = False):
+		if cloud: return False
+		elif isinstance(item, dict) and 'direct' in item and item['direct'] == True: return True
+		else: return Handle.supported(self, item)
 
 	def services(self):
 		if self.mServices == None:
@@ -560,7 +570,7 @@ class HandleResolveUrl(Handle):
 class HandleUrlResolver(Handle):
 
 	def __init__(self):
-		Handle.__init__(self, interface.Translation.string(33747))
+		Handle.__init__(self, interface.Translation.string(33747), open = True)
 		self.mServices = None
 
 	def handle(self, link, item, download = False, popups = False, close = True, select = False, cloud = False):
@@ -591,11 +601,10 @@ class HandleUrlResolver(Handle):
 		except:
 			return debrid.Debrid.addResult(link = None)
 
-	def supported(self, item):
-		if isinstance(item, dict) and 'direct' in item and item['direct'] == True:
-			return True
-		else:
-			return Handle.supported(self, item)
+	def supported(self, item, cloud = False):
+		if cloud: return False
+		elif isinstance(item, dict) and 'direct' in item and item['direct'] == True: return True
+		else: return Handle.supported(self, item)
 
 	def services(self):
 		if self.mServices == None:
@@ -647,7 +656,7 @@ class HandlePremiumize(Handle):
 		except: pass
 		return self.mServices
 
-	def supported(self, item):
+	def supported(self, item, cloud = False):
 		if isinstance(item, dict) and 'source' in item:
 			if item['source'] == 'torrent':
 				return True
@@ -691,7 +700,7 @@ class HandleOffCloud(Handle):
 		except: pass
 		return self.mServices
 
-	def supported(self, item):
+	def supported(self, item, cloud = False):
 		if isinstance(item, dict) and 'source' in item:
 			if item['source'] == 'torrent':
 				return True
@@ -735,7 +744,7 @@ class HandleRealDebrid(Handle):
 		except: pass
 		return self.mServices
 
-	def supported(self, item):
+	def supported(self, item, cloud = False):
 		if isinstance(item, dict) and 'source' in item:
 			if item['source'] == 'torrent':
 				return True
@@ -816,7 +825,7 @@ class HandleRapidPremium(Handle):
 class HandleElementum(Handle):
 
 	def __init__(self):
-		Handle.__init__(self, 'Elementum')
+		Handle.__init__(self, 'Elementum', addon = True)
 		self.mServices = None
 
 	def handle(self, link, item, download = False, popups = False, close = True, select = False, cloud = False):
@@ -855,12 +864,12 @@ class HandleElementum(Handle):
 				if tmdbApi == '': tmdbApi = tools.System.obfuscate(tools.Settings.getString('internal.tmdb.api', raw = True))
 				if not tmdbApi == '':
 					if 'tvdb' in information and not information['tvdb'] == None: # Shows - IMDB ID for episodes does not work on tmdb
-						result = cache.get(client.request, 240, 'http://api.themoviedb.org/3/find/%s?api_key=%s&external_source=tvdb_id' % (information['tvdb'], tmdbApi))
+						result = cache.Cache().cacheLong(client.request, 'http://api.themoviedb.org/3/find/%s?api_key=%s&external_source=tvdb_id' % (information['tvdb'], tmdbApi))
 						result = result['tv_episode_results']
 						parameters['tmdb'] = str(result['id'])
 						parameters['show'] = str(result['show_id'])
 					elif 'imdb' in information and not information['imdb'] == None:
-						result = cache.get(client.request, 240, 'http://api.themoviedb.org/3/find/%s?api_key=%s&external_source=imdb_id' % (information['imdb'], tmdbApi))
+						result = cache.Cache().cacheLong(client.request, 'http://api.themoviedb.org/3/find/%s?api_key=%s&external_source=imdb_id' % (information['imdb'], tmdbApi))
 						if isinstance(result, basestring): result = tools.Converter.jsonFrom(result)
 						result = result['movie_results']
 						if isinstance(result, list): result = result[0]
@@ -918,7 +927,7 @@ class HandleElementum(Handle):
 class HandleQuasar(Handle):
 
 	def __init__(self):
-		Handle.__init__(self, 'Quasar')
+		Handle.__init__(self, 'Quasar', addon = True)
 		self.mServices = None
 
 	def handle(self, link, item, download = False, popups = False, close = True, select = False, cloud = False):
@@ -957,12 +966,12 @@ class HandleQuasar(Handle):
 				if tmdbApi == '': tmdbApi = tools.System.obfuscate(tools.Settings.getString('internal.tmdb.api', raw = True))
 				if not tmdbApi == '':
 					if 'tvdb' in information and not information['tvdb'] == None: # Shows - IMDB ID for episodes does not work on tmdb
-						result = cache.get(client.request, 240, 'http://api.themoviedb.org/3/find/%s?api_key=%s&external_source=tvdb_id' % (information['tvdb'], tmdbApi))
+						result = cache.Cache().cacheLong(client.request, 'http://api.themoviedb.org/3/find/%s?api_key=%s&external_source=tvdb_id' % (information['tvdb'], tmdbApi))
 						result = result['tv_episode_results']
 						parameters['tmdb'] = str(result['id'])
 						parameters['show'] = str(result['show_id'])
 					elif 'imdb' in information and not information['imdb'] == None:
-						result = cache.get(client.request, 240, 'http://api.themoviedb.org/3/find/%s?api_key=%s&external_source=imdb_id' % (information['imdb'], tmdbApi))
+						result = cache.Cache().cacheLong(client.request, 'http://api.themoviedb.org/3/find/%s?api_key=%s&external_source=imdb_id' % (information['imdb'], tmdbApi))
 						if isinstance(result, basestring): result = tools.Converter.jsonFrom(result)
 						result = result['movie_results']
 						if isinstance(result, list): result = result[0]

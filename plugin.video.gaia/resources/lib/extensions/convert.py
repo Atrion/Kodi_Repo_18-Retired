@@ -731,6 +731,7 @@ class ConverterTime(object):
 	FormatDate = '%Y-%m-%d'
 	FormatDateTime = '%Y-%m-%d %H:%M:%S'
 	FormatDateTimeJson = '%Y-%m-%dT%H:%M:%S.%fZ'
+	FormatDateShort = '%d %b %Y'
 	FormatTimestamp = 'timestamp'
 	FormatDefault = FormatDateTime
 

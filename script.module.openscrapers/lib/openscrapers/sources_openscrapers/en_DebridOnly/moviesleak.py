@@ -43,9 +43,8 @@ class source:
         self.priority = 1
         self.language = ['en']
         self.domains = ['300mbmoviesdl.com', 'moviesleak.net/', 'hevcbluray.net']
-        self.base_link = 'https://moviesleak.net/'
+        self.base_link = 'https://hevcbluray.net/'
         self.search_link = '?s=%s'
-        self.scraper = cfscrape.create_scraper()
 
     def movie(self, imdb, title, localtitle, aliases, year):
         try:
@@ -80,7 +79,10 @@ class source:
             url = self.search_link % urllib.quote_plus(query)
             url = urlparse.urljoin(self.base_link, url)
 
-            r = self.scraper.get(url).content
+            self.s = cfscrape.create_scraper()
+
+            first = self.s.get(self.base_link).text
+            r = self.s.get(url).text
 
             posts = client.parseDOM(r, 'div', attrs={'class': 'item'})
 
@@ -101,14 +103,14 @@ class source:
 
                     try:
                         y = re.findall('(?:\.|\(|\[|\s*|)(S\d+E\d+|S\d+)(?:\.|\)|\]|\s*|)', name, re.I)[-1].upper()
-                    except Exception:
+                    except BaseException:
                         y = re.findall('(?:\.|\(|\[|\s*|)(\d{4})(?:\.|\)|\]|\s*|)', name, re.I)[0].upper()
 
                     if not y == hdlr: raise Exception()
 
                     try:
                         s = re.findall('((?:\d+\,\d+\.\d+|\d+\.\d+|\d+\,\d+|\d+)\s*(?:GB|GiB|MB|MiB))', t)[0]
-                    except BaseException:
+                    except Exception:
                         s = '0'
 
                     items += [(tit, c, s)]
@@ -139,7 +141,7 @@ class source:
             except Exception:
                 pass
 
-            data = self.scraper.get(item[1]).content
+            data = self.s.get(item[1]).text
 
             try:
                 r = client.parseDOM(data, 'li', attrs={'class': 'elemento'})
@@ -166,17 +168,17 @@ class source:
                         self._sources.append(
                             {'source': host, 'quality': quality, 'language': 'en', 'url': url, 'info': info,
                              'direct': False, 'debridonly': True})
-                    except Exception:
+                    except BaseException:
                         pass
             except Exception:
                 pass
 
-        except BaseException:
+        except Exception:
             return
 
     def resolve(self, url):
         if 'hideurl' in url:
-            data = self.scraper.get(url).content
+            data = self.s.get(url).text
             data = client.parseDOM(data, 'div', attrs={'class': 'row'})
             url = [dom_parser.parse_dom(i, 'a', req='href')[0] for i in data]
             url = [i.attrs['href'] for i in url if 'direct me' in i.content][0]

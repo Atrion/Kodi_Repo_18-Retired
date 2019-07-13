@@ -170,14 +170,20 @@ elif action == 'integrationYoda':
 elif action == 'integrationBodie':
 	OrionIntegration.executeBodie()
 
+elif action == 'integrationNymeria':
+	OrionIntegration.executeNymeria()
+
+elif action == 'integrationExodus':
+	OrionIntegration.executeExodus()
+
+elif action == 'integrationExodusRedux':
+	OrionIntegration.executeExodusRedux()
+
 elif action == 'integrationNeptuneRising':
 	OrionIntegration.executeNeptuneRising()
 
 elif action == 'integrationDeathStreams':
 	OrionIntegration.executeDeathStreams()
-
-elif action == 'integrationExodusRedux':
-	OrionIntegration.executeExodusRedux()
 
 elif action == 'integrationBoomMovies':
 	OrionIntegration.executeBoomMovies()

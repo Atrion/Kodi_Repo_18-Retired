@@ -19,6 +19,7 @@
 '''
 
 import re
+import copy
 import threading
 
 from orion import *
@@ -27,7 +28,7 @@ from resources.lib.extensions import tools
 from resources.lib.extensions import network
 from resources.lib.extensions import interface
 from resources.lib.extensions import metadata
-from resources.lib.extensions import tools
+from resources.lib.extensions import provider
 
 class Orionoid(object):
 
@@ -57,12 +58,19 @@ class Orionoid(object):
 
 	IgnoreExcludes = ['alluc', 'alluc.ee', 'prontv', 'pron.tv', 'llucy', 'llucy.net', 'furk', 'furk.net']
 
+	HashChunk = 30
+
 	##############################################################################
 	# CONSTRUCTOR
 	##############################################################################
 
-	def __init__(self):
-		self.mOrion = Orion(key = tools.System.obfuscate(tools.Settings.getString('internal.orion.api', raw = True)))
+	def __init__(self, silent = False):
+		self.mOrion = Orion(key = tools.System.obfuscate(tools.Settings.getString('internal.orion.api', raw = True)), silent = silent)
+		self.mProviders = None
+		self.mHashQueue = []
+		self.mHashCompleted = {}
+		self.mHashThreads = []
+		self.mHashLock = threading.Lock()
 
 	##############################################################################
 	# LINK
@@ -163,6 +171,38 @@ class Orionoid(object):
 		return self.mOrion.serverTest()
 
 	##############################################################################
+	# PROVIDER
+	##############################################################################
+
+	def _provider(self, id):
+		id = id.lower()
+		if self.mProviders == None:
+			provider.Provider.initialize(forceAll = True)
+			self.mProviders = provider.Provider.providers(enabled = False, local = False, orion = False)
+		for pro in self.mProviders:
+			if pro['id'] == id:
+				return pro['object']
+		return None
+
+	def _providerHas(self, id, function):
+		try: return callable(getattr(self._provider(id = id), function))
+		except: return False
+
+	def _providerExecute(self, id, function, *args):
+		return getattr(self._provider(id = id), function)(*args)
+
+	def _providerAuthenticationHas(self, id):
+		return self._providerHas(id, 'authenticationAdd')
+
+	def _providerAuthenticationAdd(self, id, links):
+		try: return self._providerExecute(id, 'authenticationAdd', links)
+		except: return links
+
+	def _providerAuthenticationRemove(self, id, links):
+		try: return self._providerExecute(id, 'authenticationRemove', links)
+		except: return links
+
+	##############################################################################
 	# STREAMS - UPDATE
 	##############################################################################
 
@@ -170,17 +210,21 @@ class Orionoid(object):
 		try:
 			torrent = stream['source'] == OrionStream.TypeTorrent
 
-			# Local stream
+			# Local streams
 			if 'local' in stream and stream['local']: return True
 
 			# Member and premium streams
+			if 'premium' in stream and ['premium']: return True
 			if 'memberonly' in stream and stream['memberonly']:
-				excluded = False
-				for exclude in Orionoid.IgnoreExcludes:
-					if ('id' in stream and exclude in stream['id'].lower()) or ('name' in stream and exclude in stream['name'].lower()) or ('provider' in stream and exclude in stream['provider'].lower()) or ('source' in stream and exclude in stream['source'].lower()) or ('hoster' in stream and stream['hoster'] and exclude in stream['hoster'].lower()):
-						excluded = True
-						break
-				if not excluded: return True
+				if not self._providerAuthenticationHas(stream['provider']):
+					excluded = False
+					for exclude in Orionoid.IgnoreExcludes:
+						for attribute in ['id', 'name', 'provider', 'source', 'hoster']:
+							if attribute in stream and stream[attribute] and exclude in stream[attribute].lower():
+								excluded = True
+								break
+						if excluded: break
+					if not excluded: return True
 
 			# Not magnet and not http/ftp
 			if not network.Networker.linkIs(stream['url']) and not network.Container(stream['url']).torrentIsMagnet(): return True
@@ -201,59 +245,64 @@ class Orionoid(object):
 	def _streamUpdate(self, meta, streams):
 		item = self._streamUpdateMeta(meta)
 		item['streams'] = []
+
 		for stream in streams:
-			if not self._streamIgnore(stream):
-				data = {'stream' : {}, 'access' : {}, 'file' : {}, 'meta' : {}, 'video' : {}, 'audio' : {}, 'subtitle' : {}}
-				if 'orion' in stream and stream['orion']: data['orion'] = True
-				meta = metadata.Metadata.initialize(stream)
+			try:
+				if not self._streamIgnore(stream):
+					data = {'links' : None, 'stream' : {}, 'access' : {}, 'file' : {}, 'meta' : {}, 'video' : {}, 'audio' : {}, 'subtitle' : {}}
 
-				if stream['source'] == OrionStream.TypeTorrent:
-					data['stream']['type'] = OrionStream.TypeTorrent
-				elif stream['source'] == OrionStream.TypeUsenet:
-					data['stream']['type'] = OrionStream.TypeUsenet
-				else:
-					data['stream']['type'] = OrionStream.TypeHoster
-					data['stream']['hoster'] = stream['source']
+					if 'orion' in stream and stream['orion']: data['id'] = stream['orion']['stream']
+					meta = metadata.Metadata.initialize(stream)
 
-				data['stream']['link'] = stream['url']
-				if 'origin' in stream: data['stream']['origin'] = stream['origin']
-				data['stream']['source'] = stream['provider']
-				if meta.seeds() > 0: data['stream']['seeds'] = meta.seeds()
-				if meta.age() > 0: data['stream']['time'] = tools.Time.timestamp() - (meta.age() * 86400)
+					data['links'] = self._providerAuthenticationRemove(stream['provider'], stream['url'])
 
-				data['access']['direct'] = meta.direct()
-				if 'cache' in stream:
-					if 'premiumize' in stream['cache']: data['access']['premiumize'] = stream['cache']['premiumize']
-					if 'offcloud' in stream['cache']: data['access']['offcloud'] = stream['cache']['offcloud']
-					if 'realdebrid' in stream['cache']: data['access']['realdebrid'] = stream['cache']['realdebrid']
+					if stream['source'] == OrionStream.TypeTorrent:
+						data['stream']['type'] = OrionStream.TypeTorrent
+					elif stream['source'] == OrionStream.TypeUsenet:
+						data['stream']['type'] = OrionStream.TypeUsenet
+					else:
+						data['stream']['type'] = OrionStream.TypeHoster
+						data['stream']['hoster'] = stream['source']
 
-				if 'hash' in stream: data['file']['hash'] = stream['hash']
-				if 'file' in stream: data['file']['name'] = stream['file']
-				if meta.size(format = False, estimate = True) > 0: data['file']['size'] = meta.size(format = False, estimate = True)
-				data['file']['pack'] = meta.pack()
+					if 'reference' in stream: data['stream']['reference'] = stream['reference']
+					if 'origin' in stream: data['stream']['origin'] = stream['origin']
+					data['stream']['source'] = stream['provider']
+					if meta.seeds() > 0: data['stream']['seeds'] = meta.seeds()
+					if meta.age() > 0: data['stream']['time'] = tools.Time.timestamp() - (meta.age() * 86400)
 
-				if meta.release(full = False): data['meta']['release'] = meta.release(full = False)
-				if meta.uploader(full = False): data['meta']['uploader'] = meta.uploader(full = False)
-				if meta.edition(): data['meta']['edition'] = meta.edition()
+					data['access']['direct'] = meta.direct()
+					if 'cache' in stream:
+						if 'premiumize' in stream['cache']: data['access']['premiumize'] = stream['cache']['premiumize']
+						if 'offcloud' in stream['cache']: data['access']['offcloud'] = stream['cache']['offcloud']
+						if 'realdebrid' in stream['cache']: data['access']['realdebrid'] = stream['cache']['realdebrid']
 
-				if meta.videoQuality(): data['video']['quality'] = meta.videoQuality()
-				if meta.videoCodec(): data['video']['codec'] = meta.videoCodec()
-				data['video']['3d'] = meta.videoExtra3d()
+					if 'hash' in stream: data['file']['hash'] = stream['hash']
+					if 'file' in stream: data['file']['name'] = stream['file']
+					if meta.size(format = False, estimate = True) > 0: data['file']['size'] = meta.size(format = False, estimate = True)
+					data['file']['pack'] = meta.pack()
 
-				if meta.videoQuality(): data['video']['quality'] = meta.videoQuality()
-				if meta.videoCodec(): data['video']['codec'] = meta.videoCodec()
-				data['video']['3d'] = meta.videoExtra3d()
+					if meta.release(full = False): data['meta']['release'] = meta.release(full = False)
+					if meta.uploader(full = False): data['meta']['uploader'] = meta.uploader(full = False)
+					if meta.edition(): data['meta']['edition'] = meta.edition()
 
-				data['audio']['type'] = OrionStream.AudioDubbed if meta.audioDubbed() else OrionStream.AudioStandard
-				data['audio']['channels'] = meta.audioChannels(True) if meta.audioChannels(number = True) else 2
-				if meta.audioSystem(): data['audio']['system'] = meta.audioSystem(full = False)
-				if meta.audioCodec(): data['audio']['codec'] = meta.audioCodec(full = False)
-				data['audio']['languages'] = [i[0] for i in meta.audioLanguages()] if len(meta.audioLanguages()) > 0 else [tools.Language.EnglishCode]
+					if meta.videoQuality(): data['video']['quality'] = meta.videoQuality()
+					if meta.videoCodec(): data['video']['codec'] = meta.videoCodec()
+					data['video']['3d'] = meta.videoExtra3d()
 
-				if meta.subtitlesIsSoft() or meta.subtitlesIsHard(): data['subtitle']['type'] = OrionStream.SubtitleHard if meta.subtitlesIsHard() else OrionStream.SubtitleSoft
+					if meta.videoQuality(): data['video']['quality'] = meta.videoQuality()
+					if meta.videoCodec(): data['video']['codec'] = meta.videoCodec()
+					data['video']['3d'] = meta.videoExtra3d()
 
-				item['streams'].append(data)
+					data['audio']['type'] = OrionStream.AudioDubbed if meta.audioDubbed() else OrionStream.AudioStandard
+					data['audio']['channels'] = meta.audioChannels(True) if meta.audioChannels(number = True) else 2
+					if meta.audioSystem(): data['audio']['system'] = meta.audioSystem(full = False)
+					if meta.audioCodec(): data['audio']['codec'] = meta.audioCodec(full = False)
+					data['audio']['languages'] = [i['code'][tools.Language.CodeDefault] for i in meta.audioLanguages()] if len(meta.audioLanguages()) > 0 else [tools.Language.EnglishCode]
+					if meta.subtitlesIsSoft() or meta.subtitlesIsHard(): data['subtitle']['type'] = OrionStream.SubtitleHard if meta.subtitlesIsHard() else OrionStream.SubtitleSoft
 
+					item['streams'].append(data)
+			except:
+				tools.Logger.error()
 		return OrionItem(data = item).update()
 
 	def _streamUpdateMeta(self, meta):
@@ -319,9 +368,10 @@ class Orionoid(object):
 		return item
 
 	def streamUpdate(self, meta, streams, wait = False):
-		thread = threading.Thread(target = self._streamUpdate, args = (meta, streams))
-		thread.start()
-		if wait: thread.join()
+		if meta and streams:
+			thread = threading.Thread(target = self._streamUpdate, args = (meta, streams))
+			thread.start()
+			if wait: thread.join()
 
 	def streamRetrieve(self, type, imdb = None, season = None, episode = None, title = None, year = None, query = None):
 		result = None
@@ -341,6 +391,15 @@ class Orionoid(object):
 				elif not title == None:
 					query = title + ' ' + str(season) + ' ' + str(episode)
 					result = self.mOrion.streams(type = type, query = query, details = True)
+		if result and result['streams']:
+			streams = []
+			for stream in result['streams']:
+				links = self._providerAuthenticationAdd(stream['stream']['source'], stream['links'])
+				if len(links) > 0:
+					stream['links'] = links
+					streams.append(stream)
+			result = {key : value for key, value in result.iteritems() if not key == 'streams'}
+			result['streams'] = streams
 		return result
 
 	def streamsCount(self, streams):
@@ -351,6 +410,59 @@ class Orionoid(object):
 
 	def streamRemove(self, idItem, idStream, notification = False):
 		self.mOrion.streamRemove(idItem = idItem, idStream = idStream, notification = notification)
+
+	##############################################################################
+	# HASH
+	##############################################################################
+
+	def hashes(self, links, chunked = False):
+		self._hashLock()
+		for link in links:
+			if not link in self.mHashQueue and not link in self.mHashCompleted:
+				self.mHashQueue.append(link)
+		self._hashUnlock()
+
+		if (not chunked and len(self.mHashQueue) > 0) or (chunked and len(self.mHashQueue) >= Orionoid.HashChunk and not self._hashesRunning()):
+			thread = threading.Thread(target = self._hashesRetrieve)
+			self._hashLock()
+			self.mHashThreads.append(thread)
+			self._hashUnlock()
+			thread.start()
+		if not chunked: self._hashJoin()
+
+		result = {}
+		for link in links:
+			if link in self.mHashCompleted:
+				result[link] = self.mHashCompleted[link]
+		return result
+
+	def _hashesRetrieve(self):
+		links = copy.deepcopy(self.mHashQueue)
+		self._hashLock()
+		self.mHashQueue = []
+		self._hashUnlock()
+
+		hashes = self.mOrion.containerHashes(links = links)
+		self._hashLock()
+		self.mHashCompleted.update(hashes)
+		for link in links:
+			if not link in self.mHashCompleted:
+				self.mHashCompleted[link] = None
+		self._hashUnlock()
+
+	def _hashLock(self):
+		self.mHashLock.acquire()
+
+	def _hashUnlock(self):
+		try: self.mHashLock.release()
+		except: pass
+
+	def _hashesRunning(self):
+		return any(thread.is_alive() for thread in self.mHashThreads)
+
+	def _hashJoin(self):
+		try: [thread.join() for thread in self.mHashThreads]
+		except: pass
 
 	##############################################################################
 	# FLARE

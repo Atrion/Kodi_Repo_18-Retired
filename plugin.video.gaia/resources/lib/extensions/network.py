@@ -24,6 +24,7 @@ import os
 import urllib
 import urllib2
 import urlparse
+import cookielib
 import json
 import threading
 import time
@@ -41,6 +42,12 @@ except: pass
 
 class Networker(object):
 
+	MethodGet = 'GET'
+	MethodPost = 'POST'
+	MethodPut = 'PUT'
+	MethodDelete = 'DELETE'
+	MethodHead = 'HEAD'
+
 	StatusUnknown = 'unknown'
 	StatusOnline = 'online'
 	StatusOffline = 'offline'
@@ -56,11 +63,8 @@ class Networker(object):
 		self.mHeadersPost = {} # Must be before self.linkClean().
 
 		# Some scrapers like FilmPalast return a ID array (which is resolved later) instead of a link. In such a case, do not use it.
-		if isinstance(link, basestring):
-			self.mLink = link
-			self.linkClean()
-		else:
-			self.mLink = ''
+		if isinstance(link, basestring): self.mLink = link
+		else: self.mLink = ''
 
 		self.mUserAgent = None
 
@@ -70,6 +74,7 @@ class Networker(object):
 		self.mResponse = None
 		self.mData = None
 		self.mParameters = parameters
+		self.mCookies = None
 
 	def __del__(self):
 		try:
@@ -92,6 +97,15 @@ class Networker(object):
 	@classmethod
 	def unquote(self, data):
 		return urllib2.unquote(data)
+
+	@classmethod
+	def local(self, host):
+		host = host.lower()
+		try:
+			import ipaddress
+			if ipaddress.ip_address(host).is_private: return True
+		except: pass
+		return host in ('localhost', '127.0.0.1', '::1') or host.startswith('192.168.')
 
 	def resolve(self, source, clean = True, timeout = None, info = False, internal = True, resolve = ResolveDefault): # Use timeout with caution.
 		if not resolve: resolve = Networker.ResolveNone
@@ -159,9 +173,14 @@ class Networker(object):
 	@classmethod
 	def linkIs(self, link, magnet = False):
 		if isinstance(link, basestring):
-			if magnet: prefix = ('magnet:', 'http://', 'https://', 'ftp://', 'ftps://')
-			else: prefix = ('http://', 'https://', 'ftp://', 'ftps://')
-			return link.startswith(prefix)
+			if magnet and self.linkIsMagnet(link): return True
+			else: return link.lower().startswith(('http://', 'https://', 'ftp://', 'ftps://'))
+		return False
+
+	@classmethod
+	def linkIsMagnet(self, link):
+		if isinstance(link, basestring):
+			return link.lower().startswith('magnet:')
 		return False
 
 	@classmethod
@@ -176,6 +195,11 @@ class Networker(object):
 				result += '/' + str(parts[i])
 		return result
 
+	@classmethod
+	def linkCreate(self, link, parameters = None, duplicates = False):
+		if parameters: link += '?' + self.linkParameters(parameters, duplicates = duplicates)
+		return link
+
 	def link(self):
 		return self.mLink
 
@@ -188,13 +212,15 @@ class Networker(object):
 		return urllib.urlencode(dictionary, doseq = duplicates)
 
 	@classmethod
-	def linkDomain(self, link, subdomain = False, ip = True):
+	def linkDomain(self, link, subdomain = False, topdomain = True, ip = True):
 		try:
 			if link.startswith('magnet:'): return None
-			result = link.split('://')[1].split('/')[0].split(':')[0].strip()
+			try: result = link.split('://')[1].split('/')[0].split(':')[0].strip()
+			except: result = link.strip()
 			ipIs = self.ipIs(result)
 			if not ip and ipIs: return None
 			if not subdomain and not ipIs: result = '.'.join(result.split('.')[-2:])
+			if not topdomain and not ipIs: result = '.'.join(result.split('.')[:-1])
 			return result
 		except: return None
 
@@ -207,6 +233,20 @@ class Networker(object):
 
 	def errorCode(self):
 		return self.mErrorCode
+
+	def response(self):
+		return self.mResponse
+
+	def cookies(self, link = None, parameters = None, headers = None, timeout = 30, range = None, force = False, addon = False, flare = True, form = None, json = None, method = None, raw = False):
+		jar = cookielib.LWPCookieJar()
+		handlers = [urllib2.HTTPHandler(), urllib2.HTTPSHandler(), urllib2.HTTPCookieProcessor(jar)]
+		opener = urllib2.build_opener(*handlers)
+		opener = urllib2.install_opener(opener)
+		self.request(link = link, parameters = parameters, headers = headers, timeout = timeout, range = range, force = force, addon = addon, flare = flare, form = form, method = method)
+		cookies = {cookie.name : cookie.value for cookie in jar}
+		if self.mCookies: cookies.update({cookie.name : cookie.value for cookie in self.mCookies}) # CloudFlare cookies.
+		if raw: cookies = '; '.join(['%s=%s' % (key, value) for key, value in cookies.iteritems()])
+		return cookies
 
 	def download(self, path, timeout = 30, range = None, flare = True):
 		data = self.retrieve(timeout = timeout, range = range, force = False, flare = flare)
@@ -225,10 +265,10 @@ class Networker(object):
 		...
 	]
 	'''
-	def retrieve(self, timeout = 30, range = None, force = False, parameters = None, addon = False, flare = True, form = None):
+	def retrieve(self, link = None, parameters = None, headers = None, timeout = 30, range = None, force = False, addon = False, flare = True, form = None, json = None, method = None):
 		try:
 			self.mData = None
-			result = self.request(timeout = timeout, range = range, force = force, parameters = parameters, addon = addon, flare = flare, form = form)
+			result = self.request(link = link, parameters = parameters, headers = headers, timeout = timeout, range = range, force = force, addon = addon, flare = flare, form = form, json = json, method = method)
 			if self.mError or result == None:
 				return self.mData
 			else:
@@ -238,30 +278,52 @@ class Networker(object):
 		except:
 			return None
 
+	def retrieveJson(self, link = None, parameters = None, headers = None, timeout = 30, range = None, force = False, addon = False, flare = True, form = None, json = None, method = None):
+		data = self.retrieve(link = link, parameters = parameters, headers = headers, timeout = timeout, range = range, force = force, addon = addon, flare = flare, form = form, json = json, method = method)
+		if data is None: return data
+		return tools.Converter.jsonFrom(data)
+
 	# range: tuple with range byte start and range byte size - (start, size). Both values can be nonean be None.
-	def request(self, timeout = 30, range = None, force = False, parameters = None, headers = None, addon = False, flare = True, form = None):
+	def request(self, link = None, parameters = None, headers = None, timeout = 30, range = None, force = False, addon = False, flare = True, form = None, json = None, method = None):
 		try:
 			if self.mResponse == None or force:
 				self.mError = False
 				self.mErrorCode = None
 				self.mResponse = None
 				self.mData = None
-				json = False
-				if self.mLink:
+				if link is None: link = self.mLink
+				if method: method = method.upper()
+				if link:
+					linkHeaders = link.split('|')
+					link = linkHeaders[0]
+					if len(linkHeaders) == 1:
+						linkHeaders = {}
+					else:
+						linkHeaders = linkHeaders[1].split('&')
+						headersTemp = {}
+						for header in linkHeaders:
+							header = header.split('=')
+							headersTemp[header[0]] = urllib.unquote_plus(header[1])
+						linkHeaders = headersTemp
+
 					if parameters == None: parameters = self.mParameters
 					parametersRaw = parameters
 					try:
-						if isinstance(parameters, dict):
-							for key, value in parameters.iteritems():
-								if isinstance(value, dict) or isinstance(value, list) or isinstance(value, tuple):
-									json = True
-									break
+						if json is None:
+							if isinstance(parameters, dict):
+								for key, value in parameters.iteritems():
+									if isinstance(value, dict) or isinstance(value, list) or isinstance(value, tuple):
+										json = True
+										break
+					except: pass
+					if json is None: json = False
+					try:
 						if json: parameters = tools.Converter.jsonTo(parameters)
 						else: parameters = urllib.urlencode(parameters, doseq = True)
 					except: pass
 
 					if form == None:
-						request = urllib2.Request(self.mLink, data = parameters)
+						request = urllib2.Request(link, data = parameters)
 					else:
 						if not isinstance(form, list): form = [form]
 						boundry = 'X-X-X-' + str(tools.Time.timestamp()) + '-X-X-X'
@@ -282,7 +344,7 @@ class Networker(object):
 							data += bytearray('\n', 'utf8')
 
 						data += bytearray('--%s--\n' % boundry, 'utf8')
-						request = urllib2.Request(self.mLink, data = data)
+						request = urllib2.Request(link, data = data)
 
 					if headers == None: headers = {}
 					headers['User-Agent'] = self.userAgent(randomize = True, mobile = False, addon = addon)
@@ -299,9 +361,13 @@ class Networker(object):
 					for key, value in self.mHeadersPost.iteritems():
 						headers[key] = value
 
+					for key, value in linkHeaders.iteritems():
+						headers[key] = value
+
 					for key, value in headers.iteritems():
 						request.add_header(key, value)
 
+					if method: request.get_method = lambda: method
 					try:
 						secureContext = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
 						self.mResponse = urllib2.urlopen(request, context = secureContext, timeout = timeout)
@@ -310,14 +376,17 @@ class Networker(object):
 						self.mResponse = urllib2.urlopen(request, timeout = timeout)
 			return self.mResponse
 		except urllib2.HTTPError as error: # HTTP error.
-			if flare and error.code == 503 and 'cloudflare' in str(error.info()).lower():
+			if flare and error.code in [301, 307, 308, 503] and 'cloudflare' in str(error.info()).lower():
 				try:
 					from resources.lib.externals.cfscrape import cfscrape
-					self.mResponse = cfscrape.CloudflareScraper().request(method = 'GET' if parametersRaw == None else 'POST', url = self.mLink, headers = headers, data = parametersRaw, timeout = timeout)
+					if not method: method = Networker.MethodGet if parametersRaw == None else Networker.MethodPost
+					scraper = cfscrape.CloudflareScraper()
+					self.mResponse = scraper.request(method = method, url = link, headers = headers, data = parametersRaw, timeout = timeout)
+					self.mCookies = scraper.cookies
 					if self.mResponse.status_code >= 300:
 						self.mError = True
 						self.mErrorCode = self.mResponse.status_code
-						if self.mDebug: tools.Logger.log(tools.System.name() + " Network Error [" + self.mLink + "]: " + str(self.mErrorCode))
+						if self.mDebug: tools.Logger.log(tools.System.name() + " Network Error [" + link + "]: " + str(self.mErrorCode))
 					else:
 						self.mData = self.mResponse.content
 						self.mHeaders = self.mResponse.headers
@@ -325,11 +394,11 @@ class Networker(object):
 				except urllib2.HTTPError as error: # HTTP error.
 					self.mError = True
 					self.mErrorCode = error.code
-					if self.mDebug: tools.Logger.log(tools.System.name() + " Network Error [" + self.mLink + "]: " + str(self.mErrorCode))
+					if self.mDebug: tools.Logger.log(tools.System.name() + " Network Error [" + link + "]: " + str(self.mErrorCode))
 				except urllib2.URLError as error: # Non-HTTP error, like not able to resolve URL.
 					self.mError = True
 					self.mErrorCode = error.args
-					if self.mDebug: tools.Logger.log(tools.System.name() + " Network Error [" + self.mLink + "]: " + str(self.mErrorCode))
+					if self.mDebug: tools.Logger.log(tools.System.name() + " Network Error [" + link + "]: " + str(self.mErrorCode))
 				except: # Other possible errors.
 					self.mError = True
 					self.mErrorCode = None
@@ -337,22 +406,22 @@ class Networker(object):
 			else:
 				self.mError = True
 				self.mErrorCode = error.code
-				if self.mDebug: tools.Logger.log(tools.System.name() + " Network Error [" + self.mLink + "]: " + str(self.mErrorCode))
+				if self.mDebug: tools.Logger.log(tools.System.name() + " Network Error [" + link + "]: " + str(self.mErrorCode))
 		except urllib2.URLError as error: # Non-HTTP error, like not able to resolve URL.
 			self.mError = True
 			self.mErrorCode = error.args
-			if self.mDebug: tools.Logger.log(tools.System.name() + " Network Error [" + self.mLink + "]: " + str(self.mErrorCode))
+			if self.mDebug: tools.Logger.log(tools.System.name() + " Network Error [" + link + "]: " + str(self.mErrorCode))
 		except: # Other possible errors.
 			self.mError = True
 			self.mErrorCode = None
 			if self.mDebug: tools.Logger.error()
 		return None
 
-	def headers(self, timeout = 30, flare = True, request = True):
+	def headers(self, link = None, parameters = None, headers = None, timeout = 30, range = None, force = False, addon = False, flare = True, form = None, method = None, request = True):
 		# Returns the HTTP header. Do not retrieve this with HEAD, since some servers return a different or no header with HEAD. Use the header of the GET request instead.
 		if request:
 			self.mHeaders = None
-			self.request(timeout = timeout, flare = flare)
+			self.request(link = link, parameters = parameters, headers = headers, timeout = timeout, range = range, force = force, addon = addon, flare = flare, form = form, method = method)
 
 		if not self.mError and self.mHeaders == None:
 			if self.mResponse:
@@ -373,16 +442,16 @@ class Networker(object):
 
 		return self.mHeaders
 
-	def header(self, type, timeout = 30, flare = True, request = True):
-		self.headers(timeout = timeout, flare = flare, request = request)
+	def header(self, type, link = None, parameters = None, headers = None, timeout = 30, range = None, force = False, addon = False, flare = True, form = None, method = None, request = True):
+		self.headers(link = link, parameters = parameters, headers = headers, timeout = timeout, range = range, force = force, addon = addon, flare = flare, form = form, method = method, request = request)
 		if self.mHeaders and type in self.mHeaders:
 			return self.mHeaders[type]
 		else:
 			return None
 
 	# Retrieves the file size from the HTTP header.
-	def headerSize(self, timeout = 30, flare = True, request = True):
-		result = self.header('content-range', timeout = timeout, flare = flare, request = request)
+	def headerSize(self, link = None, parameters = None, headers = None, timeout = 30, range = None, force = False, addon = False, flare = True, form = None, method = None, request = True):
+		result = self.header(type = 'content-range', link = link, parameters = parameters, headers = headers, timeout = timeout, range = range, force = force, addon = addon, flare = flare, form = form, method = method, request = request)
 		if result:
 			index = result.find('/')
 			if index >=0:
@@ -391,18 +460,18 @@ class Networker(object):
 			else:
 				result = None
 		if result == None: # result might be 0
-			result = self.header('content-length', timeout = timeout, flare = flare, request = request)
+			result = self.header(type = 'content-length', link = link, parameters = parameters, headers = headers, timeout = timeout, range = range, force = force, addon = addon, flare = flare, form = form, method = method, request = request)
 			if result:
 				result = int(result) if isinstance(result, basestring) and result.isdigit() else None
 		return result
 
 	# Retrieves the file type/mime from the HTTP header.
-	def headerType(self, timeout = 30, flare = True, request = True):
-		return self.header('content-type', timeout = timeout)
+	def headerType(self, link = None, parameters = None, headers = None, timeout = 30, range = None, force = False, addon = False, flare = True, form = None, method = None, request = True):
+		return self.header(type = 'content-type', link = link, parameters = parameters, headers = headers, timeout = timeout, range = range, force = force, addon = addon, flare = flare, form = form, method = method, request = request)
 
 	# Retrieves the file name from the HTTP header.
-	def headerName(self, timeout = 30, flare = True, request = True):
-		result = str(self.headers(timeout = timeout, flare = flare, request = request))
+	def headerName(self, link = None, parameters = None, headers = None, timeout = 30, range = None, force = False, addon = False, flare = True, form = None, method = None, request = True):
+		result = str(self.headers(link = link, parameters = parameters, headers = headers, timeout = timeout, range = range, force = force, addon = addon, flare = flare, form = form, method = method, request = request))
 		start = result.find('filename="')
 		if start > 0:
 			start += 10
@@ -410,6 +479,10 @@ class Networker(object):
 		else:
 			result = None
 		return result
+
+	# Retrieves the file type/mime from the HTTP header.
+	def headerCookie(self, link = None, parameters = None, headers = None, timeout = 30, range = None, force = False, addon = False, flare = True, form = None, method = None, request = True):
+		return self.header(type = 'set-cookie', link = link, parameters = parameters, headers = headers, timeout = timeout, range = range, force = force, addon = addon, flare = flare, form = form, method = method, request = request)
 
 	# Gets a chunk from an HTTP request.
 	def data(self, start = None, size = None, timeout = 30, force = False, flare = False):
@@ -717,10 +790,9 @@ class Container(object):
 	PathTemporaryContainerHoster = tools.File.joinPath(PathTemporaryContainer, TypeHoster)
 
 	# Common Trackers
-	# Do not add too many trackers. Anything above 150 trackers in a magnet link will cause a failure on Premiumize, most likeley due to GET/POST size limits.
-	# https://ma.ttias.be/open-torrent-tracker-list-2016/
-	# http://www.crizmo.com/torrent-tracker-list-2016.html
-	Trackers = ['udp://tracker.opentrackr.org:1337/announce', 'http://explodie.org:6969/announce', 'http://mgtracker.org:2710/announce', 'http://tracker.tfile.me/announce', 'udp://9.rarbg.com:2710/announce', 'udp://9.rarbg.me:2710/announce', 'udp://9.rarbg.to:2710/announce', 'udp://tracker.coppersurfer.tk:6969/announce', 'udp://tracker.glotorrents.com:6969/announce', 'udp://tracker.leechers-paradise.org:6969/announce', 'udp://open.demonii.com:1337', 'udp://tracker.openbittorrent.com:80', 'http://90.180.35.128:6969/annonce', 'udp://90.180.35.128:6969/annonce', 'http://announce.torrentsmd.com:6969/announce', 'http://bt.careland.com.cn:6969/announce', 'http://tracker.torrenty.org:6969/announce', 'http://tracker.trackerfix.com/announce', 'http://www.mvgroup.org:2710/announce']
+	# Do not add too many trackers. Anything above 150 trackers in a magnet link will cause a failure on Premiumize, most likeley due to GET/POST size limits. Also makes the magnet unnecessarily large for Orion.
+	# https://github.com/ngosang/trackerslist
+	Trackers = ['udp://tracker.coppersurfer.tk:6969/announce', 'udp://tracker.open-internet.nl:6969/announce', 'udp://tracker.leechers-paradise.org:6969/announce', 'udp://exodus.desync.com:6969/announce', 'udp://9.rarbg.to:2710/announce', 'udp://9.rarbg.me:2710/announce', 'udp://tracker.internetwarriors.net:1337/announce', 'udp://tracker.opentrackr.org:1337/announce', 'http://tracker3.itzmx.com:6961/announce', 'http://tracker1.itzmx.com:8080/announce', 'udp://open.demonii.si:1337/announce', 'udp://tracker.torrent.eu.org:451/announce', 'udp://bt.xxx-tracker.com:2710/announce', 'udp://tracker.tiny-vps.com:6969/announce', 'udp://tracker.cyberia.is:6969/announce', 'udp://thetracker.org:80/announce', 'udp://denis.stalker.upeer.me:6969/announce', 'udp://open.stealth.si:80/announce', 'udp://ipv4.tracker.harry.lu:80/announce', 'http://open.acgnxtracker.com:80/announce']
 
 	##############################################################################
 	# CONSTRUCTOR
@@ -1033,7 +1105,6 @@ class Container(object):
 				info = bencode.bencode(info)
 				return info['name']
 		except:
-			tools.Logger.error()
 			return None
 
 	# local: If true, does not retrieve any data from the internet, only local extensions, names, and files.
@@ -1072,8 +1143,7 @@ class Container(object):
 
 	def _torrentHash(self, link):
 		hash = self._torrentHashMagnet(link)
-		if hash == None:
-			hash = self._torrentHashFile(link)
+		if hash == None: hash = self._torrentHashFile(link)
 		return hash
 
 	def _torrentHashMagnet(self, link):
@@ -1138,7 +1208,7 @@ class Container(object):
 		try:
 			if not data == None:
 				data = data.lower()
-				if '<!doctype nzb' in data or '<nzb>' in data or '</nzb>' in data:
+				if '<!doctype nzb' in data or '</nzb>' in data:
 					return True
 		except:
 			pass

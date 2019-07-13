@@ -99,7 +99,12 @@ class source:
 
 	@classmethod
 	def _instancesRename(self, path):
-		replacements = [['from resources.', 'from placenta.'], ['xbmcaddon.Addon()', 'xbmcaddon.Addon("' + tools.Extensions.IdPlacenta + '")']]
+		replacements = [
+			['from resources.', 'from placenta.'],
+			['xbmcaddon.Addon()', 'xbmcaddon.Addon("' + tools.Extensions.IdPlacenta + '")'],
+			['if debrid.status() is False:', 'if False:'],
+			['if debrid.status() == False:', 'if False:'],
+		]
 		directories, files = tools.File.listDirectory(path, absolute = True)
 		for file in files:
 			if file.endswith('.py'):
@@ -145,31 +150,32 @@ class source:
 		try:
 			path1 = [sources]
 			for package1, name1, pkg1 in pkgutil.walk_packages(path1):
-				path2 = [tools.File.joinPath(sources, name1)]
-				for package2, name2, pkg2 in pkgutil.walk_packages(path2):
-					if not pkg2:
-						try:
-							id = name2
-							if id == 'orion' or id == 'orionoid': continue
-							name = id.replace(' ', '').replace('-', '').replace('_', '').replace('.', '').capitalize()
-							path = tools.File.joinPath(path2[0], id + '.py')
-							scraper = imp.load_source(id, path).source()
-							scraperNew = source()
-							scraperNew.id = id
-							scraperNew.name = name
-							scraperNew.path = path
-							try: scraperNew.language[0] = scraper.language[0]
-							except: scraperNew.language[0] = name1
-							if not hasattr(scraper, '_base_link'): # _base_link: Do not use base_link that is defined as a property (eg: KinoX), since this can make additional HTTP requests, slowing down the process.
-								if not scraperNew.base_link or scraperNew.base_link == '':
-									try: scraperNew.base_link = scraper.base_link
-									except: pass
-							scraperNew.enabled = tools.Settings.raw('provider.' + id, parameter = tools.Settings.ParameterValue, data = PlaScrapersSettings)
-							scraperNew.enabled = not scraperNew.enabled == 'false' and not scraperNew.enabled == None
-							scraperNew.object = scraper
-							result.append(scraperNew)
-						except:
-							pass
+				if not 'torrent' in name1.lower():
+					path2 = [tools.File.joinPath(sources, name1)]
+					for package2, name2, pkg2 in pkgutil.walk_packages(path2):
+						if not pkg2:
+							try:
+								id = name2
+								if id == 'orion' or id == 'orionoid': continue
+								name = id.replace(' ', '').replace('-', '').replace('_', '').replace('.', '').capitalize()
+								path = tools.File.joinPath(path2[0], id + '.py')
+								scraper = imp.load_source(id, path).source()
+								scraperNew = source()
+								scraperNew.id = id
+								scraperNew.name = name
+								scraperNew.path = path
+								try: scraperNew.language[0] = scraper.language[0]
+								except: scraperNew.language[0] = name1
+								if not hasattr(scraper, '_base_link'): # _base_link: Do not use base_link that is defined as a property (eg: KinoX), since this can make additional HTTP requests, slowing down the process.
+									if not scraperNew.base_link or scraperNew.base_link == '':
+										try: scraperNew.base_link = scraper.base_link
+										except: pass
+								scraperNew.enabled = tools.Settings.raw('provider.' + id, parameter = tools.Settings.ParameterValue, data = PlaScrapersSettings)
+								scraperNew.enabled = not scraperNew.enabled == 'false' and not scraperNew.enabled == None
+								scraperNew.object = scraper
+								result.append(scraperNew)
+							except:
+								pass
 		except:
 			tools.Logger.error()
 		return result
@@ -305,6 +311,7 @@ class source:
 						except: continue
 
 						source = item['source'].lower().replace(' ', '')
+						if 'torrent' in source: continue
 						if source == 'direct' or source == 'directlink':
 							source = urlparse.urlsplit(item['url'])[1].split(':')[0]
 							if network.Networker.ipIs(source):

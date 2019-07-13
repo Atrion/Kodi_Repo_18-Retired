@@ -60,6 +60,13 @@ class Scraper(scraper.Scraper):
 		parameters = ' | '.join([str(parameter) for parameter in parameters])
 		xbmc.log('DEATH STREAMS ORION [ERROR]: ' + parameters, xbmc.LOGERROR)
 
+	def _link(self, data):
+		links = data['links']
+		for link in links:
+			if link.lower().startswith('magnet:'):
+				return link
+		return links[0]
+
 	def _quality(self, data):
 		try:
 			quality = data['video']['quality']
@@ -110,7 +117,7 @@ class Scraper(scraper.Scraper):
 			except: return None
 
 	def _domain(self, data):
-		elements = urlparse.urlparse(data['stream']['link'])
+		elements = urlparse.urlparse(self._link(data))
 		domain = elements.netloc or elements.path
 		domain = domain.split('@')[-1].split(':')[0]
 		result = re.search('(?:www\.)?([\w\-]*\.[\w\-]{2,3}(?:\.[\w\-]{2,3})?)$', domain)
@@ -126,7 +133,7 @@ class Scraper(scraper.Scraper):
 				if domain.startswith(host) or host.startswith(domain):
 					return True
 			import resolveurl
-			return resolveurl.HostedMediaFile(data['stream']['link']).valid_url()
+			return resolveurl.HostedMediaFile(self._link(data)).valid_url()
 
 	def get_sources(self, video):
 		sources = []
@@ -165,7 +172,7 @@ class Scraper(scraper.Scraper):
 							'host' : self._source(data, True),
 							'quality' : self._quality(data),
 							'language' : self._language(data),
-							'url' : data['stream']['link'],
+							'url' : self._link(data),
 							'views' : self._popularity(data, False),
 							'rating' : int(self._popularity(data, True)),
 							'direct' : data['access']['direct'],

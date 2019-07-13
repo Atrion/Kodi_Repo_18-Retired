@@ -317,6 +317,8 @@ class Verification(object):
 		#threads.append(workers.Thread(self._verifyAccountsT411))
 		threads.append(workers.Thread(self._verifyAccountsYggtorrent))
 
+		threads.append(workers.Thread(self._verifyAccountsEmby))
+
 		return threads
 
 	def __enabled(self, entry):
@@ -775,4 +777,18 @@ class Verification(object):
 		except:
 			tools.Logger.error()
 			status = Verification.StatusLimited
+		return self.__append(name = name, status = status)
+
+	def _verifyAccountsEmby(self, checkDisabled = True):
+		from resources.lib.extensions import emby
+		handle = emby.Emby()
+		name = emby.Emby.Name
+		if self.__done(name): return
+		if not checkDisabled or handle.enabled():
+			result = handle.verify()
+			if result is None: status = Verification.StatusLimited
+			elif result: status = Verification.StatusOperational
+			else: status = Verification.StatusFailure
+		else:
+			status = Verification.StatusDisabled
 		return self.__append(name = name, status = status)

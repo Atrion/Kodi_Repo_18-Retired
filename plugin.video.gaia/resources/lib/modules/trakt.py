@@ -20,13 +20,13 @@
 
 import os,re,imp,json,urlparse,time,base64,threading,xbmc
 
-from resources.lib.modules import cache
 from resources.lib.modules import control
 from resources.lib.modules import cleandate
 from resources.lib.modules import client
 from resources.lib.modules import utils
 
 from resources.lib.extensions import tools
+from resources.lib.extensions import cache
 from resources.lib.extensions import interface
 from resources.lib.extensions import database
 from resources.lib.extensions import clipboard
@@ -47,7 +47,7 @@ def getTrakt2():
 databaseName = control.cacheFile
 databaseTable = 'trakt'
 
-def getTrakt(url, post = None, cache = True, check = True, timestamp = None, extended = False, direct = False, authentication = None):
+def getTrakt(url, post = None, cache = True, check = True, timestamp = None, extended = False, direct = False, authentication = None, timeout = 30):
 	try:
 		if not url.startswith('http://api-v2launch.trakt.tv'):
 			url = urlparse.urljoin('http://api-v2launch.trakt.tv', url)
@@ -66,11 +66,11 @@ def getTrakt(url, post = None, cache = True, check = True, timestamp = None, ext
 		if not post == None: post = json.dumps(post)
 
 		if direct or not valid:
-			result = client.request(url, post = post, headers = headers)
+			result = client.request(url, post = post, headers = headers, timeout = timeout)
 			return result
 
 		headers['Authorization'] = 'Bearer %s' % token
-		result = client.request(url, post = post, headers = headers, output = 'extended', error = True)
+		result = client.request(url, post = post, headers = headers, output = 'extended', error = True, timeout = timeout)
 		if result and not (result[1] == '401' or result[1] == '405'):
 			if check: _cacheCheck()
 			if extended: return result[0], result[2]
@@ -85,7 +85,7 @@ def getTrakt(url, post = None, cache = True, check = True, timestamp = None, ext
 		oauth = 'http://api-v2launch.trakt.tv/oauth/token'
 		opost = {'client_id': getTrakt1(), 'client_secret': getTrakt2(), 'redirect_uri': 'urn:ietf:wg:oauth:2.0:oob', 'grant_type': 'refresh_token', 'refresh_token': refresh}
 
-		result = client.request(oauth, post = json.dumps(opost), headers = headers, error = True)
+		result = client.request(oauth, post = json.dumps(opost), headers = headers, error = True, timeout = timeout)
 
 		try: code = str(result[1])
 		except: code = ''
@@ -105,7 +105,7 @@ def getTrakt(url, post = None, cache = True, check = True, timestamp = None, ext
 
 		headers['Authorization'] = 'Bearer %s' % token
 
-		result = client.request(url, post = post, headers = headers, output = 'extended')
+		result = client.request(url, post = post, headers = headers, output = 'extended', timeout = timeout)
 		if check: _cacheCheck()
 
 		if extended: return result[0], result[2]
@@ -124,72 +124,17 @@ def _error(url, post, timestamp, message):
 	return None
 
 def _cache(url, post = None, timestamp = None):
-	try:
-		# Only cache the requests that change something on the Trakt account.
-		# Trakt uses JSON post data to set things and only uses GET parameters to retrieve things.
-		if post == None:
-			return None
-
-		data = database.Database(databaseName, connect = True)
-		_cacheCreate(data)
-
-		# post parameter already json.dumps from getTrakt.
-		post = ('"%s"' % post.replace('"', '""').replace("'", "''")) if not post == None else data._null()
-		if timestamp == None: timestamp = tools.Time.timestamp()
-		data._insert('''
-			INSERT INTO %s (time, link, data)
-			VALUES (%d, "%s", %s);
-			''' % (databaseTable, timestamp, url, post)
-			, commit = True
-		)
-
-		data._close()
-	except:
-		tools.Logger.error()
-
-def _cacheCreate(data):
-	try:
-		data._create('''
-			CREATE TABLE IF NOT EXISTS %s
-			(
-				id INTEGER PRIMARY KEY AUTOINCREMENT,
-				time INTEGER,
-				link TEXT,
-				data TEXT
-			);
-			''' % (databaseTable)
-		)
-	except: pass
+	return cache.Cache().traktCache(link = url, data = post, timestamp = timestamp)
 
 def _cacheCheck():
 	thread = threading.Thread(target = _cacheProcess)
 	thread.start()
 
 def _cacheProcess():
-	data = database.Database(databaseName, connect = True)
-	data._lock()
-	_cacheCreate(data)
-	data._unlock()
-	try:
-		while True:
-			# Execute the select and delete as atomic operations.
-			data._lock()
-			result = data._selectSingle('SELECT id, time, link, data FROM %s ORDER BY time ASC LIMIT 1;' % (databaseTable))
-			if not result: raise Exception()
-			data._delete('DELETE FROM %s WHERE id IS %d;' % (databaseTable, result[0]), commit = True)
-			data._unlock()
-			result = getTrakt(url = result[2], post = json.loads(result[3]) if result[3] else None, cache = True, check = False, timestamp = result[1])
-	except:
-		data._unlock()
-	data._close()
-
-def _cacheClear():
-	try:
-		data = database.Database(databaseName, connect = True)
-		data._drop(databaseTable, commit = True)
-		data._close()
-	except:
-		tools.Logger.error()
+	while True:
+		item = cache.Cache().traktRetrieve()
+		if not item: break
+		getTrakt(url = item['link'], post = json.loads(item['data']) if item['data'] else None, cache = True, check = False, timestamp = item['time'])
 
 def authTrakt(openSettings = True):
 	# NB: Seems like there is a Kodi bug that you can't write the same setting twice in one execution.
@@ -293,87 +238,55 @@ def getTraktAddonEpisodeInfo():
 	if scrobble == 'true' and ExcludeHTTP == 'false' and not authorization == '': return True
 	else: return False
 
-def watch(imdb = None, tvdb = None, season = None, episode = None, refresh = True, notification = False):
-	if tvdb == None:
-		markMovieAsWatched(imdb)
-		cachesyncMovies()
-	elif not episode == None:
-		markEpisodeAsWatched(imdb, tvdb, season, episode)
-		cachesyncTV(imdb)
-	elif not season == None:
-		markSeasonAsWatched(imdb, tvdb, season)
-		cachesyncTV(imdb)
-	elif not tvdb == None:
-		markTVShowAsWatched(imdb, tvdb)
-		cachesyncTV(imdb)
+def watch(type = None, imdb = None, tmdb = None, tvdb = None, season = None, episode = None, refresh = True, notification = False):
+	if type is None: type = tools.Media.TypeMovie if season is None else tools.Media.TypeEpisode
+	if tools.Media.typeTelevision(type):
+		if not episode == None:
+			markEpisodeAsWatched(imdb = imdb, tvdb = tvdb, season = season, episode = episode)
+			syncShowCache(imdb = imdb, cached = False)
+		elif not season == None:
+			markSeasonAsWatched(imdb = imdb, tvdb = tvdb, season = season)
+			syncShowCache(imdb = imdb, cached = False)
+		elif not tvdb == None:
+			markTVShowAsWatched(imdb = imdb, tvdb = tvdb)
+			syncShowCache(imdb = imdb, cached = False)
 	else:
-		markMovieAsWatched(imdb)
-		cachesyncMovies()
-	if refresh: control.refresh()
+		markMovieAsWatched(imdb = imdb, tmdb = tmdb)
+		syncMoviesCache(cached = False)
+
+	if refresh: interface.Directory.refresh(position = True)
 	if notification: interface.Dialog.notification(title = 32315, message = 35502, icon = interface.Dialog.IconSuccess)
 
-def unwatch(imdb = None, tvdb = None, season = None, episode = None, refresh = True, notification = False):
-	if tvdb == None:
-		markMovieAsNotWatched(imdb)
-		cachesyncMovies()
-	elif not episode == None:
-		markEpisodeAsNotWatched(imdb, tvdb, season, episode)
-		cachesyncTV(imdb)
-	elif not season == None:
-		markSeasonAsNotWatched(imdb, tvdb, season)
-		cachesyncTV(imdb)
-	elif not tvdb == None:
-		markTVShowAsNotWatched(imdb, tvdb)
-		cachesyncTV(imdb)
+	try:
+		from resources.lib.extensions import trailer
+		trailer.Trailer().watch(imdb = imdb)
+	except:
+		tools.Logger.error()
+
+def unwatch(type = None, imdb = None, tmdb = None, tvdb = None, season = None, episode = None, refresh = True, notification = False):
+	if type is None: type = tools.Media.TypeMovie if season is None else tools.Media.TypeEpisode
+	if tools.Media.typeTelevision(type):
+		if not episode == None:
+			markEpisodeAsNotWatched(imdb = imdb, tvdb = tvdb, season = season, episode = episode)
+			syncShowCache(imdb = imdb, cached = False)
+		elif not season == None:
+			markSeasonAsNotWatched(imdb = imdb, tvdb = tvdb, season = season)
+			syncShowCache(imdb = imdb, cached = False)
+		elif not tvdb == None:
+			markTVShowAsNotWatched(imdb = imdb, tvdb = tvdb)
+			syncShowCache(imdb = imdb, cached = False)
 	else:
-		markMovieAsNotWatched(imdb)
-		cachesyncMovies()
-	if refresh: control.refresh()
+		markMovieAsNotWatched(imdb = imdb, tmdb = tmdb)
+		syncMoviesCache(cached = False)
+
+	if refresh: interface.Directory.refresh(position = True)
 	if notification: interface.Dialog.notification(title = 32315, message = 35503, icon = interface.Dialog.IconSuccess)
 
-def rate(imdb = None, tvdb = None, season = None, episode = None):
-	return _rating(action = 'rate', imdb = imdb, tvdb = tvdb, season = season, episode = episode)
-
-def unrate(imdb = None, tvdb = None, season = None, episode = None):
-	return _rating(action = 'unrate', imdb = imdb, tvdb = tvdb, season = season, episode = episode)
-
-def rateShow(imdb = None, tvdb = None, season = None, episode = None):
-	if tools.Settings.getInteger('accounts.informants.trakt.rating') == 1:
-		rate(imdb = imdb, tvdb = tvdb, season = season, episode = episode)
-
-def _rating(action, imdb = None, tvdb = None, season = None, episode = None):
 	try:
-		addon = 'script.trakt'
-		if tools.System.installed(addon):
-			data = {}
-			data['action'] = action
-			if not tvdb == None:
-				data['video_id'] = tvdb
-				if not episode == None:
-					data['media_type'] = 'episode'
-					data['dbid'] = 1
-					data['season'] = int(season)
-					data['episode'] = int(episode)
-				elif not season == None:
-					data['media_type'] = 'season'
-					data['dbid'] = 5
-					data['season'] = int(season)
-				else:
-					data['media_type'] = 'show'
-					data['dbid'] = 2
-			else:
-				data['video_id'] = imdb
-				data['media_type'] = 'movie'
-				data['dbid'] = 4
-
-			script = os.path.join(tools.System.path(addon), 'resources', 'lib', 'sqlitequeue.py')
-			sqlitequeue = imp.load_source('sqlitequeue', script)
-			data = {'action' : 'manualRating', 'ratingData' : data}
-			sqlitequeue.SqliteQueue().append(data)
-		else:
-			interface.Dialog.notification(title = 32315, message = 33659)
+		from resources.lib.extensions import trailer
+		trailer.Trailer().unwatch(imdb = imdb)
 	except:
-		pass
+		tools.Logger.error()
 
 def manager(imdb = None, tvdb = None, season = None, episode = None, refresh = True):
 	try:
@@ -386,13 +299,12 @@ def manager(imdb = None, tvdb = None, season = None, episode = None, refresh = T
 			result = getTrakt('/users/me/lists')
 			result = tools.Converter.jsonFrom(result)
 			result = [(i['name'], i['ids']['slug']) for i in result]
-			result = [result[i//2] for i in range(len(result)*2)]
-			for i in range(0, len(result), 2):
+			for i in result:
 				lists.append({
-					'title' : result[i][1],
+					'title' : i[0],
 					'items' : [
-						{'title' : interface.Translation.string(32521) % result[i][0], 'value' : interface.Translation.string(33580) % result[i][0], 'return' : '/users/me/lists/%s/items' % result[i][1]},
-						{'title' : interface.Translation.string(32522) % result[i+1][0], 'value' : interface.Translation.string(33581) % result[i+1][0], 'return' : '/users/me/lists/%s/items/remove' % lists[i+1][1]},
+						{'title' : interface.Translation.string(32521) % i[0], 'value' : interface.Translation.string(33580) % i[0], 'return' : '/users/me/lists/%s/items' % i[1]},
+						{'title' : interface.Translation.string(32522) % i[0], 'value' : interface.Translation.string(33581) % i[0], 'return' : '/users/me/lists/%s/items/remove' % i[1]},
 					],
 				})
 		except:
@@ -455,11 +367,11 @@ def manager(imdb = None, tvdb = None, season = None, episode = None, refresh = T
 					post = {"movies": [{"ids": {"imdb": imdb}}]}
 				else:
 					if not episode == None:
-						post = {"shows": [{"ids": {"tvdb": tvdb}, "seasons": [{"number": season, "episodes": [{"number": episode}]}]}]}
+						post = {"shows": [{"ids": {"imdb": imdb, "tvdb": tvdb}, "seasons": [{"number": season, "episodes": [{"number": episode}]}]}]}
 					elif not season == None:
-						post = {"shows": [{"ids": {"tvdb": tvdb}, "seasons": [{"number": season}]}]}
+						post = {"shows": [{"ids": {"imdb": imdb, "tvdb": tvdb}, "seasons": [{"number": season}]}]}
 					else:
-						post = {"shows": [{"ids": {"tvdb": tvdb}}]}
+						post = {"shows": [{"ids": {"imdb": imdb, "tvdb": tvdb}}]}
 
 				if select == '/users/me/lists/%s/items':
 					slug = listAdd(successNotification = False)
@@ -492,7 +404,7 @@ def listAdd(successNotification = True):
 
 
 def lists(id = None):
-	return cache.get(getTraktAsJson, 48, 'https://api.trakt.tv/users/me/lists' + ('' if id == None else ('/' + str(id))))
+	return cache.Cache().cacheMedium(getTraktAsJson, 'https://api.trakt.tv/users/me/lists' + ('' if id == None else ('/' + str(id))))
 
 
 def list(id):
@@ -551,14 +463,9 @@ def getWatchedActivity():
 		pass
 
 
-def cachesyncMovies(timeout=0):
-	indicators = cache.get(syncMovies, timeout)
-	return indicators
-
-
-def timeoutsyncMovies():
-	timeout = cache.timeout(syncMovies)
-	return timeout
+def syncMoviesCache(cached = True):
+	if cached: return cache.Cache().cacheRefresh(syncMovies)
+	else: return cache.Cache().cacheClear(syncMovies)
 
 
 def syncMovies():
@@ -593,28 +500,40 @@ def watchedMoviesTime(imdb):
 		pass
 
 
-def cachesyncTV(imdb):
-	threads = [threading.Thread(target = cachesyncTVShows), threading.Thread(target = cachesyncSeason, args = (imdb,))]
+def syncShowCache(imdb, cached = True):
+	threads = [threading.Thread(target = syncShowsCache, args = (cached,)), threading.Thread(target = syncSeasonsCache, args = (imdb, cached))]
 	[i.start() for i in threads]
 	[i.join() for i in threads]
 
 
-def cachesyncTVShows(timeout=0):
-	indicators = cache.get(syncTVShows, timeout)
-	return indicators
+def syncShowsCache(cached = True):
+	if cached: return cache.Cache().cacheRefresh(syncShows)
+	else: return cache.Cache().cacheClear(syncShows)
 
 
-def timeoutsyncTVShows():
-	timeout = cache.timeout(syncTVShows)
-	return timeout
+def syncSeasonsCache(imdb, cached = True):
+	if cached: return cache.Cache().cacheRefresh(syncSeasons, imdb)
+	else: return cache.Cache().cacheClear(syncSeasons, imdb)
 
 
-def syncTVShows():
+def syncShows():
 	try:
 		if getTraktCredentialsInfo() == False: return
 		indicators = getTraktAsJson('/users/me/watched/shows?extended=full')
 		indicators = [(i['show']['ids']['tvdb'], i['show']['aired_episodes'], sum([[(s['number'], e['number']) for e in s['episodes']] for s in i['seasons']], [])) for i in indicators]
 		indicators = [(str(i[0]), int(i[1]), i[2]) for i in indicators]
+		return indicators
+	except:
+		pass
+
+
+def syncSeasons(imdb):
+	try:
+		if getTraktCredentialsInfo() == False: return
+		indicators = getTraktAsJson('/shows/%s/progress/watched?specials=true&hidden=false' % imdb)
+		indicators = indicators['seasons']
+		indicators = [(i['number'], [x['completed'] for x in i['episodes']]) for i in indicators]
+		indicators = ['%01d' % int(i[0]) for i in indicators if not False in i[1]]
 		return indicators
 	except:
 		pass
@@ -649,131 +568,185 @@ def watchedShowsTime(tvdb, season, episode):
 		pass
 
 
-def cachesyncSeason(imdb, timeout=0):
-	indicators = cache.get(syncSeason, timeout, imdb)
-	return indicators
-
-
-def timeoutsyncSeason(imdb):
-	timeout = cache.timeout(syncSeason, imdb)
-	return timeout
-
-
-def syncSeason(imdb):
-	try:
-		if getTraktCredentialsInfo() == False: return
-		indicators = getTraktAsJson('/shows/%s/progress/watched?specials=false&hidden=false' % imdb)
-		indicators = indicators['seasons']
-		indicators = [(i['number'], [x['completed'] for x in i['episodes']]) for i in indicators]
-		indicators = ['%01d' % int(i[0]) for i in indicators if not False in i[1]]
-		return indicators
-	except:
-		pass
-
-
 # Gaia
 def showCount(imdb, refresh = True, wait = False):
 	try:
 		if not imdb: return None
 		result = {'total' : 0, 'watched' : 0, 'unwatched' : 0}
 		indicators = seasonCount(imdb = imdb, refresh = refresh, wait = wait)
-		for indicator in indicators:
-			result['total'] += indicator['total']
-			result['watched'] += indicator['watched']
-			result['unwatched'] += indicator['unwatched']
+		for key, value in indicators.iteritems():
+			result['total'] += value['total']
+			result['watched'] += value['watched']
+			result['unwatched'] += value['unwatched']
 		return result
 	except:
 		return None
 
-def seasonCount(imdb, refresh = True, wait = False):
+def seasonCount(imdb = None, items = None, refresh = True, wait = False):
 	try:
-		if not imdb: return None
-		if not imdb.startswith('tt'): imdb = 'tt' + imdb
-		indicators = cache.cache_existing(_seasonCountRetrieve, imdb)
+		single = items == None
+		if single: items = [imdb]
+		items = [('tt' + i.replace('tt', '')) for i in items if i]
+		if len(items) == 0: return None
+
+		indicators = [cache.Cache().cacheRetrieve(_seasonCountRetrieve, i) for i in items]
 		if refresh:
 			# NB: Do not retrieve a fresh count, otherwise loading show/season menus are slow.
-			thread = threading.Thread(target = _seasonCountCache, args = (imdb,))
-			thread.start()
+			threads = [threading.Thread(target = _seasonCountCache, args = (i,)) for i in items]
+			[i.start() for i in threads]
 			if wait:
-				thread.join()
-				indicators = cache.cache_existing(_seasonCountRetrieve, imdb)
-		return indicators
+				[i.join() for i in threads]
+				indicators = [cache.Cache().cacheRetrieve(_seasonCountRetrieve, i) for i in items]
+
+		return indicators[0] if single else indicators
 	except:
 		return None
 
 def _seasonCountCache(imdb):
-	return cache.get(_seasonCountRetrieve, 0, imdb)
+	return cache.Cache().cacheRefresh(_seasonCountRetrieve, imdb)
 
 def _seasonCountRetrieve(imdb):
 	try:
 		if getTraktCredentialsInfo() == False: return
-		indicators = getTraktAsJson('/shows/%s/progress/watched?specials=false&hidden=false' % imdb)
+		special = tools.Settings.getBoolean('interface.tvshows.special.seasons') or tools.Settings.getBoolean('interface.tvshows.special.episodes')
+		indicators = getTraktAsJson('/shows/%s/progress/watched?specials=%s&hidden=false' % (imdb, 'true' if special else 'false'))
 		seasons = indicators['seasons']
-		return [{'total' : season['aired'], 'watched' : season['completed'], 'unwatched' : season['aired'] - season['completed']} for season in seasons]
+		return {season['number'] : {'total' : season['aired'], 'watched' : season['completed'], 'unwatched' : season['aired'] - season['completed']} for season in seasons}
 	except:
 		return None
 
 
-def markMovieAsWatched(imdb):
-	if not imdb.startswith('tt'): imdb = 'tt' + imdb
-	return getTrakt('/sync/history', {"movies": [{"ids": {"imdb": imdb}}]})
-
-
-def markMovieAsNotWatched(imdb):
-	if not imdb.startswith('tt'): imdb = 'tt' + imdb
-	return getTrakt('/sync/history/remove', {"movies": [{"ids": {"imdb": imdb}}]})
-
-
-def markTVShowAsWatched(imdb, tvdb):
-	if imdb and not imdb.startswith('tt'): imdb = 'tt' + imdb
-	result = getTrakt('/sync/history', {"shows": [{"ids": {"tvdb": tvdb}}]})
-	seasonCount(imdb)
+def request(imdb = None, tmdb = None, tvdb = None, season = None, episode = None, rating = None, items = None):
+	result = []
+	if items == None: items = [{'imdb' : imdb, 'tmdb' : tmdb, 'tvdb' : tvdb, 'season' : season, 'episode' : episode, 'rating' : rating}]
+	for item in items:
+		value = {'ids' : {}}
+		if 'imdb' in item and item['imdb']: value['ids']['imdb'] = 'tt' + item['imdb'].replace('tt', '')
+		if 'tmdb' in item and item['tmdb']: value['ids']['tmdb'] = int(item['tmdb'])
+		if 'tvdb' in item and item['tvdb']: value['ids']['tvdb'] = int(item['tvdb'])
+		if 'season' in item and item['season']:
+			value['seasons'] = [{'number' : int(item['season'])}]
+			if 'episode' in item and item['episode']:
+				value['seasons'][0]['episodes'] = [{'number' : int(item['episode'])}]
+				if 'rating' in item and not item['rating'] is None: value['seasons'][0]['episodes'][0]['rating'] = int(item['rating'])
+			elif 'rating' in item and not item['rating'] is None:
+				value['seasons'][0]['rating'] = int(item['rating'])
+		elif 'rating' in item and not item['rating'] is None:
+			value['rating'] = int(item['rating'])
+		result.append(value)
 	return result
 
+def timeout(items):
+	return max(30, len(items) * 2)
 
-def markTVShowAsNotWatched(imdb, tvdb):
-	if imdb and not imdb.startswith('tt'): imdb = 'tt' + imdb
-	result = getTrakt('/sync/history/remove', {"shows": [{"ids": {"tvdb": tvdb}}]})
-	seasonCount(imdb)
+def markMovieAsWatched(imdb = None, tmdb = None, items = None):
+	items = request(imdb = imdb, tmdb = tmdb, items = items)
+	return getTrakt('/sync/history', {"movies": items}, timeout = timeout(items))
+
+def markMovieAsNotWatched(imdb = None, tmdb = None, items = None):
+	items = request(imdb = imdb, tmdb = tmdb, items = items)
+	return getTrakt('/sync/history/remove', {"movies": items}, timeout = timeout(items))
+
+def markTVShowAsWatched(imdb = None, tvdb = None, items = None):
+	items = request(imdb = imdb, tvdb = tvdb, items = items)
+	result = getTrakt('/sync/history', {"shows": items}, timeout = timeout(items))
+	seasonCount(imdb = imdb, items = items)
 	return result
 
-
-def markSeasonAsWatched(imdb, tvdb, season):
-	if imdb and not imdb.startswith('tt'): imdb = 'tt' + imdb
-	season = int('%01d' % int(season))
-	result = getTrakt('/sync/history', {"shows": [{"seasons": [{"number": season}], "ids": {"tvdb": tvdb}}]})
-	seasonCount(imdb)
+def markTVShowAsNotWatched(imdb = None, tvdb = None, items = None):
+	items = request(imdb = imdb, tvdb = tvdb, items = items)
+	result = getTrakt('/sync/history/remove', {"shows": items}, timeout = timeout(items))
+	seasonCount(imdb = imdb, items = items)
 	return result
 
-
-def markSeasonAsNotWatched(imdb, tvdb, season):
-	if imdb and not imdb.startswith('tt'): imdb = 'tt' + imdb
-	season = int('%01d' % int(season))
-	result = getTrakt('/sync/history/remove', {"shows": [{"seasons": [{"number": season}], "ids": {"tvdb": tvdb}}]})
-	seasonCount(imdb)
+def markSeasonAsWatched(imdb = None, tvdb = None, season = None, items = None):
+	items = request(imdb = imdb, tvdb = tvdb, season = season, items = items)
+	result = getTrakt('/sync/history', {"shows": items}, timeout = timeout(items))
+	seasonCount(imdb = imdb, items = items)
 	return result
 
-
-def markEpisodeAsWatched(imdb, tvdb, season, episode):
-	if imdb and not imdb.startswith('tt'): imdb = 'tt' + imdb
-	season, episode = int('%01d' % int(season)), int('%01d' % int(episode))
-	result = getTrakt('/sync/history', {"shows": [{"seasons": [{"episodes": [{"number": episode}], "number": season}], "ids": {"tvdb": tvdb}}]})
-	seasonCount(imdb)
+def markSeasonAsNotWatched(imdb = None, tvdb = None, season = None, items = None):
+	items = request(imdb = imdb, tvdb = tvdb, season = season, items = items)
+	result = getTrakt('/sync/history/remove', {"shows": items}, timeout = timeout(items))
+	seasonCount(imdb = imdb, items = items)
 	return result
 
-
-def markEpisodeAsNotWatched(imdb, tvdb, season, episode):
-	if imdb and not imdb.startswith('tt'): imdb = 'tt' + imdb
-	season, episode = int('%01d' % int(season)), int('%01d' % int(episode))
-	result = getTrakt('/sync/history/remove', {"shows": [{"seasons": [{"episodes": [{"number": episode}], "number": season}], "ids": {"tvdb": tvdb}}]})
-	seasonCount(imdb)
+def markEpisodeAsWatched(imdb = None, tvdb = None, season = None, episode = None, items = None):
+	items = request(imdb = imdb, tvdb = tvdb, season = season, episode = episode, items = items)
+	result = getTrakt('/sync/history', {"shows": items}, timeout = timeout(items))
+	seasonCount(imdb = imdb, items = items)
 	return result
 
+def markEpisodeAsNotWatched(imdb = None, tvdb = None, season = None, episode = None, items = None):
+	items = request(imdb = imdb, tvdb = tvdb, season = season, episode = episode, items = items)
+	result = getTrakt('/sync/history/remove', {"shows": items}, timeout = timeout(items))
+	seasonCount(imdb = imdb, items = items)
+	return result
+
+def rateMovie(imdb = None, tmdb = None, rating = None, items = None):
+	items = request(imdb = imdb, tmdb = tmdb, rating = rating, items = items)
+	return getTrakt('/sync/ratings', {"movies": items}, timeout = timeout(items))
+
+def rateShow(imdb = None, tvdb = None, rating = None, items = None):
+	items = request(imdb = imdb, tvdb = tvdb, rating = rating, items = items)
+	return getTrakt('/sync/ratings', {"shows": items}, timeout = timeout(items))
+
+def rateSeason(imdb = None, tvdb = None, season = None, rating = None, items = None):
+	items = request(imdb = imdb, tvdb = tvdb, season = season, rating = rating, items = items)
+	return getTrakt('/sync/ratings', {"shows": items}, timeout = timeout(items))
+
+def rateEpisode(imdb = None, tvdb = None, season = None, episode = None, rating = None, items = None):
+	items = request(imdb = imdb, tvdb = tvdb, season = season, episode = episode, rating = rating, items = items)
+	return getTrakt('/sync/ratings', {"shows": items}, timeout = timeout(items))
+
+def rate(imdb = None, tvdb = None, season = None, episode = None):
+	return _rate(action = 'rate', imdb = imdb, tvdb = tvdb, season = season, episode = episode)
+
+def unrate(imdb = None, tvdb = None, season = None, episode = None):
+	return _rate(action = 'unrate', imdb = imdb, tvdb = tvdb, season = season, episode = episode)
+
+def rateManual(imdb = None, tvdb = None, season = None, episode = None):
+	if tools.Settings.getInteger('accounts.informants.trakt.rating') == 1:
+		rate(imdb = imdb, tvdb = tvdb, season = season, episode = episode)
+
+def _rate(action, imdb = None, tvdb = None, season = None, episode = None):
+	try:
+		addon = 'script.trakt'
+		if tools.System.installed(addon):
+			data = {}
+			data['action'] = action
+			if not tvdb == None:
+				data['video_id'] = tvdb
+				if not episode == None:
+					data['media_type'] = 'episode'
+					data['dbid'] = 1
+					data['season'] = int(season)
+					data['episode'] = int(episode)
+				elif not season == None:
+					data['media_type'] = 'season'
+					data['dbid'] = 5
+					data['season'] = int(season)
+				else:
+					data['media_type'] = 'show'
+					data['dbid'] = 2
+			else:
+				data['video_id'] = imdb
+				data['media_type'] = 'movie'
+				data['dbid'] = 4
+
+			script = os.path.join(tools.System.path(addon), 'resources', 'lib', 'sqlitequeue.py')
+			sqlitequeue = imp.load_source('sqlitequeue', script)
+			data = {'action' : 'manualRating', 'ratingData' : data}
+			sqlitequeue.SqliteQueue().append(data)
+		else:
+			interface.Dialog.notification(title = 32315, message = 33659)
+	except:
+		tools.Logger.error()
 
 def getMovieTranslation(id, lang, full=False):
 	url = '/movies/%s/translations/%s' % (id, lang)
 	try:
-		item = cache.get(getTraktAsJson, 48, url)[0]
+		item = cache.Cache().cacheLong(getTraktAsJson, url)[0]
 		result = item if full else item.get('title')
 		return None if result == 'none' else result
 	except:
@@ -786,19 +759,29 @@ def getTVShowTranslation(id, lang, season=None, episode=None, full=False):
 	else:
 		url = '/shows/%s/translations/%s' % (id, lang)
 	try:
-		item = cache.get(getTraktAsJson, 48, url)[0]
+		item = cache.Cache().cacheLong(getTraktAsJson, url)[0]
 		result = item if full else item.get('title')
 		return None if result == 'none' else result
 	except:
 		pass
 
 
-def getMovieSummary(id):
-	return cache.get(getTraktAsJson, 48, '/movies/%s' % id)
+def getMovieSummary(id, full = True):
+	try:
+		url = '/movies/%s' % id
+		if full: url += '?extended=full'
+		return cache.Cache().cacheLong(getTraktAsJson, url)
+	except:
+		return
 
 
-def getTVShowSummary(id):
-	return cache.get(getTraktAsJson, 48, '/shows/%s' % id)
+def getTVShowSummary(id, full = True):
+	try:
+		url = '/shows/%s' % id
+		if full: url += '?extended=full'
+		return cache.Cache().cacheLong(getTraktAsJson, url)
+	except:
+		return
 
 
 def sort_list(sort_key, sort_direction, list_data):
@@ -838,30 +821,19 @@ def getTraktAsJson(url, post = None, authentication = None):
 	except:
 		pass
 
-
 def getMovieAliases(id):
-	try: return cache.get(getTraktAsJson, 48, '/movies/%s/aliases' % id)
+	try: return cache.Cache().cacheLong(getTraktAsJson, '/movies/%s/aliases' % id)
 	except: return []
-
 
 def getTVShowAliases(id):
-	try: return cache.get(getTraktAsJson, 48, '/shows/%s/aliases' % id)
+	try: return cache.Cache().cacheLong(getTraktAsJson, '/shows/%s/aliases' % id)
 	except: return []
-
-def getTVShowSummary(id, full=True):
-	try:
-		url = '/shows/%s' % id
-		if full: url += '?extended=full'
-		return cache.get(getTraktAsJson, 48, url)
-	except:
-		return
-
 
 def getPeople(id, content_type, full=True):
 	try:
 		url = '/%s/%s/people' % (content_type, id)
 		if full: url += '?extended=full'
-		return cache.get(getTraktAsJson, 48, url)
+		return cache.Cache().cacheLong(getTraktAsJson, url)
 	except:
 		return
 
@@ -895,7 +867,7 @@ def SearchTVShow(title, year, full=True):
 def getGenre(content, type, type_id):
 	try:
 		r = '/search/%s/%s?type=%s&extended=full' % (type, type_id, content)
-		r = cache.get(getTraktAsJson, 48, r)
+		r = cache.Cache().cacheLong(getTraktAsJson, r)
 		r = r[0].get(content, {}).get('genres', [])
 		return r
 	except:
@@ -955,14 +927,14 @@ def scrobbleUpdate(action, type, imdb = None, tvdb = None, season = None, episod
 			elif tvdb: link = '/search/tvdb/' + str(tvdb)
 			if type == 'episode': link += '?type=show'
 			else: link += '?type=movie'
-			items = tools.Cache.cache(getTraktAsJson, 760, link)
+			items = cache.Cache().cacheLong(getTraktAsJson, link)
 
 			if len(items) > 0:
 				item = items[0]
 				if type == 'episode':
 					slug = item['show']['ids']['slug']
 					link = '/shows/%s/seasons/%d/episodes/%d' % (slug, season, episode)
-					item = tools.Cache.cache(getTraktAsJson, 760, link)
+					item = cache.Cache().cacheLong(getTraktAsJson, link)
 				else:
 					item = item['movie']
 
@@ -977,4 +949,151 @@ def scrobbleUpdate(action, type, imdb = None, tvdb = None, season = None, episod
 					return 'progress' in result
 	except:
 		pass
+	return False
+
+def imdbImportCheck(importWatched, importRatings):
+	from resources.lib.indexers import movies
+
+	def check(method, result, index):
+		indexer = movies.movies(type = tools.Media.TypeMovie)
+		getattr(indexer, method)()
+		result[index] = indexer.imdb_public
+
+	threads = []
+	values = [None, None]
+	if any(importWatched):
+		values[0] = False
+		threads.append(threading.Thread(target = check, args = ('imdb_watched', values, 0)))
+	if any(importRatings):
+		values[1] = False
+		threads.append(threading.Thread(target = check, args = ('imdb_ratings', values, 1)))
+
+	[i.start() for i in threads]
+	[i.join() for i in threads]
+	return values[0], values[1]
+
+def imdbImportRetrieve(importWatched, importRatings, ratings):
+	from resources.lib.indexers import movies
+	from resources.lib.indexers import tvshows
+
+	def retrieve(type, method, result, index):
+		if tools.Media.typeTelevision(type): result[index] = getattr(tvshows.tvshows(), method)()
+		else: result[index] = getattr(movies.movies(type = type), method)()
+
+	threads = []
+	valuesWatched = [None, None, None, None]
+	valuesRatings = [None, None, None, None]
+
+	if importWatched[0]: threads.append(threading.Thread(target = retrieve, args = (tools.Media.TypeMovie, 'imdb_watched', valuesWatched, 0)))
+	if importWatched[1]: threads.append(threading.Thread(target = retrieve, args = (tools.Media.TypeDocumentary, 'imdb_watched', valuesWatched, 1)))
+	if importWatched[2]: threads.append(threading.Thread(target = retrieve, args = (tools.Media.TypeShort, 'imdb_watched', valuesWatched, 2)))
+	if importWatched[3]: threads.append(threading.Thread(target = retrieve, args = (tools.Media.TypeShow, 'imdb_watched', valuesWatched, 3)))
+
+	if importRatings[0]: threads.append(threading.Thread(target = retrieve, args = (tools.Media.TypeMovie, 'imdb_ratings', valuesRatings, 0)))
+	if importRatings[1]: threads.append(threading.Thread(target = retrieve, args = (tools.Media.TypeDocumentary, 'imdb_ratings', valuesRatings, 1)))
+	if importRatings[2]: threads.append(threading.Thread(target = retrieve, args = (tools.Media.TypeShort, 'imdb_ratings', valuesRatings, 2)))
+	if importRatings[3]: threads.append(threading.Thread(target = retrieve, args = (tools.Media.TypeShow, 'imdb_ratings', valuesRatings, 3)))
+
+	[i.start() for i in threads]
+	[i.join() for i in threads]
+
+	if ratings:
+		if importWatched[0] and importRatings[0]: valuesWatched[0] = movies.movies(type = tools.Media.TypeMovie).imdb_account(ratings = valuesRatings[0], watched = valuesWatched[0])
+		if importWatched[1] and importRatings[1]: valuesWatched[1] = movies.movies(type = tools.Media.TypeDocumentary).imdb_account(ratings = valuesRatings[1], watched = valuesWatched[1])
+		if importWatched[2] and importRatings[2]: valuesWatched[2] = movies.movies(type = tools.Media.TypeShort).imdb_account(ratings = valuesRatings[2], watched = valuesWatched[2])
+		if importWatched[3] and importRatings[3]: valuesWatched[3] = tvshows.tvshows().imdb_account(ratings = valuesRatings[3], watched = valuesWatched[3])
+
+	return valuesWatched, valuesRatings
+
+def imdbImportSync(itemsWatched, itemsRatings):
+	def syncWatched(type, items):
+		if tools.Media.typeTelevision(type): markTVShowAsWatched(items = items)
+		else: markMovieAsWatched(items = items)
+
+	def syncRatings(type, items):
+		if tools.Media.typeTelevision(type): rateShow(items = items)
+		else: rateMovie(items = items)
+
+	threads = []
+
+	if itemsWatched[0]: threads.append(threading.Thread(target = syncWatched, args = (tools.Media.TypeMovie, itemsWatched[0])))
+	if itemsWatched[1]: threads.append(threading.Thread(target = syncWatched, args = (tools.Media.TypeDocumentary, itemsWatched[1])))
+	if itemsWatched[2]: threads.append(threading.Thread(target = syncWatched, args = (tools.Media.TypeShort, itemsWatched[2])))
+	if itemsWatched[3]: threads.append(threading.Thread(target = syncWatched, args = (tools.Media.TypeShow, itemsWatched[3])))
+
+	if itemsRatings[0]: threads.append(threading.Thread(target = syncRatings, args = (tools.Media.TypeMovie, itemsRatings[0])))
+	if itemsRatings[1]: threads.append(threading.Thread(target = syncRatings, args = (tools.Media.TypeDocumentary, itemsRatings[1])))
+	if itemsRatings[2]: threads.append(threading.Thread(target = syncRatings, args = (tools.Media.TypeShort, itemsRatings[2])))
+	if itemsRatings[3]: threads.append(threading.Thread(target = syncRatings, args = (tools.Media.TypeShow, itemsRatings[3])))
+
+	[i.start() for i in threads]
+	[i.join() for i in threads]
+
+def imdbImport():
+	from resources.lib.indexers import movies
+	from resources.lib.indexers import tvshows
+
+	if interface.Dialog.option(title = 32034, message = 35610):
+		yes = interface.Format.fontBold(interface.Format.fontColor(interface.Translation.string(33341), interface.Format.ColorExcellent))
+		no = interface.Format.fontBold(interface.Format.fontColor(interface.Translation.string(33342), interface.Format.ColorBad))
+
+		importWatched = [True, True, True, True]
+		importRatings = [True, True, True, True]
+
+		initial = True
+		while initial:
+			choice = 1
+			while choice > 0:
+				items = [
+					interface.Format.fontBold(interface.Translation.string(33821)),
+
+					interface.Format.fontBold('%s %s %s: ' % (interface.Translation.string(35212), interface.Translation.string(32001), interface.Translation.string(32033))) + (yes if importWatched[0] else no),
+					interface.Format.fontBold('%s %s %s: ' % (interface.Translation.string(35212), interface.Translation.string(33470), interface.Translation.string(32033))) + (yes if importWatched[1] else no),
+					interface.Format.fontBold('%s %s %s: ' % (interface.Translation.string(35212), interface.Translation.string(33471), interface.Translation.string(32033))) + (yes if importWatched[2] else no),
+					interface.Format.fontBold('%s %s %s: ' % (interface.Translation.string(35212), interface.Translation.string(32002), interface.Translation.string(32033))) + (yes if importWatched[3] else no),
+
+					interface.Format.fontBold('%s %s %s: ' % (interface.Translation.string(35212), interface.Translation.string(32001), interface.Translation.string(35602))) + (yes if importRatings[0] else no),
+					interface.Format.fontBold('%s %s %s: ' % (interface.Translation.string(35212), interface.Translation.string(33470), interface.Translation.string(35602))) + (yes if importRatings[1] else no),
+					interface.Format.fontBold('%s %s %s: ' % (interface.Translation.string(35212), interface.Translation.string(33471), interface.Translation.string(35602))) + (yes if importRatings[2] else no),
+					interface.Format.fontBold('%s %s %s: ' % (interface.Translation.string(35212), interface.Translation.string(32002), interface.Translation.string(35602))) + (yes if importRatings[3] else no),
+				]
+				choice = interface.Dialog.options(title = 32034, items = items)
+				if choice < 0: return False
+				elif choice == 0: break
+				elif choice < 5: importWatched[choice - 1] = not importWatched[choice - 1]
+				else: importRatings[choice - 5] = not importRatings[choice - 5]
+
+			while True:
+				publicWatched, publicRatings = imdbImportCheck(importWatched, importRatings)
+				if publicWatched is False:
+					if interface.Dialog.option(title = 32034, message = 35608, labelConfirm = 35606, labelDeny = 35374): continue
+				elif publicRatings is False:
+					if interface.Dialog.option(title = 32034, message = 35609, labelConfirm = 35606, labelDeny = 35374): continue
+				else:
+					initial = False
+				break
+
+		ratings = interface.Dialog.option(title = 32034, message = 35611) if any(importRatings) else False
+		itemsWatched, itemsRatings = imdbImportRetrieve(importWatched, importRatings, ratings)
+
+		items = [interface.Format.fontBold(interface.Translation.string(33821))]
+		if not itemsWatched[0] is None: items.append(interface.Format.fontBold('%s %s %s: ' % (interface.Translation.string(32001), interface.Translation.string(32033), interface.Translation.string(35607))) + str(len(itemsWatched[0])))
+		if not itemsWatched[1] is None: items.append(interface.Format.fontBold('%s %s %s: ' % (interface.Translation.string(33470), interface.Translation.string(32033), interface.Translation.string(35607))) + str(len(itemsWatched[1])))
+		if not itemsWatched[2] is None: items.append(interface.Format.fontBold('%s %s %s: ' % (interface.Translation.string(33471), interface.Translation.string(32033), interface.Translation.string(35607))) + str(len(itemsWatched[2])))
+		if not itemsWatched[3] is None: items.append(interface.Format.fontBold('%s %s %s: ' % (interface.Translation.string(32002), interface.Translation.string(32033), interface.Translation.string(35607))) + str(len(itemsWatched[3])))
+		if not itemsRatings[0] is None: items.append(interface.Format.fontBold('%s %s %s: ' % (interface.Translation.string(32001), interface.Translation.string(35602), interface.Translation.string(35607))) + str(len(itemsRatings[0])))
+		if not itemsRatings[1] is None: items.append(interface.Format.fontBold('%s %s %s: ' % (interface.Translation.string(33470), interface.Translation.string(35602), interface.Translation.string(35607))) + str(len(itemsRatings[1])))
+		if not itemsRatings[2] is None: items.append(interface.Format.fontBold('%s %s %s: ' % (interface.Translation.string(33471), interface.Translation.string(35602), interface.Translation.string(35607))) + str(len(itemsRatings[2])))
+		if not itemsRatings[3] is None: items.append(interface.Format.fontBold('%s %s %s: ' % (interface.Translation.string(32002), interface.Translation.string(35602), interface.Translation.string(35607))) + str(len(itemsRatings[3])))
+		choice = interface.Dialog.options(title = 32034, items = items)
+		if choice < 0: return False
+
+		if interface.Dialog.option(title = 32034, message = 35612):
+			interface.Loader.show()
+			imdbImportSync(itemsWatched, itemsRatings)
+			interface.Loader.hide()
+			interface.Dialog.confirm(title = 32034, message = 35613)
+			return True
+
+	interface.Loader.hide()
 	return False

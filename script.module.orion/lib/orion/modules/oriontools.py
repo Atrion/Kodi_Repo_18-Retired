@@ -242,18 +242,28 @@ class OrionTools:
 				return False
 
 	@classmethod
-	def fileRead(self, path):
-		file = xbmcvfs.File(path)
-		result = file.read()
-		file.close()
-		return result.decode('utf-8')
+	def fileRead(self, path, binary = False):
+		try:
+			file = xbmcvfs.File(path)
+			result = file.read()
+			file.close()
+			if binary: return result
+			else: return result.decode('utf-8')
+		except:
+			self.error()
+			return None
 
 	@classmethod
-	def fileWrite(self, path, data):
-		file = xbmcvfs.File(path, 'w')
-		result = file.write(str(data.encode('utf-8')))
-		file.close()
-		return result
+	def fileWrite(self, path, data, binary = False):
+		try:
+			if not binary: data = str(data.encode('utf-8'))
+			file = xbmcvfs.File(path, 'w')
+			result = file.write(data)
+			file.close()
+			return result
+		except:
+			self.error()
+			return False
 
 	@classmethod
 	def fileInsert(self, path, after, data):
@@ -642,8 +652,12 @@ class OrionTools:
 
 	@classmethod
 	def linkIs(self, link, magnet = True):
-		if magnet and link.startswith('magnet:'): return True
-		else: return link.startswith('http:') or link.startswith('https:') or link.startswith('ftp:') or link.startswith('ftps:')
+		if magnet and self.linkIsMagnet(link): return True
+		else: return link.lower().startswith(('http:', 'https:', 'ftp:', 'ftps:'))
+
+	@classmethod
+	def linkIsMagnet(self, link, magnet = True):
+		return link.lower().startswith('magnet:')
 
 	@classmethod
 	def linkOpen(self, link = None, dialog = True, front = True):

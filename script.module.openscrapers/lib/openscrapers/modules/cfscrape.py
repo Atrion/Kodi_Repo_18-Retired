@@ -1,16 +1,12 @@
 # -*- coding: utf-8 -*-
 
-import base64
-import copy
-import logging
 import random
 import re
 import ssl
-import threading
+import copy
 import time
+import os
 from collections import OrderedDict
-
-import js2py
 
 from requests.sessions import Session
 from requests.adapters import HTTPAdapter
@@ -20,15 +16,39 @@ from requests.exceptions import RequestException
 from urllib3.util.ssl_ import create_urllib3_context, DEFAULT_CIPHERS
 
 USER_AGENTS = [
-  "Mozilla/5.0 (Windows NT 6.2; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.40 Safari/537.36",
-  "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.40 Safari/537.36",
-  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.28 Safari/537.36",
-  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.28 Safari/537.36",
-  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.28 Safari/537.36",
-  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.28 Safari/537.36",
-  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.28 Safari/537.36",
-  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36"
+    "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.86 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 6.2; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.86 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.86 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.86 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.86 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.86 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.86 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.86 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.86 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.86 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.78 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 6.2; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.78 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.78 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.78 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.78 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.78 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.78 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.78 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.78 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.78 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.79 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 6.2; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.79 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.79 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.79 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.79 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.79 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.79 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.79 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.79 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.79 Safari/537.36"
 ]
+
+from .cfscrape_solver import solve_challenge
 
 __version__ = "2.0.7"
 
@@ -69,7 +89,6 @@ https://github.com/Anorov/cloudflare-scrape/issues\
 # Remove a few problematic TLSv1.0 ciphers from the defaults
 DEFAULT_CIPHERS += ":!ECDHE+SHA:!AES128-SHA"
 
-LOCK = threading.Lock()
 
 class CloudflareAdapter(HTTPAdapter):
     """ HTTPS adapter that creates a SSL context with custom ciphers """
@@ -89,13 +108,10 @@ class CloudflareAdapter(HTTPAdapter):
 class CloudflareError(RequestException):
     pass
 
-
-class CloudflareCaptchaError(CloudflareError):
-    pass
-
-
 class CloudflareScraper(Session):
     def __init__(self, *args, **kwargs):
+        self.tries = 0
+        self.prev_resp = None
         self.delay = kwargs.pop("delay", None)
         # Use headers with a random User-Agent if no custom headers have been set
         headers = OrderedDict(kwargs.pop("headers", DEFAULT_HEADERS))
@@ -111,12 +127,11 @@ class CloudflareScraper(Session):
         self.mount("https://", CloudflareAdapter())
 
     @staticmethod
-    def is_cloudflare_iuam_challenge(resp):
+    def is_cloudflare_iuam_challenge(resp, allow_empty_body=False):
         return (
             resp.status_code in (503, 429)
             and resp.headers.get("Server", "").startswith("cloudflare")
-            and b"jschl_vc" in resp.content
-            and b"jschl_answer" in resp.content
+            and (allow_empty_body or (b"jschl_vc" in resp.content and b"jschl_answer" in resp.content))
         )
 
     @staticmethod
@@ -132,10 +147,18 @@ class CloudflareScraper(Session):
 
         # Check if Cloudflare captcha challenge is presented
         if self.is_cloudflare_captcha_challenge(resp):
-            self.handle_captcha_challenge(resp, url)
+            self.handle_captcha_challenge()
+
+        self.prev_resp = resp
 
         # Check if Cloudflare anti-bot "I'm Under Attack Mode" is enabled
         if self.is_cloudflare_iuam_challenge(resp):
+            if self.tries >= 3:
+                exception_message = 'Failed to solve Cloudflare challenge!'
+                if os.getenv('CI') == 'true':
+                    exception_message += '\n' + resp.text
+                raise Exception(exception_message)
+
             resp = self.solve_cf_challenge(resp, **kwargs)
 
         return resp
@@ -147,17 +170,14 @@ class CloudflareScraper(Session):
             (resp and resp.cookies.get("cf_clearance", None, domain=cookie_domain))
         )
 
-    def handle_captcha_challenge(self, resp, url):
-        error = (
-            "Cloudflare captcha challenge presented for %s (cfscrape cannot solve captchas)"
-            % urlparse(url).netloc
-        )
-        if ssl.OPENSSL_VERSION_NUMBER < 0x10101000:
-            error += ". Your OpenSSL version is lower than 1.1.1. Please upgrade your OpenSSL library and recompile Python."
-
-        raise CloudflareCaptchaError(error, response=resp)
+    def handle_captcha_challenge(self):
+        exception_message = 'Cloudflare returned captcha!'
+        if self.prev_resp is not None and os.getenv('CI') == 'true':
+            exception_message += '\n' + self.prev_resp.text
+        raise Exception(exception_message)
 
     def solve_cf_challenge(self, resp, **original_kwargs):
+        self.tries += 1
         start_time = time.time()
 
         body = resp.text
@@ -189,7 +209,7 @@ class CloudflareScraper(Session):
             )
 
         # Solve the Javascript challenge
-        answer = self.solve_challenge(body, domain)
+        answer, delay = solve_challenge(body, domain)
         params["jschl_answer"] = answer
 
         # Requests transforms any request into a GET after a redirect,
@@ -200,15 +220,10 @@ class CloudflareScraper(Session):
 
         # Cloudflare requires a delay before solving the challenge
         if not self.delay:
-            try:
-                delay = float(re.search(r'submit\(\);\r?\n\s*},\s*([0-9]+)', body).group(1)) / float(1000)
-                if isinstance(delay, (int, float)):
-                    self.delay = delay
-            except:
-                pass
-
-        time.sleep(max(self.delay - (time.time() - start_time), 0))
-
+            time.sleep(max(delay - (time.time() - start_time), 0))
+        else:
+            time.sleep(self.delay)
+			
         # Send the challenge response and handle the redirect manually
         redirect = self.request(method, submit_url, **cloudflare_kwargs)
         redirect_location = urlparse(redirect.headers["Location"])
@@ -227,133 +242,5 @@ class CloudflareScraper(Session):
             return self.request(method, redirect_url, **original_kwargs)
         return self.request(method, redirect.headers["Location"], **original_kwargs)
 
-    @staticmethod
-    def solve_challenge(body, domain):
-        try:
-            js = re.search(
-                r'setTimeout\(function\(\){\s+(var s,t,o,p,b,r,e,a,k,i,n,g,f.+?\r?\n[\s\S]+?a\.value =.+?)\r?\n',
-                body
-            ).group(1)
-        except Exception:
-            raise ValueError('Unable to identify Cloudflare IUAM Javascript on website. {}'.format(BUG_REPORT))
-
-        js = re.sub(r'\s{2,}', ' ', js, flags=re.MULTILINE | re.DOTALL).replace('\'; 121\'', '').replace('; ;', ';')
-        js += '\na.value;'
-
-        js_env = '''
-            String.prototype.italics=function(str) {{return "<i>" + this + "</i>";}};
-            var document = {{
-                createElement: function () {{
-                    return {{ firstChild: {{ href: "https://{domain}/" }} }}
-                }},
-                getElementById: function () {{
-                    return {{"innerHTML": "{innerHTML}"}};
-                }}
-            }};
-        '''
-
-        try:
-            inner_html = re.search(
-                r'<div(?: [^<>]*)? id="([^<>]*?)">([^<>]*?)</div>',
-                body,
-                re.MULTILINE | re.DOTALL
-            )
-            inner_html = inner_html.group(2) if inner_html else ''
-
-        except:
-            logging.error('Error extracting Cloudflare IUAM Javascript. {}'.format(BUG_REPORT))
-            raise
-
-        try:
-            js_env = re.sub(r'\s{2,}', ' ', js_env.format(domain=domain, innerHTML=inner_html),
-                            flags=re.MULTILINE | re.DOTALL)
-
-            def atob(s):
-                return base64.b64decode('{}'.format(s)).decode('utf-8')
-
-            js2py.disable_pyimport()
-            with LOCK:
-                context = js2py.EvalJs({'atob': atob})
-                result = context.eval('{}{}'.format(js_env, js))
-
-            float(result)
-        except Exception:
-            raise ValueError("Cloudflare IUAM challenge returned unexpected answer. {}".format(BUG_REPORT))
-
-        return result
-
-
-    @classmethod
-    def create_scraper(cls, sess=None, **kwargs):
-        """
-        Convenience function for creating a ready-to-go CloudflareScraper object.
-        """
-        scraper = cls(**kwargs)
-
-        if sess:
-            attrs = [
-                "auth",
-                "cert",
-                "cookies",
-                "headers",
-                "hooks",
-                "params",
-                "proxies",
-                "data",
-            ]
-            for attr in attrs:
-                val = getattr(sess, attr, None)
-                if val:
-                    setattr(scraper, attr, val)
-
-        return scraper
-
-    # Functions for integrating cloudflare-scrape with other applications and scripts
-
-    @classmethod
-    def get_tokens(cls, url, user_agent=None, **kwargs):
-        scraper = cls.create_scraper()
-        if user_agent:
-            scraper.headers["User-Agent"] = user_agent
-
-        try:
-            resp = scraper.get(url, **kwargs)
-            resp.raise_for_status()
-        except Exception:
-            logging.error("'%s' returned an error. Could not collect tokens." % url)
-            raise
-
-        domain = urlparse(resp.url).netloc
-        cookie_domain = None
-
-        for d in scraper.cookies.list_domains():
-            if d.startswith(".") and d in ("." + domain):
-                cookie_domain = d
-                break
-        else:
-            raise ValueError(
-                'Unable to find Cloudflare cookies. Does the site actually have Cloudflare IUAM ("I\'m Under Attack Mode") enabled?'
-            )
-
-        return (
-            {
-                "__cfduid": scraper.cookies.get("__cfduid", "", domain=cookie_domain),
-                "cf_clearance": scraper.cookies.get(
-                    "cf_clearance", "", domain=cookie_domain
-                ),
-            },
-            scraper.headers["User-Agent"],
-        )
-
-    @classmethod
-    def get_cookie_string(cls, url, user_agent=None, **kwargs):
-        """
-        Convenience function for building a Cookie HTTP header value.
-        """
-        tokens, user_agent = cls.get_tokens(url, user_agent=user_agent, **kwargs)
-        return "; ".join("=".join(pair) for pair in tokens.items()), user_agent
-
-
-create_scraper = CloudflareScraper.create_scraper
-get_tokens = CloudflareScraper.get_tokens
-get_cookie_string = CloudflareScraper.get_cookie_string
+		
+create_scraper = CloudflareScraper

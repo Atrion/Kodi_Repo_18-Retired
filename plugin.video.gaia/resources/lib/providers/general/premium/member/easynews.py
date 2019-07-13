@@ -82,6 +82,7 @@ class source:
 
 			cookie = easynews.accountCookie()
 
+			ignoreContains = None
 			data = urlparse.parse_qs(url)
 			data = dict([(i, data[i][0]) if data[i] else (i, '') for i in data])
 
@@ -99,8 +100,16 @@ class source:
 				season = int(data['season']) if 'season' in data and not data['season'] == None else None
 				episode = int(data['episode']) if 'episode' in data and not data['episode'] == None else None
 
-				if movie: query = '%s %d' % (title, year)
-				else: query = '%s S%02dE%02d' % (title, season, episode)
+				if movie:
+					query = '%s %d' % (title, year)
+				else:
+					# Search special episodes by name. All special episodes are added to season 0 by Trakt and TVDb. Hence, do not search by filename (eg: S02E00), since the season is not known.
+					if (season == 0 or episode == 0) and ('title' in data and not data['title'] == None and not data['title'] == ''):
+						title = '%s %s' % (data['tvshowtitle'], data['title']) # Change the title for metadata filtering.
+						query = title
+						ignoreContains = len(data['title']) / float(len(title)) # Increase the required ignore ration, since otherwise individual episodes and season packs are found as well.
+					else:
+						query = '%s S%02dE%02d' % (title, season, episode)
 				query = re.sub('(\\\|/| -|:|;|\*|\?|"|\'|<|>|\|)', ' ', query)
 
 			query = urllib.quote_plus(query)
@@ -161,14 +170,11 @@ class source:
 					meta = metadata.Metadata(name = jsonName, title = title, year = year, season = season, episode = episode, link = jsonLink, size = jsonSize, quality = jsonQuality)
 
 					# Ignore
-					if meta.ignore(False):
-						continue
+					meta.ignoreAdjust(contains = ignoreContains)
+					if meta.ignore(False): continue
 
-					if jsonPassword or jsonVirus:
-						continue
-
-					if jsonDuration.lower().startswith(('0m', '1m', '2m', '3m', '4m')):
-						continue
+					if jsonPassword or jsonVirus: continue
+					if jsonDuration.lower().startswith(('0m', '1m', '2m', '3m', '4m')): continue
 
 					# Add
 					sources.append({'url' : jsonLink, 'premium' : True, 'debridonly' : False, 'direct' : True, 'memberonly' : True, 'source' : 'EasyNews', 'language' : jsonLanguage, 'quality': meta.videoQuality(), 'metadata' : meta, 'file' : jsonName})

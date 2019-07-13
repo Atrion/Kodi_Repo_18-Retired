@@ -37,6 +37,7 @@ from resources.lib.modules import client
 from resources.lib.externals.beautifulsoup import BeautifulSoup
 
 from resources.lib.extensions import convert
+from resources.lib.extensions import cache
 from resources.lib.extensions import tools
 from resources.lib.extensions import interface
 from resources.lib.extensions import network
@@ -65,7 +66,7 @@ class Debrid(object):
 	ErrorExternal = 'external'
 	ErrorCancel = 'cancel'
 
-	Exclusions = ('.txt', '.nfo', '.rtf', '.exe', '.zip', '.7z', '.rar', '.par', '.pdf', '.doc', '.docx', '.ini', '.lnk', '.csvs', '.xml', '.html', '.json', '.jpg', '.jpeg', '.png', '.tiff', '.gif', '.bmp', '.md5', '.sha')
+	Exclusions = ('.txt', '.nfo', '.srt', '.nzb', '.torrent', '.rtf', '.exe', '.zip', '.7z', '.rar', '.par', '.pdf', '.doc', '.docx', '.ini', '.lnk', '.csvs', '.xml', '.html', '.json', '.jpg', '.jpeg', '.png', '.tiff', '.gif', '.bmp', '.md5', '.sha')
 
 	##############################################################################
 	# CONSTRUCTOR
@@ -130,8 +131,8 @@ class Debrid(object):
 		return {}
 
 	@classmethod
-	def cachedAny(self, cache):
-		for value in cache.itervalues():
+	def cachedAny(self, cached):
+		for value in cached.itervalues():
 			if value: return True
 		return False
 
@@ -170,11 +171,6 @@ class Premiumize(Debrid):
 		{	'name' : 'Cloud Storage',		'domain' : 'cloudstorage',		'limit' : 0,	'factor' : 1	},
 		{	'name' : 'Cloud Downloads',		'domain' : 'clouddownloads',	'limit' : 0,	'factor' : 1	},
 	]
-
-	# Timeouts
-	# Number of seconds the requests should be cached.
-	TimeoutServices = 1 # 1 hour
-	TimeoutAccount = 0.17 # 10 min
 
 	# General
 	Name = tools.System.name().upper()
@@ -280,6 +276,7 @@ class Premiumize(Debrid):
 	ErrorPremium = 'premium' # Require premium account.
 	ErrorPremiumize = 'premiumize' # Error from Premiumize server.
 	ErrorSelection = 'selection' # No file selected from list of items.
+	ErrorUnsupported = 'unsupported' # Not official Premiumize error. Indicates that a certain feature isd not supported.
 
 	# Client
 	ClientId = tools.System.obfuscate(tools.Settings.getString('internal.premiumize.client', raw = True))
@@ -299,6 +296,8 @@ class Premiumize(Debrid):
 		self.mParameters = None
 		self.mSuccess = None
 		self.mError = None
+		self.mErrorCode = None
+		self.mErrorDescription = None
 		self.mResult = None
 
 	##############################################################################
@@ -349,6 +348,8 @@ class Premiumize(Debrid):
 			self.mParameters = parameters
 			self.mSuccess = None
 			self.mError = None
+			self.mErrorCode = None
+			self.mErrorDescription = None
 
 			# Use GET parameters for uploading files/containers (src parameter).
 			if Premiumize.MethodGet or httpData:
@@ -403,6 +404,7 @@ class Premiumize(Debrid):
 
 			response = urllib2.urlopen(request, timeout = httpTimeout)
 			result = response.read()
+
 			response.close()
 			self.mResult = tools.Converter.jsonFrom(result)
 
@@ -532,12 +534,9 @@ class Premiumize(Debrid):
 		try:
 			n = tools.System.info(('Ym1GdFpRPT0=').decode(b).decode(b))
 			a = tools.System.info(('WVhWMGFHOXk=').decode(b).decode(b))
-			l = tools.Settings.getString(('WWtkc2RXRjVOWGRqYlZaMFlWaFdkR0ZZY0d3PQ==').decode(b).decode(b).decode(b), raw = True)
-
 			xn = not ord(n[0]) == 71 or not ord(n[2]) == 105
 			xa = not ord(a[1]) == 97 or not ord(a[3]) == 97
-			xl = not ('V2pKR2NGbFhkSFphUjJ0MVdUSTVkQT09').decode(b).decode(b).decode(b) in l
-			if xn or xa or xl: notify()
+			if xn or xa: notify()
 		except:
 			notify()
 
@@ -645,7 +644,7 @@ class Premiumize(Debrid):
 
 	def accountAuthenticationFinish(self):
 		try:
-			self.mAuthenticationUsername = self.account(cache = False)['user']
+			self.mAuthenticationUsername = self.account(cached = False)['user']
 			self._accountAuthenticationSettings()
 			return True
 		except:
@@ -662,17 +661,17 @@ class Premiumize(Debrid):
 		return tools.Settings.getString('accounts.debrid.premiumize.token') if self.accountEnabled() else ''
 
 	def accountVerify(self):
-		return not self.account(cache = False) == None
+		return not self.account(cached = False) == None
 
-	def account(self, cache = True):
+	def account(self, cached = True):
 		try:
 			if self.accountValid():
-				timeout = Premiumize.TimeoutAccount if cache else 0
-				def __premiumizeAccount(): # Must have a different name than the tools.Cache.cache call for the hoster list. Otherwise the cache returns the result for the hosters instead of the account.
-					return self._retrieve(category = Premiumize.CategoryAccount, action = Premiumize.ActionInfo)
-				result = tools.Cache.cache(__premiumizeAccount, timeout)
-				if 'status' in result and result['status'] == 401: # Login failed. The user might have entered the incorrect details which are still stuck in the cache. Force a reload.
-					result = tools.Cache.cache(__premiumizeAccount, 0)
+				result = None
+				if cached:
+					result = cache.Cache().cacheMini(self._retrieve, category = Premiumize.CategoryAccount, action = Premiumize.ActionInfo)
+					if 'status' in result and result['status'] == 401: result = None # Login failed. The user might have entered the incorrect details which are still stuck in the cache. Force a reload.
+				if result == None:
+					result = cache.Cache().cacheClear(self._retrieve, category = Premiumize.CategoryAccount, action = Premiumize.ActionInfo)
 
 				expirationDate = datetime.datetime.fromtimestamp(result['premium_until'])
 
@@ -726,7 +725,7 @@ class Premiumize(Debrid):
 				return service
 		return None
 
-	def services(self, cache = True, onlyEnabled = False):
+	def services(self, cached = True, onlyEnabled = False):
 		# Even thow ServicesUpdate is a class variable, it will be destrcucted if there are no more Premiumize instances.
 		if Premiumize.ServicesUpdate == None:
 			Premiumize.ServicesUpdate = []
@@ -736,12 +735,12 @@ class Premiumize(Debrid):
 			streamingHoster = self.streamingHoster()
 
 			try:
-				timeout = Premiumize.TimeoutServices if cache else 0
-				def __premiumizeHosters():# Must have a different name than the tools.Cache.cache call for the account details. Otherwise the cache returns the result for the account instead of the hosters.
-					return self._retrieve(category = Premiumize.CategoryServices, action = Premiumize.ActionList)
-				result = tools.Cache.cache(__premiumizeHosters, timeout)
-				if 'status' in result and result['status'] == 401: # Login failed. The user might have entered the incorrect details which are still stuck in the cache. Force a reload.
-					result = tools.Cache.cache(__premiumizeHosters, 0)
+				result = None
+				if cached:
+					result = cache.Cache().cacheShort(self._retrieve, category = Premiumize.CategoryServices, action = Premiumize.ActionList)
+					if 'status' in result and result['status'] == 401: result = None # Login failed. The user might have entered the incorrect details which are still stuck in the cache. Force a reload.
+				if result == None:
+					result = cache.Cache().cacheClear(self._retrieve, category = Premiumize.CategoryServices, action = Premiumize.ActionList)
 
 				aliases = result['aliases']
 
@@ -1016,7 +1015,7 @@ class Premiumize(Debrid):
 		elif type == network.Container.TypeUsenet:
 			return self.addUsenet(link = link, title = title, season = season, episode = episode, pack = pack, cached = cached, cloud = cloud)
 		else:
-			return self.addHoster(link = link, season = season, episode = episode, pack = pack, cached = cached)
+			return self.addHoster(link = link, season = season, episode = episode, pack = pack, cached = cached, cloud = cloud)
 
 	# Downloads the torrent, nzb, or any other container supported by Premiumize.
 	# If mode is not specified, tries to detect the file type autoamtically.
@@ -1056,7 +1055,8 @@ class Premiumize(Debrid):
 			tools.Logger.error()
 			return self.addResult(error = self._errorType())
 
-	def addHoster(self, link, season = None, episode = None, pack = False, cached = False):
+	def addHoster(self, link, season = None, episode = None, pack = False, cached = False, cloud = False):
+		if cloud: return self.addResult(error = Premiumize.ErrorUnsupported)
 		result = self._retrieve(category = Premiumize.CategoryTransfer, action = Premiumize.ActionDownload, source = link)
 		if self.success(): return self._addLink(result = result, season = season, episode = episode, pack = pack)
 		else: return self.addResult(error = self._errorType())
@@ -1095,9 +1095,10 @@ class Premiumize(Debrid):
 
 	def _itemStatus(self, status, message = None):
 		if not message == None:
+			message = message.lower()
 			if 'download finished. copying the data' in message:
 				return Premiumize.StatusFinalize
-			elif 'downloading at' in message:
+			elif 'downloading at' in message or 'running' in message:
 				return Premiumize.StatusBusy
 
 		status = status.lower()
@@ -1118,12 +1119,13 @@ class Premiumize(Debrid):
 		status = status.lower()
 		if any(state == status for state in ['seeding', 'seed']):
 			return True
-		if not message == None and 'seeding' in message:
+		if not message == None and 'seeding' in message.lower():
 			return True
 		return False
 
 	def _itemSeedingRatio(self, message):
 		try:
+			message = message.lower()
 			indexStart = message.find('ratio of ')
 			if indexStart > 0:
 				indexStart += 9
@@ -1141,40 +1143,69 @@ class Premiumize(Debrid):
 
 	def _itemSize(self, size = None, message = None):
 		if (size == None or size <= 0) and not message == None:
-			start = message.find('% of ')
-			if start < 0:
-				size = 0
-			else:
-				end = message.find('finished.', start)
-				if end < 0:
+			match = re.search('of\s?([0-9,.]+\s?(bytes|b|kb|mb|gb|tb))', message, re.IGNORECASE)
+			if match:
+				size = match.group(1)
+				if not(size is None or size == ''):
+					size = convert.ConverterSize(size.replace(',', '')).value()
+			if size is None or size == '': # Old API.
+				message = message.lower()
+				start = message.find('% of ')
+				if start < 0:
 					size = 0
 				else:
-					size = message[start : end].upper() # Must be made upper, because otherwise it is seen as bits instead of bytes.
-					size = convert.ConverterSize(size).value()
-		return int(size)
+					end = message.find('finished.', start)
+					if end < 0:
+						size = 0
+					else:
+						size = message[start : end].upper() # Must be made upper, because otherwise it is seen as bits instead of bytes.
+						size = convert.ConverterSize(size).value()
+		return 0 if (size is None or size == '') else int(size)
+
+	def _itemSizeCompleted(self, size = None, message = None):
+		if (size == None or size <= 0) and not message == None:
+			match = re.search('([0-9,.]+\s?(bytes|b|kb|mb|gb|tb))\s?of', message, re.IGNORECASE)
+			if match:
+				size = match.group(1)
+				if not(size is None or size == ''):
+					size = convert.ConverterSize(size.replace(',', '')).value()
+		return 0 if (size is None or size == '') else int(size)
 
 	def _itemSpeed(self, message):
-		speed = 0
-		try:
-			if not message == None:
-				start = message.find('downloading at ')
-				if start >= 0:
-					end = message.find('/s', start)
-					if end >= 0:
-						end += 2
-					else:
-						end = message.find('s.', start)
-						if end >= 0: end += 1
-					if end >= 0:
-						speed = convert.ConverterSpeed(message[start : end]).value()
-		except:
-			pass
-		return int(speed)
+		speed = None
+		if not message == None:
+			match = re.search('([0-9,.]+\s?(bytes|b|kb|mb|gb|tb)\/s)', message, re.IGNORECASE)
+			if match:
+				speed = match.group(1)
+				if not(speed is None or speed == ''):
+					speed = convert.ConverterSpeed(speed.replace(',', '')).value()
+			if speed is None or speed == '': # Old API.
+				try:
+					message = message.lower()
+					start = message.find('downloading at ')
+					if start >= 0:
+						end = message.find('/s', start)
+						if end >= 0:
+							end += 2
+						else:
+							end = message.find('s.', start)
+							if end >= 0: end += 1
+						if end >= 0:
+							speed = convert.ConverterSpeed(message[start : end]).value()
+				except:
+					pass
+		return 0 if (speed is None or speed == '') else int(speed)
 
 	def _itemPeers(self, message):
 		peers = 0
 		try:
-			if not message == None:
+			match = re.search('(\d+)\s+peer', message, re.IGNORECASE)
+			if match:
+				peers = match.group(1)
+				if not(peers is None or peers == ''):
+					peers = int(peers)
+			if peers == None or peers <= 0:
+				message = message.lower()
 				start = message.find('from ')
 				if start >= 0:
 					start += 5
@@ -1185,20 +1216,31 @@ class Premiumize(Debrid):
 		return peers
 
 	def _itemTime(self, time = None, message = None):
-		try:
-			if (time == None or time <= 0) and not message == None:
-				start = message.find('eta is ')
-				if start < 0:
-					time = 0
-				else:
-					message = message[start + 7:]
-					parts = message.split(':')
-					message = '%02d:%02d:%02d' % (int(parts[0]), int(parts[1]), int(parts[2]))
-					time = convert.ConverterDuration(message).value(convert.ConverterDuration.UnitSecond)
-			if time == None: time = 0
-			return int(time)
-		except:
-			return 0
+		if (time == None or time <= 0) and not message == None:
+			match = re.search('((\d{1,2}:){2}\d{1,2})', message, re.IGNORECASE)
+			if match:
+				time = match.group(1)
+				if not(time is None or time == ''):
+					time = convert.ConverterDuration(time).value(convert.ConverterDuration.UnitSecond)
+			if time == None or time <= 0:
+				match = re.search('.*,\s+(.*)\s+left', message, re.IGNORECASE)
+				time = match.group(1)
+				if not(time is None or time == ''):
+					time = convert.ConverterDuration(time).value(convert.ConverterDuration.UnitSecond)
+			if time == None or time <= 0: # Old API.
+				try:
+					message = message.lower()
+					start = message.find('eta is ')
+					if start < 0:
+						time = 0
+					else:
+						message = message[start + 7:]
+						parts = message.split(':')
+						message = '%02d:%02d:%02d' % (int(parts[0]), int(parts[1]), int(parts[2]))
+						time = convert.ConverterDuration(message).value(convert.ConverterDuration.UnitSecond)
+				except:
+					pass
+		return 0 if (time is None or time == '') else int(time)
 
 	def _itemTransfer(self, id):
 		return self._itemsTransfer(id = id)
@@ -1230,172 +1272,177 @@ class Premiumize(Debrid):
 		return items
 
 	def _itemsTransfer(self, id = None):
-		items = []
-		results = self._retrieve(category = Premiumize.CategoryTransfer, action = Premiumize.ActionList)
-		if self.success() and 'transfers' in results:
-			results = results['transfers']
-			for result in results:
-				item = {}
-				message = result['message'] if 'message' in result else None
-				if not message == None:
-					message = message.lower()
+		try:
+			items = []
+			results = self._retrieve(category = Premiumize.CategoryTransfer, action = Premiumize.ActionList)
+			if self.success() and 'transfers' in results:
+				results = results['transfers']
+				for result in results:
+					item = {}
+					message = result['message'] if 'message' in result else None
+					messageLower = message if message == None else message.lower()
 
-				# ID
-				if 'id' in result and not result['id'] == None:
-					idCurrent = result['id']
-				else:
-					idCurrent = None
-				item['id'] = idCurrent
+					# ID
+					if 'id' in result and not result['id'] == None:
+						idCurrent = result['id']
+					else:
+						idCurrent = None
+					item['id'] = idCurrent
 
-				# If you add a download multiple times, they will show multiple times in the list. Only add one instance.
-				found = False
-				for i in items:
-					if i['id'] == idCurrent:
-						found = True
-						break
-				if found: continue
+					# If you add a download multiple times, they will show multiple times in the list. Only add one instance.
+					found = False
+					for i in items:
+						if i['id'] == idCurrent:
+							found = True
+							break
+					if found: continue
 
-				# Target
-				if 'target_folder_id' in result and not result['target_folder_id'] == None:
-					target = result['target_folder_id']
-				else:
-					target = None
-				item['target'] = target
+					# Target
+					if 'target_folder_id' in result and not result['target_folder_id'] == None:
+						target = result['target_folder_id']
+					else:
+						target = None
+					item['target'] = target
 
-				# Folder
-				if 'folder_id' in result and not result['folder_id'] == None:
-					folder = result['folder_id']
-				else:
-					folder = None
-				item['folder'] = folder
+					# Folder
+					if 'folder_id' in result and not result['folder_id'] == None:
+						folder = result['folder_id']
+					else:
+						folder = None
+					item['folder'] = folder
 
-				# File
-				if 'file_id' in result and not result['file_id'] == None:
-					file = result['file_id']
-				else:
-					file = None
-				item['file'] = file
+					# File
+					if 'file_id' in result and not result['file_id'] == None:
+						file = result['file_id']
+					else:
+						file = None
+					item['file'] = file
 
-				# Name
-				if 'name' in result and not result['name'] == None:
-					name = self._itemName(result['name'])
-				else:
-					name = None
-				item['name'] = name
+					# Name
+					if 'name' in result and not result['name'] == None:
+						name = self._itemName(result['name'])
+					else:
+						name = None
+					item['name'] = name
 
-				# Size
-				size = 0
-				if ('size' in result and not result['size'] == None) or (not message == None):
-					try: sizeValue = result['size']
-					except: sizeValue = None
-					size = self._itemSize(size = sizeValue, message = message)
-				size = convert.ConverterSize(size)
-				item['size'] = {'bytes' : size.value(), 'description' : size.stringOptimal()}
+					# Size
+					size = 0
+					sizeCompleted = 0
+					if ('size' in result and not result['size'] == None) or (not message == None):
+						try: sizeValue = result['size']
+						except: sizeValue = None
+						size = self._itemSize(size = sizeValue, message = message)
+						sizeCompleted = self._itemSizeCompleted(size = None, message = message)
+					size = convert.ConverterSize(size)
+					item['size'] = {'bytes' : size.value(), 'description' : size.stringOptimal()}
 
-				# Status
-				if 'status' in result and not result['status'] == None:
-					status = self._itemStatus(result['status'], message)
-				else:
-					status = None
-				item['status'] = status
+					# Status
+					if 'status' in result and not result['status'] == None:
+						status = self._itemStatus(result['status'], message)
+					else:
+						status = None
+					item['status'] = status
 
-				# Error
-				if status == Premiumize.StatusError:
-					error = None
-					if message:
-						if 'retention' in message:
-							error = 'Out of server retention'
-						elif 'missing' in message:
-							error = 'The transfer job went missing'
-						elif 'password' in message:
-							error = 'The file is password protected'
-						elif 'repair' in message:
-							error = 'The file is unrepairable'
+					# Error
+					if status == Premiumize.StatusError:
+						error = None
+						if messageLower:
+							if 'retention' in messageLower:
+								error = 'Out of server retention'
+							elif 'missing' in messageLower:
+								error = 'The transfer job went missing'
+							elif 'password' in messageLower:
+								error = 'The file is password protected'
+							elif 'repair' in messageLower:
+								error = 'The file is unrepairable'
 
-					item['error'] = error
+						item['error'] = error
 
-				# Transfer
-				transfer = {}
+					# Transfer
+					transfer = {}
 
-				# Transfer - Speed
-				speed = {}
-				speedDownload = self._itemSpeed(message)
-				speedConverter = convert.ConverterSpeed(speedDownload)
-				speed['bytes'] = speedConverter.value(convert.ConverterSpeed.Byte)
-				speed['bits'] = speedConverter.value(convert.ConverterSpeed.Bit)
-				speed['description'] = speedConverter.stringOptimal()
-				transfer['speed'] = speed
+					# Transfer - Speed
+					speed = {}
+					speedDownload = self._itemSpeed(message)
+					speedConverter = convert.ConverterSpeed(speedDownload)
+					speed['bytes'] = speedConverter.value(convert.ConverterSpeed.Byte)
+					speed['bits'] = speedConverter.value(convert.ConverterSpeed.Bit)
+					speed['description'] = speedConverter.stringOptimal()
+					transfer['speed'] = speed
 
-				# Transfer - Torrent
-				torrent = {}
-				if 'status' in result and not result['status'] == None:
-					seeding = self._itemSeeding(status = result['status'], message = message)
-				else:
-					seeding = False
-				torrent['seeding'] = seeding
-				torrent['peers'] = self._itemPeers(message)
-				torrent['seeders'] = result['seeder'] if 'seeder' in result else 0
-				torrent['leechers'] = result['leecher'] if 'leecher' in result else 0
-				torrent['ratio'] = result['ratio'] if 'ratio' in result and result['ratio'] > 0 else self._itemSeedingRatio(message = message)
-				transfer['torrent'] = torrent
+					# Transfer - Torrent
+					torrent = {}
+					if 'status' in result and not result['status'] == None:
+						seeding = self._itemSeeding(status = result['status'], message = message)
+					else:
+						seeding = False
+					torrent['seeding'] = seeding
+					torrent['peers'] = self._itemPeers(message)
+					torrent['seeders'] = result['seeder'] if 'seeder' in result else 0
+					torrent['leechers'] = result['leecher'] if 'leecher' in result else 0
+					torrent['ratio'] = result['ratio'] if 'ratio' in result and result['ratio'] > 0 else self._itemSeedingRatio(message = message)
+					transfer['torrent'] = torrent
 
-				# Transfer - Progress
-				if ('progress' in result and not result['progress'] == None) or ('eta' in result and not result['eta'] == None):
-					progress = {}
+					# Transfer - Progress
+					if ('progress' in result and not result['progress'] == None) or ('eta' in result and not result['eta'] == None):
+						progress = {}
 
-					progressValueCompleted = 0
-					progressValueRemaining = 0
-					if 'progress' in result and not result['progress'] == None:
-						progressValueCompleted = float(result['progress'])
-					if progressValueCompleted == 0 and 'status' in item and item['status'] == Premiumize.StatusFinished:
-						progressValueCompleted = 1
-					progressValueRemaining = 1 - progressValueCompleted
+						progressValueCompleted = 0
+						progressValueRemaining = 0
+						if 'progress' in result and not result['progress'] == None:
+							progressValueCompleted = float(result['progress'])
+						if progressValueCompleted == 0 and 'status' in item and item['status'] == Premiumize.StatusFinished:
+							progressValueCompleted = 1
+						progressValueRemaining = 1 - progressValueCompleted
 
-					progressPercentageCompleted = round(progressValueCompleted * 100, 1)
-					progressPercentageRemaining = round(progressValueRemaining * 100, 1)
+						progressPercentageCompleted = round(progressValueCompleted * 100, 1)
+						progressPercentageRemaining = round(progressValueRemaining * 100, 1)
 
-					progressSizeCompleted = 0
-					progressSizeRemaining = 0
-					if 'size' in item:
-						progressSizeCompleted = int(progressValueCompleted * item['size']['bytes'])
-						progressSizeRemaining = int(item['size']['bytes'] - progressSizeCompleted)
+						progressSizeCompleted = sizeCompleted
+						progressSizeRemaining = 0
+						if 'size' in item:
+							if not progressSizeCompleted: progressSizeCompleted = int(progressValueCompleted * item['size']['bytes'])
+							progressSizeRemaining = int(item['size']['bytes'] - progressSizeCompleted)
 
-					progressTimeCompleted = 0
-					progressTimeRemaining = 0
-					time = result['eta'] if 'eta' in result else None
-					progressTimeRemaining = self._itemTime(time, message)
+						progressTimeCompleted = 0
+						progressTimeRemaining = 0
+						time = result['eta'] if 'eta' in result else None
+						progressTimeRemaining = self._itemTime(time, message)
 
-					completed = {}
-					size = convert.ConverterSize(progressSizeCompleted)
-					time = convert.ConverterDuration(progressTimeCompleted, convert.ConverterDuration.UnitSecond)
-					completed['value'] = progressValueCompleted
-					completed['percentage'] = progressPercentageCompleted
-					completed['size'] = {'bytes' : size.value(), 'description' : size.stringOptimal()}
-					completed['time'] = {'seconds' : time.value(convert.ConverterDuration.UnitSecond), 'description' : time.string(convert.ConverterDuration.FormatDefault)}
+						completed = {}
+						size = convert.ConverterSize(progressSizeCompleted)
+						time = convert.ConverterDuration(progressTimeCompleted, convert.ConverterDuration.UnitSecond)
+						completed['value'] = progressValueCompleted
+						completed['percentage'] = progressPercentageCompleted
+						completed['size'] = {'bytes' : size.value(), 'description' : size.stringOptimal()}
+						completed['time'] = {'seconds' : time.value(convert.ConverterDuration.UnitSecond), 'description' : time.string(convert.ConverterDuration.FormatDefault)}
 
-					remaining = {}
-					size = convert.ConverterSize(progressSizeRemaining)
-					time = convert.ConverterDuration(progressTimeRemaining, convert.ConverterDuration.UnitSecond)
-					remaining['value'] = progressValueRemaining
-					remaining['percentage'] = progressPercentageRemaining
-					remaining['size'] = {'bytes' : size.value(), 'description' : size.stringOptimal()}
-					remaining['time'] = {'seconds' : time.value(convert.ConverterDuration.UnitSecond), 'description' : time.string(convert.ConverterDuration.FormatDefault)}
+						remaining = {}
+						size = convert.ConverterSize(progressSizeRemaining)
+						time = convert.ConverterDuration(progressTimeRemaining, convert.ConverterDuration.UnitSecond)
+						remaining['value'] = progressValueRemaining
+						remaining['percentage'] = progressPercentageRemaining
+						remaining['size'] = {'bytes' : size.value(), 'description' : size.stringOptimal()}
+						remaining['time'] = {'seconds' : time.value(convert.ConverterDuration.UnitSecond), 'description' : time.string(convert.ConverterDuration.FormatDefault)}
 
-					progress['completed'] = completed
-					progress['remaining'] = remaining
-					transfer['progress'] = progress
+						progress['completed'] = completed
+						progress['remaining'] = remaining
+						transfer['progress'] = progress
 
-				# Transfer
-				item['transfer'] = transfer
+					# Transfer
+					item['transfer'] = transfer
 
-				if id and idCurrent == id:
-					return item
+					if id and idCurrent == id:
+						return item
 
-				# Append
-				items.append(item)
+					# Append
+					items.append(item)
 
-		if id: return items[0]
-		else: return items
+			if id: return items[0]
+			else: return items
+		except:
+			tools.Logger.error()
+			return []
 
 	def _itemIsStream(self, name, extension, status):
 		if status == 'good_as_is':
@@ -1749,7 +1796,8 @@ class Premiumize(Debrid):
 		self.tCacheLock = threading.Lock()
 		self.tCacheResult = {}
 
-		def cachedChunkTorrent(callback, hashes, timeout):
+		# Old API. Use the new API check instead.
+		'''def cachedChunkTorrent(callback, hashes, timeout):
 			premiumize = Premiumize()
 			result = premiumize._retrieve(category = Premiumize.CategoryTorrent, action = Premiumize.ActionCheckHashes, hash = hashes, httpTimeout = timeout)
 			if premiumize.success():
@@ -1760,9 +1808,9 @@ class Premiumize(Debrid):
 				if callback:
 					for key, value in result.iteritems():
 						try: callback(self.id(), key, value['status'] == 'finished')
-						except: pass
+						except: pass'''
 
-		def cachedChunkHoster(callback, links, timeout):
+		def cachedChunk(callback, links, timeout):
 			premiumize = Premiumize()
 			result = premiumize._retrieve(category = Premiumize.CategoryCache, action = Premiumize.ActionCheck, caches = links, httpTimeout = timeout)
 			if premiumize.success():
@@ -1780,8 +1828,8 @@ class Premiumize(Debrid):
 
 		threads = []
 		for chunk in chunks:
-			if hoster: thread = threading.Thread(target = cachedChunkHoster, args = (callback, chunk, timeout))
-			else: thread = threading.Thread(target = cachedChunkTorrent, args = (callback, chunk, timeout))
+			if hoster: thread = threading.Thread(target = cachedChunk, args = (callback, chunk, timeout))
+			else: thread = threading.Thread(target = cachedChunk, args = (callback, chunk, timeout))
 			threads.append(thread)
 			thread.start()
 
@@ -1814,7 +1862,7 @@ class PremiumizeInterface(object):
 		valid = False
 		title = PremiumizeInterface.Name + ' ' + interface.Translation.string(33339)
 		if self.mDebrid.accountEnabled():
-			account = self.mDebrid.account(cache = False)
+			account = self.mDebrid.account(cached = False)
 			if account:
 				valid = interface.Translation.string(33341) if self.mDebrid.accountValid() else interface.Translation.string(33342)
 				user = account['user']
@@ -1993,6 +2041,9 @@ class PremiumizeInterface(object):
 		elif result['error'] == Premiumize.ErrorSelection:
 			title = 'Selection Error'
 			message = 'No File Selected'
+		elif result['error'] == Premiumize.ErrorUnsupported:
+			title = 'Unsupported Error'
+			message = 'Requested Feature Unsupported'
 		else:
 			tools.Logger.errorCustom('Unexpected Premiumize Error: ' + str(result))
 			title = 'Stream Error'
@@ -2128,6 +2179,7 @@ class PremiumizeInterface(object):
 							status = Premiumize.StatusQueued
 							seconds = None
 							counter = 0
+							canceled = False
 							item = self.mDebrid.item(idTransfer = id, content = True, season = season, episode = episode)
 							if select: item = self._addSelect(item)
 							while True:
@@ -2199,7 +2251,9 @@ class PremiumizeInterface(object):
 
 										interface.Core.update(progress = int(percentage), title = title, message = description)
 
-								if interface.Core.canceled(): break
+								if interface.Core.canceled():
+									canceled = True # Because the status is reset with interface.Core.close().
+									break
 
 								# Ask to close a background dialog, because there is no cancel button as with the foreground dialog.
 								elapsed = self.timer.elapsed()
@@ -2234,7 +2288,7 @@ class PremiumizeInterface(object):
 							tools.Logger.error()
 
 						# Action Dialog
-						if interface.Core.canceled():
+						if interface.Core.canceled() or canceled:
 							if not self._addAction(result):
 								self.tActionCanceled = True
 								return None
@@ -2593,6 +2647,7 @@ class OffCloud(Debrid):
 	# Categories
 	CategoryInstant = 'instant'
 	CategoryCloud = 'cloud'
+	CategoryCache = 'cache'
 	CategoryRemote = 'remote'
 	CategoryRemoteAccount = 'remote-account'
 	CategoryProxy = 'proxy'
@@ -2649,11 +2704,6 @@ class OffCloud(Debrid):
 	ErrorLimitVideo = 'limitvideo'
 	ErrorPremium = 'premium'
 	ErrorSelection = 'selection' # No file selected from list of items.
-
-	# Timeouts
-	# Number of seconds the requests should be cached.
-	TimeoutServices = 3 # 3 hour
-	TimeoutAccount = 0.17 # 10 min
 
 	# Limits
 	LimitLink = 2000 # Maximum length of a URL.
@@ -2834,13 +2884,11 @@ class OffCloud(Debrid):
 		result = self._retrieve(mode = OffCloud.ModeGet, category = OffCloud.CategoryAccount, action = OffCloud.ActionStats)
 		return self.success() == True and 'userId' in result and not result['userId'] == None and not result['userId'] == ''
 
-	def account(self, cache = True):
+	def account(self, cached = True):
 		try:
 			if self.accountValid():
-				timeout = OffCloud.TimeoutAccount if cache else 0
-				def __offcloudAccount(): # Must have a different name than the tools.Cache.cache call for the hoster list. Otherwise the cache returns the result for the hosters instead of the account.
-					return self._retrieve(mode = OffCloud.ModeGet, category = OffCloud.CategoryAccount, action = OffCloud.ActionStats)
-				result = tools.Cache.cache(__offcloudAccount, timeout)
+				if cached: result = cache.Cache().cacheShort(self._retrieve, mode = OffCloud.ModeGet, category = OffCloud.CategoryAccount, action = OffCloud.ActionStats)
+				else: result = cache.Cache().cacheClear(self._retrieve, mode = OffCloud.ModeGet, category = OffCloud.CategoryAccount, action = OffCloud.ActionStats)
 
 				limits = result['limits']
 				expiration = tools.Time.datetime(result['expirationDate'], '%d-%m-%Y')
@@ -2879,7 +2927,7 @@ class OffCloud(Debrid):
 	# SERVICES
 	##############################################################################
 
-	def services(self, cache = True, onlyEnabled = False):
+	def services(self, cached = True, onlyEnabled = False):
 		# Even thow ServicesUpdate is a class variable, it will be destrcucted if there are no more Premiumize instances.
 		if OffCloud.Services == None:
 			OffCloud.Services = []
@@ -2889,10 +2937,8 @@ class OffCloud(Debrid):
 			streamingHoster = self.streamingHoster()
 
 			try:
-				timeout = OffCloud.TimeoutServices if cache else 0
-				def __offcloudHosters(): # Must have a different name than the tools.Cache.cache call for the account details. Otherwise the cache returns the result for the account instead of the hosters.
-					return self._retrieve(mode = OffCloud.ModeGet, category = OffCloud.CategorySites)
-				result = tools.Cache.cache(__offcloudHosters, timeout)
+				if cached: result = cache.Cache().cacheShort(self._retrieve, mode = OffCloud.ModeGet, category = OffCloud.CategorySites)
+				else: result = cache.Cache().cacheClear(self._retrieve, mode = OffCloud.ModeGet, category = OffCloud.CategorySites)
 
 				# Sometimes error HTML page is returned.
 				if not isinstance(result, list):
@@ -3325,7 +3371,7 @@ class OffCloud(Debrid):
 
 		def cachedChunk(callback, mode, hashes, timeout):
 			offcloud = OffCloud()
-			result = offcloud._retrieve(mode = mode, category = OffCloud.CategoryTorrent, action = OffCloud.ActionCheck, hash = hashes, httpTimeout = timeout)
+			result = offcloud._retrieve(mode = mode, category = OffCloud.CategoryCache, hash = hashes, httpTimeout = timeout)
 			if offcloud.success():
 				result = result['cachedItems']
 				self.tCacheLock.acquire()
@@ -3427,33 +3473,23 @@ class OffCloud(Debrid):
 				status = self._itemStatus(self.tResulTransfer['status'])
 
 				error = None
-				try:
-					error = self.tResulTransfer['errorMessage']
+				try: error = self.tResulTransfer['errorMessage']
 				except: pass
 
 				directory = False
-				try:
-					directory = self.tResulTransfer['isDirectory']
+				try: directory = self.tResulTransfer['isDirectory']
 				except: pass
 
 				name = None
-				try:
-					name = self.tResulTransfer['fileName']
+				try: name = self.tResulTransfer['fileName']
 				except: pass
 
 				server = None
-				try:
-					server = self.tResulTransfer['server']
-				except: pass
-
-				server = None
-				try:
-					server = self.tResulTransfer['server']
+				try: server = self.tResulTransfer['server']
 				except: pass
 
 				size = 0
-				try:
-					size = long(self.tResulTransfer['fileSize'])
+				try: size = long(self.tResulTransfer['fileSize'])
 				except: pass
 				sizeObject = convert.ConverterSize(size)
 
@@ -3548,12 +3584,12 @@ class OffCloud(Debrid):
 					},
 				})
 
-			# Cloud downloads with a single file have no way of returning the link.
-			# cloud/history and cloud/status do not return the link, and cloud/explore returns "bad archive" for single files.
-			# Construct the link manually.
-			# This should be removed once OffCloud updates their API to fix this.
-			if not self.tResulContent and not directory and status == OffCloud.StatusFinished and not server == None and not server == '':
-				self.tResulContent = ['https://%s.offcloud.com/cloud/download/%s/%s' % (server, id, urllib.quote_plus(name))]
+				# Cloud downloads with a single file have no way of returning the link.
+				# cloud/history and cloud/status do not return the link, and cloud/explore returns "bad archive" for single files.
+				# Construct the link manually.
+				# This should be removed once OffCloud updates their API to fix this.
+				if not self.tResulContent and not directory and status == OffCloud.StatusFinished and not server == None and not server == '':
+					self.tResulContent = ['https://%s.offcloud.com/cloud/download/%s/%s' % (server, id, urllib.quote_plus(name))]
 
 			if self.tResulContent:
 				video = None
@@ -3806,7 +3842,7 @@ class OffCloudInterface(object):
 		valid = False
 		title = OffCloudInterface.Name + ' ' + interface.Translation.string(33339)
 		if self.mDebrid.accountEnabled():
-			account = self.mDebrid.account(cache = False)
+			account = self.mDebrid.account(cached = False)
 			if account:
 				valid = interface.Translation.string(33341) if self.mDebrid.accountValid() else interface.Translation.string(33342)
 				premium = interface.Translation.string(33341) if account['premium'] else interface.Translation.string(33342)
@@ -3986,7 +4022,8 @@ class OffCloudInterface(object):
 	def _addSelect(self, result):
 		try:
 			if not result: return result
-			items = [i for i in result['items']['files'] if i['name'] and not i['name'].endswith(Debrid.Exclusions)]
+			try: items = [i for i in result['items']['files'] if i['name'] and not i['name'].endswith(Debrid.Exclusions)]
+			except: items = [i for i in result['files'] if i['name'] and not i['name'].endswith(Debrid.Exclusions)]
 			items = sorted(items, key = lambda x : x['name'])
 			choice = interface.Dialog.options(title = 35542, items = [i['name'] for i in items])
 			if choice < 0:
@@ -4109,12 +4146,15 @@ class OffCloudInterface(object):
 				self.timerLong = False
 
 				def updateProgress(status, category, id, percentage, close, cached):
+					canceled = False
 					while True:
 						background = interface.Core.background()
 
 						# StatusProcessing is when an already cached file (which is stored as an archive) is being extracted to make it accessible for streaming.
+						created = False
 						processing = self._addProcessing(status = status, cached = cached)
 						if not processing:
+							created = True
 							interface.Core.create(type = interface.Core.TypeDownload, title = title, message = descriptionWaiting)
 							interface.Core.update(progress = int(percentage), title = title, message = descriptionWaiting)
 
@@ -4123,17 +4163,21 @@ class OffCloudInterface(object):
 							seconds = None
 							counter = 0
 							item = self.mDebrid.item(category = category, id = id, season = season, episode = episode, transfer = True, files = True)
-							if select: result = self._addSelect(result)
+							if select: item = self._addSelect(item)
 
 							while True:
 								if (processing and counter == 5) or (not processing and counter == 10): # Only make an API request every 2.5 or 5 seconds.
 									item = self.mDebrid.item(category = category, id = id, season = season, episode = episode, transfer = True, files = True)
-									if select: result = self._addSelect(result)
+									if select: item = self._addSelect(item)
 									counter = 0
 								counter += 1
 
 								status = item['status'] if 'status' in item else None
 								processing = self._addProcessing(status = status, cached = cached)
+								if not processing and not created:
+									created = True
+									interface.Core.create(type = interface.Core.TypeDownload, title = title, message = descriptionWaiting)
+
 								try:
 									self.tLink = item['video']['link']
 									if self.tLink: return
@@ -4192,7 +4236,9 @@ class OffCloudInterface(object):
 
 										interface.Core.update(progress = int(percentage), title = title, message = description)
 
-								if not processing and interface.Core.canceled(): break
+								if not processing and interface.Core.canceled():
+									canceled = True # Because the status is reset with interface.Core.close().
+									break
 
 								# Ask to close a background dialog, because there is no cancel button as with the foreground dialog.
 								elapsed = self.timer.elapsed()
@@ -4213,7 +4259,7 @@ class OffCloudInterface(object):
 
 									answer = interface.Dialog.option(title = title, message = question, labelConfirm = 'Take Action', labelDeny = 'Continue Download')
 									if answer:
-										if self._addAction(result):
+										if self._addAction(item):
 											break
 										else:
 											self.tActionCanceled = True
@@ -4227,7 +4273,7 @@ class OffCloudInterface(object):
 							tools.Logger.error()
 
 						# Action Dialog
-						if not processing and interface.Core.canceled():
+						if not processing and (interface.Core.canceled() or canceled):
 							if not self._addAction(result):
 								self.tActionCanceled = True
 								return None
@@ -4663,13 +4709,8 @@ class RealDebrid(Debrid):
 	LimitLink = 2000 # Maximum length of a URL.
 	LimitHashesGet = 40 # Maximum number of 40-character hashes to use in GET parameter so that the URL length limit is not exceeded.
 
-	# Timeouts
-	# Number of seconds the requests should be cached.
-	TimeoutServices = 3 # 3 hour
-	TimeoutAccount = 0.17 # 10 min
-
 	# Time
-	TimeOffset = 0
+	TimeOffset = None
 
 	# User Agent
 	UserAgent = tools.System.name() + ' ' + tools.System.version()
@@ -5019,15 +5060,13 @@ class RealDebrid(Debrid):
 		return tools.Settings.getString('accounts.debrid.realdebrid.refresh') if self.accountEnabled() else ''
 
 	def accountVerify(self):
-		return not self.account(cache = False) == None
+		return not self.account(cached = False) == None
 
-	def account(self, cache = True):
+	def account(self, cached = True):
 		try:
 			if self.accountValid():
-				timeout = RealDebrid.TimeoutAccount if cache else 0
-				def __realdebridAccount(): # Must have a different name than the tools.Cache.cache call for the hoster list. Otherwise the cache returns the result for the hosters instead of the account.
-					return self._retrieve(mode = RealDebrid.ModeGet, category = RealDebrid.CategoryUser)
-				result = tools.Cache.cache(__realdebridAccount, timeout)
+				if cached: result = cache.Cache().cacheShort(self._retrieve, mode = RealDebrid.ModeGet, category = RealDebrid.CategoryUser)
+				else: result = cache.Cache().cacheClear(self._retrieve, mode = RealDebrid.ModeGet, category = RealDebrid.CategoryUser)
 
 				#if not self.success(): # Do not use this, since it will be false for cache calls.
 				if result and isinstance(result, dict) and 'id' in result and result['id']:
@@ -5063,7 +5102,7 @@ class RealDebrid(Debrid):
 	##############################################################################
 
 	# If available is False, will return all services, including those that are currently down.
-	def services(self, available = True, cache = True, onlyEnabled = False):
+	def services(self, available = True, cached = True, onlyEnabled = False):
 		# Even thow ServicesUpdate is a class variable, it will be destrcucted if there are no more Premiumize instances.
 		if RealDebrid.ServicesUpdate == None:
 			RealDebrid.ServicesUpdate = []
@@ -5075,10 +5114,8 @@ class RealDebrid(Debrid):
 				# NB: The /hosts/status always throws errors, sometimes 401 errors, sometimes unknow errors. Just use /hosts
 
 				'''
-				timeout = RealDebrid.TimeoutServices if cache else 0
-				def __realdebridHosters():# Must have a different name than the tools.Cache.cache call for the account details. Otherwise the cache returns the result for the account instead of the hosters.
-					return self._retrieve(mode = RealDebrid.ModeGet, category = RealDebrid.CategoryHosts, action = RealDebrid.ActionStatus)
-				result = tools.Cache.cache(__realdebridHosters, timeout)
+				if cached: result = cache.Cache().cacheShort(self._retrieve, mode = RealDebrid.ModeGet, category = RealDebrid.CategoryHosts, action = RealDebrid.ActionStatus)
+				else: result = cache.Cache().cacheClear(self._retrieve, mode = RealDebrid.ModeGet, category = RealDebrid.CategoryHosts, action = RealDebrid.ActionStatus)
 
 				for service in RealDebrid.ServicesTorrent:
 					service['enabled'] = streamingTorrent
@@ -5098,10 +5135,8 @@ class RealDebrid(Debrid):
 							})
 				'''
 
-				timeout = RealDebrid.TimeoutServices if cache else 0
-				def __realdebridHosters():# Must have a different name than the tools.Cache.cache call for the account details. Otherwise the cache returns the result for the account instead of the hosters.
-					return self._retrieve(mode = RealDebrid.ModeGet, category = RealDebrid.CategoryHosts)
-				result = tools.Cache.cache(__realdebridHosters, timeout)
+				if cached: result = cache.Cache().cacheShort(self._retrieve, mode = RealDebrid.ModeGet, category = RealDebrid.CategoryHosts)
+				else: result = cache.Cache().cacheClear(self._retrieve, mode = RealDebrid.ModeGet, category = RealDebrid.CategoryHosts)
 
 				for service in RealDebrid.ServicesTorrent:
 					service['enabled'] = streamingTorrent
@@ -5109,15 +5144,16 @@ class RealDebrid(Debrid):
 
 				if not result == None:
 					for key, value in result.iteritems():
-						RealDebrid.ServicesUpdate.append({
-							'name' : value['name'],
-							'id' : key.lower(),
-							'identifier' : value['id'],
-							'enabled' : streamingHoster,
-							'domain' : key,
-							'status' : 'up',
-							'supported' : True,
-						})
+						if key: # Exclude "Remote".
+							RealDebrid.ServicesUpdate.append({
+								'name' : value['name'],
+								'id' : key.lower(),
+								'identifier' : value['id'],
+								'enabled' : streamingHoster,
+								'domain' : key,
+								'status' : 'up',
+								'supported' : True,
+							})
 
 			except:
 				tools.Logger.error()
@@ -5127,11 +5163,9 @@ class RealDebrid(Debrid):
 		else:
 			return RealDebrid.ServicesUpdate
 
-	def servicesDomains(self, cache = True):
-		timeout = RealDebrid.TimeoutServices if cache else 0
-		def __realdebridDomains():# Must have a different name than the tools.Cache.cache call for the account details. Otherwise the cache returns the result for the account instead of the hosters.
-			return self._retrieve(mode = RealDebrid.ModeGet, category = RealDebrid.CategoryHosts, action = RealDebrid.ActionDomains)
-		return tools.Cache.cache(__realdebridDomains, timeout)
+	def servicesDomains(self, cached = True):
+		if cached: return cache.Cache().cacheShort(self._retrieve, mode = RealDebrid.ModeGet, category = RealDebrid.CategoryHosts, action = RealDebrid.ActionDomains)
+		else: return cache.Cache().cacheClear(self._retrieve, mode = RealDebrid.ModeGet, category = RealDebrid.CategoryHosts, action = RealDebrid.ActionDomains)
 
 	def servicesList(self, onlyEnabled = False, domains = True):
 		services = self.services(onlyEnabled = onlyEnabled)
@@ -5217,7 +5251,7 @@ class RealDebrid(Debrid):
 
 	# Selects the files in the torrent to download.
 	# files can be an id, a list of ids, or a Selection type.
-	def selectList(self, id, files = None, item = None, season = None, episode = None, manual = False):
+	def selectList(self, id, files = None, item = None, season = None, episode = None, manual = False, pack = False):
 		if manual:
 			if item == None: item = self.item(id)
 			items = {}
@@ -5242,7 +5276,11 @@ class RealDebrid(Debrid):
 					if largest == None:
 						return result
 					else:
-						result = str(largest['id'])
+						# Always download all files in season packs.
+						# Otherwise RealDebrid will only download a single episode, but still show the torrent as being cached.
+						# Subsequent episodes from the pack might therefore have to be downloaded first even though they show up as being cached.
+						if pack: result = ','.join([str(file['id']) for file in item['files']])
+						else: result = str(largest['id'])
 				elif files == RealDebrid.SelectionLargest:
 					if item == None:
 						item = self.item(id)
@@ -5277,9 +5315,9 @@ class RealDebrid(Debrid):
 
 	# Selects the files in the torrent to download.
 	# files can be an id, a list of ids, or a Selection type.
-	def select(self, id, files, item = None, season = None, episode = None):
+	def select(self, id, files, item = None, season = None, episode = None, pack = False):
 		try:
-			items = self.selectList(id = id, files = files, item = item, season = season, episode = episode)
+			items = self.selectList(id = id, files = files, item = item, season = season, episode = episode, pack = pack)
 			if items == None or items['selection'] == None: return Debrid.ErrorUnavailable
 			result = self._retrieve(mode = RealDebrid.ModePost, category = RealDebrid.CategoryTorrents, action = RealDebrid.ActionSelectFiles, id = id, files = items['selection'])
 			if self.success(): return True
@@ -5288,18 +5326,18 @@ class RealDebrid(Debrid):
 			# If there are no seeders and RealDebrid cannot retrieve a list of files.
 			return RealDebrid.ErrorRealDebrid
 
-	def selectAll(self, id):
-		return self.select(id = id, files = RealDebrid.SelectionAll)
+	def selectAll(self, id, pack = False):
+		return self.select(id = id, files = RealDebrid.SelectionAll, pack = pack)
 
-	def selectName(self, id, item = None, season = None, episode = None):
-		return self.select(id = id, files = RealDebrid.SelectionName, item = item, season = season, episode = episode)
+	def selectName(self, id, item = None, season = None, episode = None, pack = False):
+		return self.select(id = id, files = RealDebrid.SelectionName, item = item, season = season, episode = episode, pack = pack)
 
-	def selectLargest(self, id, item = None):
-		return self.select(id = id, files = RealDebrid.SelectionLargest, item = item)
+	def selectLargest(self, id, item = None, pack = False):
+		return self.select(id = id, files = RealDebrid.SelectionLargest, item = item, pack = pack)
 
-	def selectManualInitial(self, id, item = None):
+	def selectManualInitial(self, id, item = None, pack = False):
 		try:
-			items = self.selectList(id = id, item = item, manual = True)
+			items = self.selectList(id = id, item = item, manual = True, pack = pack)
 			if items == None or items['items'] == None: return Debrid.ErrorUnavailable
 			else: return items
 		except:
@@ -5501,15 +5539,24 @@ class RealDebrid(Debrid):
 	# TIME
 	##############################################################################
 
-	def timeOffset(self):
-		def __realdebridTime():
+	def _timeOffset(self):
+		try:
 			timeServer = self._retrieve(mode = RealDebrid.ModeGet, category = RealDebrid.CategoryTime)
 			timeServer = convert.ConverterTime(timeServer, format = convert.ConverterTime.FormatDateTime).timestamp()
 			timeUtc = tools.Time.timestamp()
 			timeOffset = timeServer - timeUtc
-			RealDebrid.TimeOffset = int(3600 * round(timeOffset / float(3600))) # Round to the nearest hour
-			return RealDebrid.TimeOffset
-		return tools.Cache.cache(__realdebridTime, 43200)
+			return int(3600 * round(timeOffset / float(3600))) # Round to the nearest hour
+		except:
+			return 0
+
+	def timeOffset(self):
+		# Only initialize TimeOffset if it was not already intialized before.
+		# There is an issue with RealDebrid servers being flooded with /time API requests.
+		# Not sure why this happens, but might be because the cache is not working (eg: write permission on Android).
+		# Always check if TimeOffset is already in memory from a previous request, so that issues with caching the value to disk do not cause continues API calls.
+		if RealDebrid.TimeOffset is None:
+			RealDebrid.TimeOffset = cache.Cache().cacheMedium(self._timeOffset)
+		return RealDebrid.TimeOffset
 
 	##############################################################################
 	# ITEMS
@@ -5531,7 +5578,7 @@ class RealDebrid(Debrid):
 			pass
 		return None
 
-	def _item(self, dictionary):
+	def _item(self, dictionary, season = None, episode = None, pack = False):
 		result = {}
 		try:
 			status = dictionary['status']
@@ -5635,7 +5682,28 @@ class RealDebrid(Debrid):
 
 			# Link
 			if 'links' in dictionary and len(dictionary['links']) > 0:
-				result['link'] = dictionary['links'][0]
+				index = None
+				largest = None
+				try:
+					files = dictionary['files']
+					if pack:
+						meta = metadata.Metadata()
+						for i in range(len(files)):
+							file = files[i]
+							if file['selected'] and meta.episodeContains(title = file['path'], season = season, episode = episode):
+								if largest == None or file['bytes'] > largest['bytes']:
+									largest = file
+									index = i
+					if index == None:
+						for i in range(len(files)):
+							file = files[i]
+							if file['selected'] and (largest == None or file['bytes'] > largest['bytes']):
+								largest = file
+								index = i
+				except: pass # If there is not 'files' attribute in the results.
+				if index == None: index = 0
+				try: result['link'] = dictionary['links'][index]
+				except: result['link'] = dictionary['links'][0] # Sometimes RD only has 1 link for all the files.
 			else:
 				result['link'] = None
 
@@ -5668,20 +5736,20 @@ class RealDebrid(Debrid):
 			pass
 		return result
 
-	def items(self):
+	def items(self, season = None, episode = None, pack = False):
 		results = self._retrieve(mode = RealDebrid.ModeGet, category = RealDebrid.CategoryTorrents)
 		if self.success():
 			items = []
 			for result in results:
-				items.append(self._item(result))
+				items.append(self._item(result, season = season, episode = episode, pack = pack))
 			return items
 		else:
 			return RealDebrid.ErrorRealDebrid
 
-	def item(self, id):
+	def item(self, id, season = None, episode = None, pack = False):
 		result = self._retrieve(mode = RealDebrid.ModeGet, category = RealDebrid.CategoryTorrents, action = RealDebrid.ActionInfo, id = id)
 		if self.success():
-			return self._item(result)
+			return self._item(result, season = season, episode = episode, pack = pack)
 		else:
 			return RealDebrid.ErrorRealDebrid
 
@@ -5775,7 +5843,7 @@ class RealDebridInterface(object):
 		valid = False
 		title = RealDebridInterface.Name + ' ' + interface.Translation.string(33339)
 		if self.mDebrid.accountEnabled():
-			account = self.mDebrid.account(cache = False)
+			account = self.mDebrid.account(cached = False)
 			if account:
 				valid = interface.Translation.string(33341) if self.mDebrid.accountValid() else interface.Translation.string(33342)
 				user = account['user']
@@ -5931,7 +5999,10 @@ class RealDebridInterface(object):
 		if result['success']:
 			return result
 		elif result['id']:
-			return self._addWait(result = result, season = season, episode = episode, close = close, pack = pack, source = source, cached = cached, select = select)
+			result = self._addWait(result = result, season = season, episode = episode, close = close, pack = pack, source = source, cached = cached, select = select)
+
+		if result['success']:
+			return result
 		elif result['error'] == RealDebrid.ErrorInaccessible:
 			title = 'Stream Error'
 			message = 'Stream Is Inaccessible'
@@ -6079,6 +6150,7 @@ class RealDebridInterface(object):
 			descriptionFinalize = interface.Format.fontBold('Finalizing Download') + '%s'
 			percentage = 0
 			selectionFile = None
+			canceled = False
 
 			interface.Loader.hide()
 			background = interface.Core.background()
@@ -6091,7 +6163,7 @@ class RealDebridInterface(object):
 					interface.Core.create(type = interface.Core.TypeDownload, title = title, message = descriptionInitialize)
 					interface.Core.update(progress = int(percentage), title = title, message = descriptionInitialize)
 
-				item = self.mDebrid.item(id = id)
+				item = self.mDebrid.item(id = id, season = season, episode = episode, pack = pack)
 				status = item['status']
 
 				#####################################################################################################################################
@@ -6099,7 +6171,8 @@ class RealDebridInterface(object):
 				#####################################################################################################################################
 
 				while status == RealDebrid.StatusMagnetConversion or status == RealDebrid.StatusFileSelection or status == RealDebrid.StatusQueued:
-					if interface.Core.canceled():
+					if interface.Core.canceled() or canceled:
+						canceled = True
 						break
 
 					if background and self._addWaitAction(result = result):
@@ -6111,7 +6184,7 @@ class RealDebridInterface(object):
 					apiCounter += 1
 					if apiCounter == apiInterval:
 						apiCounter = 0
-						item = self.mDebrid.item(id = id)
+						item = self.mDebrid.item(id = id, season = season, episode = episode, pack = pack)
 						status = item['status']
 						if self._addErrorDetermine(item):
 							if not cached and close: interface.Core.close()
@@ -6122,17 +6195,19 @@ class RealDebridInterface(object):
 					if select:
 						selection = False
 						while True:
-							result = self.mDebrid.selectManualInitial(id = id, item = item)
+							result = self.mDebrid.selectManualInitial(id = id, item = item, pack = pack)
 							if isinstance(result, dict):
-								if selectionFile == None: selectionFile = self._addSelect(result)
+								if selectionFile == None:
+									selectionFile = self._addSelect(result)
+									if 'error' in selectionFile and selectionFile['error']: return selectionFile
 								selection = self.mDebrid.selectManualFinal(id = id, selection = selectionFile['selection'])
 								break
 							tools.Time.sleep(1)
 					else:
-						selection = self.mDebrid.selectName(id = id, item = item, season = season, episode = episode)
+						selection = self.mDebrid.selectName(id = id, item = item, season = season, episode = episode, pack = pack)
 
 					if selection == True:
-						item = self.mDebrid.item(id = id)
+						item = self.mDebrid.item(id = id, season = season, episode = episode, pack = pack)
 						status = item['status']
 						if status == RealDebrid.StatusFinished: # In case of "cached" RealDebrid torrents that are available immediatley.
 							percentage = 100
@@ -6162,7 +6237,8 @@ class RealDebridInterface(object):
 
 				waiting = item['transfer']['progress']['completed']['value'] == 0 and item['transfer']['speed']['bytes'] == 0
 				while status == RealDebrid.StatusQueued or waiting:
-					if not cached and interface.Core.canceled():
+					if not cached and (interface.Core.canceled() or canceled):
+						canceled = True
 						break
 
 					if background and self._addWaitAction(result = result):
@@ -6174,7 +6250,7 @@ class RealDebridInterface(object):
 					apiCounter += 1
 					if apiCounter == apiInterval:
 						apiCounter = 0
-						item = self.mDebrid.item(id = id)
+						item = self.mDebrid.item(id = id, season = season, episode = episode, pack = pack)
 						status = item['status']
 						if self._addErrorDetermine(item):
 							if not cached and close: interface.Core.close()
@@ -6189,7 +6265,8 @@ class RealDebridInterface(object):
 
 				seconds = None
 				while True:
-					if not cached and interface.Core.canceled():
+					if not cached and (interface.Core.canceled() or canceled):
+						canceled = True
 						break
 
 					if background and self._addWaitAction(result = result, seconds = seconds):
@@ -6198,7 +6275,7 @@ class RealDebridInterface(object):
 					apiCounter += 1
 					if apiCounter == apiInterval:
 						apiCounter = 0
-						item = self.mDebrid.item(id = id)
+						item = self.mDebrid.item(id = id, season = season, episode = episode, pack = pack)
 
 						if self._addErrorDetermine(item):
 							if not cached and close: interface.Core.close()
@@ -6261,7 +6338,7 @@ class RealDebridInterface(object):
 				#####################################################################################################################################
 
 				# Action Dialog
-				if interface.Core.canceled():
+				if interface.Core.canceled() or canceled:
 					if not self._addAction(result):
 						return self.mDebrid.addResult(error = Debrid.ErrorCancel)
 
@@ -6558,10 +6635,8 @@ class AllDebrid(Debrid):
 		hosts = []
 		try:
 			if (not onlyEnabled or self.streamingHoster()) and self.accountValid():
-				from resources.lib.modules import client
-				from resources.lib.modules import cache
 				url = 'https://api.alldebrid.com/hosts'
-				result = cache.get(client.request, 900, url)
+				result = cache.Cache().cacheMedium(client.request, url)
 				result = tools.Converter.jsonFrom(result)
 				result = result['hosts']
 				hosts = []
@@ -6643,10 +6718,8 @@ class RapidPremium(Debrid):
 		hosts = []
 		try:
 			if (not onlyEnabled or self.streamingHoster()) and self.accountValid():
-				from resources.lib.modules import client
-				from resources.lib.modules import cache
 				url = 'http://premium.rpnet.biz/hoster2.json'
-				result = cache.get(client.request, 900, url)
+				result = cache.Cache().cacheMedium(client.request, url)
 				result = tools.Converter.jsonFrom(result)
 				result = result['supported']
 				hosts = [i.lower() for i in result]
@@ -6679,8 +6752,6 @@ class RapidPremium(Debrid):
 class EasyNews(Debrid):
 
 	Cookie = 'chickenlicker=%s%%3A%s'
-
-	TimeoutAccount = 0.17 # 10 min
 
 	LinkLogin = 'https://account.easynews.com/index.php'
 	LinkAccount = 'https://account.easynews.com/editinfo.php'
@@ -6775,17 +6846,15 @@ class EasyNews(Debrid):
 		return EasyNews.Cookie % (self.accountUsername(), self.accountPassword())
 
 	def accountVerify(self):
-		return not self.account(cache = False, minimal = True) == None
+		return not self.account(cached = False, minimal = True) == None
 
-	def account(self, cache = True, minimal = False):
+	def account(self, cached = True, minimal = False):
 		account = None
 		try:
 			if self.accountValid():
-				timeout = EasyNews.TimeoutAccount if cache else 0
+				if cached: accountHtml = cache.Cache().cacheShort(self._request, EasyNews.LinkAccount)
+				else: accountHtml = cache.Cache().cacheClear(self._request, EasyNews.LinkAccount)
 
-				def __easynewsAccount():
-					return self._request(EasyNews.LinkAccount)
-				accountHtml = tools.Cache.cache(__easynewsAccount, timeout)
 				if accountHtml == None or accountHtml == '': raise Exception()
 
 				accountHtml = BeautifulSoup(accountHtml)
@@ -6813,9 +6882,9 @@ class EasyNews(Debrid):
 				}
 
 				if not minimal:
-					def __easynewsUsage():
-						return self._request(EasyNews.LinkUsage)
-					usageHtml = tools.Cache.cache(__easynewsUsage, timeout)
+					if cached: usageHtml = cache.Cache().cacheShort(self._request, EasyNews.LinkUsage)
+					else: usageHtml = cache.Cache().cacheClear(self._request, EasyNews.LinkUsage)
+
 					if usageHtml == None or usageHtml == '': raise Exception()
 
 					usageHtml = BeautifulSoup(usageHtml)
@@ -6956,7 +7025,7 @@ class EasyNewsInterface(object):
 		valid = False
 		title = EasyNewsInterface.Name + ' ' + interface.Translation.string(33339)
 		if self.mDebrid.accountEnabled():
-			account = self.mDebrid.account(cache = False)
+			account = self.mDebrid.account(cached = False)
 			if account:
 				valid = interface.Translation.string(33341) if self.mDebrid.accountValid() else interface.Translation.string(33342)
 				user = account['user']

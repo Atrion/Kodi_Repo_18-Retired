@@ -290,6 +290,24 @@
                         <onclick>Skin.ToggleSetting(osd.usetheme)</onclick>
                         <onclick>ReloadSkin()</onclick>
                     </control>-->
+					
+					<!--<control type="radiobutton" id="9233" description="Match theme">
+                        <width>1310</width>
+                        <visible>ControlGroup(9100).HasFocus(9103)</visible>
+                        <include>DefSettingsButton</include>
+                        <label>31196</label>
+                        <selected>!Skin.HasSetting(osd.usetheme)</selected>
+                        <onclick>Skin.ToggleSetting(osd.usetheme)</onclick>
+                        <onclick>ReloadSkin()</onclick>
+                    </control>-->
+					<!--<control type="radiobutton" id="9234" description="Match theme">
+                        <width>1310</width>
+                        <visible>ControlGroup(9100).HasFocus(9103)</visible>
+                        <include>DefSettingsButton</include>
+                        <label>37609</label>
+                        <selected>Skin.HasSetting(osd.usethemeNewOSD)</selected>
+                        <onclick>Skin.ToggleSetting(osd.usethemeNewOSD)</onclick>
+                    </control>-->
                     <control type="radiobutton" id="9235" description="Show Fanart">
                         <width>1310</width>
                         <visible>ControlGroup(9100).HasFocus(9103)</visible>
@@ -453,6 +471,16 @@
 						<onclick>Skin.ToggleSetting(BlurOnHome)</onclick>
 						<enable>Skin.HasSetting(EnableBlur)</enable>
 					</control>
+									
+					<control type="radiobutton" id="9558" description="Big Wide Info (51)">
+						<width>1310</width>
+						<align>left</align>
+						<label>37617</label>
+						<visible>ControlGroup(9100).HasFocus(9108)</visible>
+						<include>DefSettingsButton</include>
+						<selected>Skin.HasSetting(NewTime)</selected>
+						<onclick>Skin.ToggleSetting(NewTime)</onclick>
+					</control>
 					
 					<control type="button" id="9560">
                         <width>1310</width>
@@ -519,10 +547,36 @@
                         <width>1310</width>
                         <visible>ControlGroup(9100).HasFocus(9108)</visible>
                         <include>DefSettingsButtonLabelName</include>
-                        <label>37528</label>
+                        <label>37625</label>
                         <enable>false</enable>                    
                     </control> 
 					<control type="radiobutton" id="9569">
+                        <width>1310</width>
+                        <visible>ControlGroup(9100).HasFocus(9108)</visible>
+                        <include>DefSettingsButton</include>
+						<label>37623</label>                   
+                    	<selected>Skin.HasSetting(rss.home)</selected>
+                    	<onclick>Skin.ToggleSetting(rss.home)</onclick>
+						<enable>System.GetBool(lookandfeel.enablerssfeeds)</enable>
+					</control>
+					<control type="radiobutton" id="9570">
+                        <width>1310</width>
+                        <visible>ControlGroup(9100).HasFocus(9108)</visible>
+                        <include>DefSettingsButton</include>
+						<label>37624</label>                   
+                    	<selected>Skin.HasSetting(rss.top)</selected>
+                    	<onclick>Skin.ToggleSetting(rss.top)</onclick>
+						<enable>System.GetBool(lookandfeel.enablerssfeeds)</enable>
+					</control>
+					
+					<control type="button" id="9572">
+                        <width>1310</width>
+                        <visible>ControlGroup(9100).HasFocus(9108)</visible>
+                        <include>DefSettingsButtonLabelName</include>
+                        <label>37528</label>
+                        <enable>false</enable>                    
+                    </control> 
+					<control type="radiobutton" id="9573">
                         <width>1310</width>
                         <visible>ControlGroup(9100).HasFocus(9108)</visible>
                         <include>DefSettingsButton</include>
@@ -530,7 +584,7 @@
                     	<selected>Skin.HasSetting(show.studiologos)</selected>
                     	<onclick>Skin.ToggleSetting(show.studiologos)</onclick>
 					</control>
-					<control type="radiobutton" id="9570">
+					<control type="radiobutton" id="9574">
                         <width>1310</width>
                         <visible>ControlGroup(9100).HasFocus(9108)</visible>
                         <include>DefSettingsButton</include>
@@ -538,7 +592,7 @@
                     	<selected>Skin.HasSetting(olddialogbuttons)</selected>
                     	<onclick>Skin.ToggleSetting(olddialogbuttons)</onclick>
 					</control>
-					<control type="radiobutton" id="9571">
+					<control type="radiobutton" id="9575">
                         <width>1310</width>
                         <visible>ControlGroup(9100).HasFocus(9108)</visible>
                         <include>DefSettingsButton</include>
@@ -546,7 +600,7 @@
                     	<selected>Skin.HasSetting(hidefilenameandpath)</selected>
                     	<onclick>Skin.ToggleSetting(hidefilenameandpath)</onclick>
 					</control>
-					<control type="radiobutton" id="9572">
+					<control type="radiobutton" id="9576">
                         <width>1310</width>
                         <visible>ControlGroup(9100).HasFocus(9108)</visible>
                         <include>DefSettingsButton</include>
@@ -703,7 +757,7 @@
 					
 					
 					
-					<control type="button" id="9601">
+					<control type="button" id="9600">
                         <width>1310</width>
                         <visible>ControlGroup(9100).HasFocus(9108)</visible>
                         <include>DefSettingsButtonLabelName</include>
@@ -711,6 +765,14 @@
                         <enable>false</enable>
                         
                     </control> 
+					<control type="radiobutton" id="9601" description="Match theme">
+                        <width>1310</width>
+                        <visible>ControlGroup(9100).HasFocus(9108)</visible>
+                        <include>DefSettingsButton</include>
+                        <label>37609</label>
+                        <selected>Skin.HasSetting(osd.usethemeNewOSD)</selected>
+                        <onclick>Skin.ToggleSetting(osd.usethemeNewOSD)</onclick>
+                    </control>
 					<control type="radiobutton" id="9602">
                         <width>1310</width>
                         <visible>ControlGroup(9100).HasFocus(9108)</visible>
@@ -781,13 +843,21 @@
 					</control>
 					
 					
-					<control type="button" id="9612">
+					<control type="button" id="9611">
                         <width>1310</width>
                         <visible>ControlGroup(9100).HasFocus(9108)</visible>
                         <include>DefSettingsButtonLabelName</include>
                         <label>10124</label>
                         <enable>false</enable>
                     </control> 
+					<control type="radiobutton" id="9612" description="Match theme">
+                        <width>1310</width>
+                        <visible>ControlGroup(9100).HasFocus(9108)</visible>
+                        <include>DefSettingsButton</include>
+                        <label>37609</label>
+                        <selected>Skin.HasSetting(osd.usethemeNewOSD)</selected>
+                        <onclick>Skin.ToggleSetting(osd.usethemeNewOSD)</onclick>
+                    </control>
 					<control type="radiobutton" id="9613">
                         <width>1310</width>
                         <visible>ControlGroup(9100).HasFocus(9108)</visible>

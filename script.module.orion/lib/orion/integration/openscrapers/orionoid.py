@@ -149,7 +149,7 @@ class source:
 				try:
 					if sources[i]['file']['hash'] in self.cachedHashes:
 						sources[i]['cached'] = True
-						sources[i]['stream']['link'] = self._premiumizeLink(link = sources[i]['stream']['link'])
+						sources[i]['links'] = [self._premiumizeLink(link = self._link(sources[i]))]
 				except: pass
 		except: self._error()
 		return sources
@@ -163,6 +163,13 @@ class source:
 					self.cachedHashes.append(key)
 			self.cachedLock.release()
 		except: self._error()
+
+	def _link(self, data):
+		links = data['links']
+		for link in links:
+			if link.lower().startswith('magnet:'):
+				return link
+		return links[0]
 
 	def _quality(self, data):
 		try:
@@ -231,7 +238,7 @@ class source:
 		return '+' + str(int(popularity)) + '%'
 
 	def _domain(self, data):
-		elements = urlparse.urlparse(data['stream']['link'])
+		elements = urlparse.urlparse(self._link(data))
 		domain = elements.netloc or elements.path
 		domain = domain.split('@')[-1].split(':')[0]
 		result = re.search('(?:www\.)?([\w\-]*\.[\w\-]{2,3}(?:\.[\w\-]{2,3})?)$', domain)
@@ -261,7 +268,7 @@ class source:
 		return None
 
 	def _debrid(self, data):
-		link = data['stream']['link']
+		link = self._link(data)
 		if data['stream']['type'] == Orion.StreamTorrent:
 			try: cached = data['cached']
 			except: cached = False
@@ -390,7 +397,7 @@ class source:
 						'source' : self._source(data, True),
 						'quality' : self._quality(data),
 						'language' : self._language(data),
-						'url' : data['stream']['link'],
+						'url' : self._link(data),
 						'info' : ' | '.join(info) if len(info) > 0 else None,
 						'direct' : data['access']['direct'],
 						'debridonly' : self._debrid(data)

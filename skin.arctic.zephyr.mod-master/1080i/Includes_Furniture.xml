@@ -34,7 +34,18 @@
 		<animation effect="fade" start="100" end="6" time="400" condition="!Control.HasFocus($PARAM[scrollid]) + !Container.Scrolling">Conditional</animation>
 	</include>
 	
-	
+	<include name="scrollbar_hor_weather" id="$PARAM[scrollid]">
+		<onback>50</onback>
+		<left>90</left>
+		<width>1745</width>
+		<bottom>210</bottom>
+		<orientation>horizontal</orientation>
+		<height>8</height>
+		<onup>50</onup>
+		<texturesliderbar border="4" colordiffuse="Dark3">scrollbar/scrollv.png</texturesliderbar>
+		<texturesliderbarfocus border="4" colordiffuse="Dark2">scrollbar/scrollv.png</texturesliderbarfocus>
+		<animation effect="fade" start="100" end="6" time="400" condition="!Control.HasFocus($PARAM[scrollid]) + !Container.Scrolling">Conditional</animation>
+	</include>
 	
 	<include name="Furniture_Scrollbar">
         <control type="scrollbar" id="60">
@@ -446,7 +457,7 @@
                 <width min="20" max="128">auto</width>
                 <height>40</height>
 				<centertop>50%</centertop>
-                <texture colordiffuse="Dark1" fallback="flags/fallback.png">$INFO[ListItem.AudioCodec,flags/audio/,.png]</texture>
+                <texture colordiffuse="Dark1" fallback="flags/fallback.png">$VAR[ListItemAudioCodec,flags/audio/,.png]</texture>
                  <aspectratio align="center">keep</aspectratio>
                 <visible>Skin.HasSetting(furniture.flagicons) + !String.IsEmpty(ListItem.AudioCodec)</visible>
             </control>
@@ -623,7 +634,7 @@
                 <width min="20" max="128">auto</width>
                 <height>64</height>
                 <centertop>50%</centertop>
-                <texture colordiffuse="Dark1" fallback="flags/fallback.png">$INFO[ListItem.AudioCodec,flags3/audio/,.png]</texture>
+                <texture colordiffuse="Dark1" fallback="flags/fallback.png">$VAR[ListItemAudioCodec,flags3/audio/,.png]</texture>
                 <aspectratio align="center">keep</aspectratio>
                 <visible>Skin.HasSetting(furniture.flagicons) + !String.IsEmpty(ListItem.AudioCodec) + !Skin.HasSetting(furniture.coloredicons)</visible>
             </control>
@@ -651,7 +662,7 @@
                 <height>64</height>
                 <align>left</align>
                 <aligny>center</aligny>
-                <label>$INFO[ListItem.VideoCodec,,  •  ]$INFO[ListItem.VideoResolution]$INFO[ListItem.VideoAspect,  •  ,]</label>
+                <label>$INFO[ListItem.VideoCodec,,  •  ]$INFO[ListItem.VideoResolution]$INFO[ListItem.VideoAspect,  •  ,]$VAR[LabelFurniturehdr,  •  ,]</label>
                 <font>Flag</font>
                 <textcolor>Dark1</textcolor>
                 <visible>!Skin.HasSetting(furniture.flagicons) + !String.IsEmpty(ListItem.VideoResolution)</visible>
@@ -670,10 +681,19 @@
                 <height>64</height>
                 <align>left</align>
                 <aligny>center</aligny>
-                <label>$INFO[ListItem.AudioCodec]$VAR[LabelAudioChannels,  •  ,]</label>
+                <label>$VAR[ListItemAudioCodec]$VAR[LabelAudioChannels,  •  ,]</label>
                 <font>Flag</font>
                 <textcolor>Dark1</textcolor>
                 <visible>!Skin.HasSetting(furniture.flagicons) + !String.IsEmpty(ListItem.AudioCodec)</visible>
+            </control>
+			
+			<control type="image">
+                <width min="20" max="100">auto</width>
+                <height>60</height>
+                <centertop>50%</centertop>
+                <texture colordiffuse="Dark1" fallback="flags/fallback.png">flags/other/hdr.png</texture>
+                <aspectratio align="center">keep</aspectratio>
+                <visible>Skin.HasSetting(furniture.flagicons) + [String.Contains(ListItem.Filenameandpath,.hdr.) | String.Contains(ListItem.Filenameandpath,hdr)]</visible>
             </control>
 			
 			<control type="image">
@@ -699,7 +719,7 @@
                 <height>64</height>
                 <align>left</align>
                 <aligny>center</aligny>
-                <label>$INFO[ListItem.Duration(mins),, $LOCALIZE[31102]  ]</label>
+                <label>$VAR[LabelDurationTimeCheck]  </label>
                 <font>Flag</font>
                 <textcolor>Dark1</textcolor>
                 <visible>!String.IsEmpty(ListItem.Duration(mins)) + [Control.IsVisible(500) | Control.IsVisible(53) | Control.IsVisible(52) | Control.IsVisible(55)]</visible>
@@ -1048,7 +1068,7 @@
                 <width min="20" max="128">auto</width>
                 <height>60</height>
                 <centertop>50%</centertop>
-                <texture fallback="flags/fallback.png">$INFO[ListItem.AudioCodec,flags/color/audio/,.png]</texture>
+                <texture fallback="flags/fallback.png">$VAR[ListItemAudioCodec,flags/color/audio/,.png]</texture>
                 <aspectratio align="center">keep</aspectratio>
                 <visible>Skin.HasSetting(furniture.flagicons) + !String.IsEmpty(ListItem.AudioCodec)</visible>
             </control>
@@ -1076,11 +1096,13 @@
                 <height>64</height>
                 <align>left</align>
                 <aligny>center</aligny>
-                <label>$INFO[ListItem.VideoCodec,,  •  ]$INFO[ListItem.VideoResolution]$INFO[ListItem.VideoAspect,  •  ,]</label>
+                <label>$INFO[ListItem.VideoCodec,,  •  ]$INFO[ListItem.VideoResolution]$INFO[ListItem.VideoAspect,  •  ,]$VAR[LabelFurniturehdr,  •  ,]</label>
                 <font>Flag</font>
                 <textcolor>Dark1</textcolor>
                 <visible>!Skin.HasSetting(furniture.flagicons) + !String.IsEmpty(ListItem.VideoResolution)</visible>
             </control>
+			
+			
             <control type="image">
                 <width>48</width>
                 <centertop>50%</centertop>
@@ -1095,10 +1117,20 @@
                 <height>64</height>
                 <align>left</align>
                 <aligny>center</aligny>
-                <label>$INFO[ListItem.AudioCodec]$VAR[LabelAudioChannels,  •  ,]</label>
+                <label>$VAR[ListItemAudioCodec]$VAR[LabelAudioChannels,  •  ,]</label>
                 <font>Flag</font>
                 <textcolor>Dark1</textcolor>
                 <visible>!Skin.HasSetting(furniture.flagicons) + !String.IsEmpty(ListItem.AudioCodec)</visible>
+            </control>
+			
+			<control type="image">
+                <width min="20" max="100">auto</width>
+                <height>64</height>
+				<left>10</left>
+                <centertop>50%</centertop>
+                <texture fallback="flags/fallback.png">flags/color/other/hdrnew.png</texture>
+                <aspectratio align="center">keep</aspectratio>
+                <visible>Skin.HasSetting(furniture.flagicons) + [String.Contains(ListItem.Filenameandpath,.hdr.) | String.Contains(ListItem.Filenameandpath,hdr)]</visible>
             </control>
 				
 			<control type="image">
@@ -1124,7 +1156,7 @@
                 <height>64</height>
                 <align>left</align>
                 <aligny>center</aligny>
-                <label>$INFO[ListItem.Duration(mins),, $LOCALIZE[31102]  ]</label>
+                <label>$VAR[LabelDurationTimeCheck]  </label>
                 <font>Flag</font>
                 <textcolor>Dark1</textcolor>
                 <visible>!String.IsEmpty(ListItem.Duration(mins)) + [Control.IsVisible(500) | Control.IsVisible(53) | Control.IsVisible(52) | Control.IsVisible(55)]</visible>
@@ -1216,8 +1248,9 @@
 				<font>Tiny</font>
 				<left>3</left>
 				<textcolor>Dark2</textcolor>
-				<label>$INFO[Window(Home).Property(SkinHelper.ListItem.RottenTomatoes.Rating)]%</label>		
+				<label>$INFO[Window(Home).Property(ListItemHelper.rating.rottentomatoes.percent)]%</label>		
 			</control>
+			
 			
 			<control type="image">
 				<visible>!String.IsEmpty(Window(Home).Property(SkinHelper.ListItem.MetaCritic.Rating)) + Skin.HasSetting(furniture.showtomatoesandmetacritics) + !Skin.HasSetting(furniture.flagicons)</visible>
@@ -1457,7 +1490,7 @@
                 <height>64</height>
                 <align>left</align>
                 <aligny>center</aligny>
-                <label>$INFO[Container(9500).ListItem.VideoCodec,,  •  ]$INFO[Container(9500).ListItem.VideoResolution]$INFO[Container(9500).ListItem.VideoAspect,  •  ,]</label>
+                <label>$INFO[Container(9500).ListItem.VideoCodec,,  •  ]$INFO[Container(9500).ListItem.VideoResolution]$INFO[Container(9500).ListItem.VideoAspect,  •  ,]$VAR[LabelFurniturehdr,  •  ,]</label>
                 <font>Flag</font>
                 <textcolor>Dark1</textcolor>
                 <visible>!Skin.HasSetting(furniture.flagicons) + !String.IsEmpty(Container(9500).ListItem.VideoResolution)</visible>
@@ -1478,6 +1511,15 @@
                 <font>Flag</font>
                 <textcolor>Dark1</textcolor>
                 <visible>!Skin.HasSetting(furniture.flagicons) + !String.IsEmpty(Container(9500).ListItem.AudioCodec)</visible>
+            </control>
+			
+			<control type="image">
+                <width min="20" max="100">auto</width>
+                <height>60</height>
+                <centertop>50%</centertop>
+                <texture colordiffuse="Dark1" fallback="flags/fallback.png">flags/other/hdr.png</texture>
+                <aspectratio align="center">keep</aspectratio>
+                <visible>String.Contains(Container(9500).ListItem.Filenameandpath,.hdr.) | String.Contains(Container(9500).ListItem.Filenameandpath,hdr)</visible>
             </control>
 			
 			<control type="image">
@@ -1818,7 +1860,7 @@
                 <height>64</height>
                 <align>left</align>
                 <aligny>center</aligny>
-                <label>$INFO[Container(9500).ListItem.VideoCodec,,  •  ]$INFO[Container(9500).ListItem.VideoResolution]$INFO[Container(9500).ListItem.VideoAspect,  •  ,]</label>
+                <label>$INFO[Container(9500).ListItem.VideoCodec,,  •  ]$INFO[Container(9500).ListItem.VideoResolution]$INFO[Container(9500).ListItem.VideoAspect,  •  ,]$VAR[LabelFurniturehdr,  •  ,]</label>
                 <font>Flag</font>
                 <textcolor>Dark1</textcolor>
                 <visible>!Skin.HasSetting(furniture.flagicons) + !String.IsEmpty(Container(9500).ListItem.VideoResolution)</visible>
@@ -1839,6 +1881,16 @@
                 <font>Flag</font>
                 <textcolor>Dark1</textcolor>
                 <visible>!Skin.HasSetting(furniture.flagicons) + !String.IsEmpty(Container(9500).ListItem.AudioCodec)</visible>
+            </control>
+			
+			<control type="image">
+                <width min="20" max="100">auto</width>
+                <height>64</height>
+				<left>10</left>
+                <centertop>50%</centertop>
+                <texture fallback="flags/fallback.png">flags/color/other/hdrnew.png</texture>
+                <aspectratio align="center">keep</aspectratio>
+                <visible>Skin.HasSetting(furniture.flagicons) + [String.Contains(Container(9500).ListItem.Filenameandpath,.hdr.) | String.Contains(Container(9500).ListItem.Filenameandpath,hdr)]</visible>
             </control>
 			
 			<control type="image">
@@ -2299,6 +2351,10 @@
 
     </variable>
     
+	<variable name="weatherlabel">
+		<value>$INFO[Control.GetLabel(9100)]</value>
+	</variable>
+	
     <variable name="MainHeaderLabel">
         <value condition="Skin.HasSetting(hide.busydialog) + Window.IsVisible(DialogBusy.xml)">$LOCALIZE[20186]...</value>
         <value condition="Window.IsVisible(Custom_SetCustomColor.xml)">$LOCALIZE[31238]</value>
@@ -2326,7 +2382,9 @@
         <value condition="!String.IsEmpty(Container.FolderName) + [Window.IsVisible(MyMusicNav.xml) | Window.IsVisible(MyMusicSongs.xml)]">$INFO[Container.FolderName]</value>
         <value condition="Window.IsVisible(MyMusicNav.xml) | Window.IsVisible(MyMusicSongs.xml)">$LOCALIZE[2]</value>
         <value condition="Window.IsVisible(SettingsSystemInfo.xml) | Window.IsVisible(SettingsCategory.xml) | Window.IsVisible(settings) | Window.IsVisible(SkinSettings.xml)">$LOCALIZE[5]</value>
-        <value condition="Window.IsVisible(weather)">$LOCALIZE[8]</value>
+        <value condition="Window.IsVisible(weather) + Control.HasFocus(9100)">$LOCALIZE[8] $VAR[weatherlabel,- ]</value>
+		<value condition="Window.IsVisible(weather) + Control.HasFocus(548)">$LOCALIZE[8] - $LOCALIZE[37621]</value>
+		<value condition="Window.IsVisible(weather)">$LOCALIZE[8]</value>
         <value condition="!String.IsEmpty(Container.FolderName) + Window.IsVisible(MyPics.xml)">$INFO[Container.FolderName]</value>
         <value condition="Window.IsVisible(MyPics.xml)">$LOCALIZE[1]</value>
         <value condition="Window.IsVisible(MyPrograms.xml)">$LOCALIZE[0]</value>
@@ -2770,6 +2828,7 @@
                     <texture colordiffuse="Dark1">progress/play.png</texture>
                     <animation effect="fade" start="0" end="100" time="150">VisibleChange</animation>
                     <visible>!Player.Paused</visible>
+					<include>Animation.RotatePlay2</include>
                 </control>
                 <control type="image" description="Pause">
                     <left>0</left>

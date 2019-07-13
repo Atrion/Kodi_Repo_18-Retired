@@ -18,13 +18,14 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
-import re,urllib,urlparse
+import re,urllib,urlparse,threading
 from resources.lib.modules import client
 from resources.lib.extensions import metadata
 from resources.lib.extensions import tools
 from resources.lib.externals.beautifulsoup import BeautifulSoup
 
 class source:
+
 	def __init__(self):
 		self.pack = True # Checked by provider.py
 		self.priority = 0
@@ -60,6 +61,18 @@ class source:
 		except:
 			return
 
+	def _link(self, link):
+		try:
+			html = BeautifulSoup(client.request(link))
+			html = html.find_all('table', class_ = 'list')[0]
+			html = html.find_all('tr', recursive = False)[4]
+			resolved = self.base_link + html.find_all('a')[0]['href']
+			self.tLock.acquire()
+			self.tLinks[link] = resolved
+			self.tLock.release()
+		except:
+			tools.Logger.error()
+
 	def sources(self, url, hostDict, hostprDict):
 		sources = []
 		found = []
@@ -67,6 +80,7 @@ class source:
 			if url == None:
 				raise Exception()
 
+			ignoreContains = None
 			data = urlparse.parse_qs(url)
 			data = dict([(i, data[i][0]) if data[i] else (i, '') for i in data])
 
@@ -86,8 +100,14 @@ class source:
 				packCount = data['packcount'] if 'packcount' in data else None
 
 				if 'tvshowtitle' in data:
-					if pack: query = '%s %d' % (title, season)
-					else: query = '%s S%02dE%02d' % (title, season, episode)
+					# Search special episodes by name. All special episodes are added to season 0 by Trakt and TVDb. Hence, do not search by filename (eg: S02E00), since the season is not known.
+					if (season == 0 or episode == 0) and ('title' in data and not data['title'] == None and not data['title'] == ''):
+						title = '%s %s' % (data['tvshowtitle'], data['title']) # Change the title for metadata filtering.
+						query = title
+						ignoreContains = len(data['title']) / float(len(title)) # Increase the required ignore ration, since otherwise individual episodes and season packs are found as well.
+					else:
+						if pack: query = '%s %d' % (title, season)
+						else: query = '%s S%02dE%02d' % (title, season, episode)
 				else:
 					query = '%s %d' % (title, year)
 				query = re.sub('(\\\|/| -|:|;|\*|\?|"|\'|<|>|\|)', ' ', query)
@@ -99,6 +119,10 @@ class source:
 
 			page = 1
 			added = False
+
+			threads = []
+			self.tLinks = {}
+			self.tLock = threading.Lock()
 
 			timerEnd = tools.Settings.getInteger('scraping.providers.timeout') - 8
 			timer = tools.Time(start = True)
@@ -147,8 +171,14 @@ class source:
 					meta.mIgnoreLength *= 10 # Otherwise too restrictive for very long usenet titles.
 
 					# Ignore
+					meta.ignoreAdjust(contains = ignoreContains)
 					if meta.ignore(False):
 						continue
+
+					# Resolve
+					thread = threading.Thread(target = self._link, args = (htmlLink,))
+					threads.append(thread)
+					thread.start()
 
 					# Add
 					sources.append({'url' : htmlLink, 'debridonly' : False, 'direct' : False, 'source' : 'usenet', 'language' : self.language[0], 'quality':  meta.videoQuality(), 'metadata' : meta, 'file' : htmlName})
@@ -156,17 +186,22 @@ class source:
 
 				if not added: # Last page reached with a working torrent
 					break
-
-			return sources
 		except:
-			return sources
+			pass
+
+		while True:
+			if timer.elapsed() > timerEnd: break
+			if not any([thread.is_alive() for thread in threads]): break
+			tools.Time.sleep(0.5)
+		result = []
+		self.tLock.acquire()
+		for i in range(len(sources)):
+			link = sources[i]['url']
+			if link in self.tLinks:
+				sources[i]['url'] = self.tLinks[link]
+				result.append(sources[i])
+		self.tLock.release()
+		return result
 
 	def resolve(self, url):
-		try:
-			html = BeautifulSoup(client.request(url))
-			html = html.find_all('table', class_ = 'list')[0]
-			html = html.find_all('tr', recursive = False)[4]
-			return self.base_link + html.find_all('a')[0]['href']
-		except:
-			tools.Logger.error()
-			return None
+		return url
