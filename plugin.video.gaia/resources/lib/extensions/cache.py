@@ -145,9 +145,15 @@ class Cache(database.Database):
 			if timeout >= Cache.TimeoutRefresh:
 				cache = self._cacheRetrieve(id)
 				if cache:
-					difference = tools.Time.timestamp() - cache[0]
-					if difference > Cache.TimeoutReset: timeout = Cache.TimeoutClear
-					elif difference <= timeout: return self._cacheDataFrom(cache[1])
+					try:
+						difference = tools.Time.timestamp() - cache[0]
+						if difference > Cache.TimeoutReset: timeout = Cache.TimeoutClear
+						elif difference <= timeout:
+							data = self._cacheDataFrom(cache[1])
+							if data is None: timeout = Cache.TimeoutClear # Sometimes the cached data is None. Refresh the request in such a case.
+							else: return data
+					except: # If cache[0] is None.
+						timeout = Cache.TimeoutClear
 			else:
 				cache = None
 
@@ -161,13 +167,14 @@ class Cache(database.Database):
 
 			return self._cacheDataFrom(result[0])
 		except:
-			tools.Logger.error()
+			tools.Logger.error('Cache Failed: ' + str(function))
 		return None
 
 	def cacheRetrieve(self, function, *args, **kwargs):
 		try:
 			kwargs = self._cacheArguments(function, *args, **kwargs)
 			id = self._id(function, kwargs)
+
 			return self._cacheDataFrom(self._cacheRetrieve(id)[1])
 		except:
 			return None

@@ -17,9 +17,9 @@ if __name__ == '__main__':
     action = params.get('action')
     actionArgs = json.loads(params.get('actionArgs'))
 
-    if 'tvshowtitle' in actionArgs['info']:
+    if actionArgs['item_type'] == 'show':
         xbmc.executebuiltin('ActivateWindow(Videos,plugin://plugin.video.seren/?action=showsRelated&actionArgs=%s)'
-                        % actionArgs['ids']['trakt'])
+                        % actionArgs['trakt_id'])
     else:
         xbmc.executebuiltin('ActivateWindow(Videos,plugin://plugin.video.seren/?action=moviesRelated&actionArgs=%s)'
-                        % actionArgs['ids']['trakt'])
+                        % actionArgs['trakt_id'])

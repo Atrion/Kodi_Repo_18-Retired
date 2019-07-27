@@ -18,10 +18,6 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
-# On certain systems (eg: iOS) the "platform" module in pyperclip fails.
-try: from resources.lib.externals import pyperclip
-except: pass
-
 from resources.lib.extensions import tools
 from resources.lib.extensions import interface
 
@@ -44,6 +40,10 @@ class Clipboard(object):
 			return False
 
 		try:
+			# On certain systems (eg: iOS) the "platform" module in pyperclip fails.
+			# Only import here and not globally, to save time because pyperclip takes about 300ms to load.
+			try: from resources.lib.externals import pyperclip
+			except: pass
 			pyperclip.copy(value)
 			id = 33033
 		except:
@@ -60,6 +60,9 @@ class Clipboard(object):
 	@classmethod
 	def paste(self, notify = False, type = None):
 		try:
+			# Only import here and not globally, to save time because pyperclip takes about 300ms to load.
+			try: from resources.lib.externals import pyperclip
+			except: pass
 			value = pyperclip.paste()
 			if notify == True:
 				title = interface.Translation.string(33032)

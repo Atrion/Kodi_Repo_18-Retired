@@ -16,12 +16,13 @@ if __name__ == '__main__':
 
     params = dict(parse_qsl(args[1].replace('?', '')))
     action = params.get('action')
+
     actionArgs = json.loads(params.get('actionArgs'))
+    actionArgs['item_type'] = 'show'
+    actionArgs.pop('season', '')
+    actionArgs.pop('episode', '')
 
-    if 'showInfo' in actionArgs:
-        actionArgs = quote(json.dumps(actionArgs['showInfo']))
-        path = '%s?action=showSeasons&actionArgs=%s' % (plugin, actionArgs)
-    else:
-        path = path.replace('action=smartPlay', 'action=showSeasons')
+    actionArgs = quote(json.dumps(actionArgs))
 
+    path = '%s?action=showSeasons&actionArgs=%s' % (plugin, actionArgs)
     xbmc.executebuiltin('ActivateWindow(Videos,%s)' % path)

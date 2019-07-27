@@ -23,33 +23,12 @@ import xbmcgui
 import xbmcaddon
 import xbmcvfs
 import xbmcgui
-import numbers
-import json
-import time
-import datetime
-import calendar
-import subprocess
-import webbrowser
+
 import sys
 import os
-import copy
-import stat
-import base64
-import uuid
-import hashlib
-import shutil
-import imp
-import pkgutil
 import re
-import urlparse
-import urllib
-import platform
-import zipfile
 import threading
 
-from resources.lib.externals import pytz
-from resources.lib.externals.unidecode import unidecode
-from resources.lib.externals.lightpack import lightpack
 
 class Time(object):
 
@@ -72,6 +51,7 @@ class Time(object):
 		if start: self.start()
 
 	def start(self):
+		import time
 		self.mStart = time.time()
 		return self.mStart
 
@@ -79,6 +59,7 @@ class Time(object):
 		return self.start()
 
 	def elapsed(self, milliseconds = False):
+		import time
 		if self.mStart == None:
 			self.mStart = time.time()
 		if milliseconds: return int((time.time() - self.mStart) * 1000)
@@ -89,11 +70,13 @@ class Time(object):
 
 	@classmethod
 	def sleep(self, seconds):
+		import time
 		time.sleep(seconds)
 
 	# UTC timestamp
 	@classmethod
 	def timestamp(self, fixedTime = None):
+		import time
 		if fixedTime == None:
 			# Do not use time.clock(), gives incorrect result for search.py
 			return int(time.time())
@@ -103,12 +86,16 @@ class Time(object):
 
 	@classmethod
 	def format(self, timestamp = None, format = FormatDateTime):
+		import time
+		import datetime
 		if timestamp == None: timestamp = self.timestamp()
 		return datetime.datetime.utcfromtimestamp(timestamp).strftime(format)
 
 	# datetime object from string
 	@classmethod
 	def datetime(self, string, format = FormatDateTime):
+		import time
+		import datetime
 		try:
 			return datetime.datetime.strptime(string, format)
 		except:
@@ -130,6 +117,7 @@ class Time(object):
 
 	@classmethod
 	def localZone(self):
+		import time
 		if time.daylight:
 			offsetHour = time.altzone / 3600
 		else:
@@ -138,6 +126,8 @@ class Time(object):
 
 	@classmethod
 	def convert(self, stringTime, stringDay = None, abbreviate = False, formatInput = FormatTimeShort, formatOutput = None, zoneFrom = ZoneUtc, zoneTo = ZoneLocal):
+		import datetime
+		from resources.lib.externals import pytz
 		result = ''
 		try:
 			# If only time is given, the date will be set to 1900-01-01 and there are conversion problems if this goes down to 1899.
@@ -177,10 +167,9 @@ class Time(object):
 
 			stringTime = timeobject.strftime(formatOutput)
 			if stringDay:
-				if abbreviate:
-					stringDay = calendar.day_abbr[timeobject.weekday()]
-				else:
-					stringDay = calendar.day_name[timeobject.weekday()]
+				import calendar
+				if abbreviate: stringDay = calendar.day_abbr[timeobject.weekday()]
+				else: stringDay = calendar.day_name[timeobject.weekday()]
 				return (stringTime, stringDay)
 			else:
 				return stringTime
@@ -617,23 +606,32 @@ class Hash(object):
 
 	@classmethod
 	def random(self):
+		import uuid
 		return str(uuid.uuid4().hex).upper()
 
 	@classmethod
 	def sha1(self, data):
-		return hashlib.sha1(data.encode('utf-8')).hexdigest().upper()
+		import hashlib
+		try: return hashlib.sha1(data.encode('utf-8')).hexdigest().upper()
+		except: return hashlib.sha1(data).hexdigest().upper() # If data contains non-encoable characters, like YggTorrent containers.
 
 	@classmethod
 	def sha256(self, data):
-		return hashlib.sha256(data.encode('utf-8')).hexdigest().upper()
+		import hashlib
+		try: return hashlib.sha256(data.encode('utf-8')).hexdigest().upper()
+		except: return hashlib.sha256(data).hexdigest().upper() # If data contains non-encoable characters, like YggTorrent containers.
 
 	@classmethod
 	def sha512(self, data):
-		return hashlib.sha512(data.encode('utf-8')).hexdigest().upper()
+		import hashlib
+		try: return hashlib.sha512(data.encode('utf-8')).hexdigest().upper()
+		except: return hashlib.sha512(data).hexdigest().upper() # If data contains non-encoable characters, like YggTorrent containers.
 
 	@classmethod
 	def md5(self, data):
-		return hashlib.md5(data.encode('utf-8')).hexdigest().upper()
+		import hashlib
+		try: return hashlib.md5(data.encode('utf-8')).hexdigest().upper()
+		except: return hashlib.md5(data).hexdigest().upper() # If data contains non-encoable characters, like YggTorrent containers.
 
 	@classmethod
 	def file(self, path):
@@ -870,6 +868,7 @@ class Converter(object):
 		elif string:
 			return 'true' if value else 'false'
 		else:
+			import numbers
 			if value == True or value == False:
 				return value
 			elif isinstance(value, numbers.Number):
@@ -883,6 +882,8 @@ class Converter(object):
 	@classmethod
 	def dictionary(self, jsonData):
 		try:
+			import json
+
 			if jsonData == None: return None
 			jsonData = json.loads(jsonData)
 
@@ -899,6 +900,7 @@ class Converter(object):
 		try:
 			if string == None:
 				return string
+			from resources.lib.externals.unidecode import unidecode
 			if umlaut:
 				try: string = string.replace(unichr(196), 'AE').replace(unichr(203), 'EE').replace(unichr(207), 'IE').replace(unichr(214), 'OE').replace(unichr(220), 'UE').replace(unichr(228), 'ae').replace(unichr(235), 'ee').replace(unichr(239), 'ie').replace(unichr(246), 'oe').replace(unichr(252), 'ue')
 				except: pass
@@ -911,6 +913,7 @@ class Converter(object):
 	def base64From(self, data, iterations = 1, url = False):
 		data = str(data)
 		if url:
+			import base64
 			for i in range(iterations):
 				data = base64.urlsafe_b64decode(data)
 		else:
@@ -927,21 +930,25 @@ class Converter(object):
 
 	@classmethod
 	def jsonFrom(self, data, default = None):
+		import json
 		try: return json.loads(data)
 		except: return default
 
 	@classmethod
 	def jsonTo(self, data, default = None):
+		import json
 		try: return json.dumps(data)
 		except: return default
 
 	@classmethod
 	def quoteFrom(self, data, default = None):
+		import urllib
 		try: return urllib.unquote_plus(data).decode('utf8')
 		except: return default
 
 	@classmethod
 	def quoteTo(self, data, default = None):
+		import urllib
 		try: return urllib.quote_plus(data)
 		except: return default
 
@@ -1074,6 +1081,7 @@ class File(object):
 					except: pass
 					try:
 						if free == 0:
+							import subprocess
 							stats = subprocess.Popen(['df', '-Pk', directory], stdout = subprocess.PIPE).communicate()[0]
 							free = int(stats.splitlines()[1].split()[3]) * 1024
 					except: pass
@@ -1146,7 +1154,9 @@ class File(object):
 			# All with force
 			try:
 				if self.exists(path):
-					if force: os.chmod(path, stat.S_IWRITE) # Remove read only.
+					if force:
+						import stat
+						os.chmod(path, stat.S_IWRITE) # Remove read only.
 					return os.remove(path) # xbmcvfs often has problems deleting files
 			except:
 				pass
@@ -1173,6 +1183,7 @@ class File(object):
 
 			try:
 				if self.existsDirectory(path):
+					import shutil
 					shutil.rmtree(path)
 					if not self.existsDirectory(path):
 						return True
@@ -1182,7 +1193,9 @@ class File(object):
 			# All with force
 			try:
 				if self.existsDirectory(path):
-					if force: os.chmod(path, stat.S_IWRITE) # Remove read only.
+					if force:
+						import stat
+						os.chmod(path, stat.S_IWRITE) # Remove read only.
 					os.rmdir(path)
 					if not self.existsDirectory(path):
 						return True
@@ -1199,7 +1212,9 @@ class File(object):
 						self.deleteDirectory(os.path.join(path, i), force = force)
 					try: xbmcvfs.rmdir(path)
 					except: pass
-					try: shutil.rmtree(path)
+					try:
+						import shutil
+						shutil.rmtree(path)
 					except: pass
 					try: os.rmdir(path)
 					except: pass
@@ -1296,6 +1311,7 @@ class File(object):
 		if self.existsDirectory(pathFrom):
 			try:
 				if overwrite: File.deleteDirectory(pathTo)
+				import shutil
 				shutil.copytree(pathFrom, pathTo)
 				return True
 			except:
@@ -1324,6 +1340,7 @@ class File(object):
 			# Especailly important for import Reaper's settings on inital use.
 			if sleep: Time.sleep(0.1 if sleep == True else sleep)
 		try:
+			import shutil
 			shutil.move(pathFrom, pathTo)
 			return True
 		except:
@@ -1354,6 +1371,7 @@ class System(object):
 
 	@classmethod
 	def sleep(self, milliseconds):
+		import time
 		time.sleep(int(milliseconds / 1000.0))
 
 	@classmethod
@@ -1385,7 +1403,7 @@ class System(object):
 		System.execute('Container.Update(path,replace)')
 		System.execute('ActivateWindow(Home)')
 		System.execute('RunAddon(%s)' % System.GaiaAddon)
-		if sleep: time.sleep(2)
+		if sleep: Time.sleep(2)
 
 	@classmethod
 	def exit(self):
@@ -1482,6 +1500,8 @@ class System(object):
 
 	@classmethod
 	def command(self, action = None, parameters = None, id = GaiaAddon, duplicates = False, basic = False):
+		import urllib
+
 		if parameters == None: parameters = {}
 		if not action == None: parameters['action'] = action
 
@@ -1507,7 +1527,8 @@ class System(object):
 
 	@classmethod
 	def id(self, id = GaiaAddon):
-		return xbmcaddon.Addon(id).getAddonInfo('id')
+		if id is None: return xbmcaddon.Addon().getAddonInfo('id')
+		else: return xbmcaddon.Addon(id).getAddonInfo('id')
 
 	@classmethod
 	def name(self, id = GaiaAddon):
@@ -1600,6 +1621,7 @@ class System(object):
 			if action: parameters['action'] = action
 			if not parameters == None and not parameters == '' and not parameters == {}:
 				if not isinstance(parameters, basestring):
+					import urllib
 					parameters = urllib.urlencode(parameters)
 				if not parameters.startswith('?'):
 					parameters = '?' + parameters
@@ -1609,7 +1631,7 @@ class System(object):
 		result = System.execute('ActivateWindow(10025,%s,return)' % command) # When launched externally (eg: from shortcut widgets).
 		System.execute('Container.Update(%s)' % command)
 		if refresh: System.execute('Container.Refresh()')
-		if sleep: time.sleep(sleep)
+		if sleep: Time.sleep(sleep)
 		return result
 
 	@classmethod
@@ -1645,10 +1667,12 @@ class System(object):
 			success = False
 			if sys.platform == 'darwin': # OS X
 				try:
+					import subprocess
 					subprocess.Popen(['open', link])
 					success = True
 				except: pass
 			if not success:
+				import webbrowser
 				webbrowser.open(link, autoraise = front, new = 2) # new = 2 opens new tab.
 		except:
 			popupForce = True
@@ -1746,19 +1770,6 @@ class System(object):
 
 			# Splash
 			interface.Splash.popup(major = versionChangeMajor, wait = versionChangeMajor or not interface.Legal.initialized())
-
-			# gaiaremove
-			# Can be removed in later versions.
-			if versionOld < 400 and versionNew >= 400:
-				interface.Dialog.confirm(title = 'New Version', message = 'Many databases, settings, filters, and accounts have changed in Gaia 4. Using settings from Gaia 3 will break certain features and slow down the addon. All existing settings and data will be cleared now.')
-				interface.Loader.show()
-				from resources.lib.indexers import navigator
-				navigator.navigator().clearAll(force = True)
-				Backup.automaticClear()
-				Settings.clear()
-				Settings.set('internal.version', self.version())
-				File.deleteDirectory(File.joinPath(System.profile(), 'Scrapers'))
-				interface.Loader.hide()
 
 			# gaiaremove
 			# Can be removed in later versions.
@@ -2014,6 +2025,7 @@ class System(object):
 
 	@classmethod
 	def informationSystem(self):
+		import platform
 		system = platform.system().capitalize()
 		version = platform.release().capitalize()
 
@@ -2032,6 +2044,7 @@ class System(object):
 
 		# Manually check for Android
 		if system == 'Linux' and distributionName == None:
+			import subprocess
 			id = None
 			if 'ANDROID_ARGUMENT' in os.environ:
 				id = True
@@ -2062,6 +2075,7 @@ class System(object):
 
 	@classmethod
 	def informationPython(self):
+		import platform
 		# Structure used by Statistics.
 		return {
 			'implementation' : platform.python_implementation(),
@@ -2732,8 +2746,7 @@ class Media(object):
 
 	@classmethod
 	def title(self, type = TypeNone, metadata = None, title = None, year = None, season = None, episode = None, encode = False, pack = False):
-		if not metadata == None:
-			title, year, season, episode, packs = self._extract(metadata = metadata, encode = encode)
+		if not metadata == None: title, year, season, episode, packs = self._extract(metadata = metadata, encode = encode)
 		title, year, season, episode = self._data(title = title, year = year, season = season, episode = episode, encode = encode)
 
 		if type == Media.TypeNone:
@@ -2845,6 +2858,7 @@ class Lightpack(object):
 		if not self.mEnabled:
 			return
 
+		from resources.lib.externals.lightpack import lightpack
 		api = self.mApiKey if self.mAuthorization else ''
 		self.mLightpack = lightpack.lightpack(self.mHost, self.mPort, api, self.mMap)
 
@@ -2861,19 +2875,24 @@ class Lightpack(object):
 		self.mError = False
 
 	def _connect(self):
+		from resources.lib.externals.lightpack import lightpack
 		return self.mLightpack.connect() >= 0
 
 	def _disconnect(self):
+		from resources.lib.externals.lightpack import lightpack
 		self.mLightpack.disconnect()
 
 	def _lock(self):
+		from resources.lib.externals.lightpack import lightpack
 		self.mLightpack.lock()
 
 	def _unlock(self):
+		from resources.lib.externals.lightpack import lightpack
 		self.mLightpack.unlock()
 
 	# Color is RGB array or hex. If index is None, uses all LEDs.
 	def _colorSet(self, color, index = None, lock = False):
+		from resources.lib.externals.lightpack import lightpack
 		if lock: self.mLightpack.lock()
 
 		if isinstance(color, basestring):
@@ -2890,6 +2909,7 @@ class Lightpack(object):
 		if lock: self.mLightpack.unlock()
 
 	def _profileSet(self, profile):
+		from resources.lib.externals.lightpack import lightpack
 		try:
 			self._errorClear()
 			self._lock()
@@ -2949,7 +2969,7 @@ class Lightpack(object):
 						else:
 							os.system(command % self.mPrismatikPath)
 
-					time.sleep(3)
+					Time.sleep(3)
 					self._connect()
 					self.switchOn()
 			except:
@@ -2989,6 +3009,7 @@ class Lightpack(object):
 			return Lightpack.StatusUnknown
 
 		try:
+			from resources.lib.externals.lightpack import lightpack
 			self._errorClear()
 			self._lock()
 			status = self.mLightpack.getStatus()
@@ -3012,6 +3033,7 @@ class Lightpack(object):
 			return False
 
 		try:
+			from resources.lib.externals.lightpack import lightpack
 			self._errorClear()
 			self._lock()
 			self.mLightpack.turnOn()
@@ -3027,6 +3049,7 @@ class Lightpack(object):
 			return False
 
 		try:
+			from resources.lib.externals.lightpack import lightpack
 			self._errorClear()
 			self._lock()
 			self.mLightpack.turnOff()
@@ -3040,7 +3063,7 @@ class Lightpack(object):
 	def _animateSpin(self, color):
 		for i in range(len(self.mMap)):
 			self._colorSet(color = color, index = i)
-			time.sleep(0.1)
+			Time.sleep(0.1)
 
 	def animate(self, force = True, message = False, delay = False):
 		if not self.mEnabled:
@@ -3051,7 +3074,7 @@ class Lightpack(object):
 				self.switchOn()
 				self._errorClear()
 				if delay: # The Lightpack sometimes gets stuck on the red light on startup animation. Maybe this delay will solve that?
-					time.sleep(1)
+					Time.sleep(1)
 				self._lock()
 
 				for i in range(2):
@@ -3153,11 +3176,13 @@ class Platform:
 
 	@classmethod
 	def _detectWindows(self):
+		import platform
 		try: return Platform.SystemWindows in platform.system().lower()
 		except: return False
 
 	@classmethod
 	def _detectMacintosh(self):
+		import platform
 		try:
 			version = platform.mac_ver()
 			return not version[0] == None and not version[0] == ''
@@ -3165,17 +3190,20 @@ class Platform:
 
 	@classmethod
 	def _detectLinux(self):
+		import platform
 		try: return platform.system().lower() == 'linux' and not self._detectAndroid()
 		except: return False
 
 	@classmethod
 	def _detectAndroid(self):
+		import platform
 		try:
 			system = platform.system().lower()
 			distribution = platform.linux_distribution()
 			if Platform.SystemAndroid in system or Platform.SystemAndroid in system or (len(distribution) > 0 and isinstance(distribution[0], basestring) and Platform.SystemAndroid in distribution[0].lower()):
 				return True
 			if system == Platform.SystemLinux:
+				import subprocess
 				id = ''
 				if 'ANDROID_ARGUMENT' in os.environ:
 					id = True
@@ -3198,6 +3226,7 @@ class Platform:
 		return False
 
 	def _detect(self):
+		import platform
 		try:
 			if self._detectWindows():
 				self.mFamilyType = Platform.FamilyWindows
@@ -3292,6 +3321,7 @@ class Hardware(object):
 
 	@classmethod
 	def identifier(self):
+		import subprocess
 		id = None
 
 		# Windows
@@ -3440,6 +3470,8 @@ class Hardware(object):
 	@classmethod
 	def processors(self):
 		# http://stackoverflow.com/questions/1006289/how-to-find-out-the-number-of-cpus-using-python
+
+		import subprocess
 
 		# Python 2.6+
 		try:
@@ -4657,6 +4689,7 @@ class Backup(object):
 			directory = self._path(clear = True)
 			directoryData = System.profile()
 
+			import zipfile
 			file = zipfile.ZipFile(path, 'r')
 			file.extractall(directory)
 			file.close()
@@ -4695,6 +4728,7 @@ class Backup(object):
 					suffix = ' [%d]' % counter
 				path = path % suffix
 
+			import zipfile
 			file = zipfile.ZipFile(path, 'w')
 
 			content = []
@@ -5242,33 +5276,60 @@ class Binge(object):
 	ModeFirst = 1
 	ModeContinue = 2
 
-	@classmethod
-	def settingsType(self):
-		return Settings.getInteger('general.playback.binge')
+	DialogNone = 0
+	DialogFull = 1
+	DialogOverlay = 2
+	DialogUpNext = 3
+
+	ActionContinue = 0
+	ActionCancel = 1
+
+	ActionInterrupt = 0
+	ActionFinish = 1
 
 	@classmethod
-	def settingsEnabled(self, type = None):
-		return (self.settingsType() if type is None else type) > 0
+	def enabled(self):
+		return Settings.getBoolean('playback.binge.enabled')
 
 	@classmethod
-	def settingsDisabled(self, type = None):
-		return (self.settingsType() if type is None else type) == 0
+	def dialog(self):
+		return Settings.getInteger('playback.binge.dialog')
 
 	@classmethod
-	def settingsManual(self, type = None):
-		return (self.settingsType() if type is None else type) == 1
+	def dialogNone(self):
+		return self.dialog() == Binge.DialogNone
 
 	@classmethod
-	def settingsAutomatic(self, type = None):
-		return (self.settingsType() if type is None else type) == 2
+	def dialogFull(self):
+		return self.dialog() == Binge.DialogFull
 
 	@classmethod
-	def settingsDelay(self):
-		return Settings.getInteger('general.playback.binge.delay')
+	def dialogOverlay(self):
+		return self.dialog() == Binge.DialogOverlay
 
 	@classmethod
-	def settingsSuppress(self):
-		return Settings.getBoolean('general.playback.binge.suppress')
+	def dialogUpNext(self):
+		return self.dialog() == Binge.DialogUpNext
+
+	@classmethod
+	def delay(self):
+		return Settings.getInteger('playback.binge.delay')
+
+	@classmethod
+	def suppress(self):
+		return Settings.getBoolean('playback.binge.suppress')
+
+	@classmethod
+	def actionNone(self):
+		return Settings.getInteger('playback.binge.action.none')
+
+	@classmethod
+	def actionContinue(self):
+		return Settings.getInteger('playback.binge.action.continue')
+
+	@classmethod
+	def actionCancel(self):
+		return Settings.getInteger('playback.binge.action.cancel')
 
 ###################################################################
 # ANNOUNCEMENT
@@ -5352,28 +5413,34 @@ class Promotions(object):
 
 	@classmethod
 	def _fixed(self):
-		from resources.lib.extensions import interface
-		from resources.lib.extensions import orionoid
-		orion = orionoid.Orionoid()
-		if orion.accountAnonymousEnabled(): orionoid.Orionoid().accountAnonymous()
-		return [{
-			'id' : Promotions.OrionAnonymous,
-			'viewed' : not orion.accountAnonymousEnabled(),
-			'provider' : 'Orion',
-			'start' : Time.timestamp(),
-			'expiration' : None,
-			'title' : interface.Translation.string(35428),
-		}]
+		try:
+			from resources.lib.extensions import interface
+			from resources.lib.extensions import orionoid
+			orion = orionoid.Orionoid()
+			if orion.accountAnonymousEnabled(): orionoid.Orionoid().accountAnonymous()
+			return [{
+				'id' : Promotions.OrionAnonymous,
+				'viewed' : not orion.accountAnonymousEnabled(),
+				'provider' : 'Orion',
+				'start' : Time.timestamp(),
+				'expiration' : None,
+				'title' : interface.Translation.string(35428),
+			}]
+		except:
+			Logger.error()
 
 	@classmethod
 	def enabled(self):
-		from resources.lib.extensions import orionoid
-		if not Settings.getBoolean('interface.menu.promotions'): return False
-		elif orionoid.Orionoid().accountAnonymousEnabled(): return True
-		current = Time.timestamp()
-		for i in self._cache():
-			if not i['viewed'] and (i['expiration'] == None or i['expiration'] > current):
-				return True
+		try:
+			from resources.lib.extensions import orionoid
+			if not Settings.getBoolean('interface.menu.promotions'): return False
+			elif orionoid.Orionoid().accountAnonymousEnabled(): return True
+			current = Time.timestamp()
+			for i in self._cache():
+				if not i['viewed'] and (i['expiration'] == None or i['expiration'] > current):
+					return True
+		except:
+			Logger.error()
 		return False
 
 	@classmethod
@@ -5416,6 +5483,7 @@ class Promotions(object):
 
 	@classmethod
 	def select(self, provider):
+		import copy
 		from resources.lib.extensions import interface
 		from resources.lib.extensions import convert
 
@@ -5437,7 +5505,7 @@ class Promotions(object):
 					time = interface.Translation.string(35446)
 				status = interface.Translation.string(35448 if i['viewed'] else 35447)
 				status = '[%s]' % status
-				status = interface.Format.font(status, bold = True, color = interface.Format.ColorPoor if i['viewed'] else interface.Format.ColorExcellent)
+				status = interface.Format.font(status, bold = True, color = interface.Format.colorPoor() if i['viewed'] else interface.Format.colorExcellent())
 				promotions.append({
 					'id' : i['id'],
 					'title' : '%s %s: %s' % (status, i['title'], time),
@@ -5449,7 +5517,8 @@ class Promotions(object):
 		if choice >= 0:
 			choice = promotions[choice]['id']
 			if choice == Promotions.OrionAnonymous:
-				orionoid.Orionoid().accountAnonymous()
+				try: orionoid.Orionoid().accountAnonymous()
+				except: Logger.error()
 			else:
 				for i in range(len(Promotions.Cache)):
 					if Promotions.Cache[i]['id'] == choice:

@@ -957,6 +957,34 @@ msgctxt "#32236"
 msgid "File"
 msgstr ""
 
+msgctxt "#32237"
+msgid "Combined"
+msgstr ""
+
+msgctxt "#32238"
+msgid "Separate"
+msgstr ""
+
+msgctxt "#32239"
+msgid "Movie Link Limit"
+msgstr ""
+
+msgctxt "#32240"
+msgid "Show Link Limit"
+msgstr ""
+
+msgctxt "#32241"
+msgid "Movie Retry Limit"
+msgstr ""
+
+msgctxt "#32242"
+msgid "Show Retry Limit"
+msgstr ""
+
+msgctxt "#32243"
+msgid "Limit Mode"
+msgstr ""
+
 ##############################################################################
 # MESSAGES
 ##############################################################################
@@ -1054,7 +1082,7 @@ msgid "%s uses third-party scrapers from %s. Do you want to continue with the %s
 msgstr ""
 
 msgctxt "#33024"
-msgid "Gaia supports Orion natively so there is no need for integration."
+msgid "%s supports Orion natively so there is no need for integration."
 msgstr ""
 
 msgctxt "#33025"
@@ -1130,7 +1158,7 @@ msgid "The Orion server to use for API requests. If set to default, the closest 
 msgstr ""
 
 msgctxt "#34009"
-msgid "The maximum number of streams to retrieve per requests. Set the limit to your package's daily limit divided by the number of movies or shows you watch per day."
+msgid "Apply the same limits to both movies and shows, or a separate limit for movies and shows."
 msgstr ""
 
 msgctxt "#34010"
@@ -1331,4 +1359,8 @@ msgstr ""
 
 msgctxt "#34059"
 msgid "The file name of the stream. Either require streams to have a file name or optionally allow streams with or without a file name."
+msgstr ""
+
+msgctxt "#34060"
+msgid "The maximum number of streams to retrieve per requests. Set the limit to your package's daily limit divided by the number of movies or shows you watch per day."
 msgstr ""

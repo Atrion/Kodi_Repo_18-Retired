@@ -6,9 +6,7 @@ if __name__ == '__main__':
     message = item.getLabel()
     path = item.getPath()
 
-    if '?action=getSources' in path:
-        path = path.replace('getSources', 'getSources&seren_reload=true')
-    if '?action=smartPlay' in path:
-        path = path.replace('smartPlay', 'getSources&seren_reload=true')
+    path = path.replace('getSources', 'getSources&seren_reload=true')
+    path = path.replace('smartPlay', 'getSources&seren_reload=true')
 
     xbmc.executebuiltin('PlayMedia(%s)' % path)

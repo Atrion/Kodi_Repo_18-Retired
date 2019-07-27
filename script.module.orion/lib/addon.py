@@ -164,6 +164,9 @@ elif action == 'integrationCovenant':
 elif action == 'integrationMagicality':
 	OrionIntegration.executeMagicality()
 
+elif action == 'integrationTheoath':
+	OrionIntegration.executeTheOath()
+
 elif action == 'integrationYoda':
 	OrionIntegration.executeYoda()
 
@@ -172,6 +175,27 @@ elif action == 'integrationBodie':
 
 elif action == 'integrationNymeria':
 	OrionIntegration.executeNymeria()
+
+elif action == 'integrationVenom':
+	OrionIntegration.executeVenom()
+
+elif action == 'integrationScrubs':
+	OrionIntegration.executeScrubs()
+
+elif action == 'integrationMedusa':
+	OrionIntegration.executeMedusa()
+
+elif action == 'integrationMercury':
+	OrionIntegration.executeMercury()
+
+elif action == 'integrationDeceit':
+	OrionIntegration.executeDeceit()
+
+elif action == 'integrationFen':
+	OrionIntegration.executeFen()
+
+elif action == 'integrationGenesis':
+	OrionIntegration.executeGenesis()
 
 elif action == 'integrationExodus':
 	OrionIntegration.executeExodus()
@@ -199,3 +223,9 @@ elif action == 'integrationUniversalScrapers':
 
 elif action == 'integrationNanScrapers':
 	OrionIntegration.executeNanScrapers()
+
+elif action == 'integrationElementum':
+	OrionIntegration.executeElementum()
+
+elif action == 'integrationQuasar':
+	OrionIntegration.executeQuasar()

@@ -34,7 +34,6 @@ from resources.lib.extensions import window
 from resources.lib.extensions import tools
 from resources.lib.extensions import convert
 from resources.lib.extensions import handler
-from resources.lib.extensions import downloader
 from resources.lib.extensions import history
 from resources.lib.extensions import trailer
 from resources.lib.extensions import provider
@@ -132,13 +131,13 @@ class Core:
 					counts.append((35455, self.countFilters))
 					counts = ' • '.join(['%s: %d' % (interface.Translation.string(i[0]), i[1]) for i in counts])
 					interface.Dialog.notification(title = 35373, message = counts, icon = interface.Dialog.IconWarning if self.countFilters == 0 else interface.Dialog.IconSuccess, time = 5000)
-					if self.countFilters == 0 and self.countSupported > 0:
-						self.loaderHide()
-						result = interface.Dialog.option(title = 33448, message = 35380)
-						if result: self.loaderShow()
-						return result
-					else:
-						window.Window.propertyGlobalSet(self.propertyNotification, True)
+			if self.countFilters == 0 and self.countSupported > 0:
+				self.loaderHide()
+				result = interface.Dialog.option(title = 33448, message = 35380)
+				if result: self.loaderShow()
+				return result
+			else:
+				window.Window.propertyGlobalSet(self.propertyNotification, True)
 		return False
 
 	def progressClose(self, loader = True, force = False):
@@ -250,10 +249,14 @@ class Core:
 
 			if not self.silent: tools.Donations.popup()
 
+			# Loader still showing after continuing with binge watching.
+			# The loader is shown in _bingePlay in the player.
+			if self.navigationStreamsSpecial and binge == tools.Binge.ModeContinue: interface.Loader.hide()
+
 			new = items == None
 			if not self.navigationCinema: self.loaderShow()
 			window.Window.propertyGlobalClear(self.propertyNotification)
-			if binge is None: binge = tools.Binge.ModeFirst if tools.Binge.settingsAutomatic() else tools.Binge.ModeNone
+			if binge is None: binge = tools.Binge.ModeFirst if tools.Binge.enabled() else tools.Binge.ModeNone
 			if cache is None: cache = True
 
 			# When the play action is called from the skin's widgets.
@@ -262,11 +265,14 @@ class Core:
 			if self.navigationStreamsDirectory and not 'plugin' in tools.System.infoLabel('Container.PluginName') and not tools.System.infoLabel('Container.FolderPath'):
 				if tools.System.versionKodiNew():
 					# launchAddon() does not seem to work in Kodi 18 anymore. Switch to dialog. Other addons are doing the same.
-					self.navigationStreamsDirectory = False
-					self.navigationStreamsDialog = True
+					#self.navigationStreamsDirectory = False
+					#self.navigationStreamsDialog = True
+					# Seems to work again, at least in Kodi 19.
+					tools.System.launchAddon()
+					tools.Time.sleep(1)
 				else:
 					tools.System.launchAddon()
-					tools.Time.sleep(2) # Important, otherwise the dialog is show if the main directory shows a bit late.
+					tools.Time.sleep(2) # Important, otherwise the dialog is shown if the main directory shows a bit late.
 
 			if autoplay == None:
 				if tools.Converter.boolean(window.Window.propertyGlobal('PseudoTVRunning')): autoplay = True
@@ -287,7 +293,14 @@ class Core:
 					metadata = movies.movies().metadataRetrieve(imdb = imdb)
 
 			if new:
-				if not self.silent and self.navigationCinema: self.navigationCinemaTrailer.cinemaStart(type = self.type)
+				if not self.silent and self.navigationCinema:
+					try: background = metadata['fanart']
+					except:
+						try: background = metadata['fanart2']
+						except:
+							try: background = metadata['fanart3']
+							except: background = None
+					self.navigationCinemaTrailer.cinemaStart(type = self.type, background = background)
 				label = tools.Media.titleUniversal(metadata = metadata, title = title if tvshowtitle is None else tvshowtitle, year = year, season = season, episode = episode)
 				tools.Logger.log('Initializing Scraping [' + label + '] ...', name = 'CORE', level = tools.Logger.TypeNotice)
 				start = tools.Time.timestamp()
@@ -744,8 +757,11 @@ class Core:
 			self.cacheBusy = False
 			self.cacheEnabled = tools.Settings.getBoolean('scraping.cache.enabled')
 			if self.cacheEnabled:
-				self.cacheOrion = orionoid.Orionoid()
-				if not self.cacheOrion.accountValid(): self.cacheOrion = None
+				try:
+					self.cacheOrion = orionoid.Orionoid()
+					if not self.cacheOrion.accountValid(): self.cacheOrion = None
+				except:
+					self.cacheOrion = None
 				try: self.cacheTimeout = tools.Settings.getInteger('scraping.cache.timeout')
 				except: self.cacheTimeout = 45
 				self.cacheTypes = []
@@ -857,49 +873,52 @@ class Core:
 
 			scrapingContinue = True
 			scrapingExcludeOrion = False
-			orion = orionoid.Orionoid()
-			if orion.accountEnabled():
-				orionScrapingMode = orion.settingsScrapingMode()
-				tools.Logger.log('Launching Orion: ' + str(orionScrapingMode), name = 'CORE', level = tools.Logger.TypeNotice)
-				if orionScrapingMode == orionoid.Orionoid.ScrapingExclusive or orionScrapingMode == orionoid.Orionoid.ScrapingSequential:
-					tools.Logger.log('Starting Orion', name = 'CORE', level = tools.Logger.TypeNotice)
-					timeout = orion.settingsScrapingTimeout()
-					percentageOrion = 0.1
-					percentageProviders -= percentageOrion
-					message = 'Searching Orion'
-					self.providersBusy = 1
-					self.providersLabels = [orion.Name]
+			try:
+				orion = orionoid.Orionoid()
+				if orion.accountEnabled():
+					orionScrapingMode = orion.settingsScrapingMode()
+					tools.Logger.log('Launching Orion: ' + str(orionScrapingMode), name = 'CORE', level = tools.Logger.TypeNotice)
+					if orionScrapingMode == orionoid.Orionoid.ScrapingExclusive or orionScrapingMode == orionoid.Orionoid.ScrapingSequential:
+						tools.Logger.log('Starting Orion', name = 'CORE', level = tools.Logger.TypeNotice)
+						timeout = orion.settingsScrapingTimeout()
+						percentageOrion = 0.1
+						percentageProviders -= percentageOrion
+						message = 'Searching Orion'
+						self.providersBusy = 1
+						self.providersLabels = [orion.Name]
 
-					provider.Provider.initialize(forceAll = True, special = True)
-					providerOrion = provider.Provider.provider(orionoid.Orionoid.Scraper, enabled = False)
-					if providerOrion and providerOrion['selected']:
-						tools.Logger.log('Scraping Orion', name = 'CORE', level = tools.Logger.TypeNotice)
-						threadOrion = None
-						if movie:
-							title = cleantitle.normalize(title)
-							threadOrion = workers.Thread(self.scrapeMovie, title, self.titleLocal, self.titleAliases, year, imdb, providerOrion, exact, cache)
-						else:
-							tvshowtitle = cleantitle.normalize(tvshowtitle)
-							threadOrion = workers.Thread(self.scrapeEpisode, title, self.titleLocal, self.titleAliases, year, imdb, tvdb, season, episode, seasoncount, tvshowtitle, premiered, providerOrion, exact, cache)
+						provider.Provider.initialize(forceAll = True, special = True)
+						providerOrion = provider.Provider.provider(orionoid.Orionoid.Scraper, enabled = False)
+						if providerOrion and providerOrion['selected']:
+							tools.Logger.log('Scraping Orion', name = 'CORE', level = tools.Logger.TypeNotice)
+							threadOrion = None
+							if movie:
+								title = cleantitle.normalize(title)
+								threadOrion = workers.Thread(self.scrapeMovie, title, self.titleLocal, self.titleAliases, year, imdb, providerOrion, exact, cache)
+							else:
+								tvshowtitle = cleantitle.normalize(tvshowtitle)
+								threadOrion = workers.Thread(self.scrapeEpisode, title, self.titleLocal, self.titleAliases, year, imdb, tvdb, season, episode, seasoncount, tvshowtitle, premiered, providerOrion, exact, cache)
 
-						threadOrion.start()
-						timerSingle.start()
-						while True:
-							try:
-								if self.progressCanceled(): break
-								if not threadOrion.is_alive(): break
-								_progressUpdate(int((min(1, timerSingle.elapsed() / float(timeout))) * percentageOrion * 100), message)
-								time.sleep(timeStep)
-							except:
-								pass
-						del threadOrion
+							threadOrion.start()
+							timerSingle.start()
+							while True:
+								try:
+									if self.progressCanceled(): break
+									if not threadOrion.is_alive(): break
+									_progressUpdate(int((min(1, timerSingle.elapsed() / float(timeout))) * percentageOrion * 100), message)
+									time.sleep(timeStep)
+								except:
+									pass
+							del threadOrion
 
-					if orionScrapingMode == orionoid.Orionoid.ScrapingExclusive:
-						scrapingContinue = False
-					elif orionScrapingMode == orionoid.Orionoid.ScrapingSequential:
-						if orion.streamsCount(self.sourcesAdjusted) < orion.settingsScrapingCount(): scrapingExcludeOrion = True
-						else: scrapingContinue = False
-				self.providersLabels = None
+						if orionScrapingMode == orionoid.Orionoid.ScrapingExclusive:
+							scrapingContinue = False
+						elif orionScrapingMode == orionoid.Orionoid.ScrapingSequential:
+							if orion.streamsCount(self.sourcesAdjusted) < orion.settingsScrapingCount(): scrapingExcludeOrion = True
+							else: scrapingContinue = False
+					self.providersLabels = None
+			except:
+				scrapingExcludeOrion = True
 
 			if scrapingContinue:
 				# Start the additional information before the providers are intialized.
@@ -1774,7 +1793,7 @@ class Core:
 				else: value = 'hoster'
 				if layoutType == 1: value = value[:1]
 				elif layoutType == 2: value = value[:3]
-				infos.append(interface.Format.font(value, bold = True, color = interface.Format.ColorMain, uppercase = True))
+				infos.append(interface.Format.font(value, bold = True, color = interface.Format.colorMain(), uppercase = True))
 
 			number = ''
 			layoutNumber = tools.Settings.getInteger('interface.information.number')
@@ -1783,7 +1802,7 @@ class Core:
 			elif layoutNumber == 3: number = '%03d'
 			if not number == '': number = interface.Format.font(number, bold = True, translate = False)
 
-			infos.append(interface.Format.font(35233, bold = True, uppercase = True, color = interface.Format.ColorOrion))
+			infos.append(interface.Format.font(35233, bold = True, uppercase = True, color = interface.Format.colorOrion()))
 			item['label'] = item['file'] = (interface.Format.separator().join(infos) % (number % 0, '')) + (interface.Format.newline() if layout == 2 else '') + link
 
 		if extras == None:
@@ -1849,7 +1868,7 @@ class Core:
 					else: itemsFiltered = items
 					if len(itemsFiltered) == 0:
 						if not new or self.progressNotification():
-							return self.showStreams(items = items, extras = extras, metadata = metadata, direct = True, library = library, filter = False, autoplay = False, clear = True, new = new, add = add, binge = binge)
+							return self.showStreams(items = items, extras = extras, metadata = metadata, direct = False if autoplay else True, library = library, filter = False, autoplay = False, clear = True, new = new, add = add, binge = binge)
 						else:
 							self.progressClose(force = True, loader = self.navigationStreamsSpecial and new and not autoplay)
 							return False
@@ -1895,7 +1914,7 @@ class Core:
 			# NB: Use "filterx" and not "filter" as parameters.
 			# Otherwise for some weird reason the back button in the directory does not work.
 			# Maybe Kodi uses that parameter name internally (eg: left side menu "Filter" option).
-			command = '%s?action=streamsShow&direct=%d&filterx=%d&autoplay=%d&library=%d&initial=%d&new=%d&add=%d&process=%d&binge=%d' % (sys.argv[0], True, filter, autoplay, library, initial, new, add, process, bool(binge))
+			command = '%s?action=streamsShow&direct=%d&filterx=%d&autoplay=%d&library=%d&initial=%d&new=%d&add=%d&process=%d&binge=%d' % (sys.argv[0], True, filter, autoplay, library, initial, new, add, process, int(binge))
 			command = self.parameterize(command)
 			self.progressClose(force = True, loader = False) # Important to close to free up window memory, since Container.Update is in a separate process which does not know the window anymore.
 			if not self.navigationCinema: self.loaderShow()
@@ -1943,7 +1962,7 @@ class Core:
 						try: episode = metadata['episode']
 						except: episode = None
 
-						extra = interface.Format.font(tools.Media.title(metadata = metadata, title = title, year = year, season = season, episode = episode), bold = True, color = interface.Format.ColorOrion)
+						extra = interface.Format.font(tools.Media.title(metadata = metadata, title = title, year = year, season = season, episode = episode), bold = True, color = interface.Format.colorOrion())
 						if not self.navigationStreamsSpecial: extra += interface.Format.separator()
 				except: pass
 
@@ -2030,34 +2049,34 @@ class Core:
 
 			window.Window.propertyGlobalSet('GaiaPosterStatic', tools.Settings.getInteger('interface.navigation.streams.poster') == 0)
 
-			window.Window.propertyGlobalSet('GaiaColorOrion', interface.Format.ColorOrion)
-			window.Window.propertyGlobalSet('GaiaColorPrimary', interface.Format.ColorPrimary)
-			window.Window.propertyGlobalSet('GaiaColorSecondary', interface.Format.ColorSecondary)
-			window.Window.propertyGlobalSet('GaiaColorMain', interface.Format.ColorMain)
-			window.Window.propertyGlobalSet('GaiaColorDisabled', interface.Format.ColorDisabled)
-			window.Window.propertyGlobalSet('GaiaColorAlternative', interface.Format.ColorAlternative)
-			window.Window.propertyGlobalSet('GaiaColorSpecial', interface.Format.ColorSpecial)
-			window.Window.propertyGlobalSet('GaiaColorUltra', interface.Format.ColorUltra)
-			window.Window.propertyGlobalSet('GaiaColorExcellent', interface.Format.ColorExcellent)
-			window.Window.propertyGlobalSet('GaiaColorGood', interface.Format.ColorGood)
-			window.Window.propertyGlobalSet('GaiaColorMedium', interface.Format.ColorMedium)
-			window.Window.propertyGlobalSet('GaiaColorPoor', interface.Format.ColorPoor)
-			window.Window.propertyGlobalSet('GaiaColorBad', interface.Format.ColorBad)
+			window.Window.propertyGlobalSet('GaiaColorOrion', interface.Format.colorOrion())
+			window.Window.propertyGlobalSet('GaiaColorPrimary', interface.Format.colorPrimary())
+			window.Window.propertyGlobalSet('GaiaColorSecondary', interface.Format.colorSecondary())
+			window.Window.propertyGlobalSet('GaiaColorMain', interface.Format.colorMain())
+			window.Window.propertyGlobalSet('GaiaColorDisabled', interface.Format.colorDisabled())
+			window.Window.propertyGlobalSet('GaiaColorAlternative', interface.Format.colorAlternative())
+			window.Window.propertyGlobalSet('GaiaColorSpecial', interface.Format.colorSpecial())
+			window.Window.propertyGlobalSet('GaiaColorUltra', interface.Format.colorUltra())
+			window.Window.propertyGlobalSet('GaiaColorExcellent', interface.Format.colorExcellent())
+			window.Window.propertyGlobalSet('GaiaColorGood', interface.Format.colorGood())
+			window.Window.propertyGlobalSet('GaiaColorMedium', interface.Format.colorMedium())
+			window.Window.propertyGlobalSet('GaiaColorPoor', interface.Format.colorPoor())
+			window.Window.propertyGlobalSet('GaiaColorBad', interface.Format.colorBad())
 
-			window.Window.propertyGlobalSet('GaiaColorHDULTRA', interface.Format.colorDarker(interface.Format.ColorUltra, 60))
-			window.Window.propertyGlobalSet('GaiaColorHD8K', interface.Format.colorDarker(interface.Format.ColorUltra, 40))
-			window.Window.propertyGlobalSet('GaiaColorHD6K', interface.Format.colorDarker(interface.Format.ColorUltra, 20))
-			window.Window.propertyGlobalSet('GaiaColorHD4K', interface.Format.ColorUltra)
-			window.Window.propertyGlobalSet('GaiaColorHD2K', interface.Format.colorLighter(interface.Format.ColorUltra, 20))
-			window.Window.propertyGlobalSet('GaiaColorHD1080', interface.Format.ColorExcellent)
-			window.Window.propertyGlobalSet('GaiaColorHD720', interface.Format.ColorGood)
-			window.Window.propertyGlobalSet('GaiaColorSD480', interface.Format.ColorMedium)
-			window.Window.propertyGlobalSet('GaiaColorSCR1080', interface.Format.colorLighter(interface.Format.ColorPoor, 40))
-			window.Window.propertyGlobalSet('GaiaColorSCR720', interface.Format.colorLighter(interface.Format.ColorPoor, 20))
-			window.Window.propertyGlobalSet('GaiaColorSCR480', interface.Format.ColorPoor)
-			window.Window.propertyGlobalSet('GaiaColorCAM1080', interface.Format.colorLighter(interface.Format.ColorBad, 40))
-			window.Window.propertyGlobalSet('GaiaColorCAM720', interface.Format.colorLighter(interface.Format.ColorBad, 20))
-			window.Window.propertyGlobalSet('GaiaColorCAM480', interface.Format.ColorBad)
+			window.Window.propertyGlobalSet('GaiaColorHDULTRA', interface.Format.colorDarker(interface.Format.colorUltra(), 60))
+			window.Window.propertyGlobalSet('GaiaColorHD8K', interface.Format.colorDarker(interface.Format.colorUltra(), 40))
+			window.Window.propertyGlobalSet('GaiaColorHD6K', interface.Format.colorDarker(interface.Format.colorUltra(), 20))
+			window.Window.propertyGlobalSet('GaiaColorHD4K', interface.Format.colorUltra())
+			window.Window.propertyGlobalSet('GaiaColorHD2K', interface.Format.colorLighter(interface.Format.colorUltra(), 20))
+			window.Window.propertyGlobalSet('GaiaColorHD1080', interface.Format.colorExcellent())
+			window.Window.propertyGlobalSet('GaiaColorHD720', interface.Format.colorGood())
+			window.Window.propertyGlobalSet('GaiaColorSD480', interface.Format.colorMedium())
+			window.Window.propertyGlobalSet('GaiaColorSCR1080', interface.Format.colorLighter(interface.Format.colorPoor(), 40))
+			window.Window.propertyGlobalSet('GaiaColorSCR720', interface.Format.colorLighter(interface.Format.colorPoor(), 20))
+			window.Window.propertyGlobalSet('GaiaColorSCR480', interface.Format.colorPoor())
+			window.Window.propertyGlobalSet('GaiaColorCAM1080', interface.Format.colorLighter(interface.Format.colorBad(), 40))
+			window.Window.propertyGlobalSet('GaiaColorCAM720', interface.Format.colorLighter(interface.Format.colorBad(), 20))
+			window.Window.propertyGlobalSet('GaiaColorCAM480', interface.Format.colorBad())
 		else:
 			icons = tools.Settings.getInteger('interface.navigation.streams.icons')
 
@@ -2105,7 +2124,7 @@ class Core:
 						try: tvdb = metadata['tvdb']
 						except: tvdb = None
 
-						extra = interface.Format.font(title + ' ' + tools.Media.title(metadata = None, title = '', year = year, season = season, episode = episode).strip(), bold = True, color = interface.Format.ColorOrion)
+						extra = interface.Format.font(title + ' ' + tools.Media.title(metadata = None, title = '', year = year, season = season, episode = episode).strip(), bold = True, color = interface.Format.colorOrion())
 						if not self.navigationStreamsSpecial: extra += interface.Format.separator()
 
 						try: poster = metadata['poster'] if 'poster' in metadata else metadata['poster2'] if 'poster2' in metadata else metadata['poster3'] if 'poster3' in metadata else None
@@ -2159,6 +2178,7 @@ class Core:
 
 				# NB: Needed to transfer the addon handle ID to play
 				# https://forum.kodi.tv/showthread.php?tid=328080
+				item.setProperty('IsPlayable', 'false')
 				#item.setProperty('IsPlayable', 'true') # Causes popup dialog from Kodi if playback was unsuccesful.
 
 				item.setInfo(type = 'Video', infoLabels = metadataKodi)
@@ -2336,7 +2356,7 @@ class Core:
 	def play(self, source, metadata = None, downloadType = None, downloadId = None, handle = None, handleMode = None, index = None, binge = None):
 		try:
 			self.downloadCanceled = False
-			sequential = tools.Settings.getBoolean('general.playback.sequential')
+			sequential = tools.Settings.getBoolean('playback.general.sequential')
 			if sequential:
 				items = json.loads(control.window.getProperty(self.propertyItems))
 				if index == None:
@@ -2524,7 +2544,8 @@ class Core:
 								except: link = pro.resolve(link)
 								if link:
 									if container:
-										hash = network.Container(link = link, download = True).hash()
+										container = network.Container(link = link, download = True)
+										hash = container.hash()
 										if hash: self.tProcessed = True
 									else:
 										self.tProcessed = True
@@ -2736,6 +2757,7 @@ class Core:
 				downloadType = None
 				downloadId = None
 				if not link == None and not link == '':
+					from resources.lib.extensions import downloader
 					downer = downloader.Downloader(downloader.Downloader.TypeCache)
 					path = downer.download(media = self.type, link = link, metadata = metadata, source = source, automatic = True)
 					if path and not path == '':
@@ -3847,8 +3869,8 @@ class Core:
 
 			# FILTERS - AUDIO LANGUAGE
 
+			filterAudioLanguageHas = None
 			filterAudioLanguage = interface.Filters.audioLanguage(label = True)
-			filterAudioLanguageHas = not _filterInvalid(filterAudioLanguage)
 			if _filterInvalid(filterAudioLanguage):
 				filterAudioLanguage = _filterSetting('audio.language')
 				filterAudioLanguage = 0 if _filterInvalid(filterAudioLanguage) else int(filterAudioLanguage)
@@ -3857,8 +3879,10 @@ class Core:
 				else:
 					filterAudioLanguage = _filterSetting('audio.language.primary')
 					if filterAudioLanguage == labelNone: filterAudioLanguage = None
+					filterAudioLanguageHas = False
 			elif filterAudioLanguage == labelAny:
 				filterAudioLanguage = None
+			if filterAudioLanguageHas is None: filterAudioLanguageHas = not _filterInvalid(filterAudioLanguage)
 			if filterAudioLanguageHas: filterAudioLanguage = tools.Language.code(filterAudioLanguage)
 			interface.Filters.audioLanguage('' if filterAudioLanguage == None else filterAudioLanguage)
 
@@ -4040,7 +4064,6 @@ class Core:
 					items = [i for i in items if not i['metadata'].audioCodec(full = False) == 'AAC']
 
 				# Filter - Audio Language
-
 				audioLanguage = int(_filterSetting('audio.language'))
 				if filterAudioLanguageHas or not audioLanguage == 0:
 					audioLanguageUnknown = tools.Converter.boolean(_filterSetting('audio.language.unknown'))
@@ -4666,13 +4689,15 @@ class Core:
 						else: value = 'hoster'
 						if layoutType == 1: value = value[:1]
 						elif layoutType == 2: value = value[:3]
-						value = interface.Format.font(value, bold = True, color = interface.Format.ColorMain, uppercase = True)
+						value = interface.Format.font(value, bold = True, color = interface.Format.colorMain(), uppercase = True)
 						infos.append(value)
 
 					if layoutProvider > 0 and not pro == None and not pro == '' and not pro == '0':
-						if 'orion' in items[i]:
-							value = interface.Format.font(orionoid.Orionoid.Name, color = interface.Format.ColorOrion, bold = True, uppercase = True)
-							infos.append(value)
+						try:
+							if 'orion' in items[i]:
+								value = interface.Format.font(orionoid.Orionoid.Name, color = interface.Format.colorOrion(), bold = True, uppercase = True)
+								infos.append(value)
+						except: pass
 						value = pro
 						if layoutProvider == 1: value = value[:3]
 						elif layoutProvider == 2: value = value[:6]

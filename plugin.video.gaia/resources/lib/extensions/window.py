@@ -161,6 +161,7 @@ class Window(object):
 	SizeLarge = 'large'
 	SizeMedium = 'medium'
 	SizeSmall = 'small'
+	SizeMini = 'mini'
 
 	# Replacements
 	Replacements = {
@@ -227,13 +228,13 @@ class Window(object):
 	AlignmentTruncatedCenter = AlignmentTruncated | AlignmentCenterY
 	AlignmentJustifiedCenter = AlignmentJustified | AlignmentCenterY
 
-	# Color
-	ColorDefault = interface.Format.ColorWhite
-	ColorHighlight = interface.Format.ColorPrimary
-	ColorDiffuse = interface.Format.ColorDisabled
-	ColorSeparator = interface.Format.ColorSecondary
+	# Ratio
+	RatioStretch = 0
+	RatioScaleUp = 1
+	RatioScaleDown = 2
+	RatioDefault = RatioStretch
 
-	def __init__(self, backgroundType, backgroundPath, xml = None, xmlScale = False, xmlType = TypeDefault):
+	def __init__(self, backgroundType, backgroundPath, xml = None, xmlScale = False, xmlType = TypeDefault, width = None, height = None):
 		self.mId = 0
 		self.mLock = threading.Lock()
 
@@ -277,8 +278,8 @@ class Window(object):
 		self.mScaleWidth = (Window.SizeWidth / float(Window.SizeHeight)) / (tools.Screen.width() / float(tools.Screen.height()))
 		self.mScaleHeight = 1
 
-		self.mWidth = Window.SizeWidth
-		self.mHeight = Window.SizeHeight
+		self.mWidth = Window.SizeWidth if width is None else width
+		self.mHeight = Window.SizeHeight if height is None else height
 
 	def __del__(self):
 		self._remove()
@@ -328,6 +329,22 @@ class Window(object):
 
 	def _onClick(self, control, callback):
 		self.mWindow._onClick(control, callback)
+
+	@classmethod
+	def _colorDefault(self):
+		return interface.Format.colorWhite()
+
+	@classmethod
+	def _colorHighlight(self):
+		return interface.Format.colorPrimary()
+
+	@classmethod
+	def _colorDiffuse(self):
+		return interface.Format.colorDisabled()
+
+	@classmethod
+	def _colorSeparator(self):
+		return interface.Format.colorSecondary()
 
 	@classmethod
 	def _after(self):
@@ -513,12 +530,20 @@ class Window(object):
 		return self.currentWindow() >= Window.IdMaximum or self.currentDialog() >= Window.IdMaximum
 
 	@classmethod
+	def _separator(self, values):
+		return self.separator(values, color = self._colorSeparator(), bold = False)
+
+	@classmethod
+	def _highlight(self, value):
+		return interface.Format.fontColor(str(value), self._colorHighlight())
+
+	@classmethod
 	def separator(self, items = None, bold = True, color = None):
 		separator = Window.SeparatorPadded
 		if bold:
 			separator = interface.Format.font(separator, bold = True, translate = False)
 		if color:
-			if color == True: color = Window.ColorDiffuse
+			if color == True: color = self._colorDiffuse()
 			separator = interface.Format.font(separator, color = color, translate = False)
 		if items: return separator.join([i for i in items if not i == None and not i == ''])
 		else: return separator
@@ -719,15 +744,16 @@ class Window(object):
 		self._unlock()
 		return control
 
-	def _addImage(self, path, x, y, width, height, color = None, fixed = False):
-		image = xbmcgui.ControlImage(x, y, width, height, path)
+	def _addImage(self, path, x, y, width, height, ratio = RatioDefault, color = None, fixed = False):
+		image = xbmcgui.ControlImage(x, y, width, height, path, ratio)
 		if color: image.setColorDiffuse(color)
 		return self._add(control = image, fixed = fixed)
 
 	def _addBackground(self, type = BackgroundCombined, path = None, fixed = False):
 		images = self._background(type = type, path = path)
+		ratio = Window.RatioDefault if self.mWidth == Window.SizeWidth and self.mHeight == Window.SizeHeight else Window.RatioScaleUp
 		for image in images:
-			self._addImage(path = image['path'], color = image['color'], x = 0, y = 0, width = self.mWidth, height = self.mHeight, fixed = fixed)
+			self._addImage(path = image['path'], color = image['color'], x = 0, y = 0, width = self.mWidth, height = self.mHeight, ratio = ratio, fixed = fixed)
 
 	def _addCurtains(self):
 		if tools.Settings.getBoolean('interface.navigation.cinema') and tools.Settings.getBoolean('interface.navigation.cinema.curtains'):
@@ -735,15 +761,17 @@ class Window(object):
 			return self._addImage(path = path, x = 0, y = 0, width = self.mWidth, height = self.mHeight)
 		return None
 
-	def _addButton(self, text, x, y, width = None, height = None, callback = None, icon = None, bold = True, uppercase = True):
+	def _addButton(self, text, x, y, width = None, height = None, callback = None, icon = None, bold = True, uppercase = True, alignment = AlignmentCenter, size = FontHuge):
 		dimension = self._dimensionButton(text = text, icon = icon)
 		if width == None: width = dimension[0]
 		if height == None: height = dimension[1]
 
 		text = self._buttonText(text = text, icon = icon)
+		if alignment in [Window.AlignmentLeftCenter, Window.AlignmentLeft]: text = '  ' + text
+
 		pathNormal = self._pathImage('buttonnormal')
 		pathFocus = self._pathImage('buttonfocus')
-		control = self._add(xbmcgui.ControlButton(x, y, width, height, interface.Format.font(text, bold = bold, uppercase = uppercase), focusTexture = pathFocus, noFocusTexture = pathNormal, alignment = Window.AlignmentCenter, textColor = Window.ColorDefault, font = Window.FontHuge))
+		control = self._add(xbmcgui.ControlButton(x, y, width, height, interface.Format.font(text, bold = bold, uppercase = uppercase), focusTexture = pathFocus, noFocusTexture = pathNormal, alignment = alignment, textColor = Window._colorDefault(), font = size))
 
 		if not icon == None:
 			iconSize = int(height * 0.8)
@@ -767,15 +795,17 @@ class Window(object):
 		if control: return (image, dimension)
 		else: return dimension
 
-	def _addLabel(self, text, x, y, width, height, color = ColorDefault, size = FontMedium, alignment = AlignmentLeft, bold = False, italic = False, light = False, uppercase = False, lowercase = False, capitalcase = False):
+	def _addLabel(self, text, x, y, width, height, color = None, size = FontMedium, alignment = AlignmentLeft, bold = False, italic = False, light = False, uppercase = False, lowercase = False, capitalcase = False):
 		# NB: Fix suggested by NG.
 		# Sometimes when the special window is closed, the text of the lables remain afterwards. The text is then shown in various places of the current Kodi native window.
 		# NG suggested to add labels to window BEFORE setting the text.
+		if color is None: color = self._colorDefault()
 		control = self._add(xbmcgui.ControlLabel(x, y, width, height, '', font = size, textColor = color, alignment = alignment))
 		self._setLabel(control = control, text = text, color = color, size = size, bold = bold, italic = italic, light = light, uppercase = uppercase, lowercase = lowercase, capitalcase = capitalcase)
 		return control
 
-	def _setLabel(self, control, text, color = ColorDefault, size = FontMedium, bold = False, italic = False, light = False, uppercase = False, lowercase = False, capitalcase = False, translate = False):
+	def _setLabel(self, control, text, color = None, size = FontMedium, bold = False, italic = False, light = False, uppercase = False, lowercase = False, capitalcase = False, translate = False):
+		if color is None: color = self._colorDefault()
 		control.setLabel(interface.Format.font(text, bold = bold, italic = italic, light = light, uppercase = uppercase, lowercase = lowercase, capitalcase = capitalcase, translate = translate), font = size, textColor = color)
 
 class WindowIntro(Window):
@@ -841,8 +871,8 @@ class WindowCinema(Window):
 		super(WindowCinema, self).__del__()
 
 	@classmethod
-	def show(self, wait = False, initialize = True, close = False):
-		return super(WindowCinema, self)._show(backgroundType = self.BackgroundCombined, backgroundPath = None, wait = wait, initialize = initialize, close = close)
+	def show(self, background = None, wait = False, initialize = True, close = False):
+		return super(WindowCinema, self)._show(backgroundType = tools.Settings.getInteger('interface.navigation.cinema.background'), backgroundPath = background, wait = wait, initialize = initialize, close = close)
 
 	def _initializeStart(self):
 		super(WindowCinema, self)._initializeStart()
@@ -850,7 +880,7 @@ class WindowCinema(Window):
 	def _initializeEnd(self):
 		super(WindowCinema, self)._initializeEnd()
 		self._addCurtains()
-		self._addLogo()
+		if tools.Settings.getInteger('interface.navigation.cinema.loader') == 2: self._addLogo()
 
 	def _addLogo(self):
 		width = self._scaleWidth(WindowCinema.LogoWidth)
@@ -878,18 +908,16 @@ class WindowProgress(Window):
 	ProgressPaddingX = 8
 	ProgressPaddingY = 20
 	ProgressInterval = 0.1
-	ProgressColorEmpty = interface.Format.ColorSecondary
-	ProgressColorFull = interface.Format.ColorPrimary
 
-	def __init__(self, backgroundType, backgroundPath, logo = None, status = None, xml = None, xmlScale = False, xmlType = Window.TypeDefault):
-		super(WindowProgress, self).__init__(backgroundType = backgroundType, backgroundPath = backgroundPath, xml = xml, xmlScale = xmlScale, xmlType = xmlType)
+	def __init__(self, backgroundType, backgroundPath, logo = None, status = None, xml = None, xmlScale = False, xmlType = Window.TypeDefault, width = None, height = None):
+		super(WindowProgress, self).__init__(backgroundType = backgroundType, backgroundPath = backgroundPath, xml = xml, xmlScale = xmlScale, xmlType = xmlType, width = width, height = height)
 
 		self.mLogo = logo
 
 		self.mProgress = 0
 		self.mProgressFinished = False
 		self.mProgressIcons = []
-		self.mProgressColors = interface.Format.colorGradient(WindowProgress.ProgressColorEmpty, WindowProgress.ProgressColorFull, int(100 / WindowProgress.ProgressCount))
+		self.mProgressColors = interface.Format.colorGradient(self._colorProgressEmpty(), self._colorProgressFull(), int(100 / WindowProgress.ProgressCount))
 		self.propertySet(WindowProgress.ProgressPercentage, self.mProgress)
 		self.propertySet(WindowProgress.ProgressFinished, False)
 
@@ -950,12 +978,12 @@ class WindowProgress(Window):
 			instance.propertySet(WindowProgress.ProgressPercentage, int(instance.mProgress))
 			progress = instance._progress()
 			for i in range(progress):
-				instance.mProgressIcons[i].setColorDiffuse(instance.ProgressColorFull)
+				instance.mProgressIcons[i].setColorDiffuse(self._colorProgressFull())
 			try: instance.mProgressIcons[progress].setColorDiffuse(instance.mProgressColors[instance._progressSub()])
 			except: pass
 			if reduced:
 				for i in range(progress, WindowProgress.ProgressCount):
-					instance.mProgressIcons[i].setColorDiffuse(instance.ProgressColorEmpty)
+					instance.mProgressIcons[i].setColorDiffuse(self._colorProgressEmpty())
 
 		if not finished is None:
 			instance.mProgressFinished = finished
@@ -963,17 +991,37 @@ class WindowProgress(Window):
 
 		if not status == None:
 			instance.mStatus = status
-			instance._setLabel(control = instance.mStatusControl, text = interface.Format.fontColor(instance.mStatus, self.ColorHighlight), size = self.FontHuge, bold = True, uppercase = True)
+			instance._setLabel(control = instance.mStatusControl, text = interface.Format.fontColor(instance.mStatus, self._colorHighlight()), size = self.FontHuge, bold = True, uppercase = True)
 
 		instance._unlock()
 		return instance
 
-	def _logoName(self, force = False, size = Window.SizeLarge):
+	@classmethod
+	def _colorProgressEmpty(self):
+		return interface.Format.colorSecondary()
+
+	@classmethod
+	def _colorProgressFull(self):
+		return interface.Format.colorPrimary()
+
+	def _logoSize(self, dimension):
+		width = dimension[0]
+		height = dimension[1]
+		# Use < and not <=. If the logo is 128px, it will use the 256px image.
+		# Due to dynamic resizing, the image with the actual size looks poor, rather use the larger image.
+		if width < 64 and height < 64: return Window.SizeMini
+		elif width < 128 and height < 128: return Window.SizeSmall
+		elif width < 256 and height < 256: return Window.SizeMedium
+		else: return Window.SizeLarge
+
+	def _logoName(self, force = False, dimension = None):
 		theme = self._theme()
+		size = self._logoSize(dimension)
 		return tools.File.joinPath(self._pathLogo(size), 'namecolor.png' if force or theme == 'default' or 'gaia' in theme  else 'nameglass.png')
 
-	def _logoIcon(self, force = False, size = Window.SizeLarge):
+	def _logoIcon(self, force = False, dimension = None):
 		theme = self._theme()
+		size = self._logoSize(dimension)
 		return tools.File.joinPath(self._pathLogo(size), 'iconcolor.png' if force or theme == 'default' or 'gaia' in theme else 'iconglass.png')
 
 	def _progress(self):
@@ -981,14 +1029,6 @@ class WindowProgress(Window):
 
 	def _progressSub(self):
 		return int(self.mProgress % float(WindowProgress.ProgressCount))
-
-	@classmethod
-	def _separator(self, values):
-		return self.separator(values, color = self.ColorSeparator, bold = False)
-
-	@classmethod
-	def _highlight(self, value):
-		return interface.Format.fontColor(str(value), self.ColorHighlight)
 
 	def _offsetLogo(self, y):
 		return int(y * WindowProgress.LogoOffsetY)
@@ -1015,8 +1055,8 @@ class WindowProgress(Window):
 
 	def _addLogo(self, logo):
 		dimension = self._dimensionLogo(logo)
-		if logo == WindowProgress.LogoIcon: path = self._logoIcon(force = True)
-		elif logo == WindowProgress.LogoName: path = self._logoName(force = True)
+		if logo == WindowProgress.LogoIcon: path = self._logoIcon(force = True, dimension = dimension)
+		elif logo == WindowProgress.LogoName: path = self._logoName(force = True, dimension = dimension)
 		self._addImage(path = path, x = self._centerX(dimension[0]), y = self._offsetY(), width = dimension[0], height = dimension[1])
 		if logo == WindowProgress.LogoName: dimension[1] += self._offsetLogo(dimension[1]) # Add padding below.
 		return dimension
@@ -1044,13 +1084,14 @@ class WindowProgress(Window):
 		return dimension
 
 	def _addProgressIcon(self, index, pathInner, pathOuter, x, y, width, height):
-		icon = self._addImage(path = pathInner, x = x, y = y, width = width, height = height, color = WindowProgress.ProgressColorEmpty)
+		icon = self._addImage(path = pathInner, x = x, y = y, width = width, height = height, color = self._colorProgressEmpty())
 		self._addImage(path = pathOuter, x = x, y = y, width = width, height = height)
 		self._lock()
 		self.mProgressIcons[index] = icon
 		self._unlock()
 
-	def _addLine(self, text = '', color = Window.ColorDefault, size = Window.FontHuge, alignment = Window.AlignmentCenter, bold = True, uppercase = True):
+	def _addLine(self, text = '', color = None, size = Window.FontHuge, alignment = Window.AlignmentCenter, bold = True, uppercase = True):
+		if color is None: color = self._colorDefault()
 		dimension = self._dimensionLine()
 		control = self._addLabel(text = text, x = self._centerX(dimension[0]), y = self._offsetY(), width = dimension[0], height = dimension[1], color = color, size = size, alignment = alignment, bold = bold, uppercase = uppercase)
 		return control, dimension
@@ -1058,7 +1099,7 @@ class WindowProgress(Window):
 	def _addStatus(self, text = None):
 		if text == None: text = self.mStatus
 		if isinstance(text, bool): text = ''
-		self.mStatusControl, dimension = self._addLine(text = text, color = self.ColorHighlight)
+		self.mStatusControl, dimension = self._addLine(text = text, color = self._colorHighlight())
 		return dimension
 
 class WindowScrape(WindowProgress):
@@ -1461,65 +1502,70 @@ class WindowStreams(WindowProgress):
 
 class WindowBinge(WindowProgress):
 
-	ControlsPadding = 30
+	ModeFull = True
+	ModeOverlay = False
 
-	def __init__(self, backgroundType, backgroundPath, logo, status):
-		super(WindowBinge, self).__init__(backgroundType = backgroundType, backgroundPath = backgroundPath, logo = logo, status = status)
-		self.mControlSeparator1 = None
-		self.mControlSeparator2 = None
+	def __init__(self, mode, backgroundType, backgroundPath, poster, logo, status, width = None, height = None, inverse = False):
+		super(WindowBinge, self).__init__(backgroundType = backgroundType, backgroundPath = backgroundPath, logo = logo, status = status, width = width, height = height)
+
+		self.mMode = mode
+
 		self.mControlTitle = None
 		self.mControlEpisode = None
+		self.mControlDuration = None
 		self.mControlCancel = None
-		self.mControlConmtinue = None
+		self.mControlContinue = None
 
+		self.mPoster = poster
 		self.mTime = None
-		self.mContinue = True
+		self.mFocus = None
+		self.mAction = tools.Binge.actionNone()
+		self.mContinue = self.mAction == tools.Binge.ActionContinue
+		self.mFontSize = self.FontMedium if self.mMode == WindowBinge.ModeOverlay else self.FontHuge
 
-		self._onAction(WindowBase.ActionMoveLeft, self._actionFocusCancel)
-		self._onAction(WindowBase.ActionMoveRight, self._actionFocusContinue)
-		self._onAction(WindowBase.ActionMoveUp, self._actionFocusCancel)
-		self._onAction(WindowBase.ActionMoveDown, self._actionFocusContinue)
-		self._onAction(WindowBase.ActionItemNext, self._actionFocusContinue)
-		self._onAction(WindowBase.ActionItemPrevious, self._actionFocusCancel)
-		self._onAction(WindowBase.ActionSelectItem, self._actionFocusContinue)
+		for action in [WindowBase.ActionMoveLeft, WindowBase.ActionMoveRight, WindowBase.ActionMoveUp, WindowBase.ActionMoveDown, WindowBase.ActionItemNext, WindowBase.ActionItemPrevious, WindowBase.ActionSelectItem]:
+			self._onAction(action, self._actionFocus)
 
 	def __del__(self):
 		super(WindowBinge, self).__del__()
 
 	def _initializeStart(self):
 		super(WindowBinge, self)._initializeStart()
-		self._dimensionUpdate(self._dimensionSeparator())
-		self._dimensionUpdate(self._dimensionLine())
-		self._dimensionUpdate(self._dimensionLine())
-		self._dimensionUpdate(self._dimensionSeparator())
-		self._dimensionUpdate(self._dimensionControls())
 
 	def _initializeEnd(self):
 		super(WindowBinge, self)._initializeEnd()
-		self._dimensionUpdate(self._addSeparator1())
-		self._dimensionUpdate(self._addTitle())
-		self._dimensionUpdate(self._addEpisode())
-		self._dimensionUpdate(self._addSeparator2())
-		self._dimensionUpdate(self._addControls())
-		self._addCurtains()
 
 	@classmethod
-	def show(self, background = None, wait = False, initialize = True, close = False, title = None, season = None, episode = None, delay = True):
+	def show(self, background = None, poster = None, wait = False, initialize = True, close = False, title = None, season = None, episode = None, duration = None, delay = None):
 		next = False
-		result = super(WindowBinge, self).show(backgroundType = tools.Settings.getInteger('interface.navigation.playback.background'), backgroundPath = background, logo = self.LogoIcon, status = interface.Translation.string(35582), wait = wait, initialize = initialize, close = close)
+		result = super(WindowBinge, self)._show(backgroundType = tools.Settings.getInteger('interface.navigation.playback.background'), backgroundPath = background, poster = poster, logo = self.LogoIcon, status = interface.Translation.string(35582), wait = wait, initialize = initialize, close = close)
 		if result:
 			instance = self._instance()
-			instance._setLabel(control = instance.mControlTitle, text = title, size = self.FontHuge, bold = True, uppercase = True)
-			instance._setLabel(control = instance.mControlEpisode, text = self._separator(['%s %s' % (interface.Translation.string(32055), self._highlight(season)), '%s %s' % (interface.Translation.string(33028), self._highlight(episode))]), size = self.FontHuge, bold = True, uppercase = True)
+
+			instance._setLabel(control = instance.mControlTitle, text = title, size = instance.mFontSize, bold = True, uppercase = True)
+			instance._setLabel(control = instance.mControlEpisode, text = self._separator(['%s %s' % (interface.Translation.string(32055), self._highlight(season)), '%s %s' % (interface.Translation.string(33028), self._highlight(episode))]), size = instance.mFontSize, bold = True, uppercase = True)
+
+			if duration:
+				duration = int(math.floor(float(duration) / 60.0))
+				hours = int(math.floor(duration / 60.0))
+				minutes = duration % 60
+				duration = []
+				if hours > 0: duration.append('%s %s' % (self._highlight(hours), interface.Translation.string(35617 if hours == 1 else 35618)))
+				if minutes > 0: duration.append('%s %s' % (self._highlight(minutes), interface.Translation.string(35619 if minutes == 1 else 35620)))
+				duration = self._separator(duration)
+			else:
+				duration = interface.Translation.string(33237)
+			instance._setLabel(control = instance.mControlDuration, text = duration, size = instance.mFontSize, bold = True, uppercase = True)
+
 			if delay:
-				delay = tools.Settings.getInteger('general.playback.binge.delay') * 1000.0 + 1000
-				self.update(progress = 0, time = int(delay / 1000))
+				delay = (delay * 1000) - 1000 # Subtract a little bit, since the window takes some time to show.
+				self.update(progress = 0, time = int(delay / 1000.0))
 				timer = tools.Time()
 				timer.start()
 				elapsed = 0
 				while (delay - elapsed) > 1000 and instance.visible():
 					elapsed = timer.elapsed(milliseconds = True)
-					self.update(progress = int((elapsed + 1000) / delay * 100), time = int((delay - elapsed) / 1000))
+					self.update(progress = int((elapsed + 1000) / float(delay) * 100), time = int((delay - elapsed) / 1000.0))
 					tools.Time.sleep(0.2)
 				self.update(progress = 100, time = 0, finished = True)
 				next = instance.mContinue
@@ -1533,21 +1579,30 @@ class WindowBinge(WindowProgress):
 		instance._lock()
 
 		if not time == None: instance.mTime = time
-		instance.mStatus = '%s %s %s' % (interface.Translation.string(35582), self._highlight(instance.mTime), interface.Translation.string(32405))
-		instance._setLabel(control = instance.mStatusControl, text = instance.mStatus, size = self.FontHuge, bold = True, uppercase = True)
+
+		label = 35582 if instance.mAction == tools.Binge.ActionContinue else 35629
+		unit = 35630 if instance.mTime == 1 else 32405
+		instance.mStatus = '%s %s %s' % (interface.Translation.string(label), self._highlight(instance.mTime), interface.Translation.string(unit))
+		instance._setLabel(control = instance.mStatusControl, text = instance.mStatus, size = instance.mFontSize, bold = True, uppercase = True)
 
 		instance._unlock()
 		return instance
 
-	@classmethod
-	def enabled(self):
-		return tools.Settings.getInteger('interface.navigation.playback') == 0
+	def _actionFocus(self):
+		if self.mMode == WindowBinge.ModeOverlay:
+			if self.mFocus is True: self._actionFocusCancel()
+			else: self._actionFocusContinue()
+		else:
+			if self.mFocus is False: self._actionFocusContinue()
+			else: self._actionFocusCancel()
 
 	def _actionFocusCancel(self):
+		self.mFocus = False
 		try: self.focus(self.mControlCancel[0])
 		except: pass
 
 	def _actionFocusContinue(self):
+		self.mFocus = True
 		try: self.focus(self.mControlContinue[0])
 		except: pass
 
@@ -1559,10 +1614,45 @@ class WindowBinge(WindowProgress):
 		self.mContinue = True
 		self.close()
 
+	def _addStatus(self, text = None):
+		if text == None: text = self.mStatus
+		if isinstance(text, bool): text = ''
+		self.mStatusControl, dimension = self._addLine(text = text, size = self.mFontSize)
+		return dimension
+
+class WindowBingeFull(WindowBinge):
+
+	Padding = 30
+
+	def __init__(self, backgroundType, backgroundPath, poster, logo, status):
+		super(WindowBingeFull, self).__init__(mode = WindowBinge.ModeFull, backgroundType = backgroundType, backgroundPath = backgroundPath, poster = poster, logo = logo, status = status)
+
+	def __del__(self):
+		super(WindowBingeFull, self).__del__()
+
+	def _initializeStart(self):
+		super(WindowBingeFull, self)._initializeStart()
+		self._dimensionUpdate(self._dimensionSeparator())
+		self._dimensionUpdate(self._dimensionLine())
+		self._dimensionUpdate(self._dimensionLine())
+		self._dimensionUpdate(self._dimensionLine())
+		self._dimensionUpdate(self._dimensionSeparator())
+		self._dimensionUpdate(self._dimensionControls())
+
+	def _initializeEnd(self):
+		super(WindowBingeFull, self)._initializeEnd()
+		self._dimensionUpdate(self._addSeparator1())
+		self._dimensionUpdate(self._addTitle())
+		self._dimensionUpdate(self._addEpisode())
+		self._dimensionUpdate(self._addDuration())
+		self._dimensionUpdate(self._addSeparator2())
+		self._dimensionUpdate(self._addControls())
+		self._addCurtains()
+
 	def _dimensionControls(self):
 		dimensionCancel = self._dimensionCancel()
 		dimensionContinue = self._dimensionContinue()
-		return (self._scaleWidth(WindowBinge.ControlsPadding) + dimensionCancel[0] + dimensionContinue[0], max(dimensionCancel[1], dimensionContinue[1]))
+		return (self._scaleWidth(WindowBingeFull.Padding) + dimensionCancel[0] + dimensionContinue[0], max(dimensionCancel[1], dimensionContinue[1]))
 
 	def _dimensionCancel(self):
 		return self._dimensionButton(text = 33743, icon = True)
@@ -1571,16 +1661,11 @@ class WindowBinge(WindowProgress):
 		return self._dimensionButton(text = 33821, icon = True)
 
 	def _addSeparator1(self):
-		self.mControlSeparator1, dimension = self._addSeparator(control = True)
+		control, dimension = self._addSeparator(control = True)
 		return dimension
 
 	def _addSeparator2(self):
-		self.mControlSeparator2, dimension = self._addSeparator(control = True)
-		return dimension
-
-	def _addStatus(self, text = None):
-		if text == None: text = self.mStatus
-		self.mStatusControl, dimension = self._addLine(text = text) # Overwrite color with white.
+		control, dimension = self._addSeparator(control = True)
 		return dimension
 
 	def _addTitle(self):
@@ -1591,14 +1676,95 @@ class WindowBinge(WindowProgress):
 		self.mControlEpisode, dimension = self._addLine()
 		return dimension
 
+	def _addDuration(self):
+		self.mControlDuration, dimension = self._addLine()
+		return dimension
+
 	def _addControls(self):
 		dimension = self._dimensionControls()
 		y = self._offsetY() + self._scaleHeight(20)
-
 		x = self._centerX(dimension[0])
 		self.mControlCancel = self._addButton(text = 33743, x = x, y = y, callback = self._actionCancel, icon = 'error')
-
-		x += self._dimensionCancel()[0] + self._scaleWidth(WindowBinge.ControlsPadding)
+		x += self._dimensionCancel()[0] + self._scaleWidth(WindowBingeFull.Padding)
 		self.mControlContinue = self._addButton(text = 33821, x = x, y = y, callback = self._actionContinue, icon = 'play')
-
 		return dimension
+
+class WindowBingeOverlay(WindowBinge):
+
+	SizeHeight = 110
+
+	ButtonWidth = 150
+	ButtonHeight = 40
+
+	LogoIconWidth = 48
+	LogoIconHeight = 48
+
+	PosterWidth = 61
+	PosterHeight = 90
+
+	Padding = 10
+
+	def __init__(self, backgroundType, backgroundPath, poster, logo, status):
+		super(WindowBingeOverlay, self).__init__(mode = WindowBinge.ModeOverlay, backgroundType = backgroundType, backgroundPath = backgroundPath, poster = poster, logo = logo, status = status, height = WindowBingeOverlay.SizeHeight, inverse = True)
+
+	def __del__(self):
+		super(WindowBingeOverlay, self).__del__()
+
+	def _initializeStart(self):
+		super(WindowBingeOverlay, self)._initializeStart()
+		self.mDimensionHeight += WindowBingeOverlay.Padding
+
+	def _initializeEnd(self):
+		super(WindowBingeOverlay, self)._initializeEnd()
+		self._addSeparator()
+		self._addPoster()
+		self._addDetails()
+		self._addControls()
+
+	def _dimensionSpace(self):
+		return [0, 0]
+
+	def _dimensionLine(self):
+		return [self._scaleWidth(1200), self._scaleHeight(1)]
+
+	def _dimensionLogo(self, logo):
+		if logo == WindowProgress.LogoIcon: return [self._scaleWidth(WindowBingeOverlay.LogoIconWidth), self._scaleHeight(WindowBingeOverlay.LogoIconHeight)]
+		else: return [0, 0]
+
+	def _dimensionButton(self, text = None, icon = None):
+		return [self._scaleWidth(WindowBingeOverlay.ButtonWidth), self._scaleHeight(WindowBingeOverlay.ButtonHeight)]
+
+	def _dimensionPoster(self, text = None, icon = None):
+		return [self._scaleWidth(WindowBingeOverlay.PosterWidth), self._scaleHeight(WindowBingeOverlay.PosterHeight)]
+
+	def _dimensionDetail(self):
+		return [self._scaleWidth((self.mWidth / 2) - (3 * WindowBingeOverlay.Padding) - WindowBingeOverlay.PosterWidth), self._scaleHeight(20)]
+
+	def _addSeparator(self):
+		return self._addImage(self._pathImage('separator'), x = -5, y = self.mHeight, width = self.mWidth + 10, height = Window.SeparatorLineHeight)
+
+	def _addPoster(self):
+		if self.mPoster:
+			dimension = self._dimensionPoster()
+			self._addImage(path = self.mPoster, x = WindowBingeOverlay.Padding, y = WindowBingeOverlay.Padding, width = dimension[0], height = dimension[1])
+
+	def _addDetails(self):
+		x = (self._dimensionPoster()[0] + (2 * WindowBingeOverlay.Padding)) if self.mPoster else WindowBingeOverlay.Padding
+		y = int(1.5 * WindowBingeOverlay.Padding)
+		self.mControlTitle, dimension = self._addDetail(x = x, y = y)
+		y += WindowBingeOverlay.Padding + dimension[1]
+		self.mControlEpisode, dimension = self._addDetail(x = x, y = y)
+		y += WindowBingeOverlay.Padding + dimension[1]
+		self.mControlDuration, dimension = self._addDetail(x = x, y = y)
+
+	def _addDetail(self, x, y, text = ''):
+		dimension = self._dimensionDetail()
+		control = self._addLabel(text = text, x = x, y = y, width = dimension[0], height = dimension[1], color = self._colorDefault(), size = Window.FontMedium, alignment = Window.AlignmentLeftCenter, bold = True, uppercase = True)
+		return control, dimension
+
+	def _addControls(self):
+		x = self.mWidth - WindowBingeOverlay.ButtonWidth - WindowBingeOverlay.Padding
+		y = WindowBingeOverlay.Padding
+		self.mControlContinue = self._addButton(text = 33821, x = x, y = y, callback = self._actionContinue, icon = 'play', size = Window.FontMedium)
+		y += self._dimensionButton()[1] + WindowBingeOverlay.Padding
+		self.mControlCancel = self._addButton(text = 33743, x = x, y = y, callback = self._actionCancel, icon = 'error', size = Window.FontMedium)

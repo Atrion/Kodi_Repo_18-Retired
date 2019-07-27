@@ -144,7 +144,7 @@ class Wizard(object):
 	@classmethod
 	def _showMode(self):
 		minute = interface.Translation.string(35347)
-		colors = interface.Format.colorGradient(interface.Format.ColorExcellent, interface.Format.ColorBad, count = 5)
+		colors = interface.Format.colorGradient(interface.Format.colorExcellent(), interface.Format.colorBad(), count = 5)
 		items = [
 			interface.Format.fontBold(interface.Format.fontColor('[ 0 ' + minute + ']  ', colors[0]) + interface.Translation.string(35337) + ': ') + interface.Translation.string(35342),
 			interface.Format.fontBold(interface.Format.fontColor('[ 3 ' + minute + ']  ', colors[1]) + interface.Translation.string(35340) + ': ') + interface.Translation.string(35345),
@@ -230,8 +230,8 @@ class Wizard(object):
 			if choice == Wizard.ChoiceLeft: return self._cancel()
 
 		orion = orionoid.Orionoid()
-		enabled = interface.Format.fontBold(interface.Format.fontColor(interface.Translation.string(32301), interface.Format.ColorExcellent))
-		disabled = interface.Format.fontBold(interface.Format.fontColor(interface.Translation.string(32302), interface.Format.ColorBad))
+		enabled = interface.Format.fontBold(interface.Format.fontColor(interface.Translation.string(32301), interface.Format.colorExcellent()))
+		disabled = interface.Format.fontBold(interface.Format.fontColor(interface.Translation.string(32302), interface.Format.colorBad()))
 		special = interface.Translation.string(33105)
 		premium = interface.Translation.string(33768)
 		provider = interface.Translation.string(33681)
@@ -588,8 +588,8 @@ class Wizard(object):
 			if choice == Wizard.ChoiceLeft: return self._cancel()
 
 		orion = orionoid.Orionoid()
-		enabled = interface.Format.fontColor(interface.Translation.string(32301), interface.Format.ColorExcellent)
-		disabled = interface.Format.fontColor(interface.Translation.string(32302), interface.Format.ColorBad)
+		enabled = interface.Format.fontColor(interface.Translation.string(32301), interface.Format.colorExcellent())
+		disabled = interface.Format.fontColor(interface.Translation.string(32302), interface.Format.colorBad())
 		special = '[' + interface.Translation.string(33105) + '] '
 		general = '[' + interface.Translation.string(32310) + '] '
 		torrent = '[' + interface.Translation.string(33199) + '] '

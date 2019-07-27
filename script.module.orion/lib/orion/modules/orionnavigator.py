@@ -134,7 +134,8 @@ class OrionNavigator:
 	def menuIntegration(self):
 		if OrionInterface.dialogOption(title = 32174, message = 33028):
 			menu = OrionNavigator()
-			for addon in OrionIntegration.Addons:
+			addons = sorted(OrionIntegration.Addons)
+			for addon in addons:
 				menu.buildAdd(label = addon, action = 'integration' + addon.title().replace(' ', ''), folder = False, icon = OrionIntegration.id(addon), theme = OrionInterface.ThemeApps)
 			menu.buildFinish()
 

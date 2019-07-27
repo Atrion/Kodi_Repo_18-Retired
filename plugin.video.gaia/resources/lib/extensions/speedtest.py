@@ -174,10 +174,10 @@ class SpeedTester(object):
 		return '%s%s' % (formatter(community), differenceLabel)
 
 	def _formatDifferenceLatency(self, local, community):
-		return self._formatDifference(local = local, community = community, formatter = self._formatLatency, colorPositive = interface.Format.ColorBad, colorNegative = interface.Format.ColorExcellent, colorNeutral = interface.Format.ColorMedium)
+		return self._formatDifference(local = local, community = community, formatter = self._formatLatency, colorPositive = interface.Format.colorBad(), colorNegative = interface.Format.colorExcellent(), colorNeutral = interface.Format.colorMedium())
 
 	def _formatDifferenceSpeed(self, local, community):
-		return self._formatDifference(local = local, community = community, formatter = self._formatSpeed, colorPositive = interface.Format.ColorExcellent, colorNegative = interface.Format.ColorBad, colorNeutral = interface.Format.ColorMedium)
+		return self._formatDifference(local = local, community = community, formatter = self._formatSpeed, colorPositive = interface.Format.colorExcellent(), colorNegative = interface.Format.colorBad(), colorNeutral = interface.Format.colorMedium())
 
 	def _informationInternal(self, service = api.Api.ServiceNone, selection = api.Api.SelectionAverage):
 		self.mInformation = self._information(service = service, selection = selection, networkInformation = True)

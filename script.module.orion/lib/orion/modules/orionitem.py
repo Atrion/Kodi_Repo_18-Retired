@@ -303,7 +303,6 @@ class OrionItem:
 			):
 
 		try:
-			from orion.modules.orionintegration import OrionIntegration
 			app = OrionApp.instance().id()
 			if not OrionSettings.getFiltersEnabled(app): app = None
 
@@ -331,8 +330,13 @@ class OrionItem:
 				return False
 
 			# Important to use "is" (equivalent to ===)
-			if limitCount is OrionItem.FilterSettings: limitCount = OrionSettings.getFiltersInteger('filters.limit.count', app)
-			if limitRetry is OrionItem.FilterSettings: limitRetry = OrionSettings.getFiltersInteger('filters.limit.retry', app)
+			modeCombined = OrionSettings.getFiltersInteger('filters.limit.mode', app) == 0
+			if limitCount is OrionItem.FilterSettings:
+				if modeCombined: limitCount = OrionSettings.getFiltersInteger('filters.limit.count', app)
+				else: limitCount = OrionSettings.getFiltersInteger('filters.limit.count.' + type, app)
+			if limitRetry is OrionItem.FilterSettings:
+				if modeCombined: limitRetry = OrionSettings.getFiltersInteger('filters.limit.retry', app)
+				else: limitRetry = OrionSettings.getFiltersInteger('filters.limit.retry.' + type, app)
 			if limitOffset is OrionItem.FilterSettings: limitOffset = OrionItem.FilterNone
 			if limitPage is OrionItem.FilterSettings: limitPage = OrionItem.FilterNone
 			if sortValue is OrionItem.FilterSettings: sortValue = OrionItem.SortIds[OrionSettings.getFiltersInteger('filters.sort.value', app)]

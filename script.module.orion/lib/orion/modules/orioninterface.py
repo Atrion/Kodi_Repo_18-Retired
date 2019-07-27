@@ -54,6 +54,7 @@ class OrionInterface:
 	ColorPrimary = 'FF47CAE9'
 	ColorSecondary = 'FF37A8C4'
 	ColorTertiary = 'FF010B14'
+	ColorQuaternary = 'FF637385'
 	ColorGood = 'FF1E8449'
 	ColorMedium = 'FF668D2E'
 	ColorPoor = 'FFBA4A00'

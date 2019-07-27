@@ -33,7 +33,6 @@ from resources.lib.modules import trakt
 from resources.lib.extensions import tools
 from resources.lib.extensions import interface
 from resources.lib.extensions import window
-from resources.lib.extensions import downloader
 from resources.lib.extensions import debrid
 from resources.lib.extensions import handler
 from resources.lib.extensions import metadata
@@ -122,9 +121,18 @@ class player(xbmc.Player):
 				self.episodeString = None
 
 			self.binge = episode and binge
-			self.bingeDelay = tools.Binge.settingsDelay()
-			self.bingeSuppress = tools.Binge.settingsSuppress()
-			self.bingeFinished = False
+			self.bingeDialogNone = tools.Binge.dialogNone()
+			self.bingeDialogFull = tools.Binge.dialogFull()
+			self.bingeDialogOverlay = tools.Binge.dialogOverlay()
+			self.bingeDialogUpNext = tools.Binge.dialogUpNext()
+			self.bingeSuppress = tools.Binge.suppress()
+			self.bingeDelay = None
+			self.bingeContinue = False
+			self.bingePlay = False
+			self.bingeFinishedScrape = False
+			self.bingeFinishedCheck = False
+			self.bingeFinishedShow = False
+			self.bingeFinishedPlay = False
 			self.bingeItems = None
 			self.bingeMetadata = None
 
@@ -132,7 +140,7 @@ class player(xbmc.Player):
 			self.progressBusy = False
 			self.progressLast = 0
 			self.progress = None
-			if tools.Settings.getInteger('general.playback.resume') > 0:
+			if tools.Settings.getInteger('playback.general.resume') > 0:
 				thread = threading.Thread(target = self._progress)
 				thread.start()
 			else:
@@ -156,6 +164,7 @@ class player(xbmc.Player):
 
 			self.downloadCheck = False
 			if downloadType and downloadId:
+				from resources.lib.extensions import downloader
 				self.download = downloader.Downloader(type = downloadType, id = downloadId)
 				self.bufferCounter = 0
 				self.bufferShow = True
@@ -177,9 +186,9 @@ class player(xbmc.Player):
 			self.progressTotal = 1
 			success = False
 			delay = 0
-			if tools.Settings.getBoolean('general.playback.retry.enabled'):
-				self.progressTotal += tools.Settings.getInteger('general.playback.retry.limit')
-				delay = tools.Settings.getInteger('general.playback.retry.delay')
+			if tools.Settings.getBoolean('playback.retry.enabled'):
+				self.progressTotal += tools.Settings.getInteger('playback.retry.limit')
+				delay = tools.Settings.getInteger('playback.retry.delay')
 			self.progressRemaining = self.progressTotal
 
 			success = False
@@ -200,7 +209,10 @@ class player(xbmc.Player):
 			if not success and self.progressRemaining == 0:
 				interface.Dialog.notification(title = 33448, message = 33450, icon = interface.Dialog.IconError)
 
-			control.resolve(int(sys.argv[1]), True, item)
+			# This should solve the issue of Gaia videos being played twice when launched from OpenMeta or widgets when using the directory structure.
+			# Setting it to True will cause the video to play again after finishing playback, when launched from the local library.
+			#control.resolve(int(sys.argv[1]), True, item)
+			control.resolve(int(sys.argv[1]), False, item)
 
 			ids = {}
 			if imdb: ids['imdb'] = imdb
@@ -329,6 +341,7 @@ class player(xbmc.Player):
 	def _downloadStop(self):
 		self._downloadClear(delete = False)
 		if not self.download == None:
+			from resources.lib.extensions import downloader
 			self.download.stop(cacheOnly = True)
 
 	def _downloadClear(self, delete = True):
@@ -341,6 +354,8 @@ class player(xbmc.Player):
 
 	def _downloadUpdateSize(self):
 		try:
+			from resources.lib.extensions import downloader
+
 			# Try using the progress from the downloader, since the below code mostly returns 0.
 			# Through Python, you can get the total file size (including the empty padded space).
 
@@ -384,6 +399,7 @@ class player(xbmc.Player):
 	def _downloadProgress(self):
 		progress = ''
 		if not self.download == None:
+			from resources.lib.extensions import downloader
 			progress = interface.Format.fontBold(interface.Translation.string(32403) + ': ')
 			self.download.refresh()
 			progress += self.download.progress()
@@ -462,12 +478,35 @@ class player(xbmc.Player):
 			self.downloadCheck = False
 			return False
 
+	def _bingeDelay(self):
+		if self.bingeDelay is None:
+			self.bingeDelay = tools.Binge.delay()
+			if self.bingeDelay == 0:
+				try: self.bingeDelay = self.getTotalTime()
+				except:
+					try: self.bingeDelay = int(self.metadata['duration'])
+					except: pass
+				self.bingeDelay = 30 if self.bingeDelay == 0 else int(self.bingeDelay / 60.0)
+				if tools.Binge.dialogFull(): self.bingeDelay = int(self.bingeDelay / 3.0)
+		return self.bingeDelay
+
 	def _bingeCheck(self):
 		try:
-			if self.binge and not self.bingeFinished and self.timeTotal - self.timeCurrent < player.BingeTime:
-				self.bingeFinished = True
-				thread = threading.Thread(target = self._bingeScrape)
-				thread.start()
+			if self.binge:
+				remaining = self.timeTotal - self.timeCurrent
+				if not self.bingeFinishedScrape and remaining < player.BingeTime:
+					self.bingeFinishedScrape = True
+					thread = threading.Thread(target = self._bingeScrape)
+					thread.start()
+				if not self.bingeFinishedCheck:
+					if self.bingeDialogUpNext:
+						if not self.bingeMetadata is None:
+							# NB: AddonSignals cannot be called from a thread, otherwise the callback never fires.
+							self.bingeFinishedCheck = True
+							self._bingeUpNext()
+					elif self.bingeDialogOverlay and remaining <= self._bingeDelay():
+						self.bingeFinishedCheck = True
+						self._bingeShow()
 		except:
 			tools.Logger.error()
 
@@ -480,36 +519,119 @@ class player(xbmc.Player):
 		except:
 			tools.Logger.error()
 
+	def _bingeUpNext(self):
+		episodeCurrent = {
+			'episodeid' : tools.Media.titleUniversal(metadata = self.metadata),
+			'tvshowid' : self.metadata['imdb'] if 'imdb' in self.metadata else '',
+			'title' : self.metadata['title'] if 'title' in self.metadata else '',
+			'showtitle' : self.metadata['tvshowtitle'] if 'tvshowtitle' in self.metadata else '',
+			'season' : int(self.metadata['season']) if 'season' in self.metadata else '',
+			'episode' : int(self.metadata['episode']) if 'episode' in self.metadata else '',
+			'playcount' : self.metadata['playcount'] if 'playcount' in self.metadata else 0,
+			'plot' : self.metadata['plot'] if ('plot' in self.metadata and not self.metadata['plot'] == '0') else '',
+			'rating' : float(self.metadata['rating']) if ('rating' in self.metadata and not self.metadata['rating'] == '0') else 0,
+			'firstaired' : self.metadata['premiered'] if ('premiered' in self.metadata and not self.metadata['premiered'] == '0') else '',
+			'art' : {
+				'tvshow.poster' : self.metadata['poster'] if ('poster' in self.metadata and not self.metadata['poster'] == '0') else '',
+				'thumb' : self.metadata['thumb'] if ('thumb' in self.metadata and not self.metadata['thumb'] == '0') else '',
+				'tvshow.fanart' : self.metadata['fanart'] if ('fanart' in self.metadata and not self.metadata['fanart'] == '0') else '',
+				'tvshow.landscape' : self.metadata['landscape'] if ('landscape' in self.metadata and not self.metadata['landscape'] == '0') else self.metadata['banner'] if ('banner' in self.metadata and not self.metadata['banner'] == '0') else '',
+				'tvshow.clearart' : self.metadata['clearart'] if ('clearart' in self.metadata and not self.metadata['clearart'] == '0') else '',
+				'tvshow.clearlogo' : self.metadata['clearlogo'] if ('clearlogo' in self.metadata and not self.metadata['clearlogo'] == '0') else '',
+			},
+		}
+
+		episodeNext = {
+			'episodeid' : tools.Media.titleUniversal(metadata = self.bingeMetadata),
+			'tvshowid' : self.bingeMetadata['imdb'] if 'imdb' in self.bingeMetadata else '',
+			'title' : self.bingeMetadata['title'] if 'title' in self.bingeMetadata else '',
+			'showtitle' : self.bingeMetadata['tvshowtitle'] if 'tvshowtitle' in self.bingeMetadata else '',
+			'season' : int(self.bingeMetadata['season']) if 'season' in self.bingeMetadata else '',
+			'episode' : int(self.bingeMetadata['episode']) if 'episode' in self.bingeMetadata else '',
+			'playcount' : self.bingeMetadata['playcount'] if 'playcount' in self.bingeMetadata else 0,
+			'plot' : self.bingeMetadata['plot'] if ('plot' in self.bingeMetadata and not self.bingeMetadata['plot'] == '0') else '',
+			'rating' : float(self.bingeMetadata['rating']) if ('rating' in self.bingeMetadata and not self.bingeMetadata['rating'] == '0') else 0,
+			'firstaired' : self.bingeMetadata['premiered'] if ('premiered' in self.bingeMetadata and not self.bingeMetadata['premiered'] == '0') else '',
+			'art' : {
+				'tvshow.poster' : self.bingeMetadata['poster'] if ('poster' in self.bingeMetadata and not self.bingeMetadata['poster'] == '0') else '',
+				'thumb' : self.bingeMetadata['thumb'] if ('thumb' in self.bingeMetadata and not self.bingeMetadata['thumb'] == '0') else '',
+				'tvshow.fanart' : self.bingeMetadata['fanart'] if ('fanart' in self.bingeMetadata and not self.bingeMetadata['fanart'] == '0') else '',
+				'tvshow.landscape' : self.bingeMetadata['landscape'] if ('landscape' in self.bingeMetadata and not self.bingeMetadata['landscape'] == '0') else self.bingeMetadata['banner'] if ('banner' in self.bingeMetadata and not self.bingeMetadata['banner'] == '0') else '',
+				'tvshow.clearart' : self.bingeMetadata['clearart'] if ('clearart' in self.bingeMetadata and not self.bingeMetadata['clearart'] == '0') else '',
+				'tvshow.clearlogo' : self.bingeMetadata['clearlogo'] if ('clearlogo' in self.bingeMetadata and not self.bingeMetadata['clearlogo'] == '0') else '',
+			},
+		}
+
+		infoNext = {
+			'current_episode': episodeCurrent,
+			'next_episode': episodeNext,
+			'play_info': {},
+		}
+
+		import AddonSignals
+		AddonSignals.sendSignal('upnext_data', infoNext, source_id = tools.System.id())
+		AddonSignals.registerSlot('upnextprovider', tools.System.id() + '_play_action', self._bingeShowUpNext)
+
+	def _bingeShowUpNext(self, data):
+		self.bingeContinue = True
+		self._bingeShow()
+
+	def _bingeShow(self):
+		try:
+			if self.binge and not self.bingeFinishedShow and self.bingeItems:
+				self.bingeFinishedShow = True
+				if not self.bingeDialogUpNext:
+					self.bingeContinue = True
+					if self.bingeSuppress:
+						thread = threading.Thread(target = self._bingeSuppress)
+						thread.start()
+					if not self.bingeDialogNone:
+						try: background = self.bingeMetadata['fanart'] if 'fanart' in self.bingeMetadata else self.bingeMetadata['fanart2'] if 'fanart2' in self.bingeMetadata else self.bingeMetadata['fanart3'] if 'fanart3' in self.bingeMetadata else None
+						except: background = None
+						try: poster = self.bingeMetadata['poster'] if 'poster' in self.bingeMetadata else self.bingeMetadata['poster2'] if 'poster2' in self.bingeMetadata else self.bingeMetadata['poster3'] if 'poster3' in self.bingeMetadata else None
+						except: poster = None
+						if self.bingeDialogFull:
+							delay = self._bingeDelay()
+							self.bingeContinue = window.WindowBingeFull.show(title = self.bingeMetadata['tvshowtitle'], season = self.bingeMetadata['season'], episode = self.bingeMetadata['episode'], duration = self.bingeMetadata['duration'], background = background, poster = poster, delay = delay)
+						elif self.bingeDialogOverlay:
+							try: delay = self.getTotalTime() - self.getTime()
+							except: delay = 0
+							self.bingeContinue = window.WindowBingeOverlay.show(title = self.bingeMetadata['tvshowtitle'], season = self.bingeMetadata['season'], episode = self.bingeMetadata['episode'], duration = self.bingeMetadata['duration'], background = background, poster = poster, delay = delay)
+				if self.bingeContinue:
+					if self.status == self.StatusStopped:
+						self._bingePlay()
+					elif tools.Binge.actionContinue() == tools.Binge.ActionInterrupt:
+						self.stop()
+						self._bingePlay()
+					else:
+						self.bingePlay = True
+				elif tools.Binge.actionCancel() == tools.Binge.ActionInterrupt:
+					self.stop()
+		except:
+			tools.Logger.error()
+
 	def _bingePlay(self):
 		try:
-			if self.binge and self.bingeItems:
-				next = True
-				if self.bingeSuppress:
-					thread = threading.Thread(target = self._bingeSuppress)
-					thread.start()
-				if self.bingeDelay > 0:
-					try: fanart = self.bingeMetadata['fanart'] if 'fanart' in self.bingeMetadata else self.bingeMetadata['fanart2'] if 'fanart2' in self.bingeMetadata else self.bingeMetadata['fanart3'] if 'fanart3' in self.bingeMetadata else None
-					except: fanart = None
-					next = window.WindowBinge.show(title = self.bingeMetadata['tvshowtitle'], season = self.bingeMetadata['season'], episode = self.bingeMetadata['episode'], background = fanart)
+			if self.binge and not self.bingeFinishedPlay and self.bingeItems:
+				self.bingeFinishedPlay = True
 				interface.Loader.show()
-				if next:
-					for i in range(len(self.bingeItems)):
-						metadata.Metadata.uninitialize(self.bingeItems[i])
-					tools.System.executePlugin(action = 'scrape', parameters = {
-						'type' : self.type,
-						'kids' : self.kids,
-						'binge' : tools.Binge.ModeContinue,
-						'title' : self.bingeMetadata['title'],
-						'tvshowtitle' : self.bingeMetadata['tvshowtitle'],
-						'year' : self.bingeMetadata['year'],
-						'imdb' : self.bingeMetadata['imdb'],
-						'tvdb' : self.bingeMetadata['tvdb'],
-						'season' : self.bingeMetadata['season'],
-						'episode' : self.bingeMetadata['episode'],
-						'premiered' : self.bingeMetadata['premiered'],
-						'metadata' : tools.Converter.jsonTo(self.bingeMetadata),
-						'items' : tools.Converter.jsonTo(self.bingeItems),
-					})
+				for i in range(len(self.bingeItems)):
+					metadata.Metadata.uninitialize(self.bingeItems[i])
+				tools.System.executePlugin(action = 'scrape', parameters = {
+					'type' : self.type,
+					'kids' : self.kids,
+					'binge' : tools.Binge.ModeContinue,
+					'title' : self.bingeMetadata['title'],
+					'tvshowtitle' : self.bingeMetadata['tvshowtitle'],
+					'year' : self.bingeMetadata['year'],
+					'imdb' : self.bingeMetadata['imdb'],
+					'tvdb' : self.bingeMetadata['tvdb'],
+					'season' : self.bingeMetadata['season'],
+					'episode' : self.bingeMetadata['episode'],
+					'premiered' : self.bingeMetadata['premiered'],
+					'metadata' : tools.Converter.jsonTo(self.bingeMetadata),
+					'items' : tools.Converter.jsonTo(self.bingeItems),
+				})
 		except:
 			tools.Logger.error()
 
@@ -572,7 +694,7 @@ class player(xbmc.Player):
 		interface.Loader.hide()
 
 		self.core.progressPlaybackInitialize(title = title, message = message, metadata = self.metadata)
-		timeout = tools.Settings.getInteger('general.playback.timeout')
+		timeout = tools.Settings.getInteger('playback.general.timeout')
 
 		# Use a thread for Kodi 18, since the player freezes for a few seconds before starting playback.
 		thread = threading.Thread(target = self.keepPlaybackWait, args = (title, message, status, substatus1, substatus2, timeout))
@@ -594,7 +716,7 @@ class player(xbmc.Player):
 
 		#self.core.progressPlaybackClose()
 		addLibrary = tools.Settings.getBoolean('library.updates.watched')
-		playbackEnd = tools.Settings.getInteger('general.playback.end') / 100.0
+		playbackEnd = tools.Settings.getInteger('playback.general.end') / 100.0
 
 		streamsHas = False
 		visibleWas = False
@@ -700,7 +822,7 @@ class player(xbmc.Player):
 		if progress > 0:
 			if self.timeTotal > 0:
 				seconds = (progress * self.timeTotal) / 100.0
-				if seconds > 0 and tools.Settings.getInteger('general.playback.resume') == 1:
+				if seconds > 0 and tools.Settings.getInteger('playback.general.resume') == 1:
 					self.progressBusy = True
 					self.pause()
 					timeMinutes, timeSeconds = divmod(float(seconds), 60)
@@ -759,7 +881,11 @@ class player(xbmc.Player):
 		self._showStreams()
 		if control.window.getProperty('%s.player.overlay' % control.addonInfo('id')) == '7':
 			trakt.rateManual(imdb = self.idImdb, tvdb = self.idTvdb, season = self.season, episode = self.episode)
-		self._bingePlay()
+		if self.binge:
+			if self.bingePlay:
+				self._bingePlay()
+			elif self.bingeDialogNone or self.bingeDialogFull:
+				self._bingeShow()
 
 	def onPlayBackEnded(self):
 		self.onPlayBackStopped()
@@ -1082,10 +1208,8 @@ class Playback(object):
 		self.progress = 0
 
 	def _trakt(self):
-		if trakt.getTraktCredentialsInfo() == False:
-			return False
-		else:
-			return tools.Settings.getInteger('general.playback.progress.alternative') == 1
+		if trakt.getTraktCredentialsInfo() == False: return False
+		else: return tools.Settings.getInteger('playback.track.progress.alternative') == 1
 
 	def _id(self, imdb = None, tvdb = None, season = None, episode = None):
 		imdbValid = not imdb == None and not imdb == '' and not imdb == '0'

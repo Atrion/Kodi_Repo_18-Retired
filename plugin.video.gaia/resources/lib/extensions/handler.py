@@ -388,17 +388,17 @@ class Handler(object):
 				for i in services:
 					extra = ''
 					if 'direct' in item and item['direct']:
-						extra = interface.Format.font(33489, color = interface.Format.colorLighter(color = interface.Format.ColorSpecial, change = 10))
+						extra = interface.Format.font(33489, color = interface.Format.colorLighter(color = interface.Format.colorSpecial(), change = 10))
 					elif 'premium' in item and item['premium']:
-						extra = interface.Format.font(33768, color = interface.Format.colorLighter(color = interface.Format.ColorSpecial, change = 10))
+						extra = interface.Format.font(33768, color = interface.Format.colorLighter(color = interface.Format.colorSpecial(), change = 10))
 					elif 'cache' in item and i.id() in item['cache'] and item['cache'][i.id()]:
-						extra = interface.Format.font(33884, color = interface.Format.ColorSpecial)
+						extra = interface.Format.font(33884, color = interface.Format.colorSpecial())
 					elif i.debrid():
-						extra = interface.Format.font(33209, color = interface.Format.colorLighter(color = interface.Format.ColorSpecial, change = 30))
+						extra = interface.Format.font(33209, color = interface.Format.colorLighter(color = interface.Format.colorSpecial(), change = 30))
 					elif i.open():
-						extra = interface.Format.font(33211, color = interface.Format.colorLighter(color = interface.Format.ColorSpecial, change = 50))
+						extra = interface.Format.font(33211, color = interface.Format.colorLighter(color = interface.Format.colorSpecial(), change = 50))
 					elif i.addon():
-						extra = interface.Format.font(35614, color = interface.Format.colorLighter(color = interface.Format.ColorSpecial, change = 50))
+						extra = interface.Format.font(35614, color = interface.Format.colorLighter(color = interface.Format.colorSpecial(), change = 50))
 					if not extra == '':
 						extra = interface.Format.fontSeparator() + interface.Format.font(extra, bold = True, uppercase = True)
 					items.append(interface.Format.fontBold(i.name()) + extra)

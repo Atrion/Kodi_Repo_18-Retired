@@ -159,7 +159,7 @@ class episodes:
 		except:
 			tools.Logger.error()
 
-	def get(self, tvshowtitle, year, imdb, tvdb, season = None, episode = None, idx = True):
+	def get(self, tvshowtitle, year, imdb, tvdb, season = None, episode = None, single = False, idx = True):
 		from resources.lib.indexers import seasons
 		try:
 			if season is None and episode is None:
@@ -168,8 +168,9 @@ class episodes:
 				self.list = cache.Cache().cacheShort(seasons.seasons().tvdb_list, tvshowtitle, year, imdb, tvdb, self.lang, season)
 			else:
 				self.list = cache.Cache().cacheShort(seasons.seasons().tvdb_list, tvshowtitle, year, imdb, tvdb, self.lang, '-1')
-				num = [x for x,y in enumerate(self.list) if y['season'] == str(season) and  y['episode'] == str(episode)][-1]
-				self.list = [y for x,y in enumerate(self.list) if x >= num]
+				num = [x for x, y in enumerate(self.list) if y['season'] == str(season) and y['episode'] == str(episode)][-1]
+				if single: self.list = [y for x, y in enumerate(self.list) if x == num]
+				else: self.list = [y for x, y in enumerate(self.list) if x >= num]
 
 			if self.kidsOnly():
 				self.list = [i for i in self.list if 'mpaa' in i and tools.Kids.allowed(i['mpaa'])]
@@ -198,7 +199,7 @@ class episodes:
 		try:
 			self.list = cache.Cache().cacheMini(self.trakt_list, self.traktunfinished_link, self.trakt_user, True)
 			if self.kidsOnly(): self.list = [i for i in self.list if 'mpaa' in i and tools.Kids.allowed(i['mpaa'])]
-			self.episodeDirectory(self.list)
+			self.episodeDirectory(self.list, unfinished = True)
 			return self.list
 		except:
 			tools.Logger.error()
@@ -227,10 +228,12 @@ class episodes:
 
 	def calendar(self, url, idx = True, direct = False):
 		try:
+			multi = False
 			try: url = getattr(self, url + '_link')
 			except: pass
 
 			if self.trakt_link in url and url == self.progress_link:
+				multi = True
 				self.list = cache.Cache().cacheMini(self.trakt_progress_list, url, self.trakt_user, self.lang, direct)
 				self.sort(type = 'progress')
 
@@ -257,7 +260,7 @@ class episodes:
 			if self.kidsOnly():
 				self.list = [i for i in self.list if 'mpaa' in i and tools.Kids.allowed(i['mpaa'])]
 
-			if idx: self.episodeDirectory(self.list)
+			if idx: self.episodeDirectory(self.list, multi = multi)
 			return self.list
 		except:
 			pass
@@ -1176,7 +1179,7 @@ class episodes:
 		return itemlist
 
 
-	def episodeDirectory(self, items):
+	def episodeDirectory(self, items, multi = None, unfinished = False):
 
 		# Retrieve additional metadata if not super info was retireved (eg: Trakt lists, such as Unfinished and History)
 		try:
@@ -1210,10 +1213,13 @@ class episodes:
 
 		indicators = playcount.getShowIndicators()
 
-		try: multi = [i['tvshowtitle'] for i in items]
-		except: multi = []
-		multi = len([x for y,x in enumerate(multi) if x not in multi[:y]])
-		multi = True if multi > 1 else False
+		# Different variable to multi.
+		# "multiple" handles the title format and the directory type.
+		# "multi" is used to avoid the watched mark being shown on top of the unwarched episode count.
+		try: multiple = [i['tvshowtitle'] for i in items]
+		except: multiple = []
+		multiple = len([x for y,x in enumerate(multiple) if x not in multiple[:y]])
+		multiple = True if multiple > 1 else False
 
 		try: sysaction = items[0]['action']
 		except: sysaction = ''
@@ -1244,7 +1250,7 @@ class episodes:
 				try: label = media.title(tools.Media.TypeEpisode, title = i['label'], season = season, episode = episode)
 				except: pass
 				if label == None: label = i['label']
-				if multi == True and not label in title and not title in label: label = '%s - %s' % (title, label)
+				if multiple == True and not label in title and not title in label: label = '%s - %s' % (title, label)
 				try: labelProgress = label + ' [' + str(int(i['progress'] * 100)) + '%]'
 				except: labelProgress = label
 
@@ -1347,10 +1353,16 @@ class episodes:
 				try:
 					overlay = int(playcount.getEpisodeOverlay(indicators, imdb, tvdb, season, episode))
 					watched = overlay == 7
+
+					# Skip episodes marked as watched for the unfinished list.
+					try:
+						if unfinished and watched and not i['progress'] is None: continue
+					except: pass
+
 					if watched: meta.update({'playcount': 1, 'overlay': 7})
 					else: meta.update({'playcount': 0, 'overlay': 6})
 					meta.update({'watched': int(watched)}) # Kodi's documentation says this value is deprecate. However, without this value, Kodi adds the watched checkmark over the remaining episode count.
-					if unwatchedEnabled:
+					if multi and unwatchedEnabled:
 						count = playcount.getShowCount(indicators, imdb, tvdb, unwatchedLimit)
 						if count:
 							item.setProperty('TotalEpisodes', str(count['total']))
@@ -1419,8 +1431,8 @@ class episodes:
 				tools.Logger.error()
 
 		# Gaia
-		# Show multi as show, in order to display unwatched count.
-		if multi:
+		# Show multiple as show, in order to display unwatched count.
+		if multiple:
 			control.content(syshandle, 'tvshows')
 			control.directory(syshandle, cacheToDisc = True)
 			views.setView('shows', {'skin.estuary' : 55, 'skin.confluence' : 500})

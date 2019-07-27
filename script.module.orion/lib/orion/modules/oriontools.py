@@ -266,14 +266,22 @@ class OrionTools:
 			return False
 
 	@classmethod
-	def fileInsert(self, path, after, data):
+	def fileInsert(self, path, after, data, flags = None):
 		content = self.fileRead(path)
-		try: index = re.search(after, content).end()
-		except: index = -1
-		if index < 0: return False
-		split1 = content[:index]
-		split2 = content[index:]
-	 	content = split1 + data + split2
+		if not self.isArray(after): after = [after]
+		if not self.isArray(data): data = [data]
+		if flags and not self.isArray(flags): flags = [flags]
+		for i in range(len(after)):
+			afterValue = after[i]
+			dataValue = data[i]
+			try: flagsValue = flags[i]
+			except: flagsValue = None
+			try: index = re.search(afterValue, content, flagsValue if flagsValue else 0).end()
+			except: index = -1
+			if index < 0: return False
+			split1 = content[:index]
+			split2 = content[index:]
+		 	content = split1 + dataValue + split2
 		self.fileWrite(path, content)
 		return True
 

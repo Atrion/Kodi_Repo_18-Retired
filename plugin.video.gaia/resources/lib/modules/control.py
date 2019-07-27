@@ -107,11 +107,20 @@ def addonIcon():
 	return addonInfo('icon')
 
 def addonThumb():
+	# This function is called often during menu navigation.
+	# Save it as a Kodi variable to speed up getting the value.
+	from resources.lib.extensions import window
+	property = 'GaiaAddonThumb'
+	result = window.Window.propertyGlobal(property)
+	if result: return result
+
 	path = skinPath()
 	theme = skinAppearance()
 	default = theme in ['default', '-', '']
 	if default:
-		return 'DefaultFolder.png'
+		result = 'DefaultFolder.png'
+		window.Window.propertyGlobalSet(property, result)
+		return result
 	elif not path == None:
 		type = tools.Settings.getInteger('interface.theme.poster')
 		name = None
@@ -124,15 +133,27 @@ def addonThumb():
 		else:
 			result = os.path.join(path, 'posters', name + '.png')
 			if os.path.exists(result):
+				window.Window.propertyGlobalSet(property, result)
 				return result
-	return addonInfo('icon')
+	result = addonInfo('icon')
+	window.Window.propertyGlobalSet(property, result)
+	return result
 
 def addonPoster():
+	# This function is called often during menu navigation.
+	# Save it as a Kodi variable to speed up getting the value.
+	from resources.lib.extensions import window
+	property = 'GaiaAddonPoster'
+	result = window.Window.propertyGlobal(property)
+	if result: return result
+
 	path = skinPath()
 	theme = skinAppearance()
 	default = theme in ['default', '-', '']
 	if default:
-		return 'DefaultVideo.png'
+		result = 'DefaultVideo.png'
+		window.Window.propertyGlobalSet(property, result)
+		return result
 	elif not path == None:
 		type = tools.Settings.getInteger('interface.theme.poster')
 		name = None
@@ -145,15 +166,27 @@ def addonPoster():
 		else:
 			result = os.path.join(path, 'posters', name + '.png')
 			if os.path.exists(result):
+				window.Window.propertyGlobalSet(property, result)
 				return result
-	return addonInfo('icon')
+	result = addonInfo('icon')
+	window.Window.propertyGlobalSet(property, result)
+	return result
 
 def addonBanner():
+	# This function is called often during menu navigation.
+	# Save it as a Kodi variable to speed up getting the value.
+	from resources.lib.extensions import window
+	property = 'GaiaAddonBanner'
+	result = window.Window.propertyGlobal(property)
+	if result: return result
+
 	path = skinPath()
 	theme = skinAppearance()
 	default = theme in ['default', '-', '']
 	if default:
-		return 'DefaultVideo.png'
+		result = 'DefaultVideo.png'
+		window.Window.propertyGlobalSet(property, result)
+		return result
 	elif not path == None:
 		type = tools.Settings.getInteger('interface.theme.banner')
 		name = None
@@ -165,20 +198,32 @@ def addonBanner():
 		else:
 			result = os.path.join(path, 'banners', name + '.png')
 			if os.path.exists(result):
+				window.Window.propertyGlobalSet(property, result)
 				return result
-	return addonInfo('icon')
+	result = addonInfo('icon')
+	window.Window.propertyGlobalSet(property, result)
+	return result
 
 def addonFanart():
+	# This function is called often during menu navigation.
+	# Save it as a Kodi variable to speed up getting the value.
+	from resources.lib.extensions import window
+	property = 'GaiaAddonFanart'
+	result = window.Window.propertyGlobal(property)
+	if result: return result
+
 	if tools.Settings.getBoolean('interface.theme.background'):
 		path = skinPath()
 		theme = skinAppearance()
 		if not path == None:
 			result = os.path.join(path, 'background.jpg')
 			if os.path.exists(result):
+				window.Window.propertyGlobalSet(property, result)
 				return result
 			else:
 				result = os.path.join(path, 'background.png') # Glass
 				if os.path.exists(result):
+					window.Window.propertyGlobalSet(property, result)
 					return result
 	return None
 

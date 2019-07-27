@@ -90,8 +90,8 @@ class Server(object):
 			self.mServer.allow_reuse_address = True
 			self.mServer.serve_forever()
 		except:
-			interface.Dialog.notification(title='socket',message='socket error')#gaiaremove
-			tools.Logger.log("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFF")#gaiaremove
+			interface.Dialog.notification(title='socket',message='socket error')
+			tools.Logger.log("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFF")
 
 	def _stop(self):
 		try: self.mServer.shutdown()

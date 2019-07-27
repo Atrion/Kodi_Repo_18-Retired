@@ -77,6 +77,9 @@ class OrionUser:
 	# USER
 	##############################################################################
 
+	def empty(self):
+		return not self.mData
+
 	def enabled(self):
 		return not self.key() == None
 

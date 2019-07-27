@@ -43,8 +43,6 @@ from resources.lib.extensions import interface
 from resources.lib.extensions import network
 from resources.lib.extensions import clipboard
 from resources.lib.extensions import metadata
-from resources.lib.extensions import clipboard
-from resources.lib.extensions import downloader
 
 ############################################################################################################################################################
 # DEBRID
@@ -1219,14 +1217,18 @@ class Premiumize(Debrid):
 		if (time == None or time <= 0) and not message == None:
 			match = re.search('((\d{1,2}:){2}\d{1,2})', message, re.IGNORECASE)
 			if match:
-				time = match.group(1)
-				if not(time is None or time == ''):
-					time = convert.ConverterDuration(time).value(convert.ConverterDuration.UnitSecond)
+				try:
+					time = match.group(1)
+					if not(time is None or time == ''):
+						time = convert.ConverterDuration(time).value(convert.ConverterDuration.UnitSecond)
+				except: time = None
 			if time == None or time <= 0:
 				match = re.search('.*,\s+(.*)\s+left', message, re.IGNORECASE)
-				time = match.group(1)
-				if not(time is None or time == ''):
-					time = convert.ConverterDuration(time).value(convert.ConverterDuration.UnitSecond)
+				try:
+					time = match.group(1)
+					if not(time is None or time == ''):
+						time = convert.ConverterDuration(time).value(convert.ConverterDuration.UnitSecond)
+				except: time = None
 			if time == None or time <= 0: # Old API.
 				try:
 					message = message.lower()
@@ -2492,6 +2494,7 @@ class PremiumizeInterface(object):
 						interface.Directory.refresh()
 						hide = False # Already hidden by container refresh.
 					else:
+						from resources.lib.extensions import downloader
 						item = self.mDebrid.item(idFolder = idFolder, idFile = idFile)
 						itemLink = item['video']['link']
 						if choice == 'browsecontent':
@@ -2547,28 +2550,28 @@ class PremiumizeInterface(object):
 			if not status == None and not status == Premiumize.StatusUnknown:
 				color = None
 				if status == Premiumize.StatusError:
-					color = interface.Format.ColorBad
+					color = interface.Format.colorBad()
 					icon = 'downloadsfailed.png'
 				elif status == Premiumize.StatusTimeout:
-					color = interface.Format.ColorPoor
+					color = interface.Format.colorPoor()
 					icon = 'downloadsfailed.png'
 				elif status == Premiumize.StatusQueued:
-					color = interface.Format.ColorMedium
+					color = interface.Format.colorMedium()
 					icon = 'downloadsbusy.png'
 				elif status == Premiumize.StatusBusy:
-					color = interface.Format.ColorExcellent
+					color = interface.Format.colorExcellent()
 					icon = 'downloadsbusy.png'
 				elif status == Premiumize.StatusFinalize:
-					color = interface.Format.ColorMain
+					color = interface.Format.colorMain()
 					icon = 'downloadsbusy.png'
 				elif status == Premiumize.StatusFinished:
-					color = interface.Format.ColorSpecial
+					color = interface.Format.colorSpecial()
 					icon = 'downloadscompleted.png'
 				info.append(interface.Format.fontColor(status.capitalize(), color))
 
 			if status == Premiumize.StatusBusy:
 				try:
-					colors = interface.Format.colorGradient(interface.Format.ColorMedium, interface.Format.ColorExcellent, 101) # One more, since it goes from 0 - 100
+					colors = interface.Format.colorGradient(interface.Format.colorMedium(), interface.Format.colorExcellent(), 101) # One more, since it goes from 0 - 100
 					percentage = int(item['transfer']['progress']['completed']['percentage'])
 					info.append(interface.Format.fontColor('%d%%' % percentage, colors[percentage]))
 				except:
@@ -4488,6 +4491,7 @@ class OffCloudInterface(object):
 					else:
 						item = self.mDebrid.item(category = category, id = id)
 						if 'video' in item and not item['video'] == None:
+							from resources.lib.extensions import downloader
 							itemLink = item['video']['link']
 							if choice == 'browsecontent':
 								# Kodi cannot set the directory structure more than once in a single run.
@@ -4533,31 +4537,31 @@ class OffCloudInterface(object):
 			if not status == None and not status == OffCloud.StatusUnknown:
 				color = None
 				if status == OffCloud.StatusError:
-					color = interface.Format.ColorBad
+					color = interface.Format.colorBad()
 					icon = 'downloadsfailed.png'
 				elif status == OffCloud.StatusCanceled:
-					color = interface.Format.ColorPoor
+					color = interface.Format.colorPoor()
 					icon = 'downloadsfailed.png'
 				elif status == OffCloud.StatusQueued:
-					color = interface.Format.ColorMedium
+					color = interface.Format.colorMedium()
 					icon = 'downloadsbusy.png'
 				elif status == OffCloud.StatusInitialize:
-					color = interface.Format.ColorGood
+					color = interface.Format.colorGood()
 					icon = 'downloadsbusy.png'
 				elif status == OffCloud.StatusBusy:
-					color = interface.Format.ColorExcellent
+					color = interface.Format.colorExcellent()
 					icon = 'downloadsbusy.png'
 				elif status == OffCloud.StatusFinalize:
-					color = interface.Format.ColorMain
+					color = interface.Format.colorMain()
 					icon = 'downloadsbusy.png'
 				elif status == OffCloud.StatusFinished:
-					color = interface.Format.ColorSpecial
+					color = interface.Format.colorSpecial()
 					icon = 'downloadscompleted.png'
 				info.append(interface.Format.fontColor(status.capitalize(), color))
 
 			if status == OffCloud.StatusBusy:
 				try:
-					colors = interface.Format.colorGradient(interface.Format.ColorMedium, interface.Format.ColorExcellent, 101) # One more, since it goes from 0 - 100
+					colors = interface.Format.colorGradient(interface.Format.colorMedium(), interface.Format.colorExcellent(), 101) # One more, since it goes from 0 - 100
 					percentage = int(item['transfer']['progress']['completed']['percentage'])
 					info.append(interface.Format.fontColor('%d%%' % percentage, colors[percentage]))
 				except:
@@ -6453,6 +6457,7 @@ class RealDebridInterface(object):
 						interface.Directory.refresh()
 						hide = False # Already hidden by container refresh.
 					elif choice == 'download':
+						from resources.lib.extensions import downloader
 						try: itemLink = self.mDebrid.add(item['link'])['link']
 						except: itemLink = None
 						if network.Networker.linkIs(itemLink): downloader.Downloader(downloader.Downloader.TypeManual).download(media = downloader.Downloader.MediaOther, link = itemLink)
@@ -6491,57 +6496,57 @@ class RealDebridInterface(object):
 			if not status == None and not status == RealDebrid.StatusUnknown:
 				color = None
 				if status == RealDebrid.StatusError:
-					color = interface.Format.ColorBad
+					color = interface.Format.colorBad()
 					icon = 'downloadsfailed.png'
 					statusLabel = 'Failure'
 					index = 0
 				elif status == RealDebrid.StatusMagnetError:
-					color = interface.Format.ColorBad
+					color = interface.Format.colorBad()
 					icon = 'downloadsfailed.png'
 					statusLabel = 'Magnet'
 					index = 0
 				elif status == RealDebrid.StatusMagnetConversion:
-					color = interface.Format.ColorMedium
+					color = interface.Format.colorMedium()
 					icon = 'downloadsbusy.png'
 					statusLabel = 'Conversion'
 					index = 1
 				elif status == RealDebrid.StatusFileSelection:
-					color = interface.Format.ColorMedium
+					color = interface.Format.colorMedium()
 					icon = 'downloadsbusy.png'
 					statusLabel = 'Selection'
 					index = 1
 				elif status == RealDebrid.StatusQueued:
-					color = interface.Format.ColorMedium
+					color = interface.Format.colorMedium()
 					icon = 'downloadsbusy.png'
 					statusLabel = 'Queued'
 					index = 1
 				elif status == RealDebrid.StatusBusy:
-					color = interface.Format.ColorExcellent
+					color = interface.Format.colorExcellent()
 					icon = 'downloadsbusy.png'
 					statusLabel = 'Busy'
 					index = 2
 				elif status == RealDebrid.StatusFinished:
-					color = interface.Format.ColorSpecial
+					color = interface.Format.colorSpecial()
 					icon = 'downloadscompleted.png'
 					statusLabel = 'Finished'
 					index = 3
 				elif status == RealDebrid.StatusVirus:
-					color = interface.Format.ColorBad
+					color = interface.Format.colorBad()
 					icon = 'downloadsfailed.png'
 					statusLabel = 'Virus'
 					index = 0
 				elif status == RealDebrid.StatusCompressing:
-					color = interface.Format.ColorMain
+					color = interface.Format.colorMain()
 					icon = 'downloadsbusy.png'
 					statusLabel = 'Compressing'
 					index = 4
 				elif status == RealDebrid.StatusUploading:
-					color = interface.Format.ColorMain
+					color = interface.Format.colorMain()
 					icon = 'downloadsbusy.png'
 					statusLabel = 'Uploading'
 					index = 4
 				elif status == RealDebrid.StatusDead:
-					color = interface.Format.ColorBad
+					color = interface.Format.colorBad()
 					icon = 'downloadsfailed.png'
 					statusLabel = 'Dead'
 					index = 0
@@ -6549,7 +6554,7 @@ class RealDebridInterface(object):
 
 			if status == RealDebrid.StatusBusy:
 				try:
-					colors = interface.Format.colorGradient(interface.Format.ColorMedium, interface.Format.ColorExcellent, 101) # One more, since it goes from 0 - 100
+					colors = interface.Format.colorGradient(interface.Format.colorMedium(), interface.Format.colorExcellent(), 101) # One more, since it goes from 0 - 100
 					percentage = int(item['transfer']['progress']['completed']['percentage'])
 					info.append(interface.Format.fontColor('%d%%' % percentage, colors[percentage]))
 				except:

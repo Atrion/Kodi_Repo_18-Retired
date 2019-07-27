@@ -49,6 +49,11 @@ class source:
 	SettingPopularity = 16
 	SettingAge = 17
 
+	Keys = {
+		'default' : 'VW1sQ1JrbEZSV2RXVTBKSFNVWlpaMVJUUWxsSlJHdG5UbWxDVFVsRVoyZFRRMEpFU1VSalowOVRRbFZKUlZGblZYbEJORWxGVVdkVWFVRXdTVVJyWjA5VFFrZEpSazFuVlVOQ1QwbEZUV2RPUTBKTA==',
+		'plugin.video.bodie' : 'VkZOQ1UwbEZSV2RSYVVKTlNVVXdaMUpwUWtsSlJYTm5WbE5DUmtsRlZXZFNRMEV6U1VSWloxRnBRVEZKUm1OblUwTkNWVWxHVVdkUFEwSkNTVVZ2WjA1VFFsTkpSa2xuVDBOQk1FbEdSV2RUYVVKRw==',
+	}
+
 	def __init__(self):
 		self.addon = xbmcaddon.Addon('script.module.lambdascrapers')
 		profile = xbmc.translatePath(self.addon.getAddonInfo('profile').decode('utf-8'))
@@ -56,12 +61,13 @@ class source:
 		except: pass
 		self.priority = 1
 		self.language = ['ab', 'aa', 'af', 'ak', 'sq', 'am', 'ar', 'an', 'hy', 'as', 'av', 'ae', 'ay', 'az', 'bm', 'ba', 'eu', 'be', 'bn', 'bh', 'bi', 'nb', 'bs', 'br', 'bg', 'my', 'ca', 'ch', 'ce', 'ny', 'zh', 'cv', 'kw', 'co', 'cr', 'hr', 'cs', 'da', 'dv', 'nl', 'dz', 'en', 'eo', 'et', 'ee', 'fo', 'fj', 'fi', 'fr', 'ff', 'gd', 'gl', 'lg', 'ka', 'de', 'el', 'gn', 'gu', 'ht', 'ha', 'he', 'hz', 'hi', 'ho', 'hu', 'is', 'io', 'ig', 'id', 'ia', 'ie', 'iu', 'ik', 'ga', 'it', 'ja', 'jv', 'kl', 'kn', 'kr', 'ks', 'kk', 'km', 'ki', 'rw', 'rn', 'kv', 'kg', 'ko', 'ku', 'kj', 'ky', 'lo', 'la', 'lv', 'li', 'ln', 'lt', 'lu', 'lb', 'mk', 'mg', 'ms', 'ml', 'mt', 'gv', 'mi', 'mr', 'mh', 'mn', 'na', 'nv', 'ng', 'ne', 'nd', 'se', 'no', 'ii', 'nn', 'oc', 'oj', 'or', 'om', 'os', 'pi', 'ps', 'fa', 'pl', 'pt', 'pa', 'qu', 'ro', 'rm', 'ru', 'sm', 'sg', 'sa', 'sc', 'sr', 'sn', 'sd', 'si', 'cu', 'sk', 'sl', 'so', 'nr', 'st', 'es', 'su', 'sw', 'ss', 'sv', 'tl', 'ty', 'tg', 'ta', 'tt', 'te', 'th', 'bo', 'ti', 'to', 'ts', 'tn', 'tr', 'tk', 'tw', 'uk', 'ur', 'ug', 'uz', 've', 'vi', 'vo', 'wa', 'cy', 'fy', 'wo', 'xh', 'yi', 'yo', 'za', 'zu']
-		self.key = 'VW1sQ1JrbEZSV2RXVTBKSFNVWlpaMVJUUWxsSlJHdG5UbWxDVFVsRVoyZFRRMEpFU1VSalowOVRRbFZKUlZGblZYbEJORWxGVVdkVWFVRXdTVVJyWjA5VFFrZEpSazFuVlVOQ1QwbEZUV2RPUTBKTA=='
 		self.domains = ['https://orionoid.com']
 		self.providers = []
 		self.cachePath = os.path.join(profile, 'orion.cache')
 		self.cacheData = None
 		self.resolvers = None
+		try: self.key = source.Keys[xbmcaddon.Addon().getAddonInfo('id')]
+		except: self.key = source.Keys['default']
 
 	def movie(self, imdb, title, localtitle, aliases, year):
 		try: return urllib.urlencode({'imdb' : imdb, 'title' : title, 'year' : year})

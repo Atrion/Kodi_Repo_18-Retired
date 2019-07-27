@@ -193,8 +193,8 @@ class source:
 		addon = copy.deepcopy(GloScrapersProviders)
 		addon = {i : False for i in addon}
 
-		enabled = interface.Format.fontColor(32301, interface.Format.ColorExcellent)
-		disabled = interface.Format.fontColor(32302, interface.Format.ColorBad)
+		enabled = interface.Format.fontColor(32301, interface.Format.colorExcellent())
+		disabled = interface.Format.fontColor(32302, interface.Format.colorBad())
 
 		languages = []
 		labels = []

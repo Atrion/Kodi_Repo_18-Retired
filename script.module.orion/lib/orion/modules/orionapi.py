@@ -177,7 +177,7 @@ class OrionApi:
 					for key, value in query.iteritems():
 						if key in truncate: query[key] = '-- truncated --'
 				OrionTools.log('ORION API REQUEST: ' + OrionTools.jsonTo(query))
-
+			
 			networker = OrionNetworker(
 				link = OrionTools.linkApi(),
 				parameters = parameters,

@@ -257,10 +257,10 @@ class Verification(object):
 
 		if list:
 			list = []
-			list.append(interface.Translation.string(33025) + ': ' + interface.Format.fontColor('%.0f%%' % min(100, max(0, percentageOperational)), interface.Format.ColorExcellent))
-			list.append(interface.Translation.string(33024) + ': ' + interface.Format.fontColor('%.0f%%' % min(100, max(0, percentageLimited)), interface.Format.ColorMedium))
-			list.append(interface.Translation.string(33023) + ': ' + interface.Format.fontColor('%.0f%%' % min(100, max(0, percentageFailure)), interface.Format.ColorBad))
-			list.append(interface.Translation.string(33022) + ': ' + interface.Format.fontColor('%.0f%%' % min(100, max(0, percentageDisabled)), interface.Format.ColorMain))
+			list.append(interface.Translation.string(33025) + ': ' + interface.Format.fontColor('%.0f%%' % min(100, max(0, percentageOperational)), interface.Format.colorExcellent()))
+			list.append(interface.Translation.string(33024) + ': ' + interface.Format.fontColor('%.0f%%' % min(100, max(0, percentageLimited)), interface.Format.colorMedium()))
+			list.append(interface.Translation.string(33023) + ': ' + interface.Format.fontColor('%.0f%%' % min(100, max(0, percentageFailure)), interface.Format.colorBad()))
+			list.append(interface.Translation.string(33022) + ': ' + interface.Format.fontColor('%.0f%%' % min(100, max(0, percentageDisabled)), interface.Format.colorMain()))
 			list.append('')
 			for result in results:
 				list.append(result['name'] + ': ' + self.__color(result['status']))
@@ -269,10 +269,10 @@ class Verification(object):
 			status = ''
 			for result in results:
 				status += interface.Format.fontNewline() + '     ' + result['name'] + ': ' + self.__color(result['status'])
-			message = interface.Translation.string(33025) + ': ' + interface.Format.fontColor('%.0f%%' % min(100, max(0, percentageOperational)), interface.Format.ColorExcellent)
-			message += ', ' + interface.Translation.string(33024) + ': ' + interface.Format.fontColor('%.0f%%' % min(100, max(0, percentageLimited)), interface.Format.ColorMedium)
-			message += ', ' + interface.Translation.string(33023) + ': ' + interface.Format.fontColor('%.0f%%' % min(100, max(0, percentageFailure)), interface.Format.ColorBad)
-			message += ', ' + interface.Translation.string(33022) + ': ' + interface.Format.fontColor('%.0f%%' % min(100, max(0, percentageDisabled)), interface.Format.ColorMain)
+			message = interface.Translation.string(33025) + ': ' + interface.Format.fontColor('%.0f%%' % min(100, max(0, percentageOperational)), interface.Format.colorExcellent())
+			message += ', ' + interface.Translation.string(33024) + ': ' + interface.Format.fontColor('%.0f%%' % min(100, max(0, percentageLimited)), interface.Format.colorMedium())
+			message += ', ' + interface.Translation.string(33023) + ': ' + interface.Format.fontColor('%.0f%%' % min(100, max(0, percentageFailure)), interface.Format.colorBad())
+			message += ', ' + interface.Translation.string(33022) + ': ' + interface.Format.fontColor('%.0f%%' % min(100, max(0, percentageDisabled)), interface.Format.colorMain())
 			return message + status
 
 	def __showResults(self, type):
@@ -326,13 +326,13 @@ class Verification(object):
 
 	def __color(self, status):
 		if status == Verification.StatusDisabled:
-			return interface.Format.fontColor(interface.Translation.string(33022), interface.Format.ColorMain)
+			return interface.Format.fontColor(interface.Translation.string(33022), interface.Format.colorMain())
 		elif status == Verification.StatusFailure:
-			return interface.Format.fontColor(interface.Translation.string(33023), interface.Format.ColorBad)
+			return interface.Format.fontColor(interface.Translation.string(33023), interface.Format.colorBad())
 		elif status == Verification.StatusLimited:
-			return interface.Format.fontColor(interface.Translation.string(33024), interface.Format.ColorMedium)
+			return interface.Format.fontColor(interface.Translation.string(33024), interface.Format.colorMedium())
 		elif status == Verification.StatusOperational:
-			return interface.Format.fontColor(interface.Translation.string(33025), interface.Format.ColorExcellent)
+			return interface.Format.fontColor(interface.Translation.string(33025), interface.Format.colorExcellent())
 
 	def __append(self, name, status, id = None):
 		self.mLock.acquire()

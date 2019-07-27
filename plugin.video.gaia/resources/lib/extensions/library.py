@@ -20,7 +20,6 @@
 
 import re
 import sys
-import urllib
 import urlparse
 import threading
 import datetime
@@ -302,14 +301,14 @@ class Library(object):
 		try:
 			name = re.sub('([^\s\w]|_)+', '', title)
 			nameLegal = self._legalPath(name)
-			title = urllib.quote_plus(title)
+			title = tools.Converter.quoteTo(title)
 			generic = link == None
 			data = None
 
 			if generic:
 				# Do not save the metadata to file. The link becomes too long and Kodi cuts it off.
-				#metadata = urllib.quote_plus(tools.Converter.jsonTo(metadata))
-				#link = '%s?action=scrape&title=%s&year=%s&imdb=%s&tmdb=%s&metadata=%s' % (sys.argv[0], urllib.quote_plus(title), year, imdb, tmdb, metadata)
+				#metadata = tools.Converter.quoteTo(tools.Converter.jsonTo(metadata))
+				#link = '%s?action=scrape&title=%s&year=%s&imdb=%s&tmdb=%s&metadata=%s' % (sys.argv[0], tools.Converter.quoteTo(title), year, imdb, tmdb, metadata)
 				link = '%s?action=scrape&title=%s&year=%s&imdb=%s&tmdb=%s' % (sys.argv[0], title, year, imdb, tmdb)
 			else:
 				data = link
@@ -344,7 +343,7 @@ class Library(object):
 
 		if link == None:
 			from resources.lib.indexers import episodes
-			items = episodes.episodes(type = self.mType, kids = self.mKids).get(tvshowtitle = title, year = year, imdb = imdb, tvdb = tvdb, season = season, episode = episode, idx = False)
+			items = episodes.episodes(type = self.mType, kids = self.mKids).get(tvshowtitle = title, year = year, imdb = imdb, tvdb = tvdb, season = season, episode = episode, single = True, idx = False)
 		else:
 			items = [metadata]
 
@@ -474,13 +473,13 @@ class Library(object):
 			generic = link == None
 			name = re.sub('([^\s\w]|_)+', '', showtitle)
 			nameLegal = self._legalPath('%s S%02dE%02d' % (name, season, episode))
-			title = urllib.quote_plus(title)
-			showtitle = urllib.quote_plus(showtitle)
-			premiered = urllib.quote_plus(premiered)
+			title = tools.Converter.quoteTo(title)
+			showtitle = tools.Converter.quoteTo(showtitle)
+			premiered = tools.Converter.quoteTo(premiered)
 
 			if generic:
 				# Do not save the metadata to file. The link becomes too long and Kodi cuts it off.
-				#metadata = urllib.quote_plus(tools.Converter.jsonTo(metadata))
+				#metadata = tools.Converter.quoteTo(tools.Converter.jsonTo(metadata))
 				#link = '%s?action=scrape&title=%s&year=%s&imdb=%s&tvdb=%s&season=%s&episode=%s&tvshowtitle=%s&premiered=%s&metadata=%s' % (sys.argv[0], title, year, imdb, tvdb, season, episode, showtitle, premiered, metadata)
 				if seasoncount: link = '%s?action=scrape&title=%s&year=%s&imdb=%s&tvdb=%s&season=%s&episode=%s&tvshowtitle=%s&premiered=%s&seasoncount=%i' % (sys.argv[0], title, year, imdb, tvdb, season, episode, showtitle, premiered, seasoncount)
 				else: link = '%s?action=scrape&title=%s&year=%s&imdb=%s&tvdb=%s&season=%s&episode=%s&tvshowtitle=%s&premiered=%s' % (sys.argv[0], title, year, imdb, tvdb, season, episode, showtitle, premiered)

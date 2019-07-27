@@ -29,11 +29,12 @@ from orion.modules.oriontools import *
 try: from sqlite3 import dbapi2 as database
 except: from pysqlite2 import dbapi2 as database
 
-OrionDatabaseInstances = {}
-OrionDatabaseLocks = {}
-OrionDatabaseLocksCustom = {}
-
 class OrionDatabase(object):
+
+	Initialized = False
+	Instances = {}
+	Locks = {}
+	LocksCustom = {}
 
 	##############################################################################
 	# CONSTANTS
@@ -50,15 +51,13 @@ class OrionDatabase(object):
 		try:
 			if name == None: name = OrionTools.hash(path)
 
-			global OrionDatabaseLocks
-			if not name in OrionDatabaseLocks:
-				OrionDatabaseLocks[name] = threading.Lock()
-			self.mLock = OrionDatabaseLocks[name]
+			if not name in OrionDatabase.Locks:
+				OrionDatabase.Locks[name] = threading.Lock()
+			self.mLock = OrionDatabase.Locks[name]
 
-			global OrionDatabaseLocksCustom
-			if not name in OrionDatabaseLocksCustom:
-				OrionDatabaseLocksCustom[name] = threading.Lock()
-			self.mLockCustom = OrionDatabaseLocksCustom[name]
+			if not name in OrionDatabase.LocksCustom:
+				OrionDatabase.LocksCustom[name] = threading.Lock()
+			self.mLockCustom = OrionDatabase.LocksCustom[name]
 
 			if path == None:
 				if not name.endswith(OrionDatabase.Extension): name += OrionDatabase.Extension
@@ -76,12 +75,36 @@ class OrionDatabase(object):
 		self._close()
 
 	@classmethod
-	def instance(self, name, default = None, create = None):
-		global OrionDatabaseInstances
-		if not name in OrionDatabaseInstances:
-			OrionDatabaseInstances[name] = OrionDatabase(name = name, default = default)
-			if not create == None: OrionDatabaseInstances[name].create(create)
-		return OrionDatabaseInstances[name]
+	def instance(self, name, default = None, path = None, create = None):
+		self.instancesInitialize()
+
+		id = name
+		if default: id += '_' + default
+		if path: id += '_' + path
+		id = OrionTools.hash(id)
+
+		if not id in OrionDatabase.Instances:
+			OrionDatabase.Instances[id] = OrionDatabase(name = name, default = default, path = path)
+			if not create == None: OrionDatabase.Instances[id].create(create)
+		return OrionDatabase.Instances[id]
+
+	@classmethod
+	def instancesInitialize(self):
+		# Python only deletes instances if there are no more references to them.
+		# The database instances have to be manually deleted to ensure that the connections are closed.
+		# Do not close connections from the Orion() destructor, since some connections might still be running in a thread when the destructor is executed.
+		if not OrionDatabase.Initialized:
+			import atexit
+			OrionDatabase.Initialized = True
+			atexit.register(self.instancesClear)
+
+	@classmethod
+	def instancesClear(self):
+		for instance in OrionDatabase.Instances.itervalues():
+			instance._close()
+		OrionDatabase.Instances = {}
+		OrionDatabase.Locks = {}
+		OrionDatabase.Custom = {}
 
 	##############################################################################
 	# INTERNAL
@@ -107,11 +130,19 @@ class OrionDatabase(object):
 			self.mDatabase = self.mConnection.cursor()
 			return True
 		except:
+			self._close()
 			return False
 
 	def _close(self):
-		try: self.mConnection.close()
-		except: pass
+		try:
+			self.mLock.acquire()
+			self.mConnection.close()
+			self.mConnection = None
+			self.mDatabase = None
+		except:
+			pass
+		finally:
+			self.mLock.release()
 
 	def _list(self, items):
 		if not type(items) in [list, tuple]: items = [items]
@@ -122,10 +153,23 @@ class OrionDatabase(object):
 
 	def _commit(self):
 		try:
+			self.mLock.acquire()
 			self.mConnection.commit()
 			return True
 		except:
 			return False
+		finally:
+			self.mLock.release()
+
+	def _commitCheck(self, result, commit = True):
+		# NB: Always commit create/insert/update/delete queries.
+		# Otherwise there are "OperationalError -> database is locked" errors.
+		# If you scrape the first time, everything works and is fast.
+		# Scraping a 2nd time right afterwards, takes very long (even though the retrieved streams popup shows early).
+		# This is because of the "Timeout". SQLite will wait 20 seconds while the database is locked, but will eventually still throw the error.
+		# It seems that if _commit() is always called, the error does not happen, because the database is unlocked immediatly after executing a query.
+		#if result and commit: return self._commit()
+		return self._commit()
 
 	def _execute(self, query, parameters = None):
 		try:
@@ -159,12 +203,12 @@ class OrionDatabase(object):
 
 	def create(self, query, parameters = None, commit = True):
 		result = self._execute(query, parameters = parameters)
-		if result and commit: result = self._commit()
+		result = self._commitCheck(result = result, commit = commit)
 		return result
 
 	def createAll(self, query, tables, parameters = None, commit = True):
 		result = self._executeAll(query, tables = tables, parameters = parameters)
-		if result and commit: result = self._commit()
+		result = self._commitCheck(result = result, commit = commit)
 		return result
 
 	# Retrieves a list of rows.
@@ -201,12 +245,12 @@ class OrionDatabase(object):
 
 	def insert(self, query, parameters = None, commit = True):
 		result = self._execute(query, parameters = parameters)
-		if result and commit: result = self._commit()
+		result = self._commitCheck(result = result, commit = commit)
 		return result
 
 	def update(self, query, parameters = None, commit = True):
 		result = self._execute(query, parameters = parameters)
-		if result and commit: result = self._commit()
+		result = self._commitCheck(result = result, commit = commit)
 		return result
 
 	# Deletes specific row in table.
@@ -214,7 +258,7 @@ class OrionDatabase(object):
 	def delete(self, query, parameters = None, table = None, commit = True):
 		if not table == None: query = query % table
 		result = self._execute(query, parameters = parameters)
-		if result and commit: result = self._commit()
+		result = self._commitCheck(result = result, commit = commit)
 		return result
 
 	# Deletes all rows in table.
@@ -222,17 +266,17 @@ class OrionDatabase(object):
 	# If tables is None, deletes all rows in all tables.
 	def deleteAll(self, tables = None, parameters = None, commit = True):
 		result = self._executeAll('DELETE FROM %s;', tables, parameters = parameters)
-		if result and commit: result = self._commit()
+		result = self._commitCheck(result = result, commit = commit)
 		return result
 
 	# Drops single table.
 	def drop(self, table, parameters = None, commit = True):
 		result = self._execute('DROP TABLE IF EXISTS %s;' % table, parameters = parameters)
-		if result and commit: result = self._commit()
+		result = self._commitCheck(result = result, commit = commit)
 		return result
 
 	# Drops all tables.
 	def dropAll(self, parameters = None, commit = True):
 		result = self._executeAll('DROP TABLE IF EXISTS %s;', parameters = parameters)
-		if result and commit: result = self._commit()
+		result = self._commitCheck(result = result, commit = commit)
 		return result

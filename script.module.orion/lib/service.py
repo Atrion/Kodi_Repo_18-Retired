@@ -30,12 +30,14 @@ from orion.modules.orionsettings import *
 from orion.modules.orionintegration import *
 from orion.modules.orionnotification import *
 
+OrionTools.log('Orion Service Started')
 OrionSettings.adapt()
 orion = Orion(OrionApi._keyInternal())
 user = OrionUser.instance()
-if user.enabled() and user.valid():
+if user.enabled() and (user.valid() or user.empty()):
 	OrionSettings.externalClean()
 	OrionIntegration.check()
 	user.update()
 	user.subscriptionCheck()
 	OrionNotification.dialogNew()
+OrionTools.log('Orion Service Finished')

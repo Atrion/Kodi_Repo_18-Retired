@@ -29,8 +29,6 @@ class Api(object):
 	# Remove 0, O, 1, I, due to looking similar, in case the user has to enter the ID.
 	Alphabet = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ'
 
-	Link = tools.Settings.getString('link.api', raw = True)
-
 	ParameterType = 'type'
 	ParameterAction = 'action'
 	ParameterKey = 'key'
@@ -110,7 +108,7 @@ class Api(object):
 		parameters[Api.ParameterKey] = tools.Hash.sha256(tools.Converter.base64From(tools.Settings.getString(tools.Converter.base64From('aW50ZXJuYWwuYXBp'), raw = True), 15 % 10) + str(time) + tools.System.name().lower())
 		parameters[Api.ParameterTime] = time
 		try:
-			result = network.Networker(link = Api.Link, parameters = parameters).retrieve(addon = True)
+			result = network.Networker(link = tools.Settings.getString('link.api', raw = True), parameters = parameters).retrieve(addon = True)
 			if raw:
 				return result
 			else:

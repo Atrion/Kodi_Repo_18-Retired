@@ -21,16 +21,6 @@
 import xbmc
 import re
 import os
-import urllib
-import urllib2
-import urlparse
-import cookielib
-import json
-import threading
-import time
-import random
-import hashlib
-import StringIO
 
 from resources.lib.extensions import tools
 from resources.lib.extensions import provider
@@ -92,10 +82,12 @@ class Networker(object):
 
 	@classmethod
 	def quote(self, data):
+		import urllib2
 		return urllib2.quote(data)
 
 	@classmethod
 	def unquote(self, data):
+		import urllib2
 		return urllib2.unquote(data)
 
 	@classmethod
@@ -108,13 +100,15 @@ class Networker(object):
 		return host in ('localhost', '127.0.0.1', '::1') or host.startswith('192.168.')
 
 	def resolve(self, source, clean = True, timeout = None, info = False, internal = True, resolve = ResolveDefault): # Use timeout with caution.
+		import threading
+
 		if not resolve: resolve = Networker.ResolveNone
 		thread = threading.Thread(target = self._resolve, args = (source, clean, info, internal, resolve))
 		thread.start()
 		if timeout:
 			timestep = 0.1
 			for i in range(int(timeout / timestep)):
-				time.sleep(timestep)
+				tools.Time.sleep(timestep)
 			if thread.is_alive():
 				return None
 		else:
@@ -132,6 +126,8 @@ class Networker(object):
 	# If randomize is false, returns the most common user agent, aka Mozilla.
 	# User agent required, otherwise getting a lot of 403 errors, becasue servers think you are a bot.
 	def userAgent(self, randomize = True, mobile = False, forceRenew = False, addon = False):
+		import random
+
 		if self.mUserAgent == None or forceRenew:
 			if addon:
 				self.mUserAgent = tools.Platform.agent()
@@ -155,6 +151,9 @@ class Networker(object):
 
 	@classmethod
 	def _linkClean(self, link):
+		import urlparse
+		import urllib
+
 		# Some URLs contain a | character which is not allowed. It seems that everything after the | are HTTP headers (eg: user-agent, referer, etc).
 		# The Kodi media player can handle these links (or is it player.py?), but urllib returns an HTTP error. Remove the part.
 		# These headers are used by the downloader.
@@ -209,6 +208,7 @@ class Networker(object):
 
 	@classmethod
 	def linkParameters(self, dictionary, duplicates = False):
+		import urllib
 		return urllib.urlencode(dictionary, doseq = duplicates)
 
 	@classmethod
@@ -238,6 +238,8 @@ class Networker(object):
 		return self.mResponse
 
 	def cookies(self, link = None, parameters = None, headers = None, timeout = 30, range = None, force = False, addon = False, flare = True, form = None, json = None, method = None, raw = False):
+		import urllib2
+		import cookielib
 		jar = cookielib.LWPCookieJar()
 		handlers = [urllib2.HTTPHandler(), urllib2.HTTPSHandler(), urllib2.HTTPCookieProcessor(jar)]
 		opener = urllib2.build_opener(*handlers)
@@ -286,6 +288,9 @@ class Networker(object):
 	# range: tuple with range byte start and range byte size - (start, size). Both values can be nonean be None.
 	def request(self, link = None, parameters = None, headers = None, timeout = 30, range = None, force = False, addon = False, flare = True, form = None, json = None, method = None):
 		try:
+			import urllib
+			import urllib2
+
 			if self.mResponse == None or force:
 				self.mError = False
 				self.mErrorCode = None
@@ -512,7 +517,7 @@ class Networker(object):
 			if self.mResponse:
 				self.mResponse.close()
 				self.mResponse = None
-			time.sleep(0.1)
+			tools.Time.sleep(0.1)
 			self.headers(flare = flare, request = request)
 
 		if not self.mHeaders or self.mError:
@@ -541,6 +546,8 @@ class Networker(object):
 
 	@classmethod
 	def information(self, obfuscate = False):
+		import urllib2
+
 		result = {}
 
 		# Local
@@ -585,7 +592,7 @@ class Networker(object):
 
 		if None in [globalIpAddress, globalIpName, globalIpType, globalProvider, globalOrganisation, globalSystem, globalContinentName, globalContinentCode, globalCountryName, globalCountryCode, globalRegionName, globalRegionCode, globalCityName, globalCityCode, globalLatitude, globalLongitude] or '' in [globalIpAddress, globalIpName, globalIpType, globalProvider, globalOrganisation, globalSystem, globalContinentName, globalContinentCode, globalCountryName, globalCountryCode, globalRegionName, globalRegionCode, globalCityName, globalCityCode, globalLatitude, globalLongitude]:
 			try:
-				result = json.load(urllib2.urlopen('https://tools.keycdn.com/geo.json'))['data']['geo']
+				result = tools.Converter.jsonFrom(urllib2.urlopen('https://tools.keycdn.com/geo.json'))['data']['geo']
 				if 'ip' in result and globalIpAddress in [None, '']: globalIpAddress = result['ip']
 				if 'rdns' in result and globalIpName in [None, '']: globalIpName = result['rdns']
 				if 'continent_code' in result and globalContinentCode in [None, '']: globalContinentCode = result['continent_code']
@@ -599,7 +606,7 @@ class Networker(object):
 
 		if None in [globalIpAddress, globalIpName, globalIpType, globalProvider, globalOrganisation, globalSystem, globalContinentName, globalContinentCode, globalCountryName, globalCountryCode, globalRegionName, globalRegionCode, globalCityName, globalCityCode, globalLatitude, globalLongitude] or '' in [globalIpAddress, globalIpName, globalIpType, globalProvider, globalOrganisation, globalSystem, globalContinentName, globalContinentCode, globalCountryName, globalCountryCode, globalRegionName, globalRegionCode, globalCityName, globalCityCode, globalLatitude, globalLongitude]:
 			try:
-				result = json.load(urllib2.urlopen('http://extreme-ip-lookup.com/json/'))
+				result = tools.Converter.jsonFrom(urllib2.urlopen('http://extreme-ip-lookup.com/json/'))
 				if 'query' in result and globalIpAddress in [None, '']: globalIpAddress = result['query']
 				if 'ipName' in result and globalIpName in [None, '']: globalIpName = result['ipName']
 				if 'ipType' in result and globalIpType in [None, '']: globalIpType = result['ipType']
@@ -616,7 +623,7 @@ class Networker(object):
 
 		if None in [globalIpAddress, globalIpName, globalIpType, globalProvider, globalOrganisation, globalSystem, globalContinentName, globalContinentCode, globalCountryName, globalCountryCode, globalRegionName, globalRegionCode, globalCityName, globalCityCode, globalLatitude, globalLongitude] or '' in [globalIpAddress, globalIpName, globalIpType, globalProvider, globalOrganisation, globalSystem, globalContinentName, globalContinentCode, globalCountryName, globalCountryCode, globalRegionName, globalRegionCode, globalCityName, globalCityCode, globalLatitude, globalLongitude]:
 			try:
-				result = json.load(urllib2.urlopen('http://ip-api.com/json'))
+				result = tools.Converter.jsonFrom(urllib2.urlopen('http://ip-api.com/json'))
 				if 'query' in result and globalIpAddress in [None, '']: globalIpAddress = result['query']
 				if 'isp' in result and globalProvider in [None, '']: globalProvider = result['isp']
 				if 'org' in result and globalOrganisation in [None, '']: globalOrganisation = result['org']
@@ -633,7 +640,7 @@ class Networker(object):
 
 		if None in [globalIpAddress, globalIpName, globalIpType, globalProvider, globalOrganisation, globalSystem, globalContinentName, globalContinentCode, globalCountryName, globalCountryCode, globalRegionName, globalRegionCode, globalCityName, globalCityCode, globalLatitude, globalLongitude] or '' in [globalIpAddress, globalIpName, globalIpType, globalProvider, globalOrganisation, globalSystem, globalContinentName, globalContinentCode, globalCountryName, globalCountryCode, globalRegionName, globalRegionCode, globalCityName, globalCityCode, globalLatitude, globalLongitude]:
 			try:
-				result = json.load(urllib2.urlopen('http://freegeoip.net/json/'))
+				result = tools.Converter.jsonFrom(urllib2.urlopen('http://freegeoip.net/json/'))
 				if 'ip' in result and globalIpAddress in [None, '']: globalIpAddress = result['ip']
 				if 'country_name' in result and globalCountryName in [None, '']: globalCountryName = result['country_name']
 				if 'country_code' in result and globalCountryCode in [None, '']: globalCountryCode = result['country_name']
@@ -917,7 +924,7 @@ class Container(object):
 						if data == None or data == '':
 							# Certain servers (eg: UsenetCrawler) block consecutive or batch calls and mark them as 503 (temporarily unavailable). Simply wait a bit and try again.
 							if self.mNetworker.errorCode() == 503:
-								time.sleep(0.1)
+								tools.Time.sleep(0.1)
 							else:
 								break
 						else:
@@ -1049,11 +1056,14 @@ class Container(object):
 		if info or pieces:
 			data = data['info']
 		if pieces:
+			import StringIO
 			data = StringIO.StringIO(data['pieces'])
 		return data
 
 	# Link can be a torrent hash or existing magnet link.
 	def _torrentMagnet(self, link, title = None, encode = True, trackers = True):
+		import urllib
+
 		titleValid = not title == None and not title == ''
 
 		if self._torrentIsMagnet(link):
@@ -1094,6 +1104,7 @@ class Container(object):
 		return link
 
 	def _torrentName(self, link):
+		import urlparse
 		try:
 			if self._torrentIsMagnet(link):
 				result = urlparse.parse_qs(urlparse.urlparse(link).query)['dn']

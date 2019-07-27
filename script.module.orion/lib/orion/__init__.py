@@ -231,6 +231,7 @@ from orion.modules.orionuser import *
 from orion.modules.orionstats import *
 from orion.modules.oriontools import *
 from orion.modules.orionitem import *
+from orion.modules.oriondatabase import *
 from orion.modules.orioncontainer import *
 from orion.modules.orionsettings import *
 from orion.modules.orionnavigator import *
@@ -253,6 +254,11 @@ class Orion:
 	# Filter Type
 	FilterNone = OrionItem.FilterNone 								# Do not use any filter at all
 	FilterSettings = OrionItem.FilterSettings						# Use the filters set by the user in the Orion addon settings
+
+	# Choice Type
+	ChoiceInclude = OrionItem.ChoiceInclude
+	ChoiceExclude = OrionItem.ChoiceExclude
+	ChoiceRequire = OrionItem.ChoiceRequire
 
 	# Item Type
 	TypeMovie = OrionItem.TypeMovie									# 'movie'				(Movie streams)
@@ -726,6 +732,9 @@ class Orion:
 		OrionSettings.silentSet(silent)
 		self.mApp.refresh() # Must be done here instead of the instance function, otherwise the is recursion with the API.
 		self.mEncoding = encoding
+
+	def __del__(self):
+		pass
 
 	##############################################################################
 	# ENCODING

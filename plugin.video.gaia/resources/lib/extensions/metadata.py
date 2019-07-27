@@ -521,7 +521,7 @@ class Metadata(object):
 		(VideoQualityHd4k , ['4k', 'hd4k', 'hd4k ', '4khd', '4khd ', 'uhd', 'ultrahd', 'ultra hd', 'ultra high', '2160', '2160p', '2160i', 'hd2160', '2160hd', '2160 ', '2160p ', '2160i ', 'hd2160 ', '2160hd ', '1716p', '1716i', 'hd1716', '1716hd', '1716p ', '1716i ', 'hd1716 ', '1716hd ', '2664p', '2664i', 'hd2664', '2664hd', '2664p ', '2664i ', 'hd2664 ', '2664hd ', '3112p', '3112i', 'hd3112', '3112hd', '3112p ', '3112i ', 'hd3112 ', '3112hd ', '2880p', '2880i', 'hd2880', '2880hd', '2880p ', '2880i ', 'hd2880 ', '2880hd ']),
 		(VideoQualityHd2k , ['2k', 'hd2k', 'hd2k ', '2khd', '2khd ', '2048p', '2048i', 'hd2048', '2048hd', '2048p ', '2048i ', 'hd2048 ', '2048hd ', '1332p', '1332i', 'hd1332', '1332hd', '1332p ', '1332i ', 'hd1332 ', '1332hd ', '1440p', '1440i', 'hd1440', '1440hd', '1440p ', '1440i ', 'hd1440 ', '1440hd ', '1556p', '1556i', 'hd1556', '1556hd', '1556p ', '1556i ', 'hd1556 ', '1556hd ', ]),
 		(VideoQualityHd1080 , ['1080', '1080p', '1080i', 'hd1080', '1080hd', '1080 ', '1080p ', '1080i ', 'hd1080 ', '1080hd ', '1200p', '1200i', 'hd1200', '1200hd', '1200p ', '1200i ', 'hd1200 ', '1200hd ']),
-		(VideoQualityHd720 , ['720', '720p', '720i', 'hd720', '720hd', 'hd', '720 ', '720p ', '720i ', 'hd720 ', '720hd ']),
+		(VideoQualityHd720 , ['720', '720p', '720i', 'hd720', '720hd', '720 ', '720p ', '720i ', 'hd720 ', '720hd ']),
 		(VideoQualitySd , ['sd', '576', '576p', '576i', 'sd576', '576sd', '576 ', '576p ', '576i ', 'sd576 ', '576sd ', '480', '480p', '480i', 'sd480', '480sd', '480 ', '480p ', '480i ', 'sd480 ', '480sd ', '360', '360p', '360i', 'sd360', '360sd', '360 ', '360p ', '360i ', 'sd360 ', '360sd ', '240', '240p', '240i', 'sd240', '240sd', '240 ', '240p ', '240i ', 'sd240 ', '240sd ']),
 	])
 
@@ -1445,11 +1445,13 @@ class Metadata(object):
 		return title
 
 	@classmethod
-	def labelFill(self, value, bold = True, color = interface.Format.ColorDisabled):
+	def labelFill(self, value, bold = True, color = None):
+		if color is None: color = interface.Format.colorDisabled()
 		if value: return value
 		else: return interface.Format.font(Metadata.Fill, bold = bold, color = color, translate = False)
 
-	def labelOrion(self, format = True, color = interface.Format.ColorOrion, bold = True, uppercase = True):
+	def labelOrion(self, format = True, color = None, bold = True, uppercase = True):
+		if color is None: color = interface.Format.colorOrion()
 		label = None
 		if self.orion():
 			from resources.lib.extensions import orionoid
@@ -1458,7 +1460,8 @@ class Metadata(object):
 				label = interface.Format.font(label, bold = bold, color = color, uppercase = uppercase)
 		return label
 
-	def labelType(self, format = True, color = interface.Format.ColorMain, bold = True, uppercase = True, setting = None):
+	def labelType(self, format = True, color = None, bold = True, uppercase = True, setting = None):
+		if color is None: color = interface.Format.colorMain()
 		label = None
 		if setting == None:
 			setting = tools.Settings.getInteger('interface.information.type')
@@ -1474,7 +1477,8 @@ class Metadata(object):
 				label = interface.Format.font(label, bold = bold, color = color, uppercase = uppercase)
 		return label
 
-	def labelCached(self, format = True, color = interface.Format.ColorSpecial, bold = True, uppercase = True, setting = None, handles = None):
+	def labelCached(self, format = True, color = None, bold = True, uppercase = True, setting = None, handles = None):
+		if color is None: color = interface.Format.colorSpecial()
 		label = None
 		if setting == None:
 			setting = tools.Settings.getInteger('interface.information.mode')
@@ -1495,7 +1499,8 @@ class Metadata(object):
 				label = interface.Format.font(label, color = color, bold = bold, uppercase = uppercase)
 		return label
 
-	def labelDebrid(self, format = True, color = interface.Format.ColorSpecial, bold = True, uppercase = True, setting = None, handles = None):
+	def labelDebrid(self, format = True, color = None, bold = True, uppercase = True, setting = None, handles = None):
+		if color is None: color = interface.Format.colorSpecial()
 		label = None
 		if setting == None:
 			setting = tools.Settings.getInteger('interface.information.mode')
@@ -1516,7 +1521,8 @@ class Metadata(object):
 				label = interface.Format.font(label, color = interface.Format.colorLighter(color = color, change = 30), bold = bold, uppercase = uppercase)
 		return label
 
-	def labelDirect(self, format = True, color = interface.Format.ColorSpecial, bold = True, uppercase = True, setting = None):
+	def labelDirect(self, format = True, color = None, bold = True, uppercase = True, setting = None):
+		if color is None: color = interface.Format.colorSpecial()
 		label = None
 		if setting == None:
 			setting = tools.Settings.getInteger('interface.information.mode')
@@ -1532,7 +1538,8 @@ class Metadata(object):
 				label = interface.Format.font(label, color = color, bold = bold, uppercase = uppercase)
 		return label
 
-	def labelOpen(self, format = True, color = interface.Format.ColorSpecial, bold = True, uppercase = True, setting = None):
+	def labelOpen(self, format = True, color = None, bold = True, uppercase = True, setting = None):
+		if color is None: color = interface.Format.colorSpecial()
 		label = None
 		if setting == None:
 			setting = tools.Settings.getInteger('interface.information.mode')
@@ -1545,7 +1552,8 @@ class Metadata(object):
 				label = interface.Format.font(label, color = interface.Format.colorLighter(color = color, change = 50), bold = bold, uppercase = uppercase)
 		return label
 
-	def labelAccess(self, format = True, color = interface.Format.ColorSpecial, bold = True, uppercase = True, setting = None):
+	def labelAccess(self, format = True, color = None, bold = True, uppercase = True, setting = None):
+		if color is None: color = interface.Format.colorSpecial()
 		label = None
 		if setting == None:
 			setting = tools.Settings.getInteger('interface.information.mode')
@@ -1562,7 +1570,8 @@ class Metadata(object):
 				label = self.labelOpen(format = format, color = color, bold = bold, uppercase = uppercase, setting = setting)
 		return label
 
-	def labelEdition(self, format = True, color = interface.Format.ColorAlternative, bold = False, uppercase = True, setting = None):
+	def labelEdition(self, format = True, color = None, bold = False, uppercase = True, setting = None):
+		if color is None: color = interface.Format.colorAlternative()
 		label = None
 		if setting == None:
 			setting = tools.Settings.getInteger('interface.information.edition')
@@ -1579,7 +1588,8 @@ class Metadata(object):
 			except: pass
 		return label
 
-	def labelPack(self, format = True, color = interface.Format.ColorAlternative, bold = False, uppercase = True, setting = None):
+	def labelPack(self, format = True, color = None, bold = False, uppercase = True, setting = None):
+		if color is None: color = interface.Format.colorAlternative()
 		label = None
 		if setting == None:
 			setting = tools.Settings.getInteger('interface.information.pack')
@@ -1622,19 +1632,19 @@ class Metadata(object):
 	def labelVideoExtra(self, format = True, color = True, bold = False, uppercase = True):
 		label = self.videoExtra()
 		if not label == None and format:
-			label = interface.Format.font(label, color = interface.Format.ColorPoor, bold = bold, uppercase = uppercase)
+			label = interface.Format.font(label, color = interface.Format.colorPoor(), bold = bold, uppercase = uppercase)
 		return label
 
 	def labelAudioDubbed(self, format = True, color = True, bold = False, uppercase = True):
 		label = self.audioDubbed(False)
 		if not label == None and format:
-			label = interface.Format.font(label, color = interface.Format.ColorPoor, bold = bold, uppercase = uppercase)
+			label = interface.Format.font(label, color = interface.Format.colorPoor(), bold = bold, uppercase = uppercase)
 		return label
 
 	def labelSubtitles(self, format = True, color = True, bold = False, uppercase = True):
 		label = self.subtitles()
 		if not label == None and format:
-			if color == True: color = interface.Format.ColorBad if list(Metadata.DictionarySubtitles)[0] == self.mSubtitles else None
+			if color == True: color = interface.Format.colorBad() if list(Metadata.DictionarySubtitles)[0] == self.mSubtitles else None
 			label = interface.Format.font(label, color = color, bold = bold, uppercase = uppercase)
 		return label
 
@@ -1648,11 +1658,11 @@ class Metadata(object):
 				if precheck:
 					check = self.precheck()
 					if check == network.Networker.StatusOnline:
-						values.append(interface.Format.font(' + ', bold = True, color = interface.Format.ColorExcellent if color else None))
+						values.append(interface.Format.font(' + ', bold = True, color = interface.Format.colorExcellent() if color else None))
 					elif check == network.Networker.StatusOffline:
-						values.append(interface.Format.font(' - ', bold = True, color = interface.Format.ColorBad if color else None))
+						values.append(interface.Format.font(' - ', bold = True, color = interface.Format.colorBad() if color else None))
 					else:
-						values.append(interface.Format.font(' = ', bold = True, color = interface.Format.ColorMedium if color else None))
+						values.append(interface.Format.font(' = ', bold = True, color = interface.Format.colorMedium() if color else None))
 
 				if not quality == Metadata.LabelNone and self.mVideoQuality:
 					if quality == Metadata.LabelMini:
@@ -2414,39 +2424,39 @@ class Metadata(object):
 	def __colorVideoQuality(self):
 		qualities = list(Metadata.DictionaryVideoQuality)
 		if self.mVideoQuality == Metadata.VideoQualityUltra:
-			return interface.Format.colorLighter(interface.Format.ColorBad, 60)
+			return interface.Format.colorLighter(interface.Format.colorBad(), 60)
 		elif self.mVideoQuality == qualities[0]:
-			return interface.Format.colorLighter(interface.Format.ColorBad, 40)
+			return interface.Format.colorLighter(interface.Format.colorBad(), 40)
 		elif self.mVideoQuality == qualities[1]:
-			return interface.Format.colorLighter(interface.Format.ColorBad, 20)
+			return interface.Format.colorLighter(interface.Format.colorBad(), 20)
 		elif self.mVideoQuality == qualities[2]:
-			return interface.Format.ColorBad
+			return interface.Format.colorBad()
 		elif self.mVideoQuality == qualities[3]:
-			return interface.Format.colorLighter(interface.Format.ColorPoor, 40)
+			return interface.Format.colorLighter(interface.Format.colorPoor(), 40)
 		elif self.mVideoQuality == qualities[4]:
-			return interface.Format.colorLighter(interface.Format.ColorPoor, 20)
+			return interface.Format.colorLighter(interface.Format.colorPoor(), 20)
 		elif self.mVideoQuality == qualities[5]:
-			return interface.Format.ColorPoor
+			return interface.Format.colorPoor()
 		elif self.mVideoQuality == qualities[6]:
-			return interface.Format.colorDarker(interface.Format.ColorUltra, 40)
+			return interface.Format.colorDarker(interface.Format.colorUltra(), 40)
 		elif self.mVideoQuality == qualities[7]:
-			return interface.Format.colorDarker(interface.Format.ColorUltra, 20)
+			return interface.Format.colorDarker(interface.Format.colorUltra(), 20)
 		elif self.mVideoQuality == qualities[8]:
-			return interface.Format.ColorUltra
+			return interface.Format.colorUltra()
 		elif self.mVideoQuality == qualities[9]:
-			return interface.Format.colorLighter(interface.Format.ColorUltra, 20)
+			return interface.Format.colorLighter(interface.Format.colorUltra(), 20)
 		elif self.mVideoQuality == qualities[10]:
-			return interface.Format.ColorExcellent
+			return interface.Format.colorExcellent()
 		elif self.mVideoQuality == qualities[11]:
-			return interface.Format.ColorGood
+			return interface.Format.colorGood()
 		elif self.mVideoQuality == qualities[12]:
-			return interface.Format.ColorMedium
+			return interface.Format.colorMedium()
 		else:
-			return interface.Format.ColorUltra
+			return interface.Format.colorUltra()
 
 	def __colorSubtitles(self):
 		if list(Metadata.DictionarySubtitles)[0] == self.mSubtitles:
-			return interface.Format.ColorBad
+			return interface.Format.colorBad()
 		else:
 			return None
 

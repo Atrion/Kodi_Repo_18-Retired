@@ -54,12 +54,23 @@ class orionoid(Scraper):
 	SettingPopularity = 16
 	SettingAge = 17
 
+	Keys = {
+		'default' : 'VVZOQ1FrbEZOR2RSVTBGNVNVUm5aMUo1UWsxSlJXOW5VbE5CTTBsRk5HZFdVMEpQU1VWRloxTjVRVEJKUlRSblZVTkNTVWxHUldkVVUwSkRTVVZSWjFKRFFrWkpSVkZuVjBOQ1FrbEZZMmRUYVVKUw==',
+		'plugin.video.nymeria' : 'VkZOQ1IwbEZUV2RXYVVKUlNVVlJaMDlUUWtOSlJVbG5VME5DUzBsRVNXZFNlVUUxU1VSVloxSjVRVE5KUlZsblQwTkNWVWxHVldkVFEwSkVTVVZqWjA1cFFraEpSV05uVkdsQ1NFbEZOR2RPYVVFeg==',
+		'plugin.video.neptune' : 'VVdsQ1VVbEZNR2RVVTBKSVNVWm5aMVY1UVROSlJXTm5VbE5DVVVsRmQyZFNVMEpQU1VWTloxVlRRazVKUldkblVWTkJORWxFU1dkVVUwSk9TVVJyWjFKRFFrZEpSVlZuVlZOQ1NVbEdRV2RQVTBGNQ==',
+		'plugin.video.medusa' : 'VldsQ1dVbEVVV2RXZVVKVFNVVnpaMUY1UWtsSlJYZG5WR2xDU0VsRmMyZE9hVUY2U1VWbloxSjVRa1ZKUlVWblUzbENUMGxGYzJkVFEwRTFTVVZ2WjFWRFFsTkpSVVZuVGxOQ1NVbEZaMmRSZVVKWA==',
+		'plugin.video.mercury' : 'VmtOQ1FrbEdWV2RPUTBKSVNVUlpaMDVwUWxOSlJrbG5WRk5CZVVsRlNXZFJVMEpUU1VScloxTjVRazFKUlZGblRubENSMGxFWTJkVVEwSlJTVVpGWjFWNVFrVkpSR05uVWxOQ1MwbEZOR2RVUTBKWQ==',
+		'plugin.video.Mercury' : 'VmtOQ1FrbEdWV2RPUTBKSVNVUlpaMDVwUWxOSlJrbG5WRk5CZVVsRlNXZFJVMEpUU1VScloxTjVRazFKUlZGblRubENSMGxFWTJkVVEwSlJTVVpGWjFWNVFrVkpSR05uVWxOQ1MwbEZOR2RVUTBKWQ==',
+		'plugin.video.deceit' : 'VVhsQ1MwbEZZMmRXVTBKRlNVVlJaMVJUUWs5SlJYTm5UbWxDV1VsR1RXZFRRMEpHU1VWWlowNTVRbGhKUkd0blVXbENURWxGU1dkVlEwSk9TVVYzWjFaRFFsTkpSVVZuVkVOQ1JFbEZXV2RTYVVKQw==',
+	}
+
 	def __init__(self):
 		self.addon = xbmcaddon.Addon('script.module.universalscrapers')
 		self.language = ['ab', 'aa', 'af', 'ak', 'sq', 'am', 'ar', 'an', 'hy', 'as', 'av', 'ae', 'ay', 'az', 'bm', 'ba', 'eu', 'be', 'bn', 'bh', 'bi', 'nb', 'bs', 'br', 'bg', 'my', 'ca', 'ch', 'ce', 'ny', 'zh', 'cv', 'kw', 'co', 'cr', 'hr', 'cs', 'da', 'dv', 'nl', 'dz', 'en', 'eo', 'et', 'ee', 'fo', 'fj', 'fi', 'fr', 'ff', 'gd', 'gl', 'lg', 'ka', 'de', 'el', 'gn', 'gu', 'ht', 'ha', 'he', 'hz', 'hi', 'ho', 'hu', 'is', 'io', 'ig', 'id', 'ia', 'ie', 'iu', 'ik', 'ga', 'it', 'ja', 'jv', 'kl', 'kn', 'kr', 'ks', 'kk', 'km', 'ki', 'rw', 'rn', 'kv', 'kg', 'ko', 'ku', 'kj', 'ky', 'lo', 'la', 'lv', 'li', 'ln', 'lt', 'lu', 'lb', 'mk', 'mg', 'ms', 'ml', 'mt', 'gv', 'mi', 'mr', 'mh', 'mn', 'na', 'nv', 'ng', 'ne', 'nd', 'se', 'no', 'ii', 'nn', 'oc', 'oj', 'or', 'om', 'os', 'pi', 'ps', 'fa', 'pl', 'pt', 'pa', 'qu', 'ro', 'rm', 'ru', 'sm', 'sg', 'sa', 'sc', 'sr', 'sn', 'sd', 'si', 'cu', 'sk', 'sl', 'so', 'nr', 'st', 'es', 'su', 'sw', 'ss', 'sv', 'tl', 'ty', 'tg', 'ta', 'tt', 'te', 'th', 'bo', 'ti', 'to', 'ts', 'tn', 'tr', 'tk', 'tw', 'uk', 'ur', 'ug', 'uz', 've', 'vi', 'vo', 'wa', 'cy', 'fy', 'wo', 'xh', 'yi', 'yo', 'za', 'zu']
-		self.key = 'VVZOQ1FrbEZOR2RSVTBGNVNVUm5aMUo1UWsxSlJXOW5VbE5CTTBsRk5HZFdVMEpQU1VWRloxTjVRVEJKUlRSblZVTkNTVWxHUldkVVUwSkRTVVZSWjFKRFFrWkpSVkZuVjBOQ1FrbEZZMmRUYVVKUw=='
 		self.cachePath = os.path.join(xbmc.translatePath(self.addon.getAddonInfo('profile').decode('utf-8')), 'orion.cache')
 		self.cacheData = None
+		try: self.key = source.Keys[xbmcaddon.Addon().getAddonInfo('id')]
+		except: self.key = source.Keys['default']
 
 	def movie(self, imdb, title, year):
 		try: return urllib.urlencode({'imdb' : imdb, 'title' : title, 'year' : year})

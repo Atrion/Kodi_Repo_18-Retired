@@ -20,6 +20,7 @@
 
 import urlparse
 import sys
+
 from resources.lib.extensions import tools
 from resources.lib.extensions import shortcuts
 
@@ -1733,11 +1734,13 @@ elif action.startswith('library'):
 		from resources.lib.extensions import library
 		precheck = tools.Converter.boolean(params.get('precheck'), none = True)
 		metadata = params.get('metadata')
+		title = tools.Converter.quoteFrom(title)
 		library.Library(type = type, kids = kids).add(link = link, title = title, year = year, season = season, episode = episode, imdb = imdb, tmdb = tmdb, tvdb = tvdb, metadata = metadata, precheck = precheck)
 
 	elif action == 'libraryResolve':
 		from resources.lib.extensions import library
 		metadata = params.get('location')
+		title = tools.Converter.quoteFrom(title)
 		library.Library(type = type, kids = kids).resolve(title = title, year = year, season = season, episode = episode)
 
 	elif action == 'libraryRefresh':
@@ -1802,39 +1805,61 @@ elif action.startswith('orion'):
 		navigator.navigator(type = type, kids = kids).orionNavigator()
 
 	elif action == 'orionSettings':
-		from resources.lib.extensions import orionoid
-		orionoid.Orionoid().addonSettings()
+		try:
+			from resources.lib.extensions import orionoid
+			orionoid.Orionoid().addonSettings()
+		except: pass
 
 	elif action == 'orionLaunch':
-		from resources.lib.extensions import orionoid
-		orionoid.Orionoid().addonLaunch()
+		try:
+			from resources.lib.extensions import orionoid
+			orionoid.Orionoid().addonLaunch()
+		except: pass
+
+	elif action == 'orionUninstall':
+		try:
+			from resources.lib.extensions import orionoid
+			orionoid.Orionoid.uninstall()
+		except: pass
 
 	elif action == 'orionWebsite':
-		from resources.lib.extensions import orionoid
-		orionoid.Orionoid().addonWebsite(open = True)
+		try:
+			from resources.lib.extensions import orionoid
+			orionoid.Orionoid().addonWebsite(open = True)
+		except: pass
 
 	elif action == 'orionAccount':
-		from resources.lib.extensions import orionoid
-		orionoid.Orionoid().accountDialog()
+		try:
+			from resources.lib.extensions import orionoid
+			orionoid.Orionoid().accountDialog()
+		except: pass
 
 	elif action == 'orionAnonymous':
-		from resources.lib.extensions import orionoid
-		orionoid.Orionoid().accountAnonymous()
+		try:
+			from resources.lib.extensions import orionoid
+			orionoid.Orionoid().accountAnonymous()
+		except: pass
 
 	elif action == 'orionVoteUp':
-		from resources.lib.extensions import orionoid
-		notification = tools.Converter.boolean(params.get('notification'), none = True)
-		orionoid.Orionoid().streamVote(idItem = params.get('idItem'), idStream = params.get('idStream'), vote = orionoid.Orionoid.VoteUp, notification = True if notification == None else notification)
+		try:
+			from resources.lib.extensions import orionoid
+			notification = tools.Converter.boolean(params.get('notification'), none = True)
+			orionoid.Orionoid().streamVote(idItem = params.get('idItem'), idStream = params.get('idStream'), vote = orionoid.Orionoid.VoteUp, notification = True if notification == None else notification)
+		except: pass
 
 	elif action == 'orionVoteDown':
-		from resources.lib.extensions import orionoid
-		notification = tools.Converter.boolean(params.get('notification'), none = True)
-		orionoid.Orionoid().streamVote(idItem = params.get('idItem'), idStream = params.get('idStream'), vote = orionoid.Orionoid.VoteDown, notification = True if notification == None else notification)
+		try:
+			from resources.lib.extensions import orionoid
+			notification = tools.Converter.boolean(params.get('notification'), none = True)
+			orionoid.Orionoid().streamVote(idItem = params.get('idItem'), idStream = params.get('idStream'), vote = orionoid.Orionoid.VoteDown, notification = True if notification == None else notification)
+		except: pass
 
 	elif action == 'orionRemove':
-		from resources.lib.extensions import orionoid
-		notification = tools.Converter.boolean(params.get('notification'), none = True)
-		orionoid.Orionoid().streamRemove(idItem = params.get('idItem'), idStream = params.get('idStream'), notification = True if notification == None else notification)
+		try:
+			from resources.lib.extensions import orionoid
+			notification = tools.Converter.boolean(params.get('notification'), none = True)
+			orionoid.Orionoid().streamRemove(idItem = params.get('idItem'), idStream = params.get('idStream'), notification = True if notification == None else notification)
+		except: pass
 
 ####################################################
 # SCRAPE

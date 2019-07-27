@@ -12,4 +12,10 @@ if __name__ == '__main__':
     if 'action=smartPlay' in path:
         path = path.replace('action=smartPlay', 'action=shufflePlay')
 
+    if 'action=getSources' in path:
+        path = path.replace('action=getSources', 'action=shufflePlay')
+
+    if 'action=playbackResume' in path:
+        path = path.replace('action=playbackResume', 'action=shufflePlay')
+
     xbmc.executebuiltin('RunPlugin(%s)' % path)

@@ -18,29 +18,12 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
-
 import os,sys,urlparse,urllib,json,re
 
 from resources.lib.modules import control
-from resources.lib.modules import trakt
-from resources.lib.modules import views
-from resources.lib.extensions import api
 from resources.lib.extensions import tools
-from resources.lib.extensions import cache
-from resources.lib.extensions import search
-from resources.lib.extensions import trailer
 from resources.lib.extensions import interface
-from resources.lib.extensions import downloader
-from resources.lib.extensions import library
-from resources.lib.extensions import debrid
-from resources.lib.extensions import emby
-from resources.lib.extensions import handler
-from resources.lib.extensions import network
 from resources.lib.extensions import shortcuts
-from resources.lib.extensions import speedtest
-from resources.lib.extensions import orionoid
-from resources.lib.extensions import metadata as metadatax
-from resources.lib.extensions import history as historyx
 
 sysaddon = sys.argv[0]
 syshandle = int(sys.argv[1])
@@ -67,7 +50,6 @@ class navigator:
 		try: name = control.lang(name).encode('utf-8')
 		except: pass
 		url = ('%s?action=%s' % (sysaddon, query)) if isAction == True else query
-
 		if isinstance(library, (tuple, list)):
 			type = library[1]
 			library = library[0]
@@ -146,6 +128,8 @@ class navigator:
 		self.endDirectory()
 
 	def historyType(self):
+		from resources.lib.extensions import history as historyx
+
 		items = []
 		ids = []
 
@@ -190,6 +174,7 @@ class navigator:
 
 	def historyStream(self):
 		from resources.lib.extensions import core
+		from resources.lib.extensions import history as historyx
 		interface.Loader.show()
 		items = []
 		histories = historyx.History().retrieve(type = self.mType, kids = self.mKids)
@@ -240,6 +225,7 @@ class navigator:
 		self.endDirectory()
 
 	def searchRecent(self):
+		from resources.lib.extensions import search
 		searches = search.Searches().retrieveAll(kids = self.mKids)
 		for item in searches:
 			if item[0] == search.Searches.TypeMovies:
@@ -267,30 +253,35 @@ class navigator:
 		self.endDirectory()
 
 	def searchRecentMovies(self):
+		from resources.lib.extensions import search
 		searches = search.Searches().retrieveMovies(kids = self.mKids)
 		for item in searches:
 			self.addDirectoryItem(item[0], self.parameterize('moviesSearch&terms=%s' % urllib.quote_plus(item[0]), type = tools.Media.TypeMovie), 'searchmovies.png', 'DefaultAddonsSearch.png')
 		self.endDirectory()
 
 	def searchRecentShows(self):
+		from resources.lib.extensions import search
 		searches = search.Searches().retrieveShows(kids = self.mKids)
 		for item in searches:
 			self.addDirectoryItem(item[0], self.parameterize('showsSearch&terms=%s' % urllib.quote_plus(item[0]), type = tools.Media.TypeShow), 'searchshows.png', 'DefaultAddonsSearch.png')
 		self.endDirectory()
 
 	def searchRecentDocumentaries(self):
+		from resources.lib.extensions import search
 		searches = search.Searches().retrieveDocumentaries(kids = self.mKids)
 		for item in searches:
 			self.addDirectoryItem(item[0], self.parameterize('moviesSearch&terms=%s' % urllib.quote_plus(item[0]), type = tools.Media.TypeDocumentary), 'searchdocumentaries.png', 'DefaultAddonsSearch.png')
 		self.endDirectory()
 
 	def searchRecentShorts(self):
+		from resources.lib.extensions import search
 		searches = search.Searches().retrieveShorts(kids = self.mKids)
 		for item in searches:
 			self.addDirectoryItem(item[0], self.parameterize('moviesSearch&terms=%s' % urllib.quote_plus(item[0]), type = tools.Media.TypeShort), 'searchshorts.png', 'DefaultAddonsSearch.png')
 		self.endDirectory()
 
 	def tools(self):
+		from resources.lib.extensions import api
 		if tools.Settings.getBoolean('interface.menu.shortcuts'): self.shortcutsItems(location = shortcuts.Shortcuts.LocationTools)
 		if api.Api.lotteryValid(): self.addDirectoryItem(33876, 'lotteryVoucher', 'tickets.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
 		self.addDirectoryItem(33011, 'settingsNavigator', 'settings.png', 'DefaultAddonProgram.png')
@@ -353,6 +344,8 @@ class navigator:
 
 	def views(self, content):
 		try:
+			from resources.lib.modules import views
+
 			title = control.lang(32059).encode('utf-8')
 			url = '%s?action=navigatorView&content=%s' % (sys.argv[0], content)
 
@@ -411,6 +404,7 @@ class navigator:
 			self._clearNotify()
 
 	def clearCache(self, confirm = True):
+		from resources.lib.extensions import cache
 		if not confirm or self._clearConfirm():
 			cache.Cache().clear(confirm = False)
 			if confirm: self._clearNotify()
@@ -425,6 +419,7 @@ class navigator:
 			if confirm: self._clearNotify()
 
 	def clearHistory(self, confirm = True):
+		from resources.lib.extensions import history as historyx
 		if not confirm or self._clearConfirm():
 			historyx.History().clear(confirm = False)
 			if confirm: self._clearNotify()
@@ -435,12 +430,14 @@ class navigator:
 			if confirm: self._clearNotify()
 
 	def clearSearches(self, confirm = True):
+		from resources.lib.extensions import search
 		if not confirm or self._clearConfirm():
 			search.Searches().clear(confirm = False)
 			if confirm: self._clearNotify()
 
 	def clearTrailers(self, confirm = True):
 		if not confirm or self._clearConfirm():
+			from resources.lib.extensions import trailer
 			trailer.Trailer().clear(confirm = False)
 			if confirm: self._clearNotify()
 
@@ -462,8 +459,8 @@ class navigator:
 			if confirm: self._clearNotify()
 
 	def clearViews(self, confirm = True):
+		from resources.lib.modules import views
 		if not confirm or self._clearConfirm():
-			from resources.lib.modules import views
 			views.clearViews()
 			if confirm: self._clearNotify()
 
@@ -480,10 +477,9 @@ class navigator:
 		self.addDirectoryItem(33239, 'supportNavigator', 'help.png', 'DefaultAddonProgram.png')
 		self.addDirectoryItem(33354, 'linkOpen&link=%s' % tools.Settings.getString('link.website', raw = True), 'network.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
 		self.addDirectoryItem(33412, 'linkOpen&link=%s' % tools.Settings.getString('link.repository', raw = True), 'cache.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
-		self.addDirectoryItem(33921, 'linkOpen&link=%s' % tools.Settings.getString('link.support', raw = True), 'help.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
-		self.addDirectoryItem(35109, 'legalDisclaimer', 'legal.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
 		self.addDirectoryItem(33768, 'informationPremium', 'premium.png', 'DefaultAddonProgram.png')
 		self.addDirectoryItem(33503, 'informationChangelog', 'change.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
+		self.addDirectoryItem(35109, 'legalDisclaimer', 'legal.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
 		self.addDirectoryItem(33037, 'informationSplash', 'splash.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
 		self.addDirectoryItem(35201, 'informationAnnouncement', 'announcements.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
 		self.addDirectoryItem(33358, 'informationAbout', 'information.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
@@ -496,6 +492,8 @@ class navigator:
 		self.endDirectory()
 
 	def informationPremium(self):
+		from resources.lib.extensions import emby
+		from resources.lib.extensions import debrid
 		full = ' (%s)' % interface.Translation.string(33458)
 		limited = ' (%s)' % interface.Translation.string(33459)
 		minimal = ' (%s)' % interface.Translation.string(33460)
@@ -509,6 +507,7 @@ class navigator:
 		self.endDirectory()
 
 	def traktAccount(self):
+		from resources.lib.modules import trakt
 		credentials = trakt.getTraktCredentialsInfo()
 		if not credentials:
 			if interface.Dialog.option(title = 33339, message = 33646, labelConfirm = 33011, labelDeny = 33486):
@@ -705,6 +704,7 @@ class navigator:
 		self.endDirectory()
 
 	def vpnNavigator(self):
+		from resources.lib.extensions import debrid
 		self.addDirectoryItem(33017, 'vpnVerification', 'vpnverification.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
 		self.addDirectoryItem(33802, 'vpnConfiguration', 'vpnconfiguration.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
 		self.addDirectoryItem(33011, 'vpnSettings', 'vpnsettings.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
@@ -733,6 +733,7 @@ class navigator:
 			message = interface.Translation.string(33068) % self.mType
 			interface.Dialog.confirm(title = 35170, message = message)
 		else:
+			from resources.lib.extensions import library
 			for item in [(tools.Media.TypeMovie, 'movies', 32001), (tools.Media.TypeShow, 'shows', 32002), (tools.Media.TypeDocumentary, 'documentaries', 33491), (tools.Media.TypeShort, 'shorts', 33471)]:
 				path = library.Library(type = item[0]).location()
 				if tools.File.exists(path):
@@ -752,8 +753,11 @@ class navigator:
 		self.endDirectory()
 
 	def accountsNavigator(self):
+		from resources.lib.extensions import orionoid
 		orion = orionoid.Orionoid()
-		if orion.accountValid(): self.addDirectoryItem(35400, 'orionAccount', 'accountorion.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
+		try:
+			if orion.accountValid(): self.addDirectoryItem(35400, 'orionAccount', 'accountorion.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
+		except: pass
 		self.addDirectoryItem(33566, 'premiumizeAccount', 'accountpremiumize.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
 		self.addDirectoryItem(35200, 'offcloudAccount', 'accountoffcloud.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
 		self.addDirectoryItem(33567, 'realdebridAccount', 'accountrealdebrid.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
@@ -763,6 +767,7 @@ class navigator:
 		self.endDirectory()
 
 	def downloads(self, type = None):
+		from resources.lib.extensions import downloader
 		if type == None:
 			self.addDirectoryItem(33290, 'downloads&downloadType=%s' % downloader.Downloader.TypeManual, 'downloadsmanual.png', 'DefaultAddonProgram.png')
 			self.addDirectoryItem(33016, 'downloads&downloadType=%s' % downloader.Downloader.TypeCache, 'downloadscache.png', 'DefaultAddonProgram.png')
@@ -790,6 +795,7 @@ class navigator:
 				self.endDirectory()
 
 	def downloadsBrowse(self, type = None, error = False):
+		from resources.lib.extensions import downloader
 		if error:
 			downloader.Downloader(type).notificationLocation()
 		else:
@@ -806,6 +812,7 @@ class navigator:
 			self.endDirectory()
 
 	def downloadsList(self, type):
+		from resources.lib.extensions import downloader
 		self.addDirectoryItem(33029, 'downloadsList&downloadType=%s&downloadStatus=%s' % (type, downloader.Downloader.StatusAll), 'downloadslist.png', 'DefaultAddonProgram.png')
 		self.addDirectoryItem(33291, 'downloadsList&downloadType=%s&downloadStatus=%s' % (type, downloader.Downloader.StatusBusy), 'downloadsbusy.png', 'DefaultAddonProgram.png')
 		self.addDirectoryItem(33292, 'downloadsList&downloadType=%s&downloadStatus=%s' % (type, downloader.Downloader.StatusPaused), 'downloadspaused.png', 'DefaultAddonProgram.png')
@@ -814,6 +821,7 @@ class navigator:
 		self.endDirectory()
 
 	def downloadsClear(self, type):
+		from resources.lib.extensions import downloader
 		self.addDirectoryItem(33029, 'downloadsClear&downloadType=%s&downloadStatus=%s' % (type, downloader.Downloader.StatusAll), 'clearlist.png', 'DefaultAddonProgram.png')
 		self.addDirectoryItem(33291, 'downloadsClear&downloadType=%s&downloadStatus=%s' % (type, downloader.Downloader.StatusBusy), 'clearplay.png', 'DefaultAddonProgram.png')
 		self.addDirectoryItem(33292, 'downloadsClear&downloadType=%s&downloadStatus=%s' % (type, downloader.Downloader.StatusPaused), 'clearpaused.png', 'DefaultAddonProgram.png')
@@ -868,16 +876,21 @@ class navigator:
 		self.endDirectory()
 
 	def orionNavigator(self):
+		from resources.lib.extensions import orionoid
 		orion = orionoid.Orionoid()
 		self.addDirectoryItem(33256, 'orionLaunch', 'orionlaunch.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
-		if orion.accountAnonymousEnabled(): self.addDirectoryItem(35428, self.parameterize('orionAnonymous'), 'orion.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
-		if orion.accountValid(): self.addDirectoryItem(33339, 'orionAccount', 'orionaccount.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
-		if orion.accountFree(): self.addDirectoryItem(33768, 'orionWebsite', 'orionpremium.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
+		try:
+			if orion.accountAnonymousEnabled(): self.addDirectoryItem(35428, self.parameterize('orionAnonymous'), 'orion.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
+			if orion.accountValid(): self.addDirectoryItem(33339, 'orionAccount', 'orionaccount.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
+			if orion.accountFree(): self.addDirectoryItem(33768, 'orionWebsite', 'orionpremium.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
+		except: pass
 		self.addDirectoryItem(33011, 'orionSettings', 'orionsettings.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
 		self.addDirectoryItem(33354, 'orionWebsite', 'orionweb.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
+		self.addDirectoryItem(35636, 'orionUninstall', 'orionuninstall.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
 		self.endDirectory()
 
 	def premiumizeNavigator(self):
+		from resources.lib.extensions import debrid
 		valid = debrid.Premiumize().accountValid()
 		if valid:
 			self.addDirectoryItem(32009, 'premiumizeDownloadsNavigator&lite=1', 'premiumizedownloads.png', 'DefaultAddonProgram.png')
@@ -888,6 +901,7 @@ class navigator:
 		self.endDirectory()
 
 	def premiumizeDownloadsNavigator(self, lite = False):
+		from resources.lib.extensions import debrid
 		valid = debrid.Premiumize().accountValid()
 		if valid:
 			self.addDirectoryItem(33297, 'premiumizeList', 'downloadslist.png', 'DefaultAddonProgram.png')
@@ -899,6 +913,7 @@ class navigator:
 		self.endDirectory()
 
 	def offcloudNavigator(self):
+		from resources.lib.extensions import debrid
 		valid = debrid.OffCloud().accountValid()
 		if valid:
 			self.addDirectoryItem(32009, 'offcloudDownloadsNavigator&lite=1', 'offclouddownloads.png', 'DefaultAddonProgram.png')
@@ -909,6 +924,7 @@ class navigator:
 		self.endDirectory()
 
 	def offcloudDownloadsNavigator(self, lite = False, category = None):
+		from resources.lib.extensions import debrid
 		valid = debrid.OffCloud().accountValid()
 		if category == None:
 			self.addDirectoryItem(35205, 'offcloudDownloadsNavigator&category=instant', 'downloadsinstant.png', 'DefaultAddonProgram.png')
@@ -930,6 +946,7 @@ class navigator:
 		self.endDirectory()
 
 	def realdebridNavigator(self):
+		from resources.lib.extensions import debrid
 		valid = debrid.RealDebrid().accountValid()
 		if valid:
 			self.addDirectoryItem(32009, 'realdebridDownloadsNavigator&lite=1', 'realdebriddownloads.png', 'DefaultAddonProgram.png')
@@ -940,6 +957,7 @@ class navigator:
 		self.endDirectory()
 
 	def realdebridDownloadsNavigator(self, lite = False):
+		from resources.lib.extensions import debrid
 		valid = debrid.RealDebrid().accountValid()
 		if valid:
 			self.addDirectoryItem(33297, 'realdebridList', 'downloadslist.png', 'DefaultAddonProgram.png')
@@ -951,6 +969,7 @@ class navigator:
 		self.endDirectory()
 
 	def easynewsNavigator(self):
+		from resources.lib.extensions import debrid
 		if debrid.EasyNews().accountValid():
 			self.addDirectoryItem(33339, 'easynewsAccount', 'easynewsaccount.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
 			self.addDirectoryItem(33030, 'speedtestEasyNews', 'easynewsspeed.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)

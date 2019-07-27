@@ -358,10 +358,13 @@ class Trailer(database.Database):
 		except:
 			tools.Logger.error()
 
-	def _cinemaStart(self, type = tools.Media.TypeMovie):
+	def _cinemaStart(self, type = tools.Media.TypeMovie, background = None):
 		try:
 			from resources.lib.extensions import window
-			window.WindowCinema.show()
+
+			loaderNone = tools.Settings.getInteger('interface.navigation.cinema.loader') == 0
+			if loaderNone: interface.Loader.show()
+			else: window.WindowCinema.show(background = background)
 
 			self.mCinemaLock.acquire()
 			self.mCinemaRunning = True
@@ -377,9 +380,11 @@ class Trailer(database.Database):
 			except: pass
 			threads = [threading.Thread(target = self._cinemaSearch, args = (item,)) for item in items]
 			[thread.start() for thread in threads]
+			if loaderNone: interface.Loader.show()
 			while len(self.mCinemaItems) == 0:
 				tools.Time.sleep(0.5)
 			if not self.mCinemaStop:
+				if loaderNone: interface.Loader.hide()
 				self.mPlayer.play(self.mCinemaPlaylist)
 
 				while True:
@@ -387,7 +392,7 @@ class Trailer(database.Database):
 						if self.mPlayer.isPlaying() and self.mPlayer.isPlayingVideo() and self.mPlayer.getTime() >= 0: break
 					except: pass
 					tools.Time.sleep(0.5)
-				window.WindowCinema.close()
+				if not loaderNone: window.WindowCinema.close()
 
 				# Callbacks don't seem to work with YouTube addon URLs. Check manually.
 				while not self.mCinemaStop:
@@ -404,14 +409,12 @@ class Trailer(database.Database):
 		except:
 			tools.Logger.error()
 
-	def cinemaStart(self, type = tools.Media.TypeMovie, wait = False):
-		thread = threading.Thread(target = self._cinemaStart, args = (type,))
+	def cinemaStart(self, type = tools.Media.TypeMovie, background = None, wait = False):
+		thread = threading.Thread(target = self._cinemaStart, args = (type, background))
 		thread.start()
 		if wait: thread.join()
 
 	def cinemaStop(self):
-		from resources.lib.extensions import window
-
 		# This is important.
 		# The YouTube plugin needs some time to find and start playing the video.
 		# Before the YouTube plugin is ready, Gaia might interrupt the trailer and start the actual episode.
@@ -429,7 +432,9 @@ class Trailer(database.Database):
 
 		if self.cinemaInterrupt(): self.mPlayer.stop()
 		self._cinemaWait2()
-		window.WindowCinema.close()
+		if not tools.Settings.getInteger('interface.navigation.cinema.loader') == 0:
+			from resources.lib.extensions import window
+			window.WindowCinema.close()
 
 	def _cinemaPlaylist(self):
 		try:

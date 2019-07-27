@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-    <addon id="repository.Atrion18B" name="[COLOR maroon]Atrion's Repo for Kodi 18.x Backup[/COLOR]" version="0.1.6" provider-name="Atrion Darnay">
+    <addon id="repository.Atrion18B" name="[COLOR maroon]Atrion's Repo for Kodi 18.x Backup[/COLOR]" version="0.1.7" provider-name="Atrion Darnay">
         <requires>
             <import addon="xbmc.addon" version="12.0.0"/>
         </requires>

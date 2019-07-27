@@ -1589,7 +1589,7 @@ msgid "Special Episodes"
 msgstr ""
 
 msgctxt "#33237"
-msgid "XXXXXXXXXXXXXXXXXXXXXX"
+msgid "Unknown Duration"
 msgstr ""
 
 msgctxt "#33238"
@@ -6265,15 +6265,15 @@ msgid "Sorts the Trakt show calendar lists according to a specific attribute."
 msgstr ""
 
 msgctxt "#34414"
-msgid "Shows a timeout window for a number of seconds, asking if you want to continue to the next episode. Set to 0 to immediately continue without any delay."
+msgid "The number of seconds to wait before continuing with the default action. Set the value to 0 to dynamically adjust the timeout based on the episode length."
 msgstr ""
 
 msgctxt "#34415"
-msgid "Suppresses external dialogs, such as the Trakt rating, when the binge continuation window is showing."
+msgid "Suppresses external dialogs, such as the Trakt rating, when the binge window is showing."
 msgstr ""
 
 msgctxt "#34416"
-msgid "Shows theater curtains on special windows."
+msgid "Which loading window to show, if any, when trailers are being searched and started."
 msgstr ""
 
 msgctxt "#34417"
@@ -6302,6 +6302,30 @@ msgstr ""
 
 msgctxt "#34423"
 msgid "The maximum number of movies or shows listed per page before requiring to navigate to the next page."
+msgstr ""
+
+msgctxt "#34424"
+msgid "Change the playback options, playback tracking and binge watching."
+msgstr ""
+
+msgctxt "#34425"
+msgid "The dialog to use that indicates the next episode. Use no dialog and automatically continue to the next episode, show a full window after playback finished, show an overlay dialog while credits are running, or use the external addon Up Next."
+msgstr ""
+
+msgctxt "#34426"
+msgid "The action to execute if the timeout is reached without the user manually selecting to continue or cancel."
+msgstr ""
+
+msgctxt "#34427"
+msgid "Either wait for the current episode to finish or interrupt the playback if binge watching is continued."
+msgstr ""
+
+msgctxt "#34428"
+msgid "Either wait for the current episode to finish or interrupt the playback if binge watching is canceled."
+msgstr ""
+
+msgctxt "#34429"
+msgid "Shows cinema curtains in the window."
 msgstr ""
 
 
@@ -8636,12 +8660,8 @@ msgctxt "#35581"
 msgid "Continuation Delay"
 msgstr ""
 
-msgctxt "#35581"
-msgid "Continuation Delay"
-msgstr ""
-
 msgctxt "#35582"
-msgid "Next Episode In"
+msgid "Continue Next Episode In"
 msgstr ""
 
 msgctxt "#35583"
@@ -8649,7 +8669,7 @@ msgid "Suppress Dialogs"
 msgstr ""
 
 msgctxt "#35584"
-msgid "Theater Curtains"
+msgid "Curtains"
 msgstr ""
 
 msgctxt "#35585"
@@ -8778,4 +8798,88 @@ msgstr ""
 
 msgctxt "#35616"
 msgid "Settings For Fast Devices"
+msgstr ""
+
+msgctxt "#35617"
+msgid "Hour"
+msgstr ""
+
+msgctxt "#35618"
+msgid "Hours"
+msgstr ""
+
+msgctxt "#35619"
+msgid "Minute"
+msgstr ""
+
+msgctxt "#35620"
+msgid "Minutes"
+msgstr ""
+
+msgctxt "#35621"
+msgid "Dialog Mode"
+msgstr ""
+
+msgctxt "#35622"
+msgid "Window"
+msgstr ""
+
+msgctxt "#35623"
+msgid "Overlay"
+msgstr ""
+
+msgctxt "#35624"
+msgid "Up Next"
+msgstr ""
+
+msgctxt "#35625"
+msgid "No Action"
+msgstr ""
+
+msgctxt "#35626"
+msgid "Continue Action"
+msgstr ""
+
+msgctxt "#35627"
+msgid "Finish Playback"
+msgstr ""
+
+msgctxt "#35628"
+msgid "Interrupt Playback"
+msgstr ""
+
+msgctxt "#35629"
+msgid "Cancel Next Episode In"
+msgstr ""
+
+msgctxt "#35630"
+msgid "Second"
+msgstr ""
+
+msgctxt "#35631"
+msgid "Playback Tracking"
+msgstr ""
+
+msgctxt "#35631"
+msgid "General Playback"
+msgstr ""
+
+msgctxt "#35632"
+msgid "Loader"
+msgstr ""
+
+msgctxt "#35633"
+msgid "Due to import limitations in Kodi, Orion is installed with Gaia by default. This feature will remove Orion and replace it with empty code. Orion will show up as [I]Orion Dummy 9.9.9[/I], but will not contain any of Orion's code. If you want to use Orion in the future, you will have to manually install it. Do you want to continue uninstalling Orion?"
+msgstr ""
+
+msgctxt "#35634"
+msgid "Orion is already uninstalled and running the dummy version that does not contain any code."
+msgstr ""
+
+msgctxt "#35635"
+msgid "Orion Uninstalled Successfully"
+msgstr ""
+
+msgctxt "#35636"
+msgid "Uninstall"
 msgstr ""

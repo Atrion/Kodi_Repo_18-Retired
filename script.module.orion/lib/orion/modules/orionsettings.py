@@ -154,8 +154,13 @@ class OrionSettings:
 		return data
 
 	@classmethod
-	def _database(self):
-		return OrionDatabase.instance(OrionSettings.DatabaseSettings, default = OrionTools.pathJoin(OrionTools.addonPath(), 'resources'))
+	def _database(self, path = None):
+		return OrionDatabase.instance(OrionSettings.DatabaseSettings, default = OrionTools.pathJoin(OrionTools.addonPath(), 'resources'), path = path)
+
+	@classmethod
+	def _commit(self):
+		self._database()._commit()
+		self._backupAutomatic(force = True)
 
 	##############################################################################
 	# LOCK
@@ -518,8 +523,7 @@ class OrionSettings:
 			self.setFiltersAudioType(values, type = app, commit = False)
 			self.setFiltersAudioSystem(values, type = app, commit = False)
 			self.setFiltersAudioCodec(values, type = app, commit = False)
-		self._database()._commit()
-		self._backupAutomatic(force = True)
+		self._commit()
 
 	@classmethod
 	def _setFilters(self, values, setting, functionStreams, functionGet, type = None, commit = True):
@@ -847,7 +851,7 @@ class OrionSettings:
 		self.launch(data.count('<category') - 1)
 
 	@classmethod
-	def externalInsert(self, app, check = False):
+	def externalInsert(self, app, check = False, settings = None, commit = True):
 		from orion.modules.orionapi import OrionApi
 		if not app.key() == OrionApi._keyInternal() and not OrionTools.addonName().lower() == app.name().lower(): # Check name as well, in case the key changes.
 			appId = app.id()
@@ -888,11 +892,14 @@ class OrionSettings:
 				data = data[:end] + subset + data[end:]
 				OrionTools.fileWrite(self.pathAddon(), self._externalClean(data))
 
-				database = OrionDatabase(path = OrionTools.pathJoin(OrionTools.addonPath(), 'resources', OrionSettings.DatabaseSettings + OrionDatabase.Extension))
-				settings = database.select('SELECT id, data FROM  %s;' % OrionSettings.DatabaseSettings)
+				if not settings:
+					database = self._database(path = OrionTools.pathJoin(OrionTools.addonPath(), 'resources', OrionSettings.DatabaseSettings + OrionDatabase.Extension))
+					settings = database.select('SELECT id, data FROM  %s;' % OrionSettings.DatabaseSettings)
+					settings = [(i[0], OrionTools.jsonFrom(i[1])) for i in settings]
 				for setting in settings:
 					if setting[0].startswith('filters.'):
-						OrionSettings.set(self._filtersAttribute(setting[0], appId), OrionTools.jsonFrom(setting[1]))
+						OrionSettings.set(self._filtersAttribute(setting[0], appId), setting[1], commit = False)
+				if commit: self._commit()
 
 	@classmethod
 	def externalRemove(self, app):
@@ -922,9 +929,15 @@ class OrionSettings:
 
 		# NB: This has to remain here permanently.
 		# Re-insert the filters if the XML file is replaced during addon updates or if the default (universal) settings change in a new version.
+
+		database = self._database(path = OrionTools.pathJoin(OrionTools.addonPath(), 'resources', OrionSettings.DatabaseSettings + OrionDatabase.Extension))
+		settings = database.select('SELECT id, data FROM  %s;' % OrionSettings.DatabaseSettings)
+		settings = [(i[0], OrionTools.jsonFrom(i[1])) for i in settings]
+
 		for i in OrionApp.instances():
 			self.externalRemove(i)
-			self.externalInsert(i, check = True)
+			self.externalInsert(i, check = True, settings = settings, commit = False)
+		self._commit()
 
 	##############################################################################
 	# ADAPT

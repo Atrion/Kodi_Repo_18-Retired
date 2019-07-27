@@ -1022,10 +1022,10 @@ class Provider(object):
 					tools.Logger.error()
 
 			colors = {
-				verification.Verification.StatusOperational : interface.Format.ColorExcellent,
-				verification.Verification.StatusLimited : interface.Format.ColorMedium,
-				verification.Verification.StatusFailure : interface.Format.ColorBad,
-				verification.Verification.StatusDisabled : interface.Format.ColorMain,
+				verification.Verification.StatusOperational : interface.Format.colorExcellent(),
+				verification.Verification.StatusLimited : interface.Format.colorMedium(),
+				verification.Verification.StatusFailure : interface.Format.colorBad(),
+				verification.Verification.StatusDisabled : interface.Format.colorMain(),
 			}
 			message = interface.Translation.string(35234) % (colors[verification.Verification.StatusOperational], colors[verification.Verification.StatusLimited], colors[verification.Verification.StatusFailure], colors[verification.Verification.StatusDisabled])
 			verifications = None

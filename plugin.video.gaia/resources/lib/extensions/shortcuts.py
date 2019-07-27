@@ -18,7 +18,6 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
-import urllib
 from resources.lib.extensions import database
 from resources.lib.extensions import tools
 from resources.lib.extensions import interface
@@ -76,9 +75,11 @@ class Shortcuts(database.Database):
 		)
 
 	def _prepare(self, data):
+		import urllib
 		return urllib.quote_plus(data)
 
 	def _unprepare(self, data):
+		import urllib
 		return urllib.unquote(data)
 
 	def insert(self, location, link, name):

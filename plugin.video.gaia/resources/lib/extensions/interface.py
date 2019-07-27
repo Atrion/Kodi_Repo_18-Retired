@@ -22,15 +22,9 @@ import xbmc
 import xbmcgui
 import xbmcaddon
 import xbmcplugin
+
 import re
-import os
-import json
-import copy
-import urllib
-import time
-import math
-import datetime
-import threading
+
 from resources.lib.extensions import tools
 from resources.lib.extensions import network
 from resources.lib.extensions import convert
@@ -128,7 +122,6 @@ class Icon(object):
 			else: theme = tools.Settings.getString('interface.theme.icon').lower()
 
 			if not theme in ['default', '-', '']:
-
 				theme = theme.replace(' ', '').lower()
 				if 'glass' in theme:
 					theme = theme.replace('(', '').replace(')', '')
@@ -138,7 +131,6 @@ class Icon(object):
 
 				addon = tools.System.pathResources() if theme in ['white', Icon.SpecialQuality, Icon.SpecialDonations, Icon.SpecialNotifications] else tools.System.pathIcons()
 				Icon.ThemePath = tools.File.joinPath(addon, 'resources', 'media', 'icons', theme)
-
 				quality = tools.Settings.getInteger('interface.theme.icon.quality')
 				if quality == 0:
 					if Skin.isAeonNox():
@@ -233,32 +225,27 @@ class Icon(object):
 				tools.Settings.set('interface.theme.icon', items[choice])
 
 
-def formatColorInitialize(customize, type, default):
-	if customize:
-		color = tools.Settings.getString('interface.color.' + type)
-		try: return re.search('\\[.*\\](.*)\\[.*\\]', color, re.IGNORECASE).group(1)
-		except: return ''
-	else:
-		return default
-
-
 class Format(object):
 
-	ColorCustomize = tools.Settings.getBoolean('interface.color.enabled')
+	# Do not read setting or format colors according to the settings here.
+	# Otherwise this code will execute every time the file is included, aka every time the navigates between menus.
+	# This would add about half a second extra to loading time.
+	#ColorCustomize = tools.Settings.getBoolean('interface.color.enabled')
+	ColorCustomize = None
 
 	ColorNone = None
-	ColorPrimary = formatColorInitialize(ColorCustomize, 'primary', 'FFA0C12C')
-	ColorSecondary = formatColorInitialize(ColorCustomize, 'secondary', 'FF3C7DBF')
-	ColorOrion = formatColorInitialize(ColorCustomize, 'orion', 'FF637385')
-	ColorMain = formatColorInitialize(ColorCustomize, 'main', 'FF2396FF')
-	ColorAlternative = formatColorInitialize(ColorCustomize, 'alternative', 'FF004F98')
-	ColorSpecial = formatColorInitialize(ColorCustomize, 'special', 'FF6C3483')
-	ColorUltra = formatColorInitialize(ColorCustomize, 'ultra', 'FF00A177')
-	ColorExcellent = formatColorInitialize(ColorCustomize, 'excellent', 'FF1E8449')
-	ColorGood = formatColorInitialize(ColorCustomize, 'good', 'FF668D2E')
-	ColorMedium = formatColorInitialize(ColorCustomize, 'medium', 'FFB7950B')
-	ColorPoor = formatColorInitialize(ColorCustomize, 'poor', 'FFBA4A00')
-	ColorBad = formatColorInitialize(ColorCustomize, 'bad', 'FF922B21')
+	ColorPrimary = 'FFA0C12C'
+	ColorSecondary = 'FF3C7DBF'
+	ColorOrion = 'FF637385'
+	ColorMain = 'FF2396FF'
+	ColorAlternative = 'FF004F98'
+	ColorSpecial = 'FF6C3483'
+	ColorUltra = 'FF00A177'
+	ColorExcellent = 'FF1E8449'
+	ColorGood = 'FF668D2E'
+	ColorMedium = 'FFB7950B'
+	ColorPoor = 'FFBA4A00'
+	ColorBad = 'FF922B21'
 	ColorGaia1 = 'FFA0C12C'
 	ColorGaia2 = 'FF3C7DBF'
 	ColorWhite = 'FFFFFFFF'
@@ -322,11 +309,11 @@ class Format(object):
 
 	@classmethod
 	def colorGradientIncrease(self, count = 10):
-		return self.colorGradient(Format.ColorBad, Format.ColorExcellent, count)
+		return self.colorGradient(Format.colorBad(), Format.colorExcellent(), count)
 
 	@classmethod
 	def colorGradientDecrease(self, count = 10):
-		return self.colorGradient(Format.ColorExcellent, Format.ColorBad, count)
+		return self.colorGradient(Format.colorExcellent(), Format.colorBad(), count)
 
 	@classmethod
 	def colorChange(self, color, change = 10):
@@ -345,6 +332,112 @@ class Format(object):
 	@classmethod
 	def colorDarker(self, color, change = 10):
 		return self.colorChange(color, -change)
+
+	@classmethod
+	def _colorSettings(self, customize, type, default):
+		if customize:
+			color = tools.Settings.getString('interface.color.' + type)
+			try: return re.search('\\[.*\\](.*)\\[.*\\]', color, re.IGNORECASE).group(1)
+			except: return ''
+		else:
+			return default
+
+	@classmethod
+	def _colorIninitialize(self):
+		if Format.ColorCustomize is None:
+			Format.ColorCustomize = tools.Settings.getBoolean('interface.color.enabled')
+			Format.ColorPrimary = self._colorSettings(Format.ColorCustomize, 'primary', Format.ColorPrimary)
+			Format.ColorSecondary = self._colorSettings(Format.ColorCustomize, 'secondary', Format.ColorSecondary)
+			Format.ColorOrion = self._colorSettings(Format.ColorCustomize, 'orion', Format.ColorOrion)
+			Format.ColorMain = self._colorSettings(Format.ColorCustomize, 'main', Format.ColorMain)
+			Format.ColorAlternative = self._colorSettings(Format.ColorCustomize, 'alternative', Format.ColorAlternative)
+			Format.ColorSpecial = self._colorSettings(Format.ColorCustomize, 'special', Format.ColorSpecial)
+			Format.ColorUltra = self._colorSettings(Format.ColorCustomize, 'ultra', Format.ColorUltra)
+			Format.ColorExcellent = self._colorSettings(Format.ColorCustomize, 'excellent', Format.ColorExcellent)
+			Format.ColorGood = self._colorSettings(Format.ColorCustomize, 'good', Format.ColorGood)
+			Format.ColorMedium = self._colorSettings(Format.ColorCustomize, 'medium', Format.ColorMedium)
+			Format.ColorPoor = self._colorSettings(Format.ColorCustomize, 'poor', Format.ColorPoor)
+			Format.ColorBad = self._colorSettings(Format.ColorCustomize, 'bad', Format.ColorBad)
+
+	@classmethod
+	def colorPrimary(self):
+		self._colorIninitialize()
+		return Format.ColorPrimary
+
+	@classmethod
+	def colorSecondary(self):
+		self._colorIninitialize()
+		return Format.ColorSecondary
+
+	@classmethod
+	def colorOrion(self):
+		self._colorIninitialize()
+		return Format.ColorOrion
+
+	@classmethod
+	def colorMain(self):
+		self._colorIninitialize()
+		return Format.ColorMain
+
+	@classmethod
+	def colorAlternative(self):
+		self._colorIninitialize()
+		return Format.ColorAlternative
+
+	@classmethod
+	def colorSpecial(self):
+		self._colorIninitialize()
+		return Format.ColorSpecial
+
+	@classmethod
+	def colorUltra(self):
+		self._colorIninitialize()
+		return Format.ColorUltra
+
+	@classmethod
+	def colorExcellent(self):
+		self._colorIninitialize()
+		return Format.ColorExcellent
+
+	@classmethod
+	def colorGood(self):
+		self._colorIninitialize()
+		return Format.ColorGood
+
+	@classmethod
+	def colorMedium(self):
+		self._colorIninitialize()
+		return Format.ColorMedium
+
+	@classmethod
+	def colorPoor(self):
+		self._colorIninitialize()
+		return Format.ColorPoor
+
+	@classmethod
+	def colorBad(self):
+		self._colorIninitialize()
+		return Format.ColorBad
+
+	@classmethod
+	def colorGaia1(self):
+		return Format.ColorGaia1
+
+	@classmethod
+	def colorGaia2(self):
+		return Format.ColorGaia2
+
+	@classmethod
+	def colorWhite(self):
+		return Format.ColorWhite
+
+	@classmethod
+	def colorBlack(self):
+		return Format.ColorBlack
+
+	@classmethod
+	def colorDisabled(self):
+		return Format.ColorDisabled
 
 	@classmethod
 	def __translate(self, label, utf8 = True):
@@ -615,6 +708,7 @@ class Core(object):
 			core._update()
 
 			if core.mDots and (not core.mThread or not core.mRunning):
+				import threading
 				core.mThread = threading.Thread(target = core._dots)
 				core.mThread.start()
 
@@ -695,7 +789,6 @@ class Dialog(object):
 	BrowseDirectoryWrite = 3
 	BrowseDefault = BrowseFile
 
-	PrefixColor = Format.ColorPrimary
 	PrefixBack = '« '
 	PrefixNext = '» '
 
@@ -705,15 +798,18 @@ class Dialog(object):
 	IdDialogNotification = 10107
 
 	@classmethod
-	def prefix(self, text, prefix, color = PrefixColor, bold = True):
+	def prefix(self, text, prefix, color = None, bold = True):
+		if color is None: color = Format.colorPrimary()
 		return Format.font(prefix, color = color, bold = bold, translate = False) + Translation.string(text)
 
 	@classmethod
-	def prefixBack(self, text, color = PrefixColor, bold = None):
+	def prefixBack(self, text, color = None, bold = None):
+		if color is None: color = Format.colorPrimary()
 		return self.prefix(text = text, prefix = Dialog.PrefixBack, color = color, bold = bold)
 
 	@classmethod
-	def prefixNext(self, text, color = PrefixColor, bold = None):
+	def prefixNext(self, text, color = None, bold = None):
+		if color is None: color = Format.colorPrimary()
 		return self.prefix(text = text, prefix = Dialog.PrefixNext, color = color, bold = bold)
 
 	@classmethod
@@ -724,7 +820,7 @@ class Dialog(object):
 	@classmethod
 	def close(self, id, sleep = None):
 		xbmc.executebuiltin('Dialog.Close(%s,true)' % str(id))
-		if sleep: time.sleep(sleep / 1000.0)
+		if sleep: tools.Time.sleep(sleep / 1000.0)
 
 	@classmethod
 	def closeOk(self, sleep = None):
@@ -739,13 +835,13 @@ class Dialog(object):
 	@classmethod
 	def closeAll(self, sleep = None):
 		xbmc.executebuiltin('Dialog.Close(all,true)')
-		if sleep: time.sleep(sleep / 1000.0)
+		if sleep: tools.Time.sleep(sleep / 1000.0)
 
 	@classmethod
 	def closeAllProgress(self, sleep = None):
 		xbmc.executebuiltin('Dialog.Close(progressdialog,true)')
 		xbmc.executebuiltin('Dialog.Close(extendedprogressdialog,true)')
-		if sleep: time.sleep(sleep / 1000.0)
+		if sleep: tools.Time.sleep(sleep / 1000.0)
 
 	@classmethod
 	def closeAllNative(self, sleep = None):
@@ -756,7 +852,7 @@ class Dialog(object):
 		xbmc.executebuiltin('Dialog.Close(sliderdialog,true)')
 		xbmc.executebuiltin('Dialog.Close(okdialog,true)')
 		xbmc.executebuiltin('Dialog.Close(selectdialog,true)')
-		if sleep: time.sleep(sleep / 1000.0)
+		if sleep: tools.Time.sleep(sleep / 1000.0)
 
 	@classmethod
 	def aborted(self):
@@ -904,12 +1000,12 @@ class Dialog(object):
 	@classmethod
 	def page(self, message, title = None):
 		xbmc.executebuiltin('ActivateWindow(%d)' % Dialog.IdDialogText)
-		time.sleep(0.5)
+		tools.Time.sleep(0.5)
 		window = xbmcgui.Window(Dialog.IdDialogText)
 		retry = 50
 		while retry > 0:
 			try:
-				time.sleep(0.01)
+				tools.Time.sleep(0.01)
 				retry -= 1
 				window.getControl(1).setLabel(self.title(title))
 				window.getControl(5).setText('[CR]' + message)
@@ -945,12 +1041,12 @@ class Dialog(object):
 			if not prefix: label = self.__translate(label)
 			if value == None:
 				heading = value or 'items' in item
-				label = Format.font(label, bold = True, uppercase = heading, color = Format.ColorPrimary if heading else None, translate = False if prefix else True)
+				label = Format.font(label, bold = True, uppercase = heading, color = Format.colorPrimary() if heading else None, translate = False if prefix else True)
 			else:
 				if not label == '':
 					if not value == None:
 						label += ': '
-					label = Format.font(label, bold = True, color = Format.ColorSecondary)
+					label = Format.font(label, bold = True, color = Format.colorSecondary())
 				if not value == None:
 					label += Format.font(self.__translate(item['value']), italic = ('link' in item and item['link']))
 			return label
@@ -967,6 +1063,7 @@ class Dialog(object):
 						if not len(result) == 0:
 							result.append('')
 							actions.append(None)
+							parameters.append(None)
 							closes.append(None)
 							returns.append(None)
 						result.append(decorate(item))
@@ -998,7 +1095,7 @@ class Dialog(object):
 					if parameters[choice]: actions[choice](**parameters[choice])
 					else: actions[choice]()
 				if closes[choice]: return returns[choice]
-				elif refresh: items, actions, closes, returns = create(refresh())
+				elif refresh: items, actions, parameters, closes, returns = create(refresh())
 		elif any(i for i in returns):
 			choice = self.select(items, title = title)
 			if choice < 0: return None
@@ -1144,7 +1241,7 @@ class Splash(xbmcgui.WindowDialog):
 					buttonWidth = self.__scaleWidth(173),
 					buttonHeight = self.__scaleHeight(53),
 
-					iconPath = Icon.path('realdebrid.png', type = Icon.ThemeIcon),
+					iconPath = Icon.path('offcloud.png', type = Icon.ThemeIcon),
 					iconX = self.__centerX(widthTotal) + self.__scaleWidth(274),
 					iconY = self.__centerY(heightTotal) + self.__scaleHeight(345),
 					iconWidth = self.__scaleWidth(53),
@@ -1280,7 +1377,7 @@ class Splash(xbmcgui.WindowDialog):
 					try:
 						donationIdentifier = donation['identifier']
 						donationAddress = donation['address']
-						if network.Networker.linkIs(donationAddress): donationAddressQr = urllib.quote_plus(donationAddress)
+						if network.Networker.linkIs(donationAddress): donationAddressQr = tools.Converter.quoteTo(donationAddress)
 						else: donationAddressQr = donationAddress
 						donationQrcode = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&bgcolor=FFFFFF&color=000000&data=%s' % donationAddressQr
 						if len(donationAddress) > 75: donationAddress = tools.Settings.getString('link.donation', raw = True)
@@ -1954,9 +2051,8 @@ class Context(object):
 	ModeItem = 'item'
 	ModeStream = 'stream'
 
-	PrefixColor = Dialog.PrefixColor
-	PrefixNext = Format.font(Dialog.PrefixNext, color = PrefixColor, bold = True, translate = False)
-	PrefixBack = Format.font(Dialog.PrefixBack, color = PrefixColor, bold = True, translate = False)
+	PrefixNext = None
+	PrefixBack = None
 
 	Labels = {}
 	LabelMenu = None
@@ -2032,24 +2128,62 @@ class Context(object):
 
 	def _initialize(self):
 		if Context.LabelMenu == None:
-			from resources.lib.extensions import downloader
+			# Use a Kodi global property to cache the context variables.
+			# Because the import of "downloader" and "debrid" takes too long.
+
+			import threading
+			from resources.lib.extensions import window
+
+			thread = threading.Thread(target = self._initializeRefresh)
+			thread.start()
+			if not window.Window.propertyGlobal('GaiaContextLabelMenu'): thread.join()
+
+			Context.LabelMenu = window.Window.propertyGlobal('GaiaContextLabelMenu')
+			Context.LabelBack = window.Window.propertyGlobal('GaiaContextLabelBack')
+			Context.LabelClose = window.Window.propertyGlobal('GaiaContextLabelClose')
+			Context.EnabledOrion = bool(window.Window.propertyGlobal('GaiaContextEnabledOrion'))
+			Context.EnabledTrakt = bool(window.Window.propertyGlobal('GaiaContextEnabledTrakt'))
+			Context.EnabledYoutube = bool(window.Window.propertyGlobal('GaiaContextEnabledYoutube'))
+			Context.EnabledLibrary = bool(window.Window.propertyGlobal('GaiaContextEnabledLibrary'))
+			Context.EnabledPresets = bool(window.Window.propertyGlobal('GaiaContextEnabledPresets'))
+			Context.EnabledBinge = bool(window.Window.propertyGlobal('GaiaContextEnabledBinge'))
+			Context.EnabledAutoplay = bool(window.Window.propertyGlobal('GaiaContextEnabledAutoplay'))
+			Context.EnabledDownloadCloud = bool(window.Window.propertyGlobal('GaiaContextEnabledDownloadCloud'))
+			Context.EnabledDownloadManual = bool(window.Window.propertyGlobal('GaiaContextEnabledDownloadManual'))
+			Context.EnabledDownloadCache = bool(window.Window.propertyGlobal('GaiaContextEnabledDownloadCache'))
+			Context.EnabledManagerManual = bool(window.Window.propertyGlobal('GaiaContextEnabledManagerManual'))
+			Context.EnabledManagerCache = bool(window.Window.propertyGlobal('GaiaContextEnabledManagerCache'))
+
+	def _initializeRefresh(self):
+		# NB: Save each variable individually, instead of a JSON object, since encoding/decoding JSON objects takes too long.
+
+		from resources.lib.extensions import downloader
+		from resources.lib.extensions import debrid
+		from resources.lib.extensions import window
+
+		manualEnabled = tools.Settings.getBoolean('downloads.manual.enabled')
+		cacheEnabled = tools.Settings.getBoolean('downloads.cache.enabled')
+
+		try:
 			from resources.lib.extensions import orionoid
-			from resources.lib.extensions import debrid
-			Context.LabelMenu = self._label(tools.System.name(), next = True, color = True)
-			Context.LabelBack = self._labelBack()
-			Context.LabelClose = self._labelClose()
-			Context.EnabledTrakt = tools.Trakt.accountEnabled()
-			Context.EnabledOrion = orionoid.Orionoid().accountEnabled()
-			Context.EnabledYoutube = tools.YouTube.installed()
-			Context.EnabledLibrary = tools.Settings.getBoolean('library.enabled')
-			Context.EnabledPresets = tools.Settings.getBoolean('providers.customization.presets.enabled')
-			Context.EnabledBinge = tools.Binge.settingsType()
-			Context.EnabledAutoplay = tools.Settings.getBoolean('automatic.enabled')
-			Context.EnabledDownloadCloud = debrid.Debrid.enabled()
-			Context.EnabledDownloadManual = tools.Settings.getBoolean('downloads.manual.enabled')
-			Context.EnabledDownloadCache = tools.Settings.getBoolean('downloads.cache.enabled')
-			Context.EnabledManagerManual = not(self.mKids == tools.Selection.TypeInclude) and Context.EnabledDownloadManual
-			Context.EnabledManagerCache = not(self.mKids == tools.Selection.TypeInclude) and Context.EnabledDownloadCache
+			window.Window.propertyGlobalSet('GaiaContextEnabledOrion' ,orionoid.Orionoid().accountEnabled())
+		except:
+			window.Window.propertyGlobalSet('GaiaContextEnabledOrion', False)
+
+		window.Window.propertyGlobalSet('GaiaContextLabelMenu', self._label(tools.System.name(), next = True, color = True))
+		window.Window.propertyGlobalSet('GaiaContextLabelBack', self._labelBack())
+		window.Window.propertyGlobalSet('GaiaContextLabelClose', self._labelClose())
+		window.Window.propertyGlobalSet('GaiaContextEnabledTrakt', tools.Trakt.accountEnabled())
+		window.Window.propertyGlobalSet('GaiaContextEnabledYoutube', tools.YouTube.installed())
+		window.Window.propertyGlobalSet('GaiaContextEnabledLibrary', tools.Settings.getBoolean('library.enabled'))
+		window.Window.propertyGlobalSet('GaiaContextEnabledPresets', tools.Settings.getBoolean('providers.customization.presets.enabled'))
+		window.Window.propertyGlobalSet('GaiaContextEnabledBinge', tools.Binge.enabled())
+		window.Window.propertyGlobalSet('GaiaContextEnabledAutoplay', tools.Settings.getBoolean('automatic.enabled'))
+		window.Window.propertyGlobalSet('GaiaContextEnabledDownloadCloud', debrid.Debrid.enabled())
+		window.Window.propertyGlobalSet('GaiaContextEnabledDownloadManual', manualEnabled)
+		window.Window.propertyGlobalSet('GaiaContextEnabledDownloadCache', cacheEnabled)
+		window.Window.propertyGlobalSet('GaiaContextEnabledManagerManual', not(self.mKids == tools.Selection.TypeInclude) and manualEnabled)
+		window.Window.propertyGlobalSet('GaiaContextEnabledManagerCache', not(self.mKids == tools.Selection.TypeInclude) and cacheEnabled)
 
 	@classmethod
 	def _translate(self, label, replace = None):
@@ -2063,9 +2197,16 @@ class Context(object):
 
 	@classmethod
 	def _label(self, label, next, color):
-		if color == True: color = Context.PrefixColor
+		if color == True: color = Format.colorPrimary()
 		elif color == False: color = None
-		return (Context.PrefixNext if next else Context.PrefixBack) + Format.font(label, bold = True, color = color)
+		prefix = None
+		if next:
+			if Context.PrefixNext is None: Context.PrefixNext = Format.font(Dialog.PrefixNext, color = Format.colorPrimary(), bold = True, translate = False)
+			prefix = Context.PrefixNext
+		else:
+			if Context.PrefixBack is None: Context.PrefixBack = Format.font(Dialog.PrefixBack, color = Format.colorPrimary(), bold = True, translate = False)
+			prefix = Context.PrefixBack
+		return prefix + Format.font(label, bold = True, color = color)
 
 	@classmethod
 	def _labelNext(self, label):
@@ -2443,13 +2584,13 @@ class Context(object):
 				{'label' : 35522, 'command' : 'commandScrapeManual', 'loader' : True},
 				{'label' : 35523, 'command' : 'commandScrapeAutomatic', 'loader' : True},
 				{'label' : 35524, 'command' : 'commandScrapePreset', 'condition' : 'Context.EnabledPresets', 'loader' : True},
-				{'label' : 35585, 'command' : 'commandScrapeSingle', 'condition' : 'tools.Binge.settingsAutomatic(Context.EnabledBinge)', 'loader' : True} if television else None,
-				{'label' : 35586, 'command' : 'commandScrapeBinge', 'condition' : 'tools.Binge.settingsManual(Context.EnabledBinge)', 'loader' : True} if television else None,
+				{'label' : 35585, 'command' : 'commandScrapeSingle', 'condition' : 'Context.EnabledBinge', 'loader' : True} if television else None,
+				{'label' : 35586, 'command' : 'commandScrapeBinge', 'condition' : 'not Context.EnabledBinge', 'loader' : True} if television else None,
 			])
 
 	def addBinge(self):
 		if tools.Media.typeTelevision(self.mType):
-			self.add(label = 35580, command = 'commandBinge', condition = 'tools.Binge.settingsEnabled(Context.EnabledBinge)', loader = True)
+			self.add(label = 35580, command = 'commandBinge', loader = True)
 
 	def addPlaylist(self):
 		# NB: Do not add the custom context menu to items in the playlist.
@@ -2548,6 +2689,7 @@ class Context(object):
 	def show(self, wait = False):
 		# Start in a background thread, so that the underlying window/dialog can be closed and reopened.
 		# The context menu is therefore not depended on the parent window.
+		import threading
 		thread = threading.Thread(target = self._show)
 		thread.start()
 		if wait: thread.join()

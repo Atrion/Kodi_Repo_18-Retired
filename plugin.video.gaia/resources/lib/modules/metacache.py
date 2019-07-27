@@ -74,8 +74,10 @@ def insert(meta):
 				i = repr(m['item'])
 				imdb = '0' if m['imdb'] == 'tt' else m['imdb']
 
-				# NB: First lookup by TVDb and then my IMDb, since there are some incorrect shows on Trakt that have the same IMDb ID, but different TVDb IDs (eg: Gotham).
-				try: dbcur.execute("DELETE FROM meta WHERE (imdb = '%s' and tvdb = '%s' and lang = '%s' and user = '%s' and not imdb = '0' and not tvdb = '0')" % (imdb, m['tvdb'], m['lang'], m['user']))
+				# NB: First lookup by TVDb and then by IMDb, since there are some incorrect shows on Trakt that have the same IMDb ID, but different TVDb IDs (eg: Gotham).
+				try:
+					dbcur.execute("SELECT * FROM meta WHERE (imdb = '%s' and tvdb = '%s' and lang = '%s' and user = '%s' and not imdb = '0' and not tvdb = '0')" % (imdb, m['tvdb'], m['lang'], m['user'])).fetchone()[0] # Try to find entry.
+					dbcur.execute("DELETE FROM meta WHERE (imdb = '%s' and tvdb = '%s' and lang = '%s' and user = '%s' and not imdb = '0' and not tvdb = '0')" % (imdb, m['tvdb'], m['lang'], m['user']))
 				except:
 					try: dbcur.execute("DELETE FROM meta WHERE (imdb = '%s' and lang = '%s' and user = '%s' and not imdb = '0') OR (tvdb = '%s' and lang = '%s' and user = '%s' and not tvdb = '0')" % (imdb, m['lang'], m['user'], m['tvdb'], m['lang'], m['user']))
 					except: pass

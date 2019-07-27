@@ -24,7 +24,6 @@ from resources.lib.modules import control
 from resources.lib.modules import cleandate
 from resources.lib.modules import client
 from resources.lib.modules import utils
-
 from resources.lib.extensions import tools
 from resources.lib.extensions import cache
 from resources.lib.extensions import interface
@@ -212,7 +211,7 @@ def getTraktCredentialsInfo():
 
 
 def getTraktIndicatorsInfo():
-	indicators = tools.Settings.getString('general.playback.status') if getTraktCredentialsInfo() == False else tools.Settings.getString('general.playback.status.alternative')
+	indicators = tools.Settings.getString('playback.track.status') if getTraktCredentialsInfo() == False else tools.Settings.getString('playback.track.status.alternative')
 	indicators = True if indicators == '1' else False
 	return indicators
 
@@ -1034,8 +1033,8 @@ def imdbImport():
 	from resources.lib.indexers import tvshows
 
 	if interface.Dialog.option(title = 32034, message = 35610):
-		yes = interface.Format.fontBold(interface.Format.fontColor(interface.Translation.string(33341), interface.Format.ColorExcellent))
-		no = interface.Format.fontBold(interface.Format.fontColor(interface.Translation.string(33342), interface.Format.ColorBad))
+		yes = interface.Format.fontBold(interface.Format.fontColor(interface.Translation.string(33341), interface.Format.colorExcellent()))
+		no = interface.Format.fontBold(interface.Format.fontColor(interface.Translation.string(33342), interface.Format.colorBad()))
 
 		importWatched = [True, True, True, True]
 		importRatings = [True, True, True, True]

@@ -56,9 +56,7 @@
 		<!-- [CROSSGROUP/] -->
 		<!--
 			gaiaremove
-			<setting id="accounts.informants.trakt.enabled" type="bool" visible="false" />
 		-->
-		<setting id="dummy.general.accounts.informants.trakt.enabled" type="bool" visible="false" default="true" />
 		<!-- [/CROSSGROUP] -->
 
 		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 33239][/B][/UPPERCASE]" />
@@ -103,36 +101,6 @@
 			<setting id="helper.general.settings.backup.restore" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34335]  [/LIGHT]" visible="eq(-3,true) + eq(-7,true)" />
 		<setting id="general.settings.backup.limit" type="slider" label="35246" subsetting="true" range="3,100" option="int" default="10" visible="eq(-4,true)" />
 			<setting id="helper.general.settings.backup.limit" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34295]  [/LIGHT]" visible="eq(-5,true) + eq(-9,true)" />
-
-		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 32330][/B][/UPPERCASE]" />
-		<setting type="sep" />
-			<setting id="help.general.playback" type="bool" default="false" visible="false" />
-		<setting id="general.playback.status" type="enum" label="35138" lvalues="32314" default="0" visible="eq(-43,false)" />
-		<setting id="general.playback.status.alternative" type="enum" label="35138" lvalues="32314|32315" default="1" visible="eq(-44,true)" />
-			<setting id="helper.general.playback.status.alternative" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34013]  [/LIGHT]" visible="eq(-3,true)" />
-		<setting id="general.playback.progress" type="enum" label="35139" lvalues="32314" default="0" visible="eq(-46,false)" />
-		<setting id="general.playback.progress.alternative" type="enum" label="35139" lvalues="32314|32315" default="1" visible="eq(-47,true)" />
-			<setting id="helper.general.playback.progress.alternative" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34244]  [/LIGHT]" visible="eq(-6,true)" />
-		<setting id="general.playback.resume" type="enum" label="32344" lvalues="32302|33565|33800" default="1" />
-			<setting id="helper.general.playback.resume" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34014]  [/LIGHT]" visible="eq(-8,true)" />
-		<setting id="general.playback.end" type="slider" label="35309" range="50,100" option="int" default="80" />
-			<setting id="helper.general.playback.end" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34308]  [/LIGHT]" visible="eq(-10,true)" />
-		<setting id="general.playback.timeout" type="slider" label="35289" range="20,300" option="int" default="90" />
-			<setting id="helper.general.playback.timeout" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34296]  [/LIGHT]" visible="eq(-12,true)" />
-		<setting id="general.playback.sequential" type="bool" label="35433" default="false" />
-			<setting id="helper.general.playback.sequential" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34354]  [/LIGHT]" visible="eq(-14,true)" />
-		<setting id="general.playback.binge" type="enum" label="35579" lvalues="33737|33110|33800" default="1" />
-			<setting id="helper.general.playback.binge" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34407]  [/LIGHT]" visible="eq(-16,true)" />
-		<setting id="general.playback.binge.delay" type="slider" label="35581" range="0,60" option="int" default="5" subsetting="true" visible="!eq(-2,0)" />
-			<setting id="helper.general.playback.binge.delay" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34414]  [/LIGHT]" visible="!eq(-3,0) + eq(-18,true)" />
-		<setting id="general.playback.binge.suppress" type="bool" label="35583" default="true" subsetting="true" visible="!eq(-4,0)" />
-			<setting id="helper.general.playback.binge.suppress" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34415]  [/LIGHT]" visible="!eq(-5,0) + eq(-20,true)" />
-		<setting id="general.playback.retry.enabled" type="bool" label="35290" default="true" />
-			<setting id="helper.general.playback.retry.enabled" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34297]  [/LIGHT]" visible="eq(-22,true)" />
-		<setting id="general.playback.retry.limit" type="slider" label="35291" subsetting="true" range="1,10" option="int" default="1" visible="eq(-2,true)" />
-			<setting id="helper.general.playback.retry.limit" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34298]  [/LIGHT]" visible="eq(-3,true) + eq(-24,true)" />
-		<setting id="general.playback.retry.delay" type="slider" label="35292" subsetting="true" range="0,180" option="int" default="3" visible="eq(-4,true)" />
-			<setting id="helper.general.playback.retry.delay" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34299]  [/LIGHT]" visible="eq(-5,true) + eq(-26,true)" />
 
 		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 33801][/B][/UPPERCASE]" />
 		<setting type="sep" />
@@ -253,34 +221,38 @@
 			<setting id="helper.interface.navigation.limit" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34423]  [/LIGHT]" visible="eq(-2,true)" />
 		<setting id="interface.navigation.cinema" type="bool" label="35567" default="false" />
 			<setting id="helper.interface.navigation.cinema" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34410]  [/LIGHT]" visible="eq(-4,true)" />
-		<setting id="interface.navigation.cinema.progress" type="bool" label="35568" default="true" subsetting="true" visible="eq(-2,true)" />
-			<setting id="helper.interface.navigation.cinema.progress" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34411]  [/LIGHT]" visible="eq(-3,true) + eq(-6,true)" />
-		<setting id="interface.navigation.cinema.curtains" type="bool" label="35584" default="true" subsetting="true" visible="eq(-4,true)" />
-			<setting id="helper.interface.navigation.cinema.curtains" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34416]  [/LIGHT]" visible="eq(-5,true) + eq(-7,true)" />
-		<setting id="interface.navigation.cinema.interrupt" type="bool" label="35569" default="false" subsetting="true" visible="eq(-6,true)" />
-			<setting id="helper.interface.navigation.cinema.interrupt" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34412]  [/LIGHT]" visible="eq(-7,true) + eq(-10,true)" />
+		<setting id="interface.navigation.cinema.loader" type="enum" label="35632" lvalues="33112|33455|35300" default="2" subsetting="true" visible="eq(-2,true)" />
+			<setting id="helper.interface.navigation.cinema.loader" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34416]  [/LIGHT]" visible="eq(-3,true) + eq(-6,true)" />
+		<setting id="interface.navigation.cinema.background" type="enum" label="32337" subsetting="true" lvalues="33112|33248|35463|35260" default="1" visible="eq(-4,true) + !eq(-2,0)" />
+			<setting id="helper.interface.navigation.cinema.background" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34373]  [/LIGHT]" visible="eq(-5,true) + !eq(-3,0) + eq(-8,true)" />
+		<setting id="interface.navigation.cinema.curtains" type="bool" label="35584" default="true" subsetting="true" visible="eq(-6,true) + !eq(-4,0)" />
+			<setting id="helper.interface.navigation.cinema.curtains" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34429]  [/LIGHT]" visible="eq(-7,true) + !eq(-5,0) + eq(-10,true)" />
+		<setting id="interface.navigation.cinema.progress" type="bool" label="35568" default="true" subsetting="true" visible="eq(-8,true)" />
+			<setting id="helper.interface.navigation.cinema.progress" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34411]  [/LIGHT]" visible="eq(-9,true) + eq(-12,true)" />
+		<setting id="interface.navigation.cinema.interrupt" type="bool" label="35569" default="false" subsetting="true" visible="eq(-10,true)" />
+			<setting id="helper.interface.navigation.cinema.interrupt" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34412]  [/LIGHT]" visible="eq(-11,true) + eq(-14,true)" />
 		<setting id="interface.navigation.scrape" type="enum" label="32335" lvalues="33105|32332|32336" default="0" />
-			<setting id="helper.interface.navigation.scrape" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34004]  [/LIGHT]" visible="eq(-12,true)" />
+			<setting id="helper.interface.navigation.scrape" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34004]  [/LIGHT]" visible="eq(-16,true)" />
 		<setting id="interface.navigation.scrape.providers" type="bool" label="32345" default="false" subsetting="true" visible="!eq(-2,2)" />
-			<setting id="helper.interface.navigation.scrape.providers" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34401]  [/LIGHT]" visible="!eq(-3,2) + eq(-14,true)" />
+			<setting id="helper.interface.navigation.scrape.providers" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34401]  [/LIGHT]" visible="!eq(-3,2) + eq(-18,true)" />
 		<setting id="interface.navigation.scrape.background" type="enum" label="32337" subsetting="true" lvalues="33112|33248|35463|35260" default="1" visible="eq(-4,0)" />
-			<setting id="helper.interface.navigation.scrape.background" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34373]  [/LIGHT]" visible="eq(-5,0) + eq(-16,true)" />
+			<setting id="helper.interface.navigation.scrape.background" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34373]  [/LIGHT]" visible="eq(-5,0) + eq(-20,true)" />
 		<setting id="interface.navigation.streams" type="enum" label="33224" lvalues="33105|32333|32332" default="0" />
-			<setting id="helper.interface.navigation.streams" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34003]  [/LIGHT]" visible="eq(-18,true)" />
+			<setting id="helper.interface.navigation.streams" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34003]  [/LIGHT]" visible="eq(-22,true)" />
 		<setting id="interface.navigation.streams.reload" type="enum" label="35545" subsetting="true" lvalues="33107|33109|35546" default="1" visible="eq(-2,0)" />
-			<setting id="helper.interface.navigation.streams.reload" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34399]  [/LIGHT]" visible="eq(-3,0) + eq(-20,true)" />
+			<setting id="helper.interface.navigation.streams.reload" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34399]  [/LIGHT]" visible="eq(-3,0) + eq(-24,true)" />
 		<setting id="interface.navigation.streams.background" type="enum" label="32337" subsetting="true" lvalues="33112|33248|35463|35260" default="1" visible="eq(-4,0)" />
-			<setting id="helper.interface.navigation.streams.background" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34373]  [/LIGHT]" visible="eq(-5,0) + eq(-22,true)" />
+			<setting id="helper.interface.navigation.streams.background" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34373]  [/LIGHT]" visible="eq(-5,0) + eq(-26,true)" />
 		<setting id="interface.navigation.streams.poster" type="enum" label="35488" subsetting="true" lvalues="35489|35490" default="1" visible="eq(-6,0)" />
-			<setting id="helper.interface.navigation.streams.poster" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34390]  [/LIGHT]" visible="eq(-7,0) + eq(-24,true)" />
+			<setting id="helper.interface.navigation.streams.poster" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34390]  [/LIGHT]" visible="eq(-7,0) + eq(-28,true)" />
 		<setting id="interface.navigation.streams.decorations" type="enum" label="35464" subsetting="true" lvalues="33455|35465|35466" default="2" visible="eq(-8,0)" />
-			<setting id="helper.interface.navigation.streams.decorations" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34374]  [/LIGHT]" visible="eq(-9,0) + eq(-26,true)" />
+			<setting id="helper.interface.navigation.streams.decorations" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34374]  [/LIGHT]" visible="eq(-9,0) + eq(-30,true)" />
 		<setting id="interface.navigation.streams.icons" type="enum" label="35464" subsetting="true" lvalues="33112|35467|35463|35468" default="3" visible="eq(-10,1)" />
-			<setting id="helper.interface.navigation.streams.icons" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34375]  [/LIGHT]" visible="eq(-11,1) + eq(28,true)" />
+			<setting id="helper.interface.navigation.streams.icons" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34375]  [/LIGHT]" visible="eq(-11,1) + eq(-32,true)" />
 		<setting id="interface.navigation.playback" type="enum" label="35473" lvalues="33105|32332|32336" default="0" />
-			<setting id="helper.interface.navigation.playback" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34376]  [/LIGHT]" visible="eq(-30,true)" />
+			<setting id="helper.interface.navigation.playback" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34376]  [/LIGHT]" visible="eq(-34,true)" />
 		<setting id="interface.navigation.playback.background" type="enum" label="32337" subsetting="true" lvalues="33112|33248|35463|35260" default="1" visible="eq(-2,0)" />
-			<setting id="helper.interface.navigation.playback.background" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34373]  [/LIGHT]" visible="eq(-3,0) + eq(-32,true)" />
+			<setting id="helper.interface.navigation.playback.background" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34373]  [/LIGHT]" visible="eq(-3,0) + eq(-36,true)" />
 
 		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 33416][/B][/UPPERCASE]" />
 		<setting type="sep" />
@@ -317,11 +289,11 @@
 			<setting id="helper.interface.information.age" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34346]  [/LIGHT]" visible="eq(-30,true)" />
 		<setting id="interface.information.seeds" type="enum" label="35406" lvalues="32302|35301|35110|35049" default="3" />
 			<setting id="helper.interface.information.seeds" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34347]  [/LIGHT]" visible="eq(-32,true)" />
-		<setting id="interface.information.premium.enabled" type="bool" label="35248" default="false" enable="eq(-104,true) | eq(-102,true)" />
+		<setting id="interface.information.premium.enabled" type="bool" label="35248" default="false" enable="eq(-108,true) | eq(-106,true)" />
 			<setting id="helper.interface.information.premium.enabled" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34338]  [/LIGHT]" visible="eq(-34,true)" />
-		<setting id="interface.information.premium.premiumize" type="enum" label="33225" lvalues="33112|33029|33226|33228" default="0" subsetting="true" enable="eq(-106,true)" visible="eq(-2,true)" />
+		<setting id="interface.information.premium.premiumize" type="enum" label="33225" lvalues="33112|33029|33226|33228" default="0" subsetting="true" enable="eq(-110,true)" visible="eq(-2,true)" />
 			<setting id="helper.interface.information.premium.premiumize" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34011]  [/LIGHT]" visible="eq(-3,true) + eq(-36,true)" />
-		<setting id="interface.information.premium.easynews" type="enum" label="33866" lvalues="33112|33867|33868|33869|33870|33871|33872|33873" default="0" subsetting="true" enable="eq(-106,true)" visible="eq(-4,true)" />
+		<setting id="interface.information.premium.easynews" type="enum" label="33866" lvalues="33112|33867|33868|33869|33870|33871|33872|33873" default="0" subsetting="true" enable="eq(-110,true)" visible="eq(-4,true)" />
 			<setting id="helper.interface.information.premium.easynews" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34199]  [/LIGHT]" visible="eq(-5,true) + eq(-38,true)" />
 
 		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 33633][/B][/UPPERCASE]" />
@@ -463,6 +435,83 @@
 		<setting id="interface.color.medium" type="action" label="33999" default="[COLOR FFB7950B]FFB7950B[/COLOR]" subsetting="true" action="RunPlugin(plugin://plugin.video.gaia/?action=settingsColor&type=medium)" visible="eq(-11,true)" />
 		<setting id="interface.color.poor" type="action" label="35243" default="[COLOR FFBA4A00]FFBA4A00[/COLOR]" subsetting="true" action="RunPlugin(plugin://plugin.video.gaia/?action=settingsColor&type=poor)" visible="eq(-12,true)" />
 		<setting id="interface.color.bad" type="action" label="35244" default="[COLOR FF922B21]FF922B21[/COLOR]" subsetting="true" action="RunPlugin(plugin://plugin.video.gaia/?action=settingsColor&type=bad)" visible="eq(-13,true)" />
+
+		<setting type="sep" />
+		<setting type="bool" visible="false" /> <!-- Ensures that a separator is drawn at the bottom. -->
+	</category>
+
+	<!-- PLAYBACK -->
+	<category label="32330">
+
+		<setting type="bool" visible="false" /> <!-- Ensures that a separator is drawn at the top. Can be removed if other cross-group elements are added here. -->
+
+		<!-- [CROSSGROUP/] -->
+		<!--
+		gaiaremove
+		<setting id="general.language.customization" type="bool" visible="false" />
+		<setting id="accounts.informants.trakt.enabled" type="bool" visible="false" />
+		-->
+		<setting id="dummy.playback.general.language.customization" type="bool" visible="false" default="true" />
+		<setting id="dummy.playback.accounts.informants.trakt.enabled" type="bool" visible="false" default="true" />
+		<!-- [/CROSSGROUP] -->
+
+		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 33239][/B][/UPPERCASE]" />
+		<setting type="sep" />
+			<setting id="help.playback" type="bool" default="false" visible="false" />
+		<setting id="helper.playback.1" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 32301][/COLOR][/B]" label="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33240][/COLOR][/B]" option="close" action="RunPlugin(plugin://plugin.video.gaia/?action=settingsHelp&category=1)" visible="eq(-1,true)" />
+		<setting id="helper.playback.2" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 32302][/COLOR][/B]" label="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33240][/COLOR][/B]" option="close" action="RunPlugin(plugin://plugin.video.gaia/?action=settingsHelp&category=1)" visible="eq(-2,false)" />
+			<setting id="helper.playback" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34424]  [/LIGHT]" visible="eq(-3,true)" />
+		<setting type="lsep" label="" />
+
+		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 35631][/B][/UPPERCASE]" />
+		<setting type="sep" />
+			<setting id="help.playback.general" type="bool" default="false" visible="false" />
+		<setting id="playback.general.sequential" type="bool" label="35433" default="false" />
+			<setting id="helper.playback.general.sequential" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34354]  [/LIGHT]" visible="eq(-2,true)" />
+		<setting id="playback.general.resume" type="enum" label="32344" lvalues="32302|33565|33800" default="1" />
+			<setting id="helper.playback.general.resume" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34014]  [/LIGHT]" visible="eq(-4,true)" />
+		<setting id="playback.general.end" type="slider" label="35309" range="50,100" option="int" default="80" />
+			<setting id="helper.playback.general.end" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34308]  [/LIGHT]" visible="eq(-6,true)" />
+		<setting id="playback.general.timeout" type="slider" label="35289" range="20,300" option="int" default="90" />
+			<setting id="helper.playback.general.timeout" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34296]  [/LIGHT]" visible="eq(-8,true)" />
+
+		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 35290][/B][/UPPERCASE]" />
+		<setting type="sep" />
+			<setting id="help.playback.retry" type="bool" default="false" visible="false" />
+		<setting id="playback.retry.enabled" type="bool" label="33192" default="true" />
+			<setting id="helper.playback.retry.enabled" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34297]  [/LIGHT]" visible="eq(-2,true)" />
+		<setting id="playback.retry.limit" type="slider" label="35291" range="1,10" option="int" default="1" visible="eq(-2,true)" />
+			<setting id="helper.playback.retry.limit" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34298]  [/LIGHT]" visible="eq(-3,true) + eq(-4,true)" />
+		<setting id="playback.retry.delay" type="slider" label="35292" range="0,180" option="int" default="3" visible="eq(-4,true)" />
+			<setting id="helper.playback.retry.delay" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34299]  [/LIGHT]" visible="eq(-5,true) + eq(-6,true)" />
+
+		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 35631][/B][/UPPERCASE]" />
+		<setting type="sep" />
+			<setting id="help.playback.track" type="bool" default="false" visible="false" />
+		<setting id="playback.track.status" type="enum" label="35138" lvalues="32314" default="0" visible="eq(-31,false)" />
+		<setting id="playback.track.status.alternative" type="enum" label="35138" lvalues="32314|32315" default="1" visible="eq(-32,true)" />
+			<setting id="helper.general.playback.status.alternative" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34013]  [/LIGHT]" visible="eq(-3,true)" />
+		<setting id="playback.track.progress" type="enum" label="35139" lvalues="32314" default="0" visible="eq(-34,false)" />
+		<setting id="playback.track.progress.alternative" type="enum" label="35139" lvalues="32314|32315" default="1" visible="eq(-35,true)" />
+			<setting id="helper.playback.track.progress.alternative" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34244]  [/LIGHT]" visible="eq(-6,true)" />
+
+		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 35579][/B][/UPPERCASE]" />
+		<setting type="sep" />
+			<setting id="help.playback.binge" type="bool" default="false" visible="false" />
+		<setting id="playback.binge.enabled" type="bool" label="33192" default="true" />
+			<setting id="helper.playback.binge" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34407]  [/LIGHT]" visible="eq(-2,true)" />
+		<setting id="playback.binge.dialog" type="enum" label="35621" lvalues="33112|35622|35623|35624" default="2" visible="eq(-2,true)" />
+			<setting id="helper.playback.binge.dialog" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34425]  [/LIGHT]" visible="eq(-3,true) + eq(-4,true)" />
+		<setting id="playback.binge.suppress" type="bool" label="35583" default="true" subsetting="true" visible="eq(-4,true) + !eq(-2,3)" />
+			<setting id="helper.playback.binge.suppress" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34415]  [/LIGHT]" visible="eq(-5,true) + !eq(-3,3) + eq(-6,true)" />
+		<setting id="playback.binge.delay" type="slider" label="35581" range="0,180" option="int" default="0" subsetting="true" visible="eq(-6,true) + !eq(-4,0) + !eq(-4,3)" />
+			<setting id="helper.playback.binge.delay" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34414]  [/LIGHT]" visible="eq(-7,true) + !eq(-5,0) + !eq(-5,3) + eq(-8,true)" />
+		<setting id="playback.binge.action.none" type="enum" label="35625" lvalues="33821|33743" default="0" subsetting="true" visible="eq(-8,true) + !eq(-6,0) + !eq(-6,3)" />
+			<setting id="helper.playback.binge.action.none" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34426]  [/LIGHT]" visible="eq(-9,true) + !eq(-7,0) + !eq(-7,3) + eq(-10,true)" />
+		<setting id="playback.binge.action.continue" type="enum" label="35626" lvalues="35628|35627" default="0" subsetting="true" visible="eq(-10,true) + !eq(-8,0) + !eq(-8,1)" />
+			<setting id="helper.playback.binge.action.continu" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34427]  [/LIGHT]" visible="eq(-11,true) + !eq(-9,0) + !eq(-9,1) + eq(-12,true)" />
+		<setting id="playback.binge.action.cancel" type="enum" label="35105" lvalues="35628|35627" default="0" subsetting="true" visible="eq(-12,true) + eq(-10,2)" />
+			<setting id="helper.playback.binge.action.cancel" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34428]  [/LIGHT]" visible="eq(-13,true) + eq(-11,2) + eq(-14,true)" />
 
 		<setting type="sep" />
 		<setting type="bool" visible="false" /> <!-- Ensures that a separator is drawn at the bottom. -->
