@@ -1,1 +1,0 @@
-https://pypi.python.org/pypi/BitTorrent-bencode/5.0.8.1

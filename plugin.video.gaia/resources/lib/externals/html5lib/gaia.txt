@@ -1,2 +1,0 @@
-Let Gaia's BeautifulSoup use this version of html5lib.
-On certain Ubuntu distros, the default used html5lib version gives errors

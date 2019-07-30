@@ -1,2 +1,0 @@
-# IncursionTheme
-Theme
