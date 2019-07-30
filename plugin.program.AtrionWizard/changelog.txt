@@ -1,0 +1,23 @@
+v0.1.1
+-Added support for custom main menu icons
+-Added ability to hide seperators in the menu(======='s)
+-Added the ability to decide how often it checks for build updates
+-Added purgeDB for all db files(Multiselect for Kodi 16+ and SingleSelect for below)
+-Added auto removal of chars from zip name that arent allowed
+-Added if a db file doesnt delete it will purge it
+-Added in Settings Do not seperate builds by version
+-Fixed trakt addons now will show the addon icon/fanart if the addon is installed
+-Fixed error in the Auto Update
+-Fixed dialogs covering up the 'View Errors' textbox
+
+v0.1.0
+-Various bug fixes
+-Add skinSwap to force skin back to confluence
+
+v0.0.1c
+-Fixed the errors on extract message
+-Relocated add user edit variables to uservar.py
+-Seperated builds by kodi version
+
+v0.0.1
+-Initial Release

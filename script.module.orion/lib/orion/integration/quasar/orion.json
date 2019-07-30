@@ -1,0 +1,57 @@
+{
+	"orion": {
+
+		"name": "Orion",
+
+		"enabled": true,
+		"predefined": true,
+		"private": false,
+		"subpage": false,
+		
+		"language": null,
+		"languages": "ab, aa, af, ak, sq, am, ar, an, hy, as, av, ae, ay, az, bm, ba, eu, be, bn, bh, bi, nb, bs, br, bg, my, ca, ch, ce, ny, zh, cv, kw, co, cr, hr, cs, da, dv, nl, dz, en, eo, et, ee, fo, fj, fi, fr, ff, gd, gl, lg, ka, de, el, gn, gu, ht, ha, he, hz, hi, ho, hu, is, io, ig, id, ia, ie, iu, ik, ga, it, ja, jv, kl, kn, kr, ks, kk, km, ki, rw, rn, kv, kg, ko, ku, kj, ky, lo, la, lv, li, ln, lt, lu, lb, mk, mg, ms, ml, mt, gv, mi, mr, mh, mn, na, nv, ng, ne, nd, se, no, ii, nn, oc, oj, or, om, os, pi, ps, fa, pl, pt, pa, qu, ro, rm, ru, sm, sg, sa, sc, sr, sn, sd, si, cu, sk, sl, so, nr, st, es, su, sw, ss, sv, tl, ty, tg, ta, tt, te, th, bo, ti, to, ts, tn, tr, tk, tw, uk, ur, ug, uz, ve, vi, vo, wa, cy, fy, wo, xh, yi, yo, za, zu",
+		
+		"base_url": "https://orionoid.com",
+		"color": "FF47CAE9",
+		"separator": "",
+
+		"login_failed": null,
+		"login_object": null,
+		"login_path": null,
+
+		"parser": {
+			"infohash": null,
+			"name": null,
+			"peers": null,
+			"row": null,
+			"seeds": null,
+			"size": null,
+			"torrent": null
+		},
+		
+		"general_query": null,
+		"general_keywords": null,
+		"general_extra": null,
+		
+		"anime_query": null,
+		"anime_keywords": null,
+		"anime_extra": null,
+
+		"movie_query": null,
+		"movie_keywords": null,
+		"movie_extra": null,
+		
+		"show_query": null,
+		"tv_keywords": null,
+		"tv_keywords2": null,
+		"tv_keywords_fallback": null,
+		"tv_extra": null,
+		"tv_extra2": null,
+
+		"season_query": null,
+		"season_keywords": null,
+		"season_keywords2": null,
+		"season_extra": null,
+		"season_extra2": null
+	}
+}

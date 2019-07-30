@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<addon
+  id="visualization.goom"
+  version="2.0.0"
+  name="Goom"
+  provider-name="Team XBMC">
+  <requires>
+<import addon="kodi.binary.global.main" version="1.0.13"/>
+<import addon="kodi.binary.instance.visualization" version="2.0.1"/></requires>
+  <extension
+    point="xbmc.player.musicviz"
+    library_linux="visualization.goom.so.2.0.0"/>
+  <extension point="xbmc.addon.metadata">
+    <summary lang="en">Goom 2k4 Visualization</summary>
+    <description lang="en">The Goom 2k4 visualization supports effects like Tentacles, Flash, Stars, Fireworks, Waves, Blurs and Glows and includes a large number of trippy hypnotic effects that dance, swirl and pop with the music</description>
+    <platform>linux</platform>
+    <assets>
+      <icon>resources/icon.png</icon>
+      <fanart>resources/fanart.png</fanart>
+      <screenshot>resources/screenshot-01.png</screenshot>
+      <screenshot>resources/screenshot-02.png</screenshot>
+      <screenshot>resources/screenshot-03.png</screenshot>
+      <screenshot>resources/screenshot-04.png</screenshot>
+      <screenshot>resources/screenshot-05.png</screenshot>
+      <screenshot>resources/screenshot-06.png</screenshot>
+    </assets>
+  </extension>
+</addon>

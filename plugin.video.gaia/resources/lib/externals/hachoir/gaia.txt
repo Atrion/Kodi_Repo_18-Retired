@@ -1,0 +1,28 @@
+https://github.com/Woerd88/script.module.hachoir
+
+Use Git Bash on Windows:
+
+find ./ -type f -exec sed -i -e 's/from hachoir/from resources.lib.externals.hachoir.hachoir/g' {} \;
+find ./ -type f -exec sed -i -e 's/import hachoir/import resources.lib.externals.hachoir.hachoir/g' {} \;
+find ./ -type f -exec sed -i -e 's/hachoir_core.PACKAGE/resources.lib.externals.hachoir.hachoir_core.PACKAGE/g' {} \;
+
+In parser.paser_list.py, replace:
+
+	module = __import__("hachoir_parser")
+	
+with
+	
+	import imp,os
+        name = '__init__'
+        path = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '__init__.py'))
+        module = imp.load_source(name, path)
+        
+  
+  
+  
+  
+  
+Add to hc_metadata/metadata.py/MultipleMetadata
+
+    def groups(self):
+        return self.__groups
