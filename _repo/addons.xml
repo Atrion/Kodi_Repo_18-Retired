@@ -36,23 +36,6 @@
 	</extension>
 </addon>
 
-<addon id="repository.lunatixz" name="Lunatixz Beta Repository" version="1.0.6" provider-name="Lunatixz">
-    <extension point="xbmc.addon.repository" name="Lunatixz Beta Repository">
-        <info compressed="false">http://raw.github.com/Lunatixz/KODI_Addons/master/addons.xml</info>
-        <checksum>http://raw.github.com/Lunatixz/KODI_Addons/master/addons.xml.md5</checksum>
-        <datadir zip="true">http://raw.github.com/Lunatixz/KODI_Addons/master/zips</datadir>
-    </extension>
-    <extension point="xbmc.addon.metadata">
-        <summary lang="en_GB"></summary>
-        <description lang="en_GB"></description>
-        <platform>all</platform>
-        <source>http://raw.github.com/Lunatixz/KODI_Addons</source>
-        <assets>
-            <icon>icon.png</icon>
-        </assets>
-    </extension>
-</addon>
-
 <addon id="script.skinshortcuts" name="Skin Shortcuts" version="1.0.18" provider-name="BigNoid,marcelveldt">
 	<requires>
 		<import addon="xbmc.python" version="2.20.0"/>
@@ -593,20 +576,6 @@ Kodi is a registered trademark of the XBMC Foundation. We are not connected to o
 	</extension>
 </addon>
 
-<addon id="repository.xbmcadult" name="XBMC-Adult Addons" version="1.0.7" provider-name="xbmc-adult">
-	<extension point="xbmc.addon.repository" name="XBMC Adult Addons">
-		<info compressed="false">https://raw.githubusercontent.com/xbmc-adult/xbmc-adult/ghmaster/addons.xml</info>
-		<checksum>https://raw.githubusercontent.com/xbmc-adult/xbmc-adult/ghmaster/addons.xml.md5</checksum>
-		<datadir zip="true">https://raw.githubusercontent.com/xbmc-adult/xbmc-adult/ghmaster</datadir>
-	</extension>
-	<extension point="xbmc.addon.metadata">
-		<summary>XBMC Addons for Adults Only</summary>
-		<description>This repository contains addons that are for adults only. You may only view the contents of this repository if you are at least 18 years of age, or at least the age of majority in the jurisdiction where you reside or from which you access this content.</description>
-		<disclaimer>The owners and submitters to this repository do not host or distribute any of the content displayed by these addons nor do they have any affiliation with the content providers.</disclaimer>
-		<platform>all</platform>
-	</extension>
-</addon>
-
 <addon id="repository.rector.stuff" name="Rector Stuff" version="1.0.0" provider-name="rmrector">
 	<requires>
 		<import addon="xbmc.addon" version="12.0.0"/>
@@ -641,21 +610,6 @@ Kodi is a registered trademark of the XBMC Foundation. We are not connected to o
     <platform>all</platform>
     <website>http://www.crummy.com/software/BeautifulSoup/</website>
   </extension>
-</addon>
-
-<addon id="repository.xxxadultxbmc" name="AdultXBMC Add-on Repository" version="2.0.0" provider-name="tvaddons">
-	<extension point="xbmc.addon.repository" name="AdultXBMC Add-on Repository">
-		<info compressed="false">https://github.com/tvaddonsco/tva-adult-repo/raw/master/addons.xml</info>
-		<checksum>https://github.com/tvaddonsco/tva-adult-repo/raw/master/addons.xml.md5</checksum>
-		<datadir zip="true">https://github.com/tvaddonsco/tva-adult-repo/raw/master/</datadir>
-	</extension>
-	<extension point="xbmc.addon.metadata">
-		<summary>Adult Content for Kodi from High Quality Sources Only</summary>
-		<description>Collection of Adult Addons for Kodi by Various Developers</description>
-		<platform>all</platform>
-                <forum>http://www.tvaddons.co</forum>
-                <website>http://www.tvaddons.co</website>
-	</extension>
 </addon>
 
 <addon id="script.module.simplecache" name="Simple Cache Module" version="1.0.16" provider-name="marcelveldt">
@@ -813,7 +767,7 @@ Kodi is a registered trademark of the XBMC Foundation. We are not connected to o
     </extension>
 </addon>
 
-    <addon id="repository.Atrion18B" name="[COLOR maroon]Atrion's Repo for Kodi 18.x Backup[/COLOR]" version="0.2.0" provider-name="Atrion Darnay">
+    <addon id="repository.Atrion18B" name="[COLOR maroon]Atrion's Repo for Kodi 18.x Backup[/COLOR]" version="0.2.1" provider-name="Atrion Darnay">
         <requires>
             <import addon="xbmc.addon" version="12.0.0"/>
         </requires>
@@ -1601,7 +1555,7 @@ Fixed CM options not showing if context menu addon not installed
   </extension>
 </addon>
 
-<addon id="plugin.program.AtrionWizard" name="Atrions Wizard" version="0.0.9" provider-name="Atrion Darnay">
+<addon id="plugin.program.AtrionWizard" name="Atrions Wizard" version="0.1.0" provider-name="Atrion Darnay">
   <requires>
     <import addon="xbmc.python" version="2.1.0"/>
   </requires>
@@ -1859,7 +1813,7 @@ Fixed CM options not showing if context menu addon not installed
   </extension>
 </addon>
 
-    <addon id="repository.Atrion18" name="[COLOR maroon]Atrion's Repo for Kodi 18.x[/COLOR]" version="0.2.0" provider-name="Atrion Darnay">
+    <addon id="repository.Atrion18" name="[COLOR maroon]Atrion's Repo for Kodi 18.x[/COLOR]" version="0.2.1" provider-name="Atrion Darnay">
         <requires>
             <import addon="xbmc.addon" version="12.0.0"/>
         </requires>
@@ -2485,34 +2439,6 @@ v5.2.14 (2017-01-23)
     </extension>
 </addon>
 
-<addon id="repository.supremacy" name="[COLORaqua]supremacy[/COLOR]" version="2.6" provider-name="supremacy">
-	<extension point="xbmc.addon.repository" name="[COLORaqua]supremacy[/COLOR]">
-	<dir>
-		<info compressed="false">https://raw.githubusercontent.com/totalrevolution/python-koding/master/zips/addons.xml</info>
-		<checksum>https://raw.githubusercontent.com/totalrevolution/python-koding/master/zips/addons.xml.md5</checksum>
-		<datadir zip="true">https://raw.githubusercontent.com/totalrevolution/python-koding/master/zips/</datadir>
-	</dir>
-	<dir>
-        <info compressed="false">https://raw.githubusercontent.com/jsergio123/zips/master/addons.xml</info>
-        <checksum>https://raw.githubusercontent.com/jsergio123/zips/master/addons.xml.md5</checksum>
-        <datadir zip="true">https://raw.githubusercontent.com/jsergio123/zips/master/</datadir>
-    </dir>
-    <dir>
-        <info compressed="false">https://raw.githubusercontent.com/teamuniversal/scrapers/master/_modules4all/zips/addons.xml</info>
-        <checksum>https://raw.githubusercontent.com/teamuniversal/scrapers/master/_modules4all/zips/addons.xml.md5</checksum>
-        <datadir zip="true">https://raw.githubusercontent.com/teamuniversal/scrapers/master/_modules4all/zips/</datadir>
-    </dir>
-		<info compressed="false">http://supremacy.org.uk/zip/plugin/addon.xml</info>
-		<checksum>http://supremacy.org.uk/zip/plugin/addons.xml.md5</checksum>
-		<datadir zip="true">http://supremacy.org.uk/zip/plugin/</datadir>
-	</extension>
-	<extension point="xbmc.addon.metadata">
-		<summary>video addon for supremacy</summary>
-		<description>Latest Addon Updates For Supremacy Repository</description>
-		<platform>all</platform>
-	</extension>
-</addon>
-
 <addon id="script.yoda.artwork" version="1.0.0" name="[COLORgreen]yoda Artwork[/COLOR]" provider-name="S">
 	<requires>
 		<import addon="xbmc.python" version="2.19.0"/>
@@ -3019,32 +2945,6 @@ v5.2.14 (2017-01-23)
 	</extension>
 </addon>
 
-<addon id="repository.kodiadult" name="TVADDONS.CO Adult 18+ Add-on Repository" version="1.0.0" provider-name="tvaddons">
-	<extension point="xbmc.addon.repository" name="TVADDONS.CO Adult 18+ Add-on Repository">
-	<dir>
-		<info compressed="false">https://github.com/tvaddonsco/tva-resolvers-repo/raw/master/addons.xml</info>
-		<checksum>https://github.com/tvaddonsco/tva-resolvers-repo/raw/master/addons.xml.md5</checksum>
-		<datadir zip="true">https://github.com/tvaddonsco/tva-resolvers-repo/raw/master/zips/</datadir>
-	</dir>
-
-    <dir>
-		<info compressed="false">https://github.com/tvaddonsco/tva-adult-repo/raw/master/addons.xml</info>
-		<checksum>https://github.com/tvaddonsco/tva-adult-repo/raw/master/addons.xml.md5</checksum>
-		<datadir zip="true">https://github.com/tvaddonsco/tva-adult-repo/raw/master/</datadir>
-    </dir>
-	</extension>
-	<extension point="xbmc.addon.metadata">
-		<summary>Unofficial Adult 18+ Kodi Addons from TVADDONS.CO</summary>
-		<description>Unofficial Adult 18+ Kodi Addons from the TVADDONS.CO Add-on Repository. Please visit www.tvaddons.co for support!
-
-Kodi is a registered trademark of the XBMC Foundation. We are not connected to or in any other way affiliated with Kodi, Team Kodi, or the XBMC Foundation.</description>
-         <disclaimer>This Kodi addon contains age-restricted materials. By entering this Kodi addon, you swear under penalty of perjury that you are over the age of 18, and over the age of majority in the location from where you are accessing this Kodi addon.  If you are under the age of 18 years, or under the age of majority in the location from where you are accessing this Kodi addon, you do not have authorization or permission to use. TVADDONS.CO did not make all the add-ons in this repository and is not responsible for their content.</disclaimer>
-		<platform>all</platform>
-                <forum>https://www.tvaddons.co/forums</forum>
-                <website>https://www.tvaddons.co</website>
-	</extension>
-</addon>
-
 <addon id="metadata.tvshows.themoviedb.org"
        name="The Movie Database"
        version="3.1.1"
@@ -3139,25 +3039,6 @@ Kodi is a registered trademark of the XBMC Foundation. We are not connected to o
         <icon>icon.png</icon>
     </assets>
   </extension>
-</addon>
-
-<addon id="incursion.repository" name="Incursion Repository" version="0.0.3" provider-name="NixGates">
-	<extension point="xbmc.addon.repository" name="Incursion Repository">
-		<dir>
-			<info compressed="false">https://raw.githubusercontent.com/jsergio123/zips/master/addons.xml</info>
-			<checksum>https://raw.githubusercontent.com/jsergio123/zips/master/addons.xml.md5</checksum>
-			<datadir zip="true">https://raw.githubusercontent.com/jsergio123/zips/master/</datadir>
-		</dir>
-		<info compressed="false">https://raw.githubusercontent.com/nixgates/Incursion/master/addons.xml</info>
-		<checksum>https://raw.githubusercontent.com/nixgates/Incursion/master/addons.xml.md5</checksum>
-		<datadir zip="true">https://raw.githubusercontent.com/nixgates/Incursion/master/repo</datadir>
-	</extension>
-	<extension point="xbmc.addon.metadata">
-		<summary>Incursion Video Repo</summary>
-		<description>A Covenant Fork</description>
-		<disclaimer></disclaimer>
-		<platform>all</platform>
-	</extension>
 </addon>
 
 <addon id="vfs.sftp" version="1.0.1.2" name="SFTP support" provider-name="spiff">
