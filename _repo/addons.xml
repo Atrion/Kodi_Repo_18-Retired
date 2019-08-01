@@ -767,7 +767,7 @@ Kodi is a registered trademark of the XBMC Foundation. We are not connected to o
     </extension>
 </addon>
 
-    <addon id="repository.Atrion18B" name="[COLOR maroon]Atrion's Repo for Kodi 18.x Backup[/COLOR]" version="0.2.1" provider-name="Atrion Darnay">
+    <addon id="repository.Atrion18B" name="[COLOR DarkGreen]Atrion's Repo for Kodi 18.x Backup[/COLOR]" version="0.2.2" provider-name="Atrion Darnay">
         <requires>
             <import addon="xbmc.addon" version="12.0.0"/>
         </requires>
@@ -1813,7 +1813,7 @@ Fixed CM options not showing if context menu addon not installed
   </extension>
 </addon>
 
-    <addon id="repository.Atrion18" name="[COLOR maroon]Atrion's Repo for Kodi 18.x[/COLOR]" version="0.2.1" provider-name="Atrion Darnay">
+    <addon id="repository.Atrion18" name="[COLOR DarkGreen]Atrion's Repo for Kodi 18.x[/COLOR]" version="0.2.2" provider-name="Atrion Darnay">
         <requires>
             <import addon="xbmc.addon" version="12.0.0"/>
         </requires>
@@ -1829,6 +1829,7 @@ Fixed CM options not showing if context menu addon not installed
             <platform>all</platform>
     </extension>
 </addon>
+0D381F
 
 <addon id="repository.jsergio" name="jsergio repo" version="1.0.4" provider-name="jsergio">
 	<extension point="xbmc.addon.repository" name="jsergio repo">
