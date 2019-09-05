@@ -32,11 +32,11 @@ To use the Orion Kodi addon, do the following:
 	3. Create a new Orion object with your app API key:
 			orion = Orion('my_app_key')
 	4. Search for the streams using the instance from the previous step:
-			results = orion.streams(type = Orion.TypeMovie, idXYZ = 'Orion, IMDb, TMDb, or TVDb ID')
+			results = orion.streams(type = Orion.TypeMovie, idXYZ = 'Orion, IMDb, TMDb, TVDb, TVRage, or Trakt ID. Alternatively, the Trakt slug can be used.')
 
 A few things to note:
 	1. Do not name your file "orion.py" or your class "Orion", because this will clash with Orion's import.
-	2. A query requires a "type" and either and ID (idOrion, idImdb, idTmdb, idTvdb) or the "query" parameter.
+	2. A query requires a "type" and either and ID (idOrion, idImdb, idTmdb, idTvdb, idTvrage, idTrakt, idSlug) or the "query" parameter.
 		In addition, if you search for a show, you have to provide the "numberSeason" and "numberEpisode" together with the ID.
 
 ##############################################################################################################################################################################################################################################
@@ -118,10 +118,24 @@ CONTAINER RETRIEVE - Retrieve the details for a list of containers, including li
 
 ##############################################################################################################################################################################################################################################
 
+CONTAINER IDENTIFIERS - Retrieve the hashes and segment message IDs for a list of containers.
+
+	from orion import *
+	result = Orion('my_app_key').containerIdentifiers(links = ['source_link_of_torrent_or_usenet_container'])
+
+##############################################################################################################################################################################################################################################
+
 CONTAINER HASHES - Retrieve the hashes for a list of containers.
 
 	from orion import *
 	result = Orion('my_app_key').containerHashes(links = ['source_link_of_torrent_or_usenet_container', 'source_link_of_torrent_or_usenet_container'])
+
+##############################################################################################################################################################################################################################################
+
+CONTAINER SEGMENTS - Retrieve the segment message IDs for a list of containers.
+
+	from orion import *
+	result = Orion('my_app_key').containerSegments(links = ['source_link_of_torrent_or_usenet_container'])
 
 ##############################################################################################################################################################################################################################################
 
@@ -730,7 +744,7 @@ class Orion:
 	def __init__(self, key, encoding = EncodingDefault, silent = False):
 		self.mApp = OrionApp.instance(key)
 		OrionSettings.silentSet(silent)
-		self.mApp.refresh() # Must be done here instead of the instance function, otherwise the is recursion with the API.
+		self.mApp.refresh() # Must be done here instead of the instance function, otherwise there is recursion with the API.
 		self.mEncoding = encoding
 
 	def __del__(self):
@@ -878,6 +892,9 @@ class Orion:
 				idImdb = None,
 				idTmdb = None,
 				idTvdb = None,
+				idTvrage = None,
+				idTrakt = None,
+				idSlug = None,
 
 				numberSeason = None,
 				numberEpisode = None,
@@ -947,6 +964,9 @@ class Orion:
 			idImdb = idImdb,
 			idTmdb = idTmdb,
 			idTvdb = idTvdb,
+			idTvrage = idTvrage,
+			idTrakt = idTrakt,
+			idSlug = idSlug,
 
 			numberSeason = numberSeason,
 			numberEpisode = numberEpisode,
@@ -1042,6 +1062,17 @@ class Orion:
 		if single: result = result[0]
 		return self._encode(result, encoding = encoding)
 
+	# Retrieve hashes and segment message IDs for the given links.
+	# The links parameter can be a single link or a list of links.
+	def containerIdentifiers(self, links, encoding = None):
+		single = OrionTools.isString(links)
+		result = OrionContainer.identifiers(links = links)
+		if single:
+			result = result[0]
+			return self._encode(result, encoding = encoding)
+		else:
+			return self._encode(result, encoding = encoding, dictionary = True)
+
 	# Retrieve hashes for the given links.
 	# The links parameter can be a single link or a list of links.
 	def containerHashes(self, links, encoding = None):
@@ -1052,6 +1083,17 @@ class Orion:
 			if not encoding == Orion.EncodingObject:
 				try: result = result.hash()
 				except: pass
+			return self._encode(result, encoding = encoding)
+		else:
+			return self._encode(result, encoding = encoding, dictionary = True)
+
+	# Retrieve segment message IDs for the given links.
+	# The links parameter can be a single link or a list of links.
+	def containerSegments(self, links, encoding = None):
+		single = OrionTools.isString(links)
+		result = OrionContainer.segments(links = links)
+		if single:
+			result = result[0]
 			return self._encode(result, encoding = encoding)
 		else:
 			return self._encode(result, encoding = encoding, dictionary = True)

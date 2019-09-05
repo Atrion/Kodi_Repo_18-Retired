@@ -45,6 +45,9 @@ class OrionItem:
 	IdImdb = 'imdb'
 	IdTmdb = 'tmdb'
 	IdTvdb = 'tvdb'
+	IdTvrage = 'tvrage'
+	IdTrakt = 'trakt'
+	IdSlug = 'slug'
 	IdDefault = IdOrion
 
 	SelectDefault = None
@@ -244,6 +247,9 @@ class OrionItem:
 				idImdb = None,
 				idTmdb = None,
 				idTvdb = None,
+				idTvrage = None,
+				idTrakt = None,
+				idSlug = None,
 
 				numberSeason = None,
 				numberEpisode = None,
@@ -569,12 +575,15 @@ class OrionItem:
 			if not type == None: filters['type'] = type
 			if not query == None: filters['query'] = query
 
-			if not idOrion == None or not idImdb == None or not idTmdb == None or not idTvdb == None:
+			if not idOrion == None or not idImdb == None or not idTmdb == None or not idTvdb == None or not idTvrage == None or not idTrakt == None or not idSlug == None:
 				filters['id'] = {}
 				if not idOrion == None: filters['id']['orion'] = idOrion
 				if not idImdb == None: filters['id']['imdb'] = idImdb
 				if not idTmdb == None: filters['id']['tmdb'] = idTmdb
 				if not idTvdb == None: filters['id']['tvdb'] = idTvdb
+				if not idTvrage == None: filters['id']['tvrage'] = idTvrage
+				if not idTrakt == None: filters['id']['trakt'] = idTrakt
+				if not idSlug == None: filters['id']['slug'] = idSlug
 
 			if not numberSeason == None or not numberEpisode == None:
 				filters['number'] = {}
@@ -732,6 +741,18 @@ class OrionItem:
 
 	def idTvdb(self, select = SelectDefault, default = None):
 		try: return self.mData[self._select(select)]['id']['tvdb']
+		except: return default
+
+	def idTvrage(self, select = SelectDefault, default = None):
+		try: return self.mData[self._select(select)]['id']['tvrage']
+		except: return default
+
+	def idTrakt(self, select = SelectDefault, default = None):
+		try: return self.mData[self._select(select)]['id']['trakt']
+		except: return default
+
+	def idSlug(self, select = SelectDefault, default = None):
+		try: return self.mData[self._select(select)]['id']['slug']
 		except: return default
 
 	##############################################################################

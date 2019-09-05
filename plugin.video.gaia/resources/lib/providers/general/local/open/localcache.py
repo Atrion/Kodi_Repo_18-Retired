@@ -18,49 +18,22 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
-
-import urllib,urlparse,os,re
+import os,re
 
 from resources.lib.extensions import metadata
 from resources.lib.extensions import tools
 from resources.lib.extensions import interface
+from resources.lib.extensions import provider
 
-class source:
+class source(provider.ProviderBase):
+
 	def __init__(self):
+		provider.ProviderBase.__init__(self, supportMovies = True, supportShows = True)
+
 		self.priority = 0
 		self.language = ['un']
 		self.domains = []
 		self.prefix = 'downloads.cache.'
-
-	def movie(self, imdb, title, localtitle, year):
-		try:
-			url = {'imdb': imdb, 'title': title, 'year': year}
-			url = urllib.urlencode(url)
-			return url
-		except:
-			return
-
-
-	def tvshow(self, imdb, tvdb, tvshowtitle, localtitle, year):
-		try:
-			url = {'imdb': imdb, 'tvdb': tvdb, 'tvshowtitle': tvshowtitle, 'year': year}
-			url = urllib.urlencode(url)
-			return url
-		except:
-			return
-
-
-	def episode(self, url, imdb, tvdb, title, premiered, season, episode):
-		try:
-			if url == None: return
-
-			url = urlparse.parse_qs(url)
-			url = dict([(i, url[i][0]) if url[i] else (i, '') for i in url])
-			url['title'], url['premiered'], url['season'], url['episode'] = title, premiered, season, episode
-			url = urllib.urlencode(url)
-			return url
-		except:
-			return
 
 	def _locationMovies(self):
 		path = None
@@ -103,14 +76,10 @@ class source:
 	def sources(self, url, hostDict, hostprDict):
 		sources = []
 		try:
-			if url == None:
-				return sources
+			if url == None: return sources
+			if not tools.Settings.getBoolean(self.prefix + 'enabled'): return sources
 
-			if not tools.Settings.getBoolean(self.prefix + 'enabled'):
-				return sources
-
-			data = urlparse.parse_qs(url)
-			data = dict([(i, data[i][0]) if data[i] else (i, '') for i in data])
+			data = self._decode(url)
 
 			type = 'episode' if 'tvshowtitle' in data else 'movie'
 			if type == 'movie':
@@ -126,6 +95,7 @@ class source:
 
 			if 'exact' in data and data['exact']:
 				title = data['tvshowtitle'] if 'tvshowtitle' in data else data['title']
+				titles = None
 			else:
 				if type == 'episode':
 					# Search special episodes by name. All special episodes are added to season 0 by Trakt and TVDb. Hence, do not search by filename (eg: S02E00), since the season is not known.
@@ -135,10 +105,16 @@ class source:
 						title = '%s S%02dE%02d' % (data['tvshowtitle'], int(data['season']), int(data['episode']))
 				else:
 					title = '%s %s' % (data['title'], str(data['year']))
-
 				title = re.sub('(\\\|/| -|:|;|\*|\?|"|\'|<|>|\|)', ' ', title)
+				titles = data['alternatives'] if 'alternatives' in data else None
+
+			if not self._query(title): return sources
 
 			files = self._find(path, title)
+			if titles:
+				for t in titles:
+					files.extend(self._find(path, t))
+
 			for file in files:
 				file = file.replace('\\\\', '/').replace('\\', '/') # For some reason Python sometimes adds backslash instead of forward slash with os.path. This causes duplicate files not to be filtered out due to a "different" path.
 				meta = metadata.Metadata()
@@ -148,6 +124,3 @@ class source:
 			pass
 
 		return sources
-
-	def resolve(self, url):
-		return url

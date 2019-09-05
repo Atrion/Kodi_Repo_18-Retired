@@ -8,11 +8,11 @@ import threading
 
 from resources.lib.externals.beautifulsoup import BeautifulSoup
 
+from resources.lib import debrid
 from resources.lib.modules import client
 from resources.lib.modules import workers
 from resources.lib.extensions import interface
 from resources.lib.extensions import tools
-from resources.lib.extensions import debrid
 from resources.lib.extensions import provider as providerx
 
 # Verify account and provider access.
@@ -471,7 +471,7 @@ class Verification(object):
 		if self.__done(name): return
 		try:
 			if not checkDisabled or self.__enabled('accounts.debrid.premiumize.enabled'):
-				if debrid.Premiumize().accountVerify():
+				if debrid.premiumize.Core().accountVerify():
 					status = Verification.StatusOperational
 				else:
 					status = Verification.StatusFailure
@@ -486,7 +486,7 @@ class Verification(object):
 		if self.__done(name): return
 		try:
 			if not checkDisabled or self.__enabled('accounts.debrid.offcloud.enabled'):
-				if debrid.OffCloud().accountVerify():
+				if debrid.offcloud.Core().accountVerify():
 					status = Verification.StatusOperational
 				else:
 					status = Verification.StatusFailure
@@ -501,7 +501,7 @@ class Verification(object):
 		if self.__done(name): return
 		try:
 			if not checkDisabled or self.__enabled('accounts.debrid.realdebrid.enabled'):
-				if debrid.RealDebrid().accountVerify():
+				if debrid.realdebrid.Core().accountVerify():
 					status = Verification.StatusOperational
 				else:
 					status = Verification.StatusFailure
@@ -556,7 +556,7 @@ class Verification(object):
 		if self.__done(name): return
 		try:
 			if not checkDisabled or self.__enabled('accounts.debrid.easynews.enabled'):
-				if debrid.EasyNews().accountVerify():
+				if debrid.easynews.Core().accountVerify():
 					status = Verification.StatusOperational
 				else:
 					status = Verification.StatusFailure

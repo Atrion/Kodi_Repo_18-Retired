@@ -238,7 +238,7 @@ def start_info_actions(infos, params):
 			elif int(params.get('dbid', -1)) > 0:
 				tvshow_id = local_db.get_imdb_id_from_db(media_type='show', dbid=params['dbid'])
 			elif params.get('tvdb_id'):
-				tvshow_id = TheMovieDB.get_movie_tmdb_id(params['tvdb_id'])
+				tvshow_id = TheMovieDB.get_show_tmdb_id(params['tvdb_id'])
 			else:
 				tvshow_id = ''
 			if tvshow_id:

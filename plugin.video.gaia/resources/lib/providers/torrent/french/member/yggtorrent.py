@@ -20,14 +20,17 @@
 
 import re, urllib, urlparse, json, threading
 from resources.lib.modules import client
+from resources.lib.extensions import provider
 from resources.lib.extensions import metadata
 from resources.lib.extensions import tools
 from resources.lib.extensions import network
 from resources.lib.externals.beautifulsoup import BeautifulSoup
 
-class source:
+class source(provider.ProviderBase):
 
 	def __init__(self):
+		provider.ProviderBase.__init__(self, supportMovies = True, supportShows = True)
+
 		self.pack = True # Checked by provider.py
 		self.priority = 0
 		self.language = ['fr']
@@ -37,7 +40,7 @@ class source:
 		self.download_link = '/engine/download_torrent?id='
 		self.login_link = '/user/login'
 		self.category_video = 2145
-		self.subcategory_any = "all"
+		self.subcategory_any = 'all'
 		self.subcategories_show = {'Série TV': '2184'}
 		self.subcategories_movie = {'Film': '2183', 'Animation': '2178'}
 
@@ -80,33 +83,6 @@ class source:
 		domain = network.Networker.linkDomain(link, subdomain = False, topdomain = True).lower()
 		return domain in self.domains
 
-	def movie(self, imdb, title, localtitle, year):
-		try:
-			url = {'imdb': imdb, 'title': title, 'year': year}
-			url = urllib.urlencode(url)
-			return url
-		except:
-			return
-
-	def tvshow(self, imdb, tvdb, tvshowtitle, localtitle, year):
-		try:
-			url = {'imdb': imdb, 'tvdb': tvdb, 'tvshowtitle': tvshowtitle, 'year': year}
-			url = urllib.urlencode(url)
-			return url
-		except:
-			return
-
-	def episode(self, url, imdb, tvdb, title, premiered, season, episode):
-		try:
-			if url == None: return
-			url = urlparse.parse_qs(url)
-			url = dict([(i, url[i][0]) if url[i] else (i, '') for i in url])
-			url['title'], url['premiered'], url['season'], url['episode'] = title, premiered, season, episode
-			url = urllib.urlencode(url)
-			return url
-		except:
-			return
-
 	def _hash(self, url, index):
 		try:
 			htmlSingle = BeautifulSoup(client.request(url))
@@ -120,74 +96,14 @@ class source:
 			try: self.tLock.release()
 			except: pass
 
-	def sources(self, url, hostDict, hostprDict):
-		self.tSources = []
+	def _search(self, url, query, subcategory, show, title, titles, year, season, episode, pack, packCount, packException, ignoreContains):
+		pageLimit = tools.Settings.getInteger('scraping.providers.pages')
+		pageCounter = 0
+		page = 0
+		added = False
+
 		try:
-			if url == None:
-				raise Exception()
-
-			if not self.enabled or self.username == '' or self.password == '':
-				raise Exception()
-
-			ignoreContains = None
-			data = urlparse.parse_qs(url)
-			data = dict([(i, data[i][0]) if data[i] else (i, '') for i in data])
-
-			show = 'tvshowtitle' in data
-			title = data['tvshowtitle'] if show else data['title']
-			titleYear = '%s S%02dE%02d' % (data['tvshowtitle'], int(data['season']), int(data['episode'])) if show else '%s (%s)' % (data['title'], data['year'])
-
-			if 'exact' in data and data['exact']:
-				query = title = data['tvshowtitle'] if 'tvshowtitle' in data else data['title']
-				year = None
-				season = None
-				episode = None
-				pack = False
-				packCount = None
-			else:
-				year = int(data['year']) if 'year' in data and not data['year'] == None else None
-				season = int(data['season']) if 'season' in data and not data['season'] == None else None
-				episode = int(data['episode']) if 'episode' in data and not data['episode'] == None else None
-				pack = data['pack'] if 'pack' in data else False
-				packCount = data['packcount'] if 'packcount' in data else None
-
-				if show: subcategory = self.subcategories_show.values()[0] if len(self.subcategories_show) == 1 else self.subcategory_any
-				else: subcategory = self.subcategories_movie.values()[0] if len(self.subcategories_movie) == 1 else self.subcategory_any
-
-				if show:
-					# Search special episodes by name. All special episodes are added to season 0 by Trakt and TVDb. Hence, do not search by filename (eg: S02E00), since the season is not known.
-					if (season == 0 or episode == 0) and ('title' in data and not data['title'] == None and not data['title'] == ''):
-						title = '%s %s' % (data['tvshowtitle'], data['title']) # Change the title for metadata filtering.
-						query = title
-						ignoreContains = len(data['title']) / float(len(title)) # Increase the required ignore ration, since otherwise individual episodes and season packs are found as well.
-					else:
-						if pack: query = '%s S%02d' % (title, season)
-						else: query = '%s S%02dE%02d' % (title, season, episode)
-				else:
-					query = '%s %d' % (title, year)
-				query = re.sub('(\\\|/| -|:|;|\*|\?|"|\'|<|>|\|)', ' ', query)
-				querySplit = query.split()
-
-			url = urlparse.urljoin(self.base_link, self.search_link)
-			query = urllib.quote_plus(query)
-
-			pageLimit = tools.Settings.getInteger('scraping.providers.pages')
-			pageCounter = 0
-
-			page = 0
-			added = False
-
-			timerTimeout = tools.Settings.getInteger('scraping.providers.timeout')
-			timerEnd = timerTimeout - 8
-			timer = tools.Time(start = True)
-
-			threads = []
-			self.tLock = threading.Lock()
 			while True:
-				# Stop searching 8 seconds before the provider timeout, otherwise might continue searching, not complete in time, and therefore not returning any links.
-				if timer.elapsed() > timerEnd:
-					break
-
 				pageCounter += 1
 				if pageLimit > 0 and pageCounter > pageLimit:
 					break
@@ -203,17 +119,12 @@ class source:
 					htmlTable = htmlTables[0]
 					htmlTbody = htmlTable.find_all('tbody')[0]
 					htmlRows = htmlTbody.find_all('tr', recursive = False)
-
 					for i in range(len(htmlRows)):
-						# Stop searching 8 seconds before the provider timeout, otherwise might continue searching, not complete in time, and therefore not returning any links.
-						if timer.elapsed() > timerEnd:
-							break
-
 						htmlRow = htmlRows[i]
 
 						# Name
 						htmlInfo = htmlRows[i].find_all('a', href = True)[1]
-						htmlName = htmlInfo.getText()
+						htmlName = htmlInfo.getText().strip()
 
 						# Category
 						if subcategory is self.subcategory_any:
@@ -235,11 +146,11 @@ class source:
 						htmlSeeds = int(htmlRow.find_all('td')[7].getText())
 
 						# Metadata
-						meta = metadata.Metadata(name = htmlName, title = title, year = year, season = season, episode = episode, pack = pack, packCount = packCount, link = htmlLink, size = htmlSize, seeds = htmlSeeds)
+						meta = metadata.Metadata(name = htmlName, title = title, titles = titles, year = year, season = season, episode = episode, pack = pack, packCount = packCount, link = htmlLink, size = htmlSize, seeds = htmlSeeds)
 
 						# Ignore
 						meta.ignoreAdjust(contains = ignoreContains)
-						if meta.ignore(True): continue
+						if meta.ignore(True, season = not packException): continue
 
 						# Add
 						self.tLock.acquire()
@@ -250,19 +161,99 @@ class source:
 						# Hash
 						if self.inspection:
 							htmlHash = urllib.quote(str(htmlInfo.get('href').encode('utf-8')), ':/+')
+							self.tLock.acquire()
 							thread = threading.Thread(target = self._hash, args = (htmlHash, len(self.tSources) - 1))
-							threads.append(thread)
+							self.tThreadsHashes.append(thread)
+							self.tLock.release()
 							thread.start()
 
 				if not added: # Last page reached with a working torrent
 					break
+		except:
+			tools.Logger.error()
+		finally:
+			try: self.tLock.release()
+			except: pass
+
+	def sources(self, url, hostDict, hostprDict):
+		self.tSources = []
+		try:
+			if url == None: raise Exception()
+			if not self.enabled or self.username == '' or self.password == '': raise Exception()
+
+			ignoreContains = None
+			data = self._decode(url)
+
+			show = 'tvshowtitle' in data
+			if show: subcategory = self.subcategories_show.values()[0] if len(self.subcategories_show) == 1 else self.subcategory_any
+			else: subcategory = self.subcategories_movie.values()[0] if len(self.subcategories_movie) == 1 else self.subcategory_any
+
+			if 'exact' in data and data['exact']:
+				title = data['tvshowtitle'] if 'tvshowtitle' in data else data['title']
+				titles = None
+				queries = [title]
+				year = None
+				season = None
+				episode = None
+				pack = False
+				packCount = None
+				packExceptions = None
+			else:
+				title = data['tvshowtitle'] if show else data['title']
+				titles = data['alternatives'] if 'alternatives' in data else None
+				year = int(data['year']) if 'year' in data and not data['year'] == None else None
+				season = int(data['season']) if 'season' in data and not data['season'] == None else None
+				episode = int(data['episode']) if 'episode' in data and not data['episode'] == None else None
+				pack = data['pack'] if 'pack' in data else False
+				packCount = data['packcount'] if 'packcount' in data else None
+				packExceptions = None
+				if show:
+					# Search special episodes by name. All special episodes are added to season 0 by Trakt and TVDb. Hence, do not search by filename (eg: S02E00), since the season is not known.
+					if (season == 0 or episode == 0) and ('title' in data and not data['title'] == None and not data['title'] == ''):
+						title = '%s %s' % (data['tvshowtitle'], data['title']) # Change the title for metadata filtering.
+						queries = [title]
+						ignoreContains = len(data['title']) / float(len(title)) # Increase the required ignore ration, since otherwise individual episodes and season packs are found as well.
+					else:
+						if pack:
+							queries = ['%s S%02d' % (title, season), '%s saison %d' % (title, season), '%s intégrale' % title]
+							packExceptions = [2] # Index of query where season pack file name detection should be ignored.
+						else:
+							queries = ['%s S%02dE%02d' % (title, season, episode)]
+				else:
+					queries = ['%s %d' % (title, year)]
+				queries = [re.sub('(\\\|/| -|:|;|\*|\?|"|\'|<|>|\|)', ' ', query) for query in queries]
+
+			if not self._query(queries): return self.tSources
+
+			url = urlparse.urljoin(self.base_link, self.search_link)
+			queries = [urllib.quote_plus(query) for query in queries]
+
+			timerTimeout = tools.Settings.getInteger('scraping.providers.timeout')
+			timerEnd = timerTimeout - 8
+			timer = tools.Time(start = True)
+
+			self.tThreadsSearches = []
+			self.tThreadsHashes = []
+			self.tLock = threading.Lock()
+
+			for q in range(len(queries)):
+				query = queries[q]
+				packException = True if packExceptions and q in packExceptions else False
+				thread = threading.Thread(target = self._search, args = (url, query, subcategory, show, title, titles, year, season, episode, pack, packCount, packException, ignoreContains))
+				self.tThreadsSearches.append(thread)
+				thread.start()
+
+			while True:
+				if timer.elapsed() > timerTimeout: break
+				if not any([t.is_alive() for t in self.tThreadsSearches]): break
+				tools.Time.sleep(0.5)
 
 			# First filter out all non-related links before doing the hash lookup.
 			if self.inspection:
 				timerTimeout -= 2
 				while True:
 					if timer.elapsed() > timerTimeout: break
-					if not any([thread.is_alive() for thread in threads]): break
+					if not any([t.is_alive() for t in self.tThreadsHashes]): break
 					tools.Time.sleep(0.5)
 
 			try: self.tLock.release()

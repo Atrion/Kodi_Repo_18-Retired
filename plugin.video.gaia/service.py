@@ -19,6 +19,7 @@
 '''
 
 from resources.lib.extensions import tools
+from resources.lib.extensions import interface
 from resources.lib.extensions import vpn
 from resources.lib.extensions import library
 from resources.lib.extensions import settings
@@ -38,6 +39,9 @@ tools.Lightpack().launchAutomatic()
 
 # Local Library Update
 library.Library.service()
+
+# Context Menu
+interface.Context.initialize()
 
 # Server
 #server.Server.run()

@@ -49,7 +49,6 @@ class channels:
 		# https://github.com/Mermade/openSky/wiki/URL-links
 		# https://github.com/Mermade/openSky/wiki/Channel-Identifiers
 		self.uk_datetime = self.uk_datetime()
-		self.systime = (self.uk_datetime).strftime('%Y%m%d%H%M%S%f')
 		self.tm_img_link = 'https://image.tmdb.org/t/p/w%s%s'
 		self.sky_channels_link = 'http://epgservices.sky.com/tvlistings-proxy/TVListingsProxy/init.json'
 		self.sky_programme_link = 'http://epgservices.sky.com/tvlistings-proxy/TVListingsProxy/tvlistings.json?detail=2&channels=%s&time=%s'
@@ -253,6 +252,7 @@ class channels:
 		sysaddon = sys.argv[0]
 		syshandle = int(sys.argv[1])
 		addonFanart = control.addonFanart()
+		context = interface.Context.enabled()
 
 		for i in items:
 			try:
@@ -265,7 +265,7 @@ class channels:
 				item.setArt({'icon': iconIcon, 'thumb': iconThumb, 'poster': iconPoster, 'banner': iconBanner})
 				if not addonFanart == None: item.setProperty('Fanart_Image', addonFanart)
 
-				item.addContextMenuItems([interface.Context(mode = interface.Context.ModeGeneric, type = self.type, kids = self.kids, link = url, title = name, create = True).menu()])
+				if context: item.addContextMenuItems([interface.Context(mode = interface.Context.ModeGeneric, type = self.type, kids = self.kids, link = url, title = name, create = True).menu()])
 				control.addItem(handle = syshandle, url = url, listitem = item, isFolder = True)
 			except:
 				pass
@@ -288,6 +288,7 @@ class channels:
 		indicators = playcount.getMovieIndicators()
 		isPlayable = 'true' if not 'plugin' in control.infoLabel('Container.PluginName') else 'false'
 		ratingsOwn = tools.Settings.getInteger('interface.ratings.type') == 1
+		context = interface.Context.enabled()
 
 		for i in items:
 			try:
@@ -317,7 +318,7 @@ class channels:
 				except: pass
 
 				sysmeta = urllib.quote_plus(json.dumps(meta))
-				url = self.parameterize('%s?action=scrape&title=%s&year=%s&imdb=%s&metadata=%s&t=%s' % (sysaddon, systitle, year, imdb, sysmeta, self.systime))
+				url = self.parameterize('%s?action=scrape&title=%s&year=%s&imdb=%s&metadata=%s' % (sysaddon, systitle, year, imdb, sysmeta))
 
 				watched = int(playcount.getMovieOverlay(indicators, imdb)) == 7
 				if watched: meta.update({'playcount': 1, 'overlay': 7})
@@ -379,7 +380,7 @@ class channels:
 				item.setArt(art)
 				item.setProperty('IsPlayable', isPlayable)
 				item.setInfo(type = 'Video', infoLabels = tools.Media.metadataClean(meta))
-				item.addContextMenuItems([interface.Context(mode = interface.Context.ModeItem, type = self.type, kids = self.kids, create = True, queue = True, watched = watched, refresh = True, metadata = meta, art = art, label = label, trailer = name, link = url, title = title, year = year, imdb = imdb, tmdb = tmdb).menu()])
+				if context: item.addContextMenuItems([interface.Context(mode = interface.Context.ModeItem, type = self.type, kids = self.kids, create = True, queue = True, watched = watched, refresh = True, metadata = meta, art = art, label = label, trailer = name, link = url, title = title, year = year, imdb = imdb, tmdb = tmdb).menu()])
 				control.addItem(handle = syshandle, url = url, listitem = item, isFolder = False)
 			except:
 				pass

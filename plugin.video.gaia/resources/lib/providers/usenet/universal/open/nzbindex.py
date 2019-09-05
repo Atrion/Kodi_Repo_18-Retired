@@ -18,17 +18,18 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
-import re,urllib,urlparse,json
+import re,json
 from resources.lib.modules import client
+from resources.lib.extensions import provider
 from resources.lib.extensions import metadata
 from resources.lib.extensions import tools
 from resources.lib.extensions import network
 
-# https://torrentapi.org/apidocs_v2.txt
-
-class source:
+class source(provider.ProviderBase):
 
 	def __init__(self):
+		provider.ProviderBase.__init__(self, supportMovies = True, supportShows = True)
+
 		self.pack = True # Checked by provider.py
 		self.priority = 0
 		self.language = ['un']
@@ -37,45 +38,17 @@ class source:
 		self.search_link = '/search/json?max=250&minage=0&maxage=0&hidespam=1&hidepassword=1&hidecross=1&hasNFO=0&complete=1&minsize=50&maxsize=0&sort=agedesc&poster=&q=%s&p=%d'
 		self.download_link = '/download/%s'
 
-	def movie(self, imdb, title, localtitle, year):
-		try:
-			url = {'imdb': imdb, 'title': title, 'year': year}
-			url = urllib.urlencode(url)
-			return url
-		except:
-			return
-
-	def tvshow(self, imdb, tvdb, tvshowtitle, localtitle, year):
-		try:
-			url = {'imdb': imdb, 'tvdb': tvdb, 'tvshowtitle': tvshowtitle, 'year': year}
-			url = urllib.urlencode(url)
-			return url
-		except:
-			return
-
-	def episode(self, url, imdb, tvdb, title, premiered, season, episode):
-		try:
-			if url == None: return
-			url = urlparse.parse_qs(url)
-			url = dict([(i, url[i][0]) if url[i] else (i, '') for i in url])
-			url['title'], url['premiered'], url['season'], url['episode'] = title, premiered, season, episode
-			url = urllib.urlencode(url)
-			return url
-		except:
-			return
-
 	def sources(self, url, hostDict, hostprDict):
 		sources = []
 		try:
-			if url == None:
-				raise Exception()
+			if url == None: raise Exception()
 
 			ignoreContains = None
-			data = urlparse.parse_qs(url)
-			data = dict([(i, data[i][0]) if data[i] else (i, '') for i in data])
+			data = self._decode(url)
 
 			if 'exact' in data and data['exact']:
 				query = title = data['tvshowtitle'] if 'tvshowtitle' in data else data['title']
+				titles = None
 				year = None
 				season = None
 				episode = None
@@ -83,6 +56,7 @@ class source:
 				packCount = None
 			else:
 				title = data['tvshowtitle'] if 'tvshowtitle' in data else data['title']
+				titles = data['alternatives'] if 'alternatives' in data else None
 				year = int(data['year']) if 'year' in data and not data['year'] == None else None
 				season = int(data['season']) if 'season' in data and not data['season'] == None else None
 				episode = int(data['episode']) if 'episode' in data and not data['episode'] == None else None
@@ -101,6 +75,8 @@ class source:
 				else:
 					query = '%s %d' % (title, year)
 				query = re.sub('(\\\|/| -|:|;|\*|\?|"|\'|<|>|\|)', ' ', query)
+
+			if not self._query(query): return sources
 
 			urlSearch = self.base_link + self.search_link
 			urlDownload = self.base_link + self.download_link
@@ -121,7 +97,7 @@ class source:
 						jsonLink = urlDownload % str(torrent['id'])
 
 						# Metadata
-						meta = metadata.Metadata(name = jsonName, title = title, year = year, season = season, episode = episode, pack = pack, packCount = packCount, link = jsonLink, size = jsonSize, age = jsonAge)
+						meta = metadata.Metadata(name = jsonName, title = title, titles = titles, year = year, season = season, episode = episode, pack = pack, packCount = packCount, link = jsonLink, size = jsonSize, age = jsonAge)
 
 						# Ignore
 						meta.ignoreAdjust(contains = ignoreContains, length = 0.3)
@@ -131,15 +107,10 @@ class source:
 						sources.append({'url' : jsonLink, 'debridonly' : False, 'direct' : False, 'source' : 'usenet', 'language' : self.language[0], 'quality':  meta.videoQuality(), 'metadata' : meta, 'file' : jsonName})
 						added = True
 					except:
-						tools.Logger.error()
 						pass
 
 				if not added: break
 
 			return sources
 		except:
-			tools.Logger.error()
 			return sources
-
-	def resolve(self, url):
-		return url

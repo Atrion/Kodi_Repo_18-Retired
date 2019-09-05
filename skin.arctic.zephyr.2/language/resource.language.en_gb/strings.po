@@ -47,7 +47,7 @@ msgstr ""
 
 #: /1080i/Custom_1119_EnableInfoLists.xml
 msgctxt "#31007"
-msgid "Use script.extendedinfo"
+msgid "Use online information"
 msgstr ""
 
 #: /1080i/SkinSettings.xml
@@ -310,44 +310,44 @@ msgctxt "#31059"
 msgid "Context Menu"
 msgstr ""
 
-#: /1080i/script-script.extendedinfo-DialogInfo.xml
+#: /1080i/Custom_1116_ColorBoxAdvancedSettings.xml
 msgctxt "#31060"
-msgid "Films starring"
+msgid "Blur settings"
 msgstr ""
 
-#: /1080i/script-script.extendedinfo-DialogInfo.xml
+#: /1080i/Custom_1116_ColorBoxAdvancedSettings.xml
 msgctxt "#31061"
-msgid "Tv shows starring"
+msgid "Effect"
 msgstr ""
 
-#: /1080i/script-script.extendedinfo-DialogInfo.xml
+#: /1080i/Custom_1116_ColorBoxAdvancedSettings.xml
 msgctxt "#31062"
-msgid "Films with"
+msgid "Blur Size"
 msgstr ""
 
-#: /1080i/script-script.extendedinfo-DialogInfo.xml
+#: /1080i/Custom_1116_ColorBoxAdvancedSettings.xml
 msgctxt "#31063"
-msgid "as Crew"
+msgid "Pixel Size"
 msgstr ""
 
-#: /1080i/script-script.extendedinfo-DialogInfo.xml
+#: /1080i/Custom_1116_ColorBoxAdvancedSettings.xml
 msgctxt "#31064"
-msgid "Tv shows with"
+msgid "Bits"
 msgstr ""
 
-#: /1080i/script-script.extendedinfo-DialogInfo.xml
+#: /1080i/Custom_1116_ColorBoxAdvancedSettings.xml
 msgctxt "#31065"
-msgid "Images of"
+msgid "Preview Image"
 msgstr ""
 
-#: /1080i/script-script.extendedinfo-DialogVideoInfo.xml
+#: /1080i/Custom_1116_ColorBoxAdvancedSettings.xml
 msgctxt "#31066"
-msgid "Crew of"
+msgid "Important"
 msgstr ""
 
-#: /1080i/script-script.extendedinfo-DialogVideoInfo.xml
+#: /1080i/Custom_1116_ColorBoxAdvancedSettings.xml
 msgctxt "#31067"
-msgid "Trailers"
+msgid "Quality changes resolution of the generated image$COMMA which may also alter the intensity of the effect. Better quality images take longer to process.[CR]Blend layers the effect over the original image$COMMA with 100% showing the effect and 0% showing the original."
 msgstr ""
 
 #: /1080i/Includes_Weather.xml
@@ -1267,7 +1267,7 @@ msgctxt "#31349"
 msgid "Initialising Skin"
 msgstr ""
 
-#: /1080i/script-script.extendedinfo-DialogInfo.xml
+#: /1080i/Custom_1136_VideoInfo.xml
 msgctxt "#31356"
 msgid "Years Old"
 msgstr ""

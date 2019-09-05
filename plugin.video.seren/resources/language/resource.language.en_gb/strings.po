@@ -1,4 +1,4 @@
-# Kodi Media Center language file
+ # Kodi Media Center language file
 # Addon Name: Seren
 # Addon id: plugin.video.Seren
 # Addon Provider: Nixgates
@@ -86,15 +86,15 @@ msgid "Find similar"
 msgstr ""
 
 msgctxt "#32021"
-msgid ""
-msgstr "Color Picker"
+msgid "Color Picker"
+msgstr ""
 
 msgctxt "#32022"
 msgid "Getting Things Ready"
 msgstr ""
 
 msgctxt "#32023"
-msgid "Real Debrid Auth"
+msgid "Real-Debrid Auth"
 msgstr ""
 
 msgctxt "#32024"
@@ -114,7 +114,7 @@ msgid "Highlight Color Changed to - "
 msgstr ""
 
 msgctxt "#32028"
-msgid "Error Connecting to TMDB"
+msgid "Error Connecting to TMDb"
 msgstr ""
 
 msgctxt "#32029"
@@ -212,7 +212,7 @@ msgid "ARE YOU SURE?"
 msgstr ""
 
 msgctxt "#32051"
-msgid "Your Real Debrid Premium status has expired"
+msgid "Your Real-Debrid Premium status has expired"
 msgstr ""
 
 msgctxt "#32052"
@@ -229,7 +229,7 @@ msgid "Premium Services"
 msgstr ""
 
 msgctxt "#32055"
-msgid "Clear Local Result Cache"
+msgid "Clear Local Torrent Cache"
 msgstr ""
 
 msgctxt "#32056"
@@ -282,7 +282,6 @@ msgctxt "#32067"
 msgid "New TV Shows"
 msgstr ""
 
-
 msgctxt "#32068"
 msgid "Torrent file select"
 msgstr ""
@@ -319,11 +318,11 @@ msgid "There are currently no packages installed"
 msgstr ""
 
 msgctxt "#32075"
-msgid "Unistall"
+msgid "Uninstall"
 msgstr ""
 
 msgctxt "#32076"
-msgid "Are you sure you wish to remove"
+msgid "Are you sure you wish to remove?"
 msgstr ""
 
 msgctxt "#32077"
@@ -510,7 +509,7 @@ msgstr ""
 
 ######REAL_DEBRID.PY#########
 msgctxt "#32100"
-msgid "Authentication with Real Debrid has failed, please try again"
+msgid "Authentication with Real-Debrid has failed, please try again"
 msgstr ""
 
 ######SETTINGS.XML VALUES######
@@ -615,7 +614,7 @@ msgid "Current Color"
 msgstr ""
 
 msgctxt "#40026"
-msgid "Smart Play Settings"
+msgid "Smart Play"
 msgstr ""
 
 msgctxt "#40027"
@@ -723,11 +722,11 @@ msgid "Max Resolution"
 msgstr ""
 
 msgctxt "#40053"
-msgid "Pre-emptive Termination Settings"
+msgid "Preemptive Termination"
 msgstr ""
 
 msgctxt "#40054"
-msgid "Enable Pre-emptive Termination"
+msgid "Enable Preemptive Termination"
 msgstr ""
 
 msgctxt "#40055"
@@ -755,7 +754,7 @@ msgid "Enable Account Expiry Notifications"
 msgstr ""
 
 msgctxt "#40061"
-msgid "Trakt Account Settings"
+msgid "Trakt Account"
 msgstr ""
 
 msgctxt "#40062"
@@ -775,11 +774,11 @@ msgid "Revoke Trakt Authentication..."
 msgstr ""
 
 msgctxt "#40066"
-msgid "Premiumize Account Settings"
+msgid "Premiumize Account"
 msgstr ""
 
 msgctxt "#40067"
-msgid "Real Debrid Account Settings"
+msgid "Real-Debrid Account"
 msgstr ""
 
 msgctxt "#40068"
@@ -859,11 +858,11 @@ msgid "Append show info to mixed episode lists"
 msgstr ""
 
 msgctxt "#40087"
-msgid "TMDB API Key"
+msgid "TMDb API Key"
 msgstr ""
 
 msgctxt "#40088"
-msgid "Trakt API Keys"
+msgid "Trakt"
 msgstr ""
 
 msgctxt "#40089"
@@ -875,7 +874,7 @@ msgid "Trakt Client Secret"
 msgstr ""
 
 msgctxt "#40091"
-msgid "TVDB API Keys"
+msgid "TVDB"
 msgstr ""
 
 msgctxt "#40092"
@@ -895,19 +894,19 @@ msgid "Source Sorting"
 msgstr ""
 
 msgctxt "#40096"
-msgid "Authorize Real Debrid..."
+msgid "Authorize Real-Debrid..."
 msgstr ""
 
 msgctxt "#40097"
-msgid "Real Debrid Username"
+msgid "Real-Debrid Username"
 msgstr ""
 
 msgctxt "#40098"
-msgid "Enable Real Debrid"
+msgid "Enable Real-Debrid"
 msgstr ""
 
 msgctxt "#40099"
-msgid "Real Debrid Priority"
+msgid "Real-Debrid Priority"
 msgstr ""
 
 msgctxt "#40100"
@@ -935,7 +934,7 @@ msgid "Prefer Transcoded Files"
 msgstr ""
 
 msgctxt "#40106"
-msgid "Api Key"
+msgid "API Key"
 msgstr ""
 
 msgctxt "#40107"
@@ -947,7 +946,7 @@ msgid "Enable Premiumize"
 msgstr ""
 
 msgctxt "#40109"
-msgid "Hide Low Quality Items"
+msgid "Hide Common Undesirable Items"
 msgstr ""
 
 msgctxt "#40110"
@@ -955,7 +954,7 @@ msgid "Enable Quaternary Low Quality Sort Preference"
 msgstr ""
 
 msgctxt "#40111"
-msgid "TMDB API Keys"
+msgid "TMDb"
 msgstr ""
 
 msgctxt "#40112"
@@ -967,15 +966,15 @@ msgid "Unable to contact Trakt.\nPlease check Trakts outage status at:\nhttp://s
 msgstr ""
 
 msgctxt "#40114"
-msgid "Fanart.tv API Key"
+msgid "Fanart.TV API Key"
 msgstr ""
 
 msgctxt "#40115"
-msgid "Fanart.tv"
+msgid "Fanart.TV"
 msgstr ""
 
 msgctxt "#40116"
-msgid "Delay Release Dates by a day"
+msgid "Delay Release Dates By a Day"
 msgstr ""
 
 msgctxt "#40117"
@@ -1043,7 +1042,7 @@ msgid "Auto Select Delay"
 msgstr ""
 
 msgctxt "#40133"
-msgid "[COLOR yellow]Please Note: [/COLOR] Seren v0.2 requires an initial synchronization with trakt.\n\nThis synchronization assists to speed up Seren's menus and will allow usage of certain menus in the event Trakt experiences server issues. \n\nYou may choose to delay this process for now, although it is highly recommended that you don't. Should you choose to delay this process, it should be noted that some menus and information will not be available. \n\nIf you choose to skip this process, you will be reminded again."
+msgid "[COLOR yellow]Please Note: [/COLOR] Seren requires an initial synchronization with trakt.\n\nThis synchronization assists to speed up Seren's menus and will allow usage of certain menus in the event Trakt experiences server issues. \n\nYou may choose to delay this process for now, although it is highly recommended that you don't. Should you choose to delay this process, it should be noted that some menus and information will not be available. \n\nIf you choose to skip this process, you will be reminded again."
 msgstr ""
 
 msgctxt "#40134"
@@ -1059,7 +1058,7 @@ msgid "A new verison of Seren is available from the repository. Please consider 
 msgstr ""
 
 msgctxt "#40137"
-msgid "Check for Seren updates"
+msgid "Notify Me About Available Updates"
 msgstr ""
 
 msgctxt "#40138"
@@ -1140,4 +1139,700 @@ msgstr ""
 
 msgctxt "#40157"
 msgid "Auto try next link on resolve failure (Source Select)"
+msgstr ""
+
+msgctxt "#40158"
+msgid "Successfully installed %s - %s\nWould you like to switch to this theme?"
+msgstr ""
+
+msgctxt "#40159"
+msgid "Are you sure you wish to uninstall the theme %s?"
+msgstr ""
+
+msgctxt "#40160"
+msgid "Successfully uninstalled %s"
+msgstr ""
+
+msgctxt "#40161"
+msgid "Themes"
+msgstr ""
+
+msgctxt "#40162"
+msgid "Active theme"
+msgstr ""
+
+msgctxt "#40163"
+msgid "Switch theme"
+msgstr ""
+
+msgctxt "#40164"
+msgid "Uninstall theme"
+msgstr ""
+
+msgctxt "#40165"
+msgid "Install theme"
+msgstr ""
+
+msgctxt "#40166"
+msgid "You are attempting to uninstall the active theme, this will switch you to the default theme."
+msgstr ""
+
+msgctxt "#40167"
+msgid "Succesfully Switched to %s"
+msgstr ""
+
+msgctxt "#40168"
+msgid "The theme name %s is not allowed"
+msgstr ""
+
+msgctxt "#40169"
+msgid "Are you sure you wish to clear the search history?"
+msgstr ""
+
+msgctxt "#40170"
+msgid "Flatten Season Episodes"
+msgstr ""
+
+msgctxt "#40171"
+msgid "This theme package appears to be invalid, please refer to the log for more information"
+msgstr ""
+
+msgctxt "#40172"
+msgid "Next Up"
+msgstr ""
+
+msgctxt "#40173"
+msgid "Upcoming Episodes"
+msgstr ""
+
+msgctxt "#40174"
+msgid "Unfinished Shows in Collection"
+msgstr ""
+
+msgctxt "#40175"
+msgid "Recent Episodes"
+msgstr ""
+
+msgctxt "#40176"
+msgid "My Show Lists"
+msgstr ""
+
+msgctxt "#40177"
+msgid "Trakt Sync Tools"
+msgstr ""
+
+msgctxt "#40178"
+msgid "Flush Activities"
+msgstr ""
+
+msgctxt "#40179"
+msgid "Force Sync Activities"
+msgstr ""
+
+msgctxt "#40180"
+msgid "Clear All Metadata"
+msgstr ""
+
+msgctxt "#40181"
+msgid "Rebuild Database"
+msgstr ""
+
+msgctxt "#40182"
+msgid "Cache Assist History"
+msgstr ""
+
+msgctxt "#40183"
+msgid "Current Premiumize Transfers"
+msgstr ""
+
+msgctxt "#40184"
+msgid "Current Real-Debrid Transfers"
+msgstr ""
+
+msgctxt "#40185"
+msgid "Clear Non Active..."
+msgstr ""
+
+msgctxt "#40186"
+msgid "Default"
+msgstr ""
+
+msgctxt "#40187"
+msgid "Poster"
+msgstr ""
+
+msgctxt "#40188"
+msgid "Icon Wall"
+msgstr ""
+
+msgctxt "#40189"
+msgid "Shift"
+msgstr ""
+
+msgctxt "#40190"
+msgid "Info Wall"
+msgstr ""
+
+msgctxt "#40191"
+msgid "Wide List"
+msgstr ""
+
+msgctxt "#40192"
+msgid "Wall"
+msgstr ""
+
+msgctxt "#40193"
+msgid "Banner"
+msgstr ""
+
+msgctxt "#40194"
+msgid "Fanart"
+msgstr ""
+
+msgctxt "#40195"
+msgid "Automatic"
+msgstr ""
+
+msgctxt "#40196"
+msgid "Manual Selection"
+msgstr ""
+
+msgctxt "#40197"
+msgid "Torrents Only"
+msgstr ""
+
+msgctxt "#40198"
+msgid "Hosters Only"
+msgstr ""
+
+msgctxt "#40199"
+msgid "Torrents/Hosters"
+msgstr ""
+
+msgctxt "#40200"
+msgid "Premiumize"
+msgstr ""
+
+msgctxt "#40201"
+msgid "Real-Debrid"
+msgstr ""
+
+msgctxt "#40202"
+msgid "Torrents"
+msgstr ""
+
+msgctxt "#40203"
+msgid "Hosters"
+msgstr ""
+
+msgctxt "#40204"
+msgid "Resolution"
+msgstr ""
+
+msgctxt "#40205"
+msgid "Provider Manager"
+msgstr ""
+
+msgctxt "#40206"
+msgid "Tool Box"
+msgstr ""
+
+msgctxt "#40207"
+msgid "Install Package"
+msgstr ""
+
+msgctxt "#40208"
+msgid "Uninstall Package"
+msgstr ""
+
+msgctxt "#40209"
+msgid "Enable Package"
+msgstr ""
+
+msgctxt "#40210"
+msgid "Disable Package"
+msgstr ""
+
+msgctxt "#40211"
+msgid "Enable All Hosters"
+msgstr ""
+
+msgctxt "#40212"
+msgid "Enable All Torrents"
+msgstr ""
+
+msgctxt "#40213"
+msgid "Disable All Hosters"
+msgstr ""
+
+msgctxt "#40214"
+msgid "Disable All Torrents"
+msgstr ""
+
+msgctxt "#40215"
+msgid "Enable All"
+msgstr ""
+
+msgctxt "#40216"
+msgid "Disable All"
+msgstr ""
+
+msgctxt "#40217"
+msgid "Installed Packages"
+msgstr ""
+
+msgctxt "#40218"
+msgid "Package Providers"
+msgstr ""
+
+msgctxt "#40219"
+msgid "Provider type"
+msgstr ""
+
+msgctxt "#40220"
+msgid "Status"
+msgstr ""
+
+msgctxt "#40221"
+msgid "Torrents"
+msgstr ""
+
+msgctxt "#40222"
+msgid "Cached"
+msgstr ""
+
+msgctxt "#40223"
+msgid "Hosters"
+msgstr ""
+
+msgctxt "#40224"
+msgid "Cloudfiles"
+msgstr ""
+
+msgctxt "#40225"
+msgid "Remaining providers"
+msgstr ""
+
+msgctxt "#40226"
+msgid "Provider"
+msgstr ""
+
+msgctxt "#40227"
+msgid "Source"
+msgstr ""
+
+msgctxt "#40228"
+msgid "Resolution"
+msgstr ""
+
+msgctxt "#40229"
+msgid "Info"
+msgstr ""
+
+msgctxt "#40230"
+msgid "Year"
+msgstr ""
+
+msgctxt "#40231"
+msgid "Rating"
+msgstr ""
+
+msgctxt "#40232"
+msgid "Aired"
+msgstr ""
+
+msgctxt "#40233"
+msgid "Debrid"
+msgstr ""
+
+msgctxt "#40234"
+msgid "Size"
+msgstr ""
+
+msgctxt "#40235"
+msgid "Provider"
+msgstr ""
+
+msgctxt "#40236"
+msgid "Source type"
+msgstr ""
+
+msgctxt "#40237"
+msgid "Resolution"
+msgstr ""
+
+msgctxt "#40238"
+msgid "Info"
+msgstr ""
+
+msgctxt "#40239"
+msgid "One or more providers have updates pending"
+msgstr ""
+
+msgctxt "#40240"
+msgid "Prefer Movie artwork from"
+msgstr ""
+
+msgctxt "#40241"
+msgid "Prefer TV Show artwork from"
+msgstr ""
+
+msgctxt "#40242"
+msgid "Fanart.TV (slower)"
+msgstr ""
+
+msgctxt "#40243"
+msgid "TMDb"
+msgstr ""
+
+msgctxt "#40244"
+msgid "TVDB/TMDb"
+msgstr ""
+
+msgctxt "#40245"
+msgid "Playback"
+msgstr ""
+
+msgctxt "#40246"
+msgid "Interface"
+msgstr ""
+
+msgctxt "#40247"
+msgid "Artwork"
+msgstr ""
+
+msgctxt "#40248"
+msgid "Advanced"
+msgstr ""
+
+msgctxt "#40249"
+msgid "Season"
+msgstr ""
+
+msgctxt "#40250"
+msgid "Episode"
+msgstr ""
+
+msgctxt "#40251"
+msgid "TV Show"
+msgstr ""
+
+msgctxt "#40252"
+msgid "Movie"
+msgstr ""
+
+msgctxt "#40253"
+msgid "Show Advanced Movie Artwork Settings"
+msgstr ""
+
+msgctxt "#40254"
+msgid "Show Advanced TV Artwork Settings"
+msgstr ""
+
+msgctxt "#40255"
+msgid "Are you sure you wish to remove the %s package?"
+msgstr ""
+
+msgctxt "#40256"
+msgid "Show Advanced Settings..."
+msgstr ""
+
+msgctxt "#40257"
+msgid "Movie Artwork"
+msgstr ""
+
+msgctxt "#40258"
+msgid "TV show Artwork"
+msgstr ""
+
+msgctxt "#40259"
+msgid "Search History has been cleared"
+msgstr ""
+
+msgctxt "#40260"
+msgid "User information has been cleared"
+msgstr ""
+
+msgctxt "#40261"
+msgid "Metadata has been cleared"
+msgstr ""
+
+msgctxt "#40262"
+msgid "Database has been rebuilt"
+msgstr ""
+
+msgctxt "#40263"
+msgid "Sucessfully authenticated with Trakt"
+msgstr ""
+
+msgctxt "#40264"
+msgid "There may be an issue with the Trakt service, please clear cache and wait"
+msgstr ""
+
+msgctxt "#40265"
+msgid "Add to Collection"
+msgstr ""
+
+msgctxt "#40266"
+msgid "Remove from Collection"
+msgstr ""
+
+msgctxt "#40267"
+msgid "Add to Watchlist"
+msgstr ""
+
+msgctxt "#40268"
+msgid "Remove from Watchlist"
+msgstr ""
+
+msgctxt "#40269"
+msgid "Mark as Watched"
+msgstr ""
+
+msgctxt "#40270"
+msgid "Mark as Unwatched"
+msgstr ""
+
+msgctxt "#40271"
+msgid "Add to List"
+msgstr ""
+
+msgctxt "#40272"
+msgid "Remove From List"
+msgstr ""
+
+msgctxt "#40273"
+msgid "Hide %s"
+msgstr ""
+
+msgctxt "#40274"
+msgid "Refresh Item Metadata"
+msgstr ""
+
+msgctxt "#40275"
+msgid "Remove Playback Progress"
+msgstr ""
+
+msgctxt "#40276"
+msgid "Show"
+msgstr ""
+
+msgctxt "#40277"
+msgid "Season"
+msgstr ""
+
+msgctxt "#40278"
+msgid "Episode"
+msgstr ""
+
+msgctxt "#40279"
+msgid "Movie"
+msgstr ""
+
+msgctxt "#40280"
+msgid "Trakt manager"
+msgstr ""
+
+msgctxt "#40281"
+msgid "Failed to update status, please check the log"
+msgstr ""
+
+msgctxt "#40282"
+msgid "Item marked as watched"
+msgstr ""
+
+msgctxt "#40283"
+msgid "Item marked as unwatched"
+msgstr ""
+
+msgctxt "#40284"
+msgid "Item added to Collection"
+msgstr ""
+
+msgctxt "#40285"
+msgid "Item removed from Collection"
+msgstr ""
+
+msgctxt "#40286"
+msgid "Item added to Watchlist"
+msgstr ""
+
+msgctxt "#40287"
+msgid "Item removed from Watchlist"
+msgstr ""
+
+msgctxt "#40288"
+msgid "Item added to %s"
+msgstr ""
+
+msgctxt "#40289"
+msgid "Item removed from %s"
+msgstr ""
+
+msgctxt "#40290"
+msgid "Select a list"
+msgstr ""
+
+msgctxt "#40291"
+msgid "Watched Progress"
+msgstr ""
+
+msgctxt "#40292"
+msgid "Calendar"
+msgstr ""
+
+msgctxt "#40293"
+msgid "Select Menu type to hide from"
+msgstr ""
+
+msgctxt "#40294"
+msgid "Item has been hidden from your %s"
+msgstr ""
+
+msgctxt "#40295"
+msgid "Item's Progress History has been removed"
+msgstr ""
+
+msgctxt "#40296"
+msgid "Silent scrape"
+msgstr ""
+
+msgctxt "#40297"
+msgid "Torrent File Picker"
+msgstr ""
+
+msgctxt "#40298"
+msgid "Genre Selection"
+msgstr ""
+
+msgctxt "#40299"
+msgid "New cached sources have been created for %s"
+msgstr ""
+
+msgctxt "#40300"
+msgid "Cache assist for %s has failed due to no progress"
+msgstr ""
+
+msgctxt "#40301"
+msgid "Cache assist for %s has failed according to Real-Debrid"
+msgstr ""
+
+msgctxt "#40302"
+msgid "Browse..."
+msgstr ""
+
+msgctxt "#40303"
+msgid "Web Location..."
+msgstr ""
+
+msgctxt "#40304"
+msgid "Locate Provider Zip"
+msgstr ""
+
+msgctxt "#40305"
+msgid "Enter Zip URL"
+msgstr ""
+
+msgctxt "#40306"
+msgid "Cache"
+msgstr ""
+
+msgctxt "#40307"
+msgid "Cache Assist"
+msgstr ""
+
+msgctxt "#40308"
+msgid "Resume"
+msgstr ""
+
+msgctxt "#40309"
+msgid "Sorry, SMB shares are not supported"
+msgstr ""
+
+msgctxt "#40310"
+msgid "Unable to connect to file.\nPlease check URL and try again."
+msgstr ""
+
+msgctxt "#40311"
+msgid "Installing"
+msgstr ""
+
+msgctxt "#40312"
+msgid "Author"
+msgstr ""
+
+msgctxt "#40313"
+msgid "Are you sure you wish to proceed?"
+msgstr ""
+
+msgctxt "#40314"
+msgid "Custom Sources Install"
+msgstr ""
+
+msgctxt "#40315"
+msgid "Cancel"
+msgstr ""
+
+msgctxt "#40316"
+msgid "Install"
+msgstr ""
+
+msgctxt "#40317"
+msgid "Extracting"
+msgstr ""
+
+msgctxt "#40318"
+msgid "Successfully Installed"
+msgstr ""
+
+msgctxt "#40319"
+msgid "Failed to install"
+msgstr ""
+
+msgctxt "#40320"
+msgid "Please check the log for further details"
+msgstr ""
+
+msgctxt "#40321"
+msgid "The skin name 'Default' is not allowed."
+msgstr ""
+
+msgctxt "#40322"
+msgid "Starting Playback"
+msgstr ""
+
+msgctxt "#40323"
+msgid "Poster"
+msgstr ""
+
+msgctxt "#40324"
+msgid "Keyart"
+msgstr ""
+
+msgctxt "#40325"
+msgid "Fanart"
+msgstr ""
+
+msgctxt "#40326"
+msgid "Banner"
+msgstr ""
+
+msgctxt "#40327"
+msgid "Clear Logo"
+msgstr ""
+
+msgctxt "#40328"
+msgid "Landscape"
+msgstr ""
+
+msgctxt "#40329"
+msgid "Character Art"
+msgstr ""
+
+msgctxt "#40330"
+msgid "Clear Art"
+msgstr ""
+
+msgctxt "#40331"
+msgid "Disc Art"
 msgstr ""

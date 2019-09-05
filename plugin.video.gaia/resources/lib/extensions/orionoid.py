@@ -62,7 +62,9 @@ try:
 
 		IgnoreExcludes = ['alluc', 'alluc.ee', 'prontv', 'pron.tv', 'llucy', 'llucy.net', 'furk', 'furk.net']
 
-		HashChunk = 30
+		ChunkLimit = 30
+
+		Providers = None
 
 		##############################################################################
 		# CONSTRUCTOR
@@ -70,11 +72,14 @@ try:
 
 		def __init__(self, silent = False):
 			self.mOrion = Orion(key = tools.System.obfuscate(tools.Settings.getString('internal.orion.api', raw = True)), silent = silent)
-			self.mProviders = None
-			self.mHashQueue = []
-			self.mHashCompleted = {}
-			self.mHashThreads = []
-			self.mHashLock = threading.Lock()
+			self.mHashesQueue = []
+			self.mHashesCompleted = {}
+			self.mHashesThreads = []
+			self.mHashesLock = None
+			self.mIdentifiersQueue = []
+			self.mIdentifiersCompleted = {}
+			self.mIdentifiersThreads = []
+			self.mIdentifiersLock = None
 
 		##############################################################################
 		# UNINSTALL
@@ -199,12 +204,15 @@ try:
 		# PROVIDER
 		##############################################################################
 
-		def _provider(self, id):
-			id = id.lower()
-			if self.mProviders == None:
+		def providerInitialize(self):
+			if Orionoid.Providers == None:
 				provider.Provider.initialize(forceAll = True)
-				self.mProviders = provider.Provider.providers(enabled = False, local = False, orion = False)
-			for pro in self.mProviders:
+				Orionoid.Providers = provider.Provider.providers(enabled = False, local = False, orion = False)
+
+		def _provider(self, id):
+			self.providerInitialize()
+			id = id.lower()
+			for pro in Orionoid.Providers:
 				if pro['id'] == id:
 					return pro['object']
 			return None
@@ -437,56 +445,117 @@ try:
 			self.mOrion.streamRemove(idItem = idItem, idStream = idStream, notification = notification)
 
 		##############################################################################
-		# HASH
+		# HASHES
 		##############################################################################
 
 		def hashes(self, links, chunked = False):
-			self._hashLock()
+			self._hashesCreate()
+			self._hashesLock()
 			for link in links:
-				if not link in self.mHashQueue and not link in self.mHashCompleted:
-					self.mHashQueue.append(link)
-			self._hashUnlock()
+				if not link in self.mHashesQueue and not link in self.mHashesCompleted:
+					self.mHashesQueue.append(link)
+			self._hashesUnlock()
 
-			if (not chunked and len(self.mHashQueue) > 0) or (chunked and len(self.mHashQueue) >= Orionoid.HashChunk and not self._hashesRunning()):
+			if (not chunked and len(self.mHashesQueue) > 0) or (chunked and len(self.mHashesQueue) >= Orionoid.ChunkLimit and not self._hashesRunning()):
 				thread = threading.Thread(target = self._hashesRetrieve)
-				self._hashLock()
-				self.mHashThreads.append(thread)
-				self._hashUnlock()
+				self._hashesLock()
+				self.mHashesThreads.append(thread)
+				self._hashesUnlock()
 				thread.start()
-			if not chunked: self._hashJoin()
+			if not chunked: self._hashesJoin()
 
 			result = {}
 			for link in links:
-				if link in self.mHashCompleted:
-					result[link] = self.mHashCompleted[link]
+				if link in self.mHashesCompleted:
+					result[link] = self.mHashesCompleted[link]
 			return result
 
 		def _hashesRetrieve(self):
-			links = copy.deepcopy(self.mHashQueue)
-			self._hashLock()
-			self.mHashQueue = []
-			self._hashUnlock()
+			links = copy.deepcopy(self.mHashesQueue)
+			self._hashesLock()
+			self.mHashesQueue = []
+			self._hashesUnlock()
 
 			hashes = self.mOrion.containerHashes(links = links)
-			self._hashLock()
-			self.mHashCompleted.update(hashes)
+			self._hashesLock()
+			self.mHashesCompleted.update(hashes)
 			for link in links:
-				if not link in self.mHashCompleted:
-					self.mHashCompleted[link] = None
-			self._hashUnlock()
+				if not link in self.mHashesCompleted:
+					self.mHashesCompleted[link] = None
+			self._hashesUnlock()
 
-		def _hashLock(self):
-			self.mHashLock.acquire()
+		def _hashesCreate(self):
+			if self.mHashesLock is None: self.mHashesLock = threading.Lock()
 
-		def _hashUnlock(self):
-			try: self.mHashLock.release()
+		def _hashesLock(self):
+			self.mHashesLock.acquire()
+
+		def _hashesUnlock(self):
+			try: self.mHashesLock.release()
 			except: pass
 
 		def _hashesRunning(self):
-			return any(thread.is_alive() for thread in self.mHashThreads)
+			return any(thread.is_alive() for thread in self.mHashesThreads)
 
-		def _hashJoin(self):
-			try: [thread.join() for thread in self.mHashThreads]
+		def _hashesJoin(self):
+			try: [thread.join() for thread in self.mHashesThreads]
+			except: pass
+
+		##############################################################################
+		# IDENTIFIERS
+		##############################################################################
+
+		def identifiers(self, links, chunked = False):
+			self._identifiersCreate()
+			self._identifiersLock()
+			for link in links:
+				if not link in self.mIdentifiersQueue and not link in self.mIdentifiersCompleted:
+					self.mIdentifiersQueue.append(link)
+			self._identifiersUnlock()
+
+			if (not chunked and len(self.mIdentifiersQueue) > 0) or (chunked and len(self.mIdentifiersQueue) >= Orionoid.ChunkLimit and not self._identifiersRunning()):
+				thread = threading.Thread(target = self._identifiersRetrieve)
+				self._identifiersLock()
+				self.mIdentifiersThreads.append(thread)
+				self._identifiersUnlock()
+				thread.start()
+			if not chunked: self._identifiersJoin()
+
+			result = {}
+			for link in links:
+				if link in self.mIdentifiersCompleted:
+					result[link] = self.mIdentifiersCompleted[link]
+			return result
+
+		def _identifiersRetrieve(self):
+			links = copy.deepcopy(self.mIdentifiersQueue)
+			self._identifiersLock()
+			self.mIdentifiersQueue = []
+			self._identifiersUnlock()
+
+			identifiers = self.mOrion.containerIdentifiers(links = links)
+			self._identifiersLock()
+			self.mIdentifiersCompleted.update(identifiers)
+			for link in links:
+				if not link in self.mIdentifiersCompleted:
+					self.mIdentifiersCompleted[link] = None
+			self._identifiersUnlock()
+
+		def _identifiersCreate(self):
+			if self.mIdentifiersLock is None: self.mIdentifiersLock = threading.Lock()
+
+		def _identifiersLock(self):
+			self.mIdentifiersLock.acquire()
+
+		def _identifiersUnlock(self):
+			try: self.mIdentifiersLock.release()
+			except: pass
+
+		def _identifiersRunning(self):
+			return any(thread.is_alive() for thread in self.mIdentifiersThreads)
+
+		def _identifiersJoin(self):
+			try: [thread.join() for thread in self.mIdentifiersThreads]
 			except: pass
 
 		##############################################################################

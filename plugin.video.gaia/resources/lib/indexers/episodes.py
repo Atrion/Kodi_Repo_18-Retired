@@ -69,7 +69,6 @@ class episodes:
 		self.tvmaze_link = 'http://api.tvmaze.com'
 		self.tvdb_key = tools.System.obfuscate(tools.Settings.getString('internal.tvdb.api', raw = True))
 		self.datetime = (datetime.datetime.utcnow() - datetime.timedelta(hours = 5))
-		self.systime = (self.datetime).strftime('%Y%m%d%H%M%S%f')
 		self.today_date = (self.datetime).strftime('%Y-%m-%d')
 		self.trakt_user = tools.Settings.getString('accounts.informants.trakt.user').strip()
 		self.lang = control.apiLanguage()['tvdb']
@@ -185,14 +184,13 @@ class episodes:
 				interface.Loader.hide()
 				if self.notifications: interface.Dialog.notification(title = 32326, message = 33049, icon = interface.Dialog.IconInformation)
 
-	def next(self, tvshowtitle, year, imdb, tvdb, season, episode, notification = True):
+	def next(self, tvshowtitle, year, imdb, tvdb, season, episode):
 		try:
 			result = self.get(tvshowtitle = tvshowtitle, year = year, imdb = imdb, tvdb = tvdb, season = int(season), episode = int(episode) + 1, idx = False)
 			if not result: result = self.get(tvshowtitle = tvshowtitle, year = year, imdb = imdb, tvdb = tvdb, season = int(season) + 1, episode = 1, idx = False)
 			result = result[0]
 			if int(re.sub('[^0-9]', '', str(result['premiered']))) < int(re.sub('[^0-9]', '', str(self.today_date))): return result
 		except: pass
-		if notification: interface.Dialog.notification(title = 35580, message = 35587, icon = interface.Dialog.IconInformation)
 		return None
 
 	def unfinished(self):
@@ -226,8 +224,10 @@ class episodes:
 		except:
 			tools.Logger.error()
 
-	def calendar(self, url, idx = True, direct = False):
+	def calendar(self, url, idx = True, direct = None):
 		try:
+			if direct is None: direct = tools.Settings.getBoolean('interface.tvshows.direct')
+
 			multi = False
 			try: url = getattr(self, url + '_link')
 			except: pass
@@ -252,10 +252,10 @@ class episodes:
 				urls = [i['url'] for i in self.calendars(idx = False)][:5]
 				self.list = []
 				for url in urls:
-					self.list += cache.Cache().cacheLong(self.tvmaze_list, url, True, direct)
+					self.list += cache.Cache().cacheLong(self.tvmaze_list, url, True, True, direct)
 
 			elif self.tvmaze_link in url:
-				self.list = cache.Cache().cacheShort(self.tvmaze_list, url, False, direct)
+				self.list = cache.Cache().cacheShort(self.tvmaze_list, url, False, True, direct)
 
 			if self.kidsOnly():
 				self.list = [i for i in self.list if 'mpaa' in i and tools.Kids.allowed(i['mpaa'])]
@@ -282,7 +282,7 @@ class episodes:
 	def home(self, idx = True, direct = False):
 		date = self.datetime - datetime.timedelta(days = 1)
 		url = self.calendar_link % date.strftime('%Y-%m-%d')
-		self.list = cache.Cache().cacheShort(self.tvmaze_list, url, False, direct)
+		self.list = cache.Cache().cacheShort(self.tvmaze_list, url, False, True, direct)
 		if idx: self.episodeDirectory(self.list)
 		return self.list
 
@@ -373,10 +373,12 @@ class episodes:
 				if not 'show' in item or not 'episode' in item:
 					raise Exception()
 
-				title = item['episode']['title'].encode('utf-8')
+				try: title = item['episode']['title'].encode('utf-8')
+				except: title = item['episode']['title']
 				if title == None or title == '': raise Exception()
 				title = client.replaceHTMLCodes(title)
-				title = title.encode('utf-8')
+				try: title = title.encode('utf-8')
+				except: pass
 
 				season = item['episode']['season']
 				season = re.sub('[^0-9]', '', '%01d' % int(season))
@@ -388,10 +390,12 @@ class episodes:
 				if episode == '0': raise Exception()
 				episode = episode.encode('utf-8')
 
-				tvshowtitle = item['show']['title'].encode('utf-8')
+				try: tvshowtitle = item['show']['title'].encode('utf-8')
+				except: tvshowtitle = item['show']['title']
 				if tvshowtitle == None or tvshowtitle == '': raise Exception()
 				tvshowtitle = client.replaceHTMLCodes(tvshowtitle)
-				tvshowtitle = tvshowtitle.encode('utf-8')
+				try: tvshowtitle = tvshowtitle.encode('utf-8')
+				except: pass
 
 				year = item['show']['year']
 				year = re.sub('[^0-9]', '', str(year))
@@ -537,7 +541,8 @@ class episodes:
 				tvshowtitle = item['show']['title']
 				if tvshowtitle == None or tvshowtitle == '': raise Exception()
 				tvshowtitle = client.replaceHTMLCodes(tvshowtitle)
-				tvshowtitle = tvshowtitle.encode('utf-8')
+				try: tvshowtitle = tvshowtitle.encode('utf-8')
+				except: pass
 
 				year = item['show']['year']
 				year = re.sub('[^0-9]', '', str(year))
@@ -629,7 +634,8 @@ class episodes:
 				title = client.parseDOM(item, 'EpisodeName')[0]
 				if title == '': title = '0'
 				title = client.replaceHTMLCodes(title)
-				title = title.encode('utf-8')
+				try: title = title.encode('utf-8')
+				except: pass
 
 				season = client.parseDOM(item, 'SeasonNumber')[0]
 				season = '%01d' % int(season)
@@ -833,7 +839,8 @@ class episodes:
 				title = client.parseDOM(item, 'EpisodeName')[0]
 				if title == '': title = '0'
 				title = client.replaceHTMLCodes(title)
-				title = title.encode('utf-8')
+				try: title = title.encode('utf-8')
+				except: pass
 
 				season = client.parseDOM(item, 'SeasonNumber')[0]
 				season = '%01d' % int(season)
@@ -1056,7 +1063,8 @@ class episodes:
 				title = item['name']
 				if title == None or title == '': raise Exception()
 				title = client.replaceHTMLCodes(title)
-				title = title.encode('utf-8')
+				try: title = title.encode('utf-8')
+				except: pass
 
 				season = item['season']
 				season = re.sub('[^0-9]', '', '%01d' % int(season))
@@ -1075,7 +1083,8 @@ class episodes:
 				tvshowtitle = item['show']['name']
 				if tvshowtitle == None or tvshowtitle == '': raise Exception()
 				tvshowtitle = client.replaceHTMLCodes(tvshowtitle)
-				tvshowtitle = tvshowtitle.encode('utf-8')
+				try: tvshowtitle = tvshowtitle.encode('utf-8')
+				except: pass
 
 				try: tvshowyear = item['show']['year']
 				except: tvshowyear = year
@@ -1179,6 +1188,127 @@ class episodes:
 		return itemlist
 
 
+	def context(self, tvshowtitle, title, year, imdb, tvdb, season, episode):
+		from resources.lib.indexers import tvshows
+		metadata = tvshows.tvshows(type = self.type, kids = self.kids).metadata(tvshowtitle = tvshowtitle, title = title, year = year, imdb = imdb, tvdb = tvdb, season = season, episode = episode)
+
+		addon = tools.System.plugin()
+		addonPoster, addonBanner = control.addonPoster(), control.addonBanner()
+		addonFanart, settingFanart = control.addonFanart(), tools.Settings.getBoolean('interface.theme.fanart')
+
+		indicators = playcount.getShowIndicators()
+		ratingsOwn = tools.Settings.getInteger('interface.ratings.type') == 1
+
+		imdb, tvdb, year, season, episode, premiered = metadata['imdb'], metadata['tvdb'], metadata['year'], metadata['season'], metadata['episode'], metadata['premiered']
+		title = metadata['tvshowtitle']
+		if not 'label' in metadata: metadata['label'] = metadata['title']
+		if metadata['tvshowtitle'] == metadata['label'] or metadata['label'] == None or metadata['label'] == '' or metadata['label'] == '0': metadata['label'] = '%s %d' % (tools.Media.NameEpisodeLong, int(episode))
+		label = None
+		try: label = tools.Media().title(tools.Media.TypeEpisode, title = metadata['label'], season = season, episode = episode)
+		except: pass
+		if label == None: label = metadata['label']
+
+		trailer = '%s Season %s' % (title, str(season))
+
+		try: seasoncount = metadata['seasoncount']
+		except: seasoncount = None
+
+		# Allow special episodes with season = '0' or episode = '0'
+		#meta = dict((k,v) for k, v in i.iteritems() if not v == '0')
+		meta = dict((k,v) for k, v in metadata.iteritems())
+		meta.update({'mediatype': 'episode', 'episode' : episode})
+		meta.update({'code': imdb, 'imdbnumber': imdb, 'imdb_id': imdb, 'tvdb_id': tvdb})
+
+		# Remove default time, since this might mislead users. Rather show no time.
+		#if not 'duration' in i: meta.update({'duration': '60'})
+		#elif metadata['duration'] == '0': meta.update({'duration': '60'})
+
+		# Some descriptions have a link at the end that. Remove it.
+		try:
+			plot = meta['plot']
+			index = plot.rfind('See full summary')
+			if index >= 0: plot = plot[:index]
+			plot = plot.strip()
+			if re.match('[a-zA-Z\d]$', plot): plot += ' ...'
+			meta['plot'] = plot
+		except: pass
+
+		try: meta.update({'duration': int(meta['duration'])})
+		except: pass
+		try: meta.update({'genre': cleangenre.lang(meta['genre'], self.lang)})
+		except: pass
+		try: meta.update({'title': metadata['label']})
+		except: pass
+		try: meta.update({'year': date.year}) # Kodi uses the year (the year the show started) as the year for the episode. Change it from the premiered date.
+		except: pass
+		try:
+			if not 'tvshowyear' in meta: meta.update({'tvshowyear': year}) # Kodi uses the year (the year the show started) as the year for the episode. Change it from the premiered date.
+		except: pass
+
+		if ratingsOwn and 'ratingown' in meta and not meta['ratingown'] == '0':
+			meta['rating'] = meta['ratingown']
+
+		watched = int(playcount.getEpisodeOverlay(indicators, imdb, tvdb, season, episode)) == 7
+		if watched: meta.update({'playcount': 1, 'overlay': 7})
+		else: meta.update({'playcount': 0, 'overlay': 6})
+		meta.update({'watched': int(watched)}) # Kodi's documentation says this value is deprecate. However, without this value, Kodi adds the watched checkmark over the remaining episode count.
+
+		poster = '0'
+		if poster == '0' and 'poster3' in metadata: poster = metadata['poster3']
+		if poster == '0' and 'poster2' in metadata: poster = metadata['poster2']
+		if poster == '0' and 'poster' in metadata: poster = metadata['poster']
+
+		icon = '0'
+		if icon == '0' and 'icon3' in metadata: icon = metadata['icon3']
+		if icon == '0' and 'icon2' in metadata: icon = metadata['icon2']
+		if icon == '0' and 'icon' in metadata: icon = metadata['icon']
+
+		thumb = '0'
+		if thumb == '0' and 'thumb3' in metadata: thumb = metadata['thumb3']
+		if thumb == '0' and 'thumb2' in metadata: thumb = metadata['thumb2']
+		if thumb == '0' and 'thumb' in metadata: thumb = metadata['thumb']
+
+		banner = '0'
+		if banner == '0' and 'banner3' in metadata: banner = metadata['banner3']
+		if banner == '0' and 'banner2' in metadata: banner = metadata['banner2']
+		if banner == '0' and 'banner' in metadata: banner = metadata['banner']
+
+		fanart = '0'
+		if settingFanart:
+			if fanart == '0' and 'fanart3' in metadata: fanart = metadata['fanart3']
+			if fanart == '0' and 'fanart2' in metadata: fanart = metadata['fanart2']
+			if fanart == '0' and 'fanart' in metadata: fanart = metadata['fanart']
+
+		clearlogo = '0'
+		if clearlogo == '0' and 'clearlogo' in metadata: clearlogo = metadata['clearlogo']
+
+		clearart = '0'
+		if clearart == '0' and 'clearart' in metadata: clearart = metadata['clearart']
+
+		landscape = '0'
+		if landscape == '0' and 'landscape' in metadata: landscape = metadata['landscape']
+
+		if poster == '0': poster = addonPoster
+		if icon == '0': icon = poster
+		if thumb == '0': thumb = poster
+		if banner == '0': banner = addonBanner
+		if fanart == '0': fanart = addonFanart
+
+		art = {}
+		if not poster == '0' and not poster == None: art.update({'poster' : poster, 'tvshow.poster' : poster, 'season.poster' : poster})
+		if not icon == '0' and not icon == None: art.update({'icon' : icon})
+		if not thumb == '0' and not thumb == None: art.update({'thumb' : thumb})
+		if not banner == '0' and not banner == None: art.update({'banner' : banner})
+		if not clearlogo == '0' and not clearlogo == None: art.update({'clearlogo' : clearlogo})
+		if not clearart == '0' and not clearart == None: art.update({'clearart' : clearart})
+		if not fanart == '0' and not fanart == None: art.update({'fanart' : fanart})
+		if not landscape == '0' and not landscape == None: art.update({'landscape' : landscape})
+
+		meta.update({'trailer': '%s?action=streamsTrailer&title=%s&imdb=%s&art=%s' % (addon, urllib.quote_plus(trailer), imdb, urllib.quote_plus(json.dumps(art)))})
+		link = self.parameterize('%s?action=scrape&title=%s&year=%s&imdb=%s&tvdb=%s&season=%s&episode=%s&tvshowtitle=%s&premiered=%s&metadata=%s%s' % (addon, urllib.quote_plus(metadata['title']), year, imdb, tvdb, season, episode, urllib.quote_plus(title), urllib.quote_plus(premiered), urllib.quote_plus(json.dumps(meta)), '' if seasoncount == None else ('&seasoncount=%d' % seasoncount)))
+
+		return interface.Context(mode = interface.Context.ModeItem, type = self.type, kids = self.kids, create = True, watched = watched, season = season, episode = episode, metadata = meta, art = art, label = label, link = link, trailer = trailer, title = title, year = year, imdb = imdb, tvdb = tvdb).menu()[1]
+
 	def episodeDirectory(self, items, multi = None, unfinished = False):
 
 		# Retrieve additional metadata if not super info was retireved (eg: Trakt lists, such as Unfinished and History)
@@ -1229,6 +1359,7 @@ class episodes:
 		unwatchedEnabled = tools.Settings.getBoolean('interface.tvshows.unwatched.enabled')
 		unwatchedLimit = tools.Settings.getBoolean('interface.tvshows.unwatched.limit')
 		futureEpisode = tools.Settings.getBoolean('interface.tvshows.future.episodes')
+		context = interface.Context.enabled()
 
 		airEnabled = tools.Settings.getBoolean('interface.tvshows.air.enabled')
 		if airEnabled:
@@ -1274,10 +1405,11 @@ class episodes:
 							labelProgress = '[LIGHT]' + labelProgress + '[/LIGHT]'
 				except: pass
 
-				# Allow special episodes with season = '0' oe episode = '0'
+				# Allow special episodes with season = '0' or episode = '0'
 				#meta = dict((k,v) for k, v in i.iteritems() if not v == '0')
 				meta = dict((k,v) for k, v in i.iteritems())
-				meta.update({'mediatype': 'episode'})
+				meta.update({'mediatype': 'episode', 'season' : season, 'episode' : episode})
+				meta.update({'code': imdb, 'imdbnumber': imdb, 'imdb_id': imdb, 'tvdb_id': tvdb})
 
 				# Gaia
 				# Remove default time, since this might mislead users. Rather show no time.
@@ -1303,7 +1435,8 @@ class episodes:
 				except: pass
 				try: meta.update({'year': date.year}) # Kodi uses the year (the year the show started) as the year for the episode. Change it from the premiered date.
 				except: pass
-				try: meta.update({'tvshowyear': i['year']}) # Kodi uses the year (the year the show started) as the year for the episode. Change it from the premiered date.
+				try:
+					if not 'tvshowyear' in meta: meta.update({'tvshowyear': year}) # Kodi uses the year (the year the show started) as the year for the episode. Change it from the premiered date.
 				except: pass
 
 				if airEnabled:
@@ -1402,6 +1535,9 @@ class episodes:
 				clearart = '0'
 				if clearart == '0' and 'clearart' in i: clearart = i['clearart']
 
+				landscape = '0'
+				if landscape == '0' and 'landscape' in i: landscape = i['landscape']
+
 				if poster == '0': poster = addonPoster
 				if icon == '0': icon = poster
 				if thumb == '0': thumb = poster
@@ -1415,17 +1551,18 @@ class episodes:
 				if not banner == '0' and not banner == None: art.update({'banner' : banner})
 				if not clearlogo == '0' and not clearlogo == None: art.update({'clearlogo' : clearlogo})
 				if not clearart == '0' and not clearart == None: art.update({'clearart' : clearart})
-				if not fanart == '0' and not fanart == None: item.setProperty('Fanart_Image', fanart)
+				if not fanart == '0' and not fanart == None: art.update({'fanart' : fanart})
+				if not landscape == '0' and not landscape == None: art.update({'landscape' : landscape})
 
 				meta.update({'trailer': '%s?action=streamsTrailer&title=%s&imdb=%s&art=%s' % (sysaddon, urllib.quote_plus(trailer), imdb, urllib.quote_plus(json.dumps(art)))})
-				sysmeta = urllib.quote_plus(json.dumps(meta))
-				url = self.parameterize('%s?action=scrape&title=%s&year=%s&imdb=%s&tvdb=%s&season=%s&episode=%s&tvshowtitle=%s&premiered=%s&metadata=%s&t=%s%s' % (sysaddon, systitle, year, imdb, tvdb, season, episode, systvshowtitle, syspremiered, sysmeta, self.systime, '' if seasoncount == None else ('&seasoncount=%d' % seasoncount)))
-				if isFolder == True: url = self.parameterize('%s?action=episodesRetrieve&tvshowtitle=%s&year=%s&imdb=%s&tvdb=%s&season=%s&episode=%s' % (sysaddon, systvshowtitle, year, imdb, tvdb, season, episode))
+				if isFolder: url = self.parameterize('%s?action=episodesRetrieve&tvshowtitle=%s&year=%s&imdb=%s&tvdb=%s&season=%s&episode=%s&metadata=%s' % (sysaddon, systvshowtitle, year, imdb, tvdb, season, episode, urllib.quote_plus(json.dumps(meta))))
+				else: url = self.parameterize('%s?action=scrape&title=%s&year=%s&imdb=%s&tvdb=%s&season=%s&episode=%s&tvshowtitle=%s&premiered=%s&metadata=%s%s' % (sysaddon, systitle, year, imdb, tvdb, season, episode, systvshowtitle, syspremiered, urllib.quote_plus(json.dumps(meta)), '' if seasoncount == None else ('&seasoncount=%d' % seasoncount)))
 
+				if not fanart == '0' and not fanart == None: item.setProperty('Fanart_Image', fanart)
 				item.setArt(art)
 				item.setProperty('IsPlayable', isPlayable)
 				item.setInfo(type = 'Video', infoLabels = tools.Media.metadataClean(meta))
-				item.addContextMenuItems([interface.Context(mode = interface.Context.ModeItem, type = self.type, kids = self.kids, create = True, watched = watched, season = season, episode = episode, metadata = meta, art = art, label = label, link = url, trailer = trailer, title = title, year = year, imdb = imdb, tvdb = tvdb).menu()])
+				if context: item.addContextMenuItems([interface.Context(mode = interface.Context.ModeItem, type = self.type, kids = self.kids, create = True, watched = watched, season = season, episode = episode, metadata = meta, art = art, label = label, link = url, trailer = trailer, title = title, year = year, imdb = imdb, tvdb = tvdb).menu()])
 				control.addItem(handle = syshandle, url = url, listitem = item, isFolder = isFolder)
 			except:
 				tools.Logger.error()
@@ -1452,6 +1589,7 @@ class episodes:
 
 		addonFanart = control.addonFanart()
 		addonThumb = control.addonThumb()
+		context = interface.Context.enabled()
 
 		for i in items:
 			try:
@@ -1468,7 +1606,7 @@ class episodes:
 				item.setArt({'icon': iconIcon, 'thumb': iconThumb, 'poster': iconPoster, 'banner': iconBanner})
 				if not addonFanart == None: item.setProperty('Fanart_Image', addonFanart)
 
-				item.addContextMenuItems([interface.Context(mode = interface.Context.ModeGeneric, type = self.type, kids = self.kids, link = url, title = name, create = True, library = link, queue = queue).menu()])
+				if context: item.addContextMenuItems([interface.Context(mode = interface.Context.ModeGeneric, type = self.type, kids = self.kids, link = url, title = name, create = True, library = link, queue = queue).menu()])
 				control.addItem(handle = syshandle, url = url, listitem = item, isFolder = True)
 			except:
 				pass

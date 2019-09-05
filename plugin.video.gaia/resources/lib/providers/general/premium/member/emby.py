@@ -18,16 +18,17 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
-import urlparse
-import urllib
+from resources.lib.extensions import provider
 from resources.lib.extensions import metadata
 from resources.lib.extensions import network
 from resources.lib.extensions import tools
 from resources.lib.extensions import emby
 
-class source:
+class source(provider.ProviderBase):
 
 	def __init__(self):
+		provider.ProviderBase.__init__(self, supportMovies = True, supportShows = True)
+
 		self.emby = emby.Emby()
 
 		self.pack = False # Checked by provider.py
@@ -40,61 +41,34 @@ class source:
 	def instanceEnabled(self):
 		return self.emby.enabled()
 
-	def movie(self, imdb, title, localtitle, year):
-		try:
-			url = {'imdb': imdb, 'title': title, 'year': year}
-			url = urllib.urlencode(url)
-			return url
-		except:
-			return
-
-	def tvshow(self, imdb, tvdb, tvshowtitle, localtitle, year):
-		try:
-			url = {'imdb': imdb, 'tvdb': tvdb, 'tvshowtitle': tvshowtitle, 'year': year}
-			url = urllib.urlencode(url)
-			return url
-		except:
-			return
-
-	def episode(self, url, imdb, tvdb, title, premiered, season, episode):
-		try:
-			if url == None: return
-			url = urlparse.parse_qs(url)
-			url = dict([(i, url[i][0]) if url[i] else (i, '') for i in url])
-			url['title'], url['premiered'], url['season'], url['episode'] = title, premiered, season, episode
-			url = urllib.urlencode(url)
-			return url
-		except:
-			return
-
 	def sources(self, url, hostDict, hostprDict):
 		sources = []
 		try:
-			if url == None:
-				raise Exception()
+			if url == None: raise Exception()
+			if not self.emby.enabled(): raise Exception()
 
-			if not self.emby.enabled():
-				raise Exception()
-
-			data = urlparse.parse_qs(url)
-			data = dict([(i, data[i][0]) if data[i] else (i, '') for i in data])
+			data = self._decode(url)
 
 			type = tools.Media.TypeShow if 'tvshowtitle' in data else tools.Media.TypeMovie
 			imdb = data['imdb'] if 'imdb' in data else None
 			if 'exact' in data and data['exact']:
-				query = data['tvshowtitle'] if type == tools.Media.TypeShow else data['title']
-				title = None
+				exact = True
+				title = data['tvshowtitle'] if type == tools.Media.TypeShow else data['title']
+				titles = None
 				year = None
 				season = None
 				episode = None
 			else:
-				query = None
+				exact = False
 				title = data['tvshowtitle'] if type == tools.Media.TypeShow else data['title']
+				titles = data['alternatives'] if 'alternatives' in data else None
 				year = int(data['year']) if 'year' in data and not data['year'] == None else None
 				season = int(data['season']) if 'season' in data and not data['season'] == None else None
 				episode = int(data['episode']) if 'episode' in data and not data['episode'] == None else None
 
-			streams = self.emby.search(type = type, title = title, year = year, season = season, episode = episode)
+			if not self._query(title, year, season, episode): return sources
+
+			streams = self.emby.search(type = type, title = title, year = year, season = season, episode = episode, exact = exact)
 			if not streams: return sources
 
 			for stream in streams:
@@ -104,7 +78,7 @@ class source:
 					try: size = stream['file']['size']
 					except: size = None
 
-					meta = metadata.Metadata(name = name, title = title, year = year, season = season, episode = episode, size = size)
+					meta = metadata.Metadata(name = name, title = title, titles = titles, year = year, season = season, episode = episode, size = size)
 					meta.setType(metadata.Metadata.TypePremium)
 					meta.setDirect(True)
 
@@ -157,6 +131,3 @@ class source:
 		except:
 			tools.Logger.error()
 			return sources
-
-	def resolve(self, url):
-		return url

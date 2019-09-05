@@ -18,15 +18,19 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
-import re,urllib,urlparse,time,threading
+import re,time,threading
 from resources.lib.modules import client
 from resources.lib.modules import control
+from resources.lib.extensions import provider
 from resources.lib.extensions import metadata
 from resources.lib.extensions import tools
-from resources.lib.extensions import debrid
+from resources.lib.debrid import offcloud
 
-class source:
+class source(provider.ProviderBase):
+
 	def __init__(self):
+		provider.ProviderBase.__init__(self, supportMovies = True, supportShows = True)
+
 		self.pack = True # Checked by provider.py
 		self.priority = 0
 		self.language = ['un']
@@ -36,39 +40,12 @@ class source:
 		self.items = []
 
 	def instanceEnabled(self):
-		offcloud = debrid.OffCloud()
-		return offcloud.accountEnabled() and offcloud.accountValid()
-
-	def movie(self, imdb, title, localtitle, year):
-		try:
-			url = {'imdb': imdb, 'title': title, 'year': year}
-			url = urllib.urlencode(url)
-			return url
-		except:
-			return
-
-	def tvshow(self, imdb, tvdb, tvshowtitle, localtitle, year):
-		try:
-			url = {'imdb': imdb, 'tvdb': tvdb, 'tvshowtitle': tvshowtitle, 'year': year}
-			url = urllib.urlencode(url)
-			return url
-		except:
-			return
-
-	def episode(self, url, imdb, tvdb, title, premiered, season, episode):
-		try:
-			if url == None: return
-			url = urlparse.parse_qs(url)
-			url = dict([(i, url[i][0]) if url[i] else (i, '') for i in url])
-			url['title'], url['premiered'], url['season'], url['episode'] = title, premiered, season, episode
-			url = urllib.urlencode(url)
-			return url
-		except:
-			return
+		core = offcloud.Core()
+		return core.accountEnabled() and core.accountValid()
 
 	def _item(self, category, id, season, episode):
 		try:
-			item = debrid.OffCloud().item(category = category, id = id, transfer = True, files = True, season = season, episode = episode)
+			item = offcloud.Core().item(category = category, id = id, transfer = True, files = True, season = season, episode = episode)
 			try: self.mutex.acquire()
 			except: pass
 			if item: self.items.append(item)
@@ -77,24 +54,24 @@ class source:
 		except:
 			tools.Logger.error()
 
-	def _items(self, category, title, year, season, episode, pack):
+	def _items(self, category, title, titles, year, season, episode, pack):
 		try:
 			timerEnd = tools.Settings.getInteger('scraping.providers.timeout') - 3
 			timer = tools.Time(start = True)
 
-			items = debrid.OffCloud().items(category = category)
+			items = offcloud.Core().items(category = category)
 			try: self.mutex.acquire()
 			except: pass
 
 			threads = []
 			for item in items:
-				if item['status'] == debrid.OffCloud.StatusFinished: # Only finished downloads.
+				if item['status'] == offcloud.Core.StatusFinished: # Only finished downloads.
 					id = item['id']
 					if not id in self.ids:
-						meta = metadata.Metadata(name = item['name'], title = title, year = year, season = season, episode = episode, pack = pack)
+						meta = metadata.Metadata(name = item['name'], title = title, titles = titles, year = year, season = season, episode = episode, pack = pack)
 						if not meta.ignore(size = False):
 							self.ids.append(id)
-							if category == debrid.OffCloud.CategoryInstant:
+							if category == offcloud.Core.CategoryInstant:
 								self.items.append(item)
 							else:
 								threads.append(threading.Thread(target = self._item, args = (category, id, season, episode)))
@@ -118,17 +95,14 @@ class source:
 		self.items = [] # NB: The same object of the provider is used for both normal episodes and season packs. Make sure it is cleared from the previous run.
 		sources = []
 		try:
-			if url == None:
-				raise Exception()
+			if url == None: raise Exception()
+			if not offcloud.Core().accountValid(): raise Exception()
 
-			if not debrid.OffCloud().accountValid():
-				raise Exception()
-
-			data = urlparse.parse_qs(url)
-			data = dict([(i, data[i][0]) if data[i] else (i, '') for i in data])
+			data = self._decode(url)
 
 			if 'exact' in data and data['exact']:
 				title = data['tvshowtitle'] if 'tvshowtitle' in data else data['title']
+				titles = None
 				year = None
 				season = None
 				episode = None
@@ -136,19 +110,22 @@ class source:
 				packCount = 0
 			else:
 				title = data['tvshowtitle'] if 'tvshowtitle' in data else data['title']
+				titles = data['alternatives'] if 'alternatives' in data else None
 				year = int(data['year']) if 'year' in data and not data['year'] == None else None
 				season = int(data['season']) if 'season' in data and not data['season'] == None else None
 				episode = int(data['episode']) if 'episode' in data and not data['episode'] == None else None
 				pack = data['pack'] if 'pack' in data else False
 				packCount = data['packcount'] if 'packcount' in data else False
 
+			if not self._query(title, year, season, episode, pack): return sources
+
 			timerEnd = tools.Settings.getInteger('scraping.providers.timeout') - 3
 			timer = tools.Time(start = True)
 
 			threads = []
 			self.ids = []
-			threads.append(threading.Thread(target = self._items, args = (debrid.OffCloud.CategoryCloud, title, year, season, episode, pack)))
-			threads.append(threading.Thread(target = self._items, args = (debrid.OffCloud.CategoryInstant, title, year, season, episode, pack)))
+			threads.append(threading.Thread(target = self._items, args = (offcloud.Core.CategoryCloud, title, titles, year, season, episode, pack)))
+			threads.append(threading.Thread(target = self._items, args = (offcloud.Core.CategoryInstant, title, titles, year, season, episode, pack)))
 			[thread.start() for thread in threads]
 
 			while True:
@@ -177,7 +154,7 @@ class source:
 					except: jsonSize = None
 
 					# Metadata
-					meta = metadata.Metadata(name = jsonName, title = title, year = year, season = season, episode = episode, size = jsonSize, pack = pack, packCount = packCount)
+					meta = metadata.Metadata(name = jsonName, title = title, titles = titles, year = year, season = season, episode = episode, size = jsonSize, pack = pack, packCount = packCount)
 
 					# Add
 					sources.append({'url' : jsonLink, 'premium' : True, 'debridonly' : True, 'direct' : True, 'memberonly' : True, 'source' : 'OffCloud', 'language' : self.language[0], 'quality':  meta.videoQuality(), 'metadata' : meta, 'file' : jsonName})
@@ -186,6 +163,3 @@ class source:
 			return sources
 		except:
 			return sources
-
-	def resolve(self, url):
-		return url

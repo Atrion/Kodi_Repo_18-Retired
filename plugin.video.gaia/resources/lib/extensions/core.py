@@ -20,14 +20,13 @@
 
 import xbmc,xbmcgui,xbmcvfs,sys,pkgutil,re,json,urllib,urlparse,datetime,time,os,copy,threading
 
+from resources.lib import debrid
 from resources.lib.modules import control
 from resources.lib.modules import cleantitle
 from resources.lib.modules import client
-from resources.lib.modules import debrid
 from resources.lib.modules import workers
 from resources.lib.modules import trakt
 from resources.lib.modules import tvmaze
-from resources.lib.extensions import cache
 from resources.lib.extensions import network
 from resources.lib.extensions import interface
 from resources.lib.extensions import window
@@ -38,8 +37,8 @@ from resources.lib.extensions import history
 from resources.lib.extensions import trailer
 from resources.lib.extensions import provider
 from resources.lib.extensions import orionoid
-from resources.lib.extensions import debrid as debridx
 from resources.lib.extensions import metadata as metadatax
+from resources.lib.extensions import cache as cachex
 from resources.lib.externals.beautifulsoup import BeautifulSoup
 
 try: from sqlite3 import dbapi2 as database
@@ -263,16 +262,7 @@ class Core:
 			# Otherwise the directory with streams is not shown.
 			# Only has to be done if accessed from the home screen. Not necessary if the user is already in a directory structure.
 			if self.navigationStreamsDirectory and not 'plugin' in tools.System.infoLabel('Container.PluginName') and not tools.System.infoLabel('Container.FolderPath'):
-				if tools.System.versionKodiNew():
-					# launchAddon() does not seem to work in Kodi 18 anymore. Switch to dialog. Other addons are doing the same.
-					#self.navigationStreamsDirectory = False
-					#self.navigationStreamsDialog = True
-					# Seems to work again, at least in Kodi 19.
-					tools.System.launchAddon()
-					tools.Time.sleep(1)
-				else:
-					tools.System.launchAddon()
-					tools.Time.sleep(2) # Important, otherwise the dialog is shown if the main directory shows a bit late.
+				tools.System.launchAddon()
 
 			if autoplay == None:
 				if tools.Converter.boolean(window.Window.propertyGlobal('PseudoTVRunning')): autoplay = True
@@ -287,10 +277,10 @@ class Core:
 					from resources.lib.indexers import tvshows
 					# TODO: The episode metadata should be retrieved, not the show metadata.
 					# Currently the metadata is always passed as a parameter, but if that changes, this has to be fixed.
-					metadata = tvshows.tvshows().metadataRetrieve(tvshowtitle = tvshowtitle, title = title, year = year, imdb = imdb, tvdb = tvdb, season = season, episode = episode)
+					metadata = tvshows.tvshows().metadata(tvshowtitle = tvshowtitle, title = title, year = year, imdb = imdb, tvdb = tvdb, season = season, episode = episode)
 				else:
 					from resources.lib.indexers import movies
-					metadata = movies.movies().metadataRetrieve(imdb = imdb)
+					metadata = movies.movies().metadata(imdb = imdb)
 
 			if new:
 				if not self.silent and self.navigationCinema:
@@ -301,8 +291,9 @@ class Core:
 							try: background = metadata['fanart3']
 							except: background = None
 					self.navigationCinemaTrailer.cinemaStart(type = self.type, background = background)
-				label = tools.Media.titleUniversal(metadata = metadata, title = title if tvshowtitle is None else tvshowtitle, year = year, season = season, episode = episode)
-				tools.Logger.log('Initializing Scraping [' + label + '] ...', name = 'CORE', level = tools.Logger.TypeNotice)
+				if exact: label = title if title else tvshowtitle
+				else: label = tools.Media.titleUniversal(metadata = metadata, title = title if tvshowtitle is None else tvshowtitle, year = year, season = season, episode = episode)
+				tools.Logger.log('Initializing Scraping [' + label.encode('utf8') + '] ...', name = 'CORE', level = tools.Logger.TypeNotice)
 				start = tools.Time.timestamp()
 				result = self.scrapeItem(title = title, year = year, imdb = imdb, tvdb = tvdb, season = season, episode = episode, tvshowtitle = tvshowtitle, premiered = premiered, metadata = metadata, preset = preset, seasoncount = seasoncount, exact = exact, autoplay = autoplay, cache = cache)
 				if result == None or self.progressCanceled(): # Avoid the no-streams notification right after the unavailable notification
@@ -413,17 +404,17 @@ class Core:
 				# Remove years in brackets from titles.
 				# Do not remove years that are not between brackets, since it might be part of the title. Eg: 2001 A Space Oddesy
 				# Eg: Heartland (CA) (2007) -> Heartland (CA)
-				value = re.sub('\([0-9]{4}\)', '', value)
-				value = re.sub('\[[0-9]{4}\]', '', value)
-				value = re.sub('\{[0-9]{4}\}', '', value)
+				value = re.sub('\([0-9]{4}\)', '', value, re.UNICODE)
+				value = re.sub('\[[0-9]{4}\]', '', value, re.UNICODE)
+				value = re.sub('\{[0-9]{4}\}', '', value, re.UNICODE)
 
 				# Remove symbols.
 				# Eg: Heartland (CA) -> Heartland CA
 				# Replace with space: Brooklyn Nine-Nine -> Brooklyn Nine Nine
-				value = re.sub('[^A-Za-z0-9\s]', ' ', value)
+				value = re.sub('\s{2,}', ' ', re.sub('[-!$%^&*()_+|~=`{}\[\];\'<>?,.;\/]', ' ', value, re.UNICODE))
 
 				# Replace extra spaces.
-				value = re.sub('\s\s+', ' ', value)
+				value = re.sub('\s\s+', ' ', value, re.UNICODE)
 				value = value.strip()
 
 				return value
@@ -500,27 +491,17 @@ class Core:
 
 			def additionalInformation(title, tvshowtitle, imdb, tvdb):
 				threadsInformation = []
-
 				threadsInformation.append(workers.Thread(additionalInformationTitle, title, tvshowtitle, imdb, tvdb))
 
 				if not tvshowtitle == None: title = tvshowtitle
-				if tools.Settings.getBoolean('scraping.foreign.characters'):
+				if tools.Settings.getBoolean('scraping.alternative.characters'):
 					threadsInformation.append(workers.Thread(additionalInformationCharacters, title, imdb, tvdb))
 
 				[thread.start() for thread in threadsInformation]
 				[thread.join() for thread in threadsInformation]
 
 				# Title for the foreign language in the settings.
-				if self.titleLocal:
-					local = tools.Converter.unicode(self.titleLocal)
-					if not local == tools.Converter.unicode(title):
-						found = False
-						for value in self.titleAlternatives.itervalues():
-							if tools.Converter.unicode(value) == local:
-								found = True
-								break
-						if not found:
-							self.titleAlternatives['local'] = self.titleLocal
+				if self.titleLocal: self.titleAlternatives['local'] = self.titleLocal
 
 			def additionalInformationCharacters(title, imdb, tvdb):
 				try:
@@ -531,17 +512,28 @@ class Core:
 					tmdbApi = tools.Settings.getString('accounts.informants.tmdb.api') if tools.Settings.getBoolean('accounts.informants.tmdb.enabled') else ''
 					if tmdbApi == '': tmdbApi = tools.System.obfuscate(tools.Settings.getString('internal.tmdb.api', raw = True))
 					if not tmdbApi == '':
-						result = cache.Cache().cacheLong(client.request, 'http://api.themoviedb.org/3/find/%s?api_key=%s&external_source=imdb_id' % (imdb, tmdbApi))
+						result = cachex.Cache().cacheLong(client.request, 'http://api.themoviedb.org/3/find/%s?api_key=%s&external_source=imdb_id' % (imdb, tmdbApi))
 						self.progressInformationCharacters = 25
 						result = json.loads(result)
-						if 'original_title' in result: # Movies
-							self.titleOriginal = result['original_title']
-						elif 'original_name' in result: # Shows
-							self.titleOriginal = result['original_name']
+						if not isinstance(result, list): result = [result]
+						for i in result:
+							for j in i:
+								for key, value in i.iteritems():
+									if not isinstance(value, list): value = [value]
+									for k in value:
+										if 'original_title' in k: # Movies
+											self.titleOriginal = k['original_title']
+											break
+										elif 'original_name' in k: # Shows
+											self.titleOriginal = k['original_name']
+											break
+									if self.titleOriginal: break
+								if self.titleOriginal: break
+							if self.titleOriginal: break
 
 					if not self.titleOriginal:
 						self.progressInformationCharacters = 50
-						result = cache.Cache().cacheLong(client.request, 'http://www.imdb.com/title/%s' % imdb)
+						result = cachex.Cache().cacheLong(client.request, 'http://www.imdb.com/title/%s' % imdb)
 						self.progressInformationCharacters = 75
 						result = BeautifulSoup(result)
 						resultTitle = result.find_all('div', class_ = 'originalTitle')
@@ -595,29 +587,31 @@ class Core:
 					# Also search titles that contain abbrviations (consecutive capital letters).
 					# Eg: "K.C. Undercover" is retrieved as "KC Undercover" by informants. Most providers have it as "K C Undercover".
 					self.titleAbbreviation = self.titleOriginal
-					abbreviations = re.findall('[A-Z]{2,}', self.titleAbbreviation)
+					if not self.titleAbbreviation == None:
+						abbreviations = re.findall('[A-Z]{2,}', self.titleAbbreviation)
+						for abbreviation in abbreviations:
+							self.titleAbbreviation = self.titleAbbreviation.replace(abbreviation, ' '.join(list(abbreviation)))
 
 					if not self.titleAbbreviation == self.titleOriginal:
 						self.titleAlternatives['abbreviation'] = self.titleAbbreviation
 
 					self.progressInformationCharacters = 100
 				except:
-					pass
+					tools.Logger.error()
 
 			def additionalInformationTitle(title, tvshowtitle, imdb, tvdb):
 				self.progressInformationLanguage = 25
 				if tvshowtitle == None:
 					content = 'movie'
-					title = cleantitle.normalize(title)
 					self.titleLocal = self.getLocalTitle(title, imdb, tvdb, content)
 					self.progressInformationLanguage = 50
 					self.titleAliases = self.getAliasTitles(imdb, self.titleLocal, content)
 				else:
 					content = 'tvshow'
-					tvshowtitle = cleantitle.normalize(tvshowtitle)
 					self.titleLocal = self.getLocalTitle(tvshowtitle, imdb, tvdb, content)
 					self.progressInformationLanguage = 50
 					self.titleAliases = self.getAliasTitles(imdb, self.titleLocal, content)
+				self.titleAliases = list(set(self.titleAliases))
 				self.progressInformationLanguage = 100
 
 			def initializeProviders(movie, preset, imdb, tvdb, excludes):
@@ -637,11 +631,38 @@ class Core:
 
 			tools.Logger.log('Starting Scraping ...', name = 'CORE', level = tools.Logger.TypeNotice)
 
+			# NB: Initialize the providers inside Orion here, BEFORE the scraping providers are initialized or the scraping prrocess starts.
+			# Otherwise, Orion will initialize them during the scraping process, which can cause various issues to the other running providers.
+			# For instance, TorrentApi's Lock might suddenly be reset, causing synchronization errors, becuase Orion will create a NEW instance of TorrentApi.
+			try:
+				orion = orionoid.Orionoid()
+				if orion.accountEnabled(): orion.providerInitialize()
+			except: pass
+
 			threads = []
+			movie = tvshowtitle == None if self.type == None else (self.type == tools.Media.TypeMovie or self.type == self.type == tools.Media.TypeDocumentary or self.type == self.type == tools.Media.TypeShort)
+
+			self.titleLanguages = {}
+			self.titleAlternatives = {}
+			self.titleLocal = None
+			self.titleAliases = []
+			self.titleOriginal = None
+			self.titleAbbreviation = None
+			self.titleForeign1 = None
+			self.titleForeign2 = None
+			self.titleUmlaut1 = None
+			self.titleUmlaut2 = None
 
 			title = titleClean(title)
 			tvshowtitle = titleClean(tvshowtitle)
-			movie = tvshowtitle == None if self.type == None else (self.type == tools.Media.TypeMovie or self.type == self.type == tools.Media.TypeDocumentary or self.type == self.type == tools.Media.TypeShort)
+
+			# With non-ASCII characters.
+			self.titleAlternatives['raw'] = title if movie else tvshowtitle
+
+			# Replace accents with ASCII characters.
+			# Eg: é -> e
+			title = cleantitle.normalize(title)
+			tvshowtitle = cleantitle.normalize(tvshowtitle)
 
 			self.streamsTotal = 0
 			self.streamsHdUltra = 0
@@ -674,7 +695,6 @@ class Core:
 			self.dataLock = threading.Lock()
 
 			# Termination
-
 			self.termination = False
 			self.terminationLock = threading.Lock()
 			self.terminationPrevious = 0
@@ -767,31 +787,31 @@ class Core:
 				self.cacheTypes = []
 				self.cacheObjects = []
 				if tools.Settings.getBoolean('scraping.cache.premiumize'):
-					premiumize = debridx.Premiumize()
-					if premiumize.accountValid():
+					premiumizeCore = debrid.premiumize.Core()
+					if premiumizeCore.accountValid():
 						if tools.Settings.getBoolean('streaming.torrent.premiumize.enabled'):
 							self.cacheTypes.append(handler.Handler.TypeTorrent)
-							self.cacheObjects.append(premiumize)
+							self.cacheObjects.append(premiumizeCore)
 						if tools.Settings.getBoolean('streaming.usenet.premiumize.enabled') and (self.cacheOrion or tools.Settings.getBoolean('scraping.cache.preload.usenet')):
 							self.cacheTypes.append(handler.Handler.TypeUsenet)
-							self.cacheObjects.append(premiumize)
+							self.cacheObjects.append(premiumizeCore)
 						if tools.Settings.getBoolean('streaming.hoster.premiumize.enabled'):
 							self.cacheTypes.append(handler.Handler.TypeHoster)
-							self.cacheObjects.append(premiumize)
+							self.cacheObjects.append(premiumizeCore)
 				if tools.Settings.getBoolean('scraping.cache.offcloud'):
-					offcloud = debridx.OffCloud()
-					if offcloud.accountValid():
+					offcloudCore = debrid.offcloud.Core()
+					if offcloudCore.accountValid():
 						if tools.Settings.getBoolean('streaming.torrent.offcloud.enabled'):
 							self.cacheTypes.append(handler.Handler.TypeTorrent)
-							self.cacheObjects.append(offcloud)
+							self.cacheObjects.append(offcloudCore)
 						if tools.Settings.getBoolean('streaming.usenet.offcloud.enabled') and (self.cacheOrion or tools.Settings.getBoolean('scraping.cache.preload.usenet')):
 							self.cacheTypes.append(handler.Handler.TypeUsenet)
-							self.cacheObjects.append(offcloud)
+							self.cacheObjects.append(offcloudCore)
 				if tools.Settings.getBoolean('scraping.cache.realdebrid'):
-					realdebrid = debridx.RealDebrid()
-					if realdebrid.accountValid() and tools.Settings.getBoolean('streaming.torrent.realdebrid.enabled'):
+					realdebridCore = debrid.realdebrid.Core()
+					if realdebridCore.accountValid() and tools.Settings.getBoolean('streaming.torrent.realdebrid.enabled'):
 						self.cacheTypes.append(handler.Handler.TypeTorrent)
-						self.cacheObjects.append(realdebrid)
+						self.cacheObjects.append(realdebridCore)
 				self.cacheEnabled = len(self.cacheTypes) > 0
 
 			# Limit the number of running threads.
@@ -800,27 +820,16 @@ class Core:
 			# NB: Do not use None (aka unlimited). If 500+ links are found, too many threads are started, causing a major delay by having to switch between threads. Use a limited number of threads.
 			self.threadsLimit = tools.Hardware.processors() * 2
 
-			enabledPremiumize = debridx.Premiumize().accountValid() and (tools.Settings.getBoolean('streaming.torrent.premiumize.enabled') or tools.Settings.getBoolean('streaming.usenet.premiumize.enabled'))
-			enabledOffCloud = debridx.OffCloud().accountValid() and (tools.Settings.getBoolean('streaming.torrent.offcloud.enabled') or tools.Settings.getBoolean('streaming.usenet.offcloud.enabled'))
-			enabledRealDebrid = debridx.RealDebrid().accountValid() and tools.Settings.getBoolean('streaming.torrent.realdebrid.enabled')
+			enabledPremiumize = debrid.premiumize.Core().accountValid() and (tools.Settings.getBoolean('streaming.torrent.premiumize.enabled') or tools.Settings.getBoolean('streaming.usenet.premiumize.enabled'))
+			enabledOffCloud = debrid.offcloud.Core().accountValid() and (tools.Settings.getBoolean('streaming.torrent.offcloud.enabled') or tools.Settings.getBoolean('streaming.usenet.offcloud.enabled'))
+			enabledRealDebrid = debrid.realdebrid.Core().accountValid() and tools.Settings.getBoolean('streaming.torrent.realdebrid.enabled')
 
 			control.makeFile(control.dataPath)
 			self.sourceFile = control.providercacheFile
 
-			self.titleLanguages = {}
-			self.titleAlternatives = {}
-			self.titleLocal = None
-			self.titleAliases = []
-			self.titleOriginal = None
-			self.titleAbbreviation = None
-			self.titleForeign1 = None
-			self.titleForeign2 = None
-			self.titleUmlaut1 = None
-			self.titleUmlaut2 = None
-
 			self.enabledProviders = tools.Settings.getBoolean('interface.navigation.scrape.providers')
 			self.enabledDevelopers = tools.System.developers()
-			self.enabledForeign = tools.Settings.getBoolean('scraping.foreign.enabled')
+			self.enabledAlternative = tools.Settings.getBoolean('scraping.alternative.enabled')
 			self.enabledPrecheck = self.enabledDevelopers and tools.Settings.getBoolean('scraping.precheck.enabled')
 			self.enabledMetadata = self.enabledDevelopers and tools.Settings.getBoolean('scraping.metadata.enabled')
 			self.enabledCache = tools.Settings.getBoolean('scraping.cache.enabled') and ((enabledPremiumize and tools.Settings.getBoolean('scraping.cache.premiumize')) or (enabledOffCloud and tools.Settings.getBoolean('scraping.cache.offcloud')) or (enabledRealDebrid and tools.Settings.getBoolean('scraping.cache.realdebrid')))
@@ -834,7 +843,7 @@ class Core:
 
 			percentageDone = 0
 			percentageInitialize = 0.05
-			percentageForeign = 0.05 if self.enabledForeign else 0
+			percentageForeign = 0.05 if self.enabledAlternative else 0
 			percentagePrecheck = 0.15 if self.enabledPrecheck else 0
 			percentageMetadata = 0.15 if self.enabledMetadata else 0
 			percentageCache = 0.05 if self.enabledCache else 0
@@ -874,7 +883,6 @@ class Core:
 			scrapingContinue = True
 			scrapingExcludeOrion = False
 			try:
-				orion = orionoid.Orionoid()
 				if orion.accountEnabled():
 					orionScrapingMode = orion.settingsScrapingMode()
 					tools.Logger.log('Launching Orion: ' + str(orionScrapingMode), name = 'CORE', level = tools.Logger.TypeNotice)
@@ -892,12 +900,8 @@ class Core:
 						if providerOrion and providerOrion['selected']:
 							tools.Logger.log('Scraping Orion', name = 'CORE', level = tools.Logger.TypeNotice)
 							threadOrion = None
-							if movie:
-								title = cleantitle.normalize(title)
-								threadOrion = workers.Thread(self.scrapeMovie, title, self.titleLocal, self.titleAliases, year, imdb, providerOrion, exact, cache)
-							else:
-								tvshowtitle = cleantitle.normalize(tvshowtitle)
-								threadOrion = workers.Thread(self.scrapeEpisode, title, self.titleLocal, self.titleAliases, year, imdb, tvdb, season, episode, seasoncount, tvshowtitle, premiered, providerOrion, exact, cache)
+							if movie: threadOrion = workers.Thread(self.scrapeMovie, title, None, self.titleLocal, self.titleAliases, year, imdb, providerOrion, exact, cache)
+							else: threadOrion = workers.Thread(self.scrapeEpisode, title, None, self.titleLocal, self.titleAliases, year, imdb, tvdb, season, episode, seasoncount, tvshowtitle, premiered, providerOrion, exact, cache)
 
 							threadOrion.start()
 							timerSingle.start()
@@ -924,7 +928,7 @@ class Core:
 				# Start the additional information before the providers are intialized.
 				# Save some search time. Even if there are no providers available later, still do this.
 				threadAdditional = None
-				if not exact and not self.progressCanceled() and self.enabledForeign:
+				if not exact and not self.progressCanceled() and self.enabledAlternative:
 					threadAdditional = workers.Thread(additionalInformation, title, tvshowtitle, imdb, tvdb)
 					threadAdditional.start()
 
@@ -957,10 +961,10 @@ class Core:
 					return None
 
 				_progressUpdate(int(percentageInitialize * 100), message) # In case the initialization finishes early.
-				if not exact and not self.progressCanceled() and self.enabledForeign:
+				if not exact and not self.progressCanceled() and self.enabledAlternative:
 					percentageDone = percentageInitialize
 					message = 'Retrieving Additional Information'
-					try: timeout = tools.Settings.getInteger('scraping.foreign.timeout')
+					try: timeout = tools.Settings.getInteger('scraping.alternative.timeout')
 					except: timeout = 15
 
 					timerSingle.start()
@@ -979,15 +983,38 @@ class Core:
 						time.sleep(0.3) # Ensure the time thread (0.2 interval) is stopped.
 						return None
 
-				self.titleAlternatives = {key : value for key, value in self.titleAlternatives.iteritems() if not titleClean(value) == title} # Only if the title is differnt to main title.
-				self.titleAlternatives = {key : list(set(value)) for key, value in self.titleAlternatives.iteritems()} # Remove duplicates.
+				if self.enabledAlternative:
+					# Add aliases in case scraping.alternative.characters is disabled.
+					for i in range(len(self.titleAliases)):
+						self.titleAlternatives['alias%02d' % (i + 1)] = self.titleAliases[i]
+
+				# Remove duplicates.
+				seen = set([title, tvshowtitle])
+				for key in self.titleAlternatives.keys():
+					try: unicode = self.titleAlternatives[key].encode('utf-8')
+					except: unicode = None
+					if self.titleAlternatives[key] in seen or (unicode and unicode in seen):
+						del self.titleAlternatives[key]
+					else:
+						seen.add(self.titleAlternatives[key])
+						if unicode: seen.add(unicode)
+
+				# Limit the maximum number of titles.
+				alternativeLimit = tools.Settings.getInteger('scraping.alternative.limit')
+				if len(self.titleAlternatives.keys()) > alternativeLimit:
+					for key in sorted(self.titleAlternatives.keys(), reverse = True):
+						if key.startswith('alias'):
+							del self.titleAlternatives[key]
+							if len(self.titleAlternatives.keys()) <= alternativeLimit: break
+					if len(self.titleAlternatives.keys()) > alternativeLimit:
+						for key in self.titleAlternatives.iterkeys():
+							del self.titleAlternatives[key]
+							if len(self.titleAlternatives.keys()) <= alternativeLimit: break
 
 				if movie:
-					title = cleantitle.normalize(title)
 					for source in self.providers:
 						threads.append(workers.Thread(self.scrapeMovieAlternatives, self.titleAlternatives, title, self.titleLocal, self.titleAliases, year, imdb, source, exact, cache)) # Only language title for the first thread.
 				else:
-					tvshowtitle = cleantitle.normalize(tvshowtitle)
 					for source in self.providers:
 						threads.append(workers.Thread(self.scrapeEpisodeAlternatives, self.titleAlternatives, title, self.titleLocal, self.titleAliases, year, imdb, tvdb, season, episode, seasoncount, tvshowtitle, premiered, source, exact, cache)) # Only language title for the first thread.
 
@@ -1016,6 +1043,8 @@ class Core:
 							termination = 0
 							if self.adjustTermination():
 								self.termination = True
+								interface.Dialog.notification(title = 33882, message = 35638, icon = interface.Dialog.IconInformation)
+								tools.Logger.log('Enough links found. Preemptive termination activated.')
 								break
 
 						totalThreads = len(threads)
@@ -1303,30 +1332,29 @@ class Core:
 
 	def scrapeMovieAlternatives(self, alternativetitles, title, localtitle, aliases, year, imdb, source, exact, cache):
 		threads = []
-		threads.append(workers.Thread(self.scrapeMovie, title, localtitle, aliases, year, imdb, source, exact, cache))
-		if not source['id'] == 'oriscrapers': # Do not scrape alternative titles for Orion.
-			for key, value in alternativetitles.iteritems():
-				threads.append(workers.Thread(self.scrapeMovie, value, localtitle, aliases, year, imdb, source, exact, cache, key))
+		threads.append(workers.Thread(self.scrapeMovie, title, alternativetitles, localtitle, aliases, year, imdb, source, exact, cache))
+		for key, value in alternativetitles.iteritems():
+			sourceNew = provider.Provider.copy(source) # Copy, since the object is used in multiple threads with alternative titles.
+			threads.append(workers.Thread(self.scrapeMovie, value, alternativetitles, localtitle, aliases, year, imdb, sourceNew, exact, cache, key))
 		[thread.start() for thread in threads]
 		[thread.join() for thread in threads]
 
-	def scrapeMovie(self, title, localtitle, aliases, year, imdb, source, exact, cache, mode = None):
+	def scrapeMovie(self, title, alternativetitles, localtitle, aliases, year, imdb, source, exact, cache, mode = None):
 		connection = None
-		try:
-			# Replace symbols with spaces. Eg: K.C. Undercover
-			try: title = re.sub('\s{2,}', ' ', re.sub('[^a-zA-Z\d\s:]', ' ', title)).strip()
-			except: pass
 
-			if localtitle == None: localtitle = title
-			if mode == None: mode = ''
-			sourceId = source['id']
-			sourceObject = source['object']
-			sourceType = source['type']
-			sourceName = source['name']
-			sourceLabel = source['label']
-			sourceAddon = source['addon']
-		except:
-			pass
+		# Replace symbols with spaces.
+		# Search for all symbols (except :), instead of non-alphanumeric characters, in order to keep unicode characters.
+		try: title = re.sub('\s{2,}', ' ', re.sub('[-!$%^&*()_+|~=`{}\[\];\'<>?,.;\/]', ' ', title, re.UNICODE)).strip()
+		except: pass
+
+		if localtitle == None: localtitle = title
+		if mode == None: mode = ''
+		sourceId = source['id']
+		sourceObject = source['object']
+		sourceType = source['type']
+		sourceName = source['name']
+		sourceLabel = source['label']
+		sourceAddon = source['addon']
 
 		try:
 			try:
@@ -1371,8 +1399,12 @@ class Core:
 
 		try:
 			if url == None:
-				try: url = sourceObject.movie(imdb, title, localtitle, year)
-				except: url = sourceObject.movie(imdb, title, localtitle, aliases, year)
+				try: url = sourceObject.movie(imdb = imdb, title = title, alternativetitles = alternativetitles, localtitle = localtitle, aliases = aliases, year = year)
+				except:
+					try: url = sourceObject.movie(imdb = imdb, title = title, alternativetitles = alternativetitles, localtitle = localtitle, year = year)
+					except:
+						try: url = sourceObject.movie(imdb, title, localtitle, year)
+						except: url = sourceObject.movie(imdb, title, localtitle, aliases, year)
 				if url == None: raise Exception()
 				if exact:
 					try: url += '&exact=1'
@@ -1480,32 +1512,31 @@ class Core:
 
 	def scrapeEpisodeAlternatives(self, alternativetitles, title, localtitle, aliases, year, imdb, tvdb, season, episode, seasoncount, tvshowtitle, premiered, source, exact, cache):
 		threads = []
-		threads.append(workers.Thread(self.scrapeEpisode, title, localtitle, aliases, year, imdb, tvdb, season, episode, seasoncount, tvshowtitle, premiered, source, exact, cache))
-		if not source['id'] == 'oriscrapers': # Do not scrape alternative titles for Orion.
-			for key, value in alternativetitles.iteritems():
-				threads.append(workers.Thread(self.scrapeEpisode, title, localtitle, aliases, year, imdb, tvdb, season, episode, seasoncount, value, premiered, source, exact, cache, key))
+		threads.append(workers.Thread(self.scrapeEpisode, title, alternativetitles, localtitle, aliases, year, imdb, tvdb, season, episode, seasoncount, tvshowtitle, premiered, source, exact, cache))
+		for key, value in alternativetitles.iteritems():
+			sourceNew = provider.Provider.copy(source) # Copy, since the object is used in multiple threads with alternative titles.
+			threads.append(workers.Thread(self.scrapeEpisode, title, alternativetitles, localtitle, aliases, year, imdb, tvdb, season, episode, seasoncount, value, premiered, sourceNew, exact, cache, key))
 		[thread.start() for thread in threads]
 		[thread.join() for thread in threads]
 
-	def scrapeEpisode(self, title, localtitle, aliases, year, imdb, tvdb, season, episode, seasoncount, tvshowtitle, premiered, source, exact, cache, mode = None):
+	def scrapeEpisode(self, title, alternativetitles, localtitle, aliases, year, imdb, tvdb, season, episode, seasoncount, tvshowtitle, premiered, source, exact, cache, mode = None):
 		connection = None
-		try:
-			# Replace symbols with spaces. Eg: K.C. Undercover
-			try: title = re.sub('\s{2,}', ' ', re.sub('[^a-zA-Z\d\s:]', ' ', title)).strip()
-			except: pass
-			try: tvshowtitle = re.sub('\s{2,}', ' ', re.sub('[^a-zA-Z\d\s:]', ' ', tvshowtitle)).strip()
-			except: pass
 
-			if localtitle == None: localtitle = title
-			if mode == None: mode = ''
-			sourceId = source['id']
-			sourceObject = source['object']
-			sourceType = source['type']
-			sourceName = source['name']
-			sourceLabel = source['label']
-			sourceAddon = source['addon']
-		except:
-			pass
+		# Replace symbols with spaces. Eg: K.C. Undercover
+		# Search for all symbols (except :), instead of non-alphanumeric characters, in order to keep unicode characters.
+		try: title = re.sub('\s{2,}', ' ', re.sub('[-!$%^&*()_+|~=`{}\[\];\'<>?,.;\/]', ' ', title, re.UNICODE)).strip()
+		except: pass
+		try: tvshowtitle = re.sub('\s{2,}', ' ', re.sub('[-!$%^&*()_+|~=`{}\[\];\'<>?,.;\/]', ' ', tvshowtitle, re.UNICODE)).strip()
+		except: pass
+
+		if localtitle == None: localtitle = title
+		if mode == None: mode = ''
+		sourceId = source['id']
+		sourceObject = source['object']
+		sourceType = source['type']
+		sourceName = source['name']
+		sourceLabel = source['label']
+		sourceAddon = source['addon']
 
 		try:
 			try:
@@ -1550,8 +1581,13 @@ class Core:
 
 		try:
 			if url == None:
-				try: url = sourceObject.tvshow(imdb, tvdb, tvshowtitle, localtitle, year)
-				except: url = sourceObject.tvshow(imdb, tvdb, tvshowtitle, localtitle, aliases, year)
+				try: url = sourceObject.tvshow(imdb = imdb, tvdb = tvdb, tvshowtitle = tvshowtitle, alternativetitles = alternativetitles, localtitle = localtitle, aliases = aliases, year = year)
+				except:
+					try: url = sourceObject.tvshow(imdb = imdb, tvdb = tvdb, tvshowtitle = tvshowtitle, alternativetitles = alternativetitles, localtitle = localtitle, year = year)
+					except:
+						try: url = sourceObject.tvshow(imdb, tvdb, tvshowtitle, localtitle, year)
+						except: url = sourceObject.tvshow(imdb, tvdb, tvshowtitle, localtitle, aliases, year)
+
 				if url == None: raise Exception()
 				if exact:
 					try: url += '&exact=1'
@@ -1583,7 +1619,6 @@ class Core:
 			if self.silent:
 				try: sourceObject.silent()
 				except: pass
-
 			if ep_url == None: ep_url = sourceObject.episode(url, imdb, tvdb, title, premiered, season, episode)
 			if ep_url == None: return
 			try:
@@ -1605,7 +1640,7 @@ class Core:
 			pass
 
 		try:
-			def _scrapeEpisode(url, mode, sourceId, sourceObject, sourceName, tvshowtitle, season, episode, imdb, currentSources, pack, packcount, exact):
+			def _scrapeEpisode(url, mode, sourceId, sourceObject, sourceName, tvshowtitle, season, episode, imdb, pack, packcount, exact):
 				try:
 					sources = []
 					sources = sourceObject.sources(url, self.hostDict, self.hostprDict)
@@ -1710,19 +1745,32 @@ class Core:
 					new_url = ep_url
 				new_url_encoded = urllib.urlencode(new_url)
 
+			threads = []
+
+			seasonObject = None
+			seasonPack = tools.Settings.getBoolean('scraping.packs.enabled') and source['pack'] and not source['external'] and not season == 0 and not episode == 0
+			if seasonPack: # Must be created here and not after the normal thread started. Otherwise there are issues with threading and lock objects that have to be copied.
+				try: seasonObject = provider.Provider.copy(source)['object'] # Copy, since the object is used in multiple threads with alternative titles.
+				except: pass
+
 			# Get normal episodes
-			currentSources = []
-			currentSources += _scrapeEpisode(new_url_encoded, mode, sourceId, sourceObject, sourceName, tvshowtitle, season, episode, imdb, currentSources, False, seasoncount, exact)
+			thread = threading.Thread(target = _scrapeEpisode, args = (new_url_encoded, mode, sourceId, sourceObject, sourceName, tvshowtitle, season, episode, imdb, False, seasoncount, exact))
+			threads.append(thread)
+			thread.start()
 
 			# Get season packs
 			# Do not get season packs for special episodes.
-			if tools.Settings.getBoolean('scraping.packs.enabled') and source['pack'] and not source['external'] and not season == 0 and not episode == 0:
+			if seasonPack:
 				try:
 					new_url['pack'] = True
 					new_url_encoded = urllib.urlencode(new_url)
-					_scrapeEpisode(new_url_encoded, mode, sourceId, sourceObject, sourceName, tvshowtitle, season, episode, imdb, currentSources, True, seasoncount, exact)
+					thread = threading.Thread(target = _scrapeEpisode, args = (new_url_encoded, mode, sourceId, seasonObject, sourceName, tvshowtitle, season, episode, imdb, True, seasoncount, exact))
+					threads.append(thread)
+					thread.start()
 				except:
 					tools.Logger.error()
+
+			[thread.join() for thread in threads]
 		except:
 			tools.Logger.error()
 
@@ -1802,7 +1850,7 @@ class Core:
 			elif layoutNumber == 3: number = '%03d'
 			if not number == '': number = interface.Format.font(number, bold = True, translate = False)
 
-			infos.append(interface.Format.font(35233, bold = True, uppercase = True, color = interface.Format.colorOrion()))
+			infos.append(interface.Format.font(35233, bold = True, uppercase = True, color = interface.Format.colorTertiary()))
 			item['label'] = item['file'] = (interface.Format.separator().join(infos) % (number % 0, '')) + (interface.Format.newline() if layout == 2 else '') + link
 
 		if extras == None:
@@ -1962,7 +2010,7 @@ class Core:
 						try: episode = metadata['episode']
 						except: episode = None
 
-						extra = interface.Format.font(tools.Media.title(metadata = metadata, title = title, year = year, season = season, episode = episode), bold = True, color = interface.Format.colorOrion())
+						extra = interface.Format.font(tools.Media.title(metadata = metadata, title = title, year = year, season = season, episode = episode), bold = True, color = interface.Format.colorTertiary())
 						if not self.navigationStreamsSpecial: extra += interface.Format.separator()
 				except: pass
 
@@ -1987,6 +2035,7 @@ class Core:
 		sysmeta = tools.Converter.quoteTo(tools.Converter.jsonTo(metadata))
 		duration = self._duration(metadata)
 
+		prefix = tools.Settings.getInteger('interface.navigation.streams.prefix')
 		hasFanart = tools.Settings.getBoolean('interface.theme.fanart')
 		addonPoster = control.addonPoster()
 		addonBanner = control.addonBanner()
@@ -2049,9 +2098,9 @@ class Core:
 
 			window.Window.propertyGlobalSet('GaiaPosterStatic', tools.Settings.getInteger('interface.navigation.streams.poster') == 0)
 
-			window.Window.propertyGlobalSet('GaiaColorOrion', interface.Format.colorOrion())
 			window.Window.propertyGlobalSet('GaiaColorPrimary', interface.Format.colorPrimary())
 			window.Window.propertyGlobalSet('GaiaColorSecondary', interface.Format.colorSecondary())
+			window.Window.propertyGlobalSet('GaiaColorTertiary', interface.Format.colorTertiary())
 			window.Window.propertyGlobalSet('GaiaColorMain', interface.Format.colorMain())
 			window.Window.propertyGlobalSet('GaiaColorDisabled', interface.Format.colorDisabled())
 			window.Window.propertyGlobalSet('GaiaColorAlternative', interface.Format.colorAlternative())
@@ -2124,7 +2173,7 @@ class Core:
 						try: tvdb = metadata['tvdb']
 						except: tvdb = None
 
-						extra = interface.Format.font(title + ' ' + tools.Media.title(metadata = None, title = '', year = year, season = season, episode = episode).strip(), bold = True, color = interface.Format.colorOrion())
+						extra = interface.Format.font(title + ' ' + tools.Media.title(metadata = None, title = '', year = year, season = season, episode = episode, skin = False).strip(), bold = True)
 						if not self.navigationStreamsSpecial: extra += interface.Format.separator()
 
 						try: poster = metadata['poster'] if 'poster' in metadata else metadata['poster2'] if 'poster2' in metadata else metadata['poster3'] if 'poster3' in metadata else None
@@ -2199,9 +2248,19 @@ class Core:
 						elif not name: name = link
 					elif not name:
 						name = link
+
+					origin = orionoid.Orionoid.Name if 'orion' in itemJson else itemJson['origin']
+					originFormat = None
+					if prefix > 0:
+						originFormat = origin
+						if prefix == 1: originFormat = originFormat[:3]
+						elif prefix == 2: originFormat = re.sub('scrapers*', '', originFormat, flags = re.IGNORECASE)
+						originFormat = interface.Format.font(originFormat, bold = True, uppercase = True, color = interface.Format.colorTertiary())
+
 					hoster = None if itemJson['source'].lower() == itemJson['providerlabel'].lower() else itemJson['source'] if meta.isHoster() or meta.isPremium() else None
-					provider = window.WindowStreams.separator([meta.labelOrion(), interface.Format.font(itemJson['providerlabel'], uppercase = True, bold = True), interface.Format.font(hoster, uppercase = True, bold = True)], color = True)
-					stream = window.WindowStreams.separator([extra if extra else None, meta.labelOrion(), interface.Format.font(itemJson['providerlabel'], uppercase = True, bold = True), interface.Format.font(hoster, uppercase = True, bold = True)], color = True)
+					provider = window.WindowStreams.separator([originFormat, interface.Format.font(itemJson['provider'], uppercase = True, bold = True), interface.Format.font(hoster, uppercase = True, bold = True)], color = True)
+					stream = window.WindowStreams.separator([extra if extra else None, originFormat, interface.Format.font(itemJson['provider'], uppercase = True, bold = True), interface.Format.font(hoster, uppercase = True, bold = True)], color = True)
+
 					access = metadatax.Metadata.labelFill(window.WindowStreams.separator([meta.labelDirect(), meta.labelCached(), meta.labelDebrid(), meta.labelOpen()], color = True))
 					info = metadatax.Metadata.labelFill(window.WindowStreams.separator([meta.labelType(), meta.labelAccess()], color = True))
 					metas = metadatax.Metadata.labelFill(window.WindowStreams.separator([meta.labelEdition(), meta.labelPack(), meta.labelRelease(), meta.labelUploader()], color = True))
@@ -2232,8 +2291,9 @@ class Core:
 					item.setProperty('GaiaAction', url)
 					item.setProperty('GaiaNumber', str(i + 1))
 					item.setProperty('GaiaExtra', extra)
+					item.setProperty('GaiaIcon', origin.lower())
+					item.setProperty('GaiaPrefix', str(int(prefix > 0)))
 					item.setProperty('GaiaType', meta.type())
-					item.setProperty('GaiaOrion', str(int(meta.orion())))
 					item.setProperty('GaiaProvider', provider)
 					item.setProperty('GaiaStream', stream)
 					item.setProperty('GaiaPopularity', popularity)
@@ -2419,7 +2479,7 @@ class Core:
 					break
 
 			try:
-				item = source
+				item = copy.deepcopy(source)
 				if isinstance(item, list):
 					item = item[0]
 
@@ -2471,7 +2531,6 @@ class Core:
 													sourceObject = provider.Provider.provider(i, enabled = False, local = True, exact = False)['object']
 													break
 												except: pass
-
 								try: url = sourceObject.resolve(url, internal = True) # To accomodate Torba's popup dialog.
 								except: url = sourceObject.resolve(url)
 								item['urlresolved'] = item['url'] = url # Assign to 'url', since it must first be resolved by eg Incursion scrapers and then by eg ResolveUrl
@@ -2504,7 +2563,7 @@ class Core:
 						return None
 				except: pass
 
-				self.progressPlaybackUpdate(progress = 5, title = heading, message = message)
+				self.progressPlaybackUpdate(progress = 2, title = heading, message = message)
 
 				local = 'local' in item and item['local']
 				if item['source'] == block: raise Exception()
@@ -2512,7 +2571,7 @@ class Core:
 				self.tResolved = None
 
 				# OffCloud cloud downloads require a download, even if it is a hoster. Only instant downloads on OffCloud do not need this.
-				try: cloud = (not 'premium' in item or not item['premium']) and (not item['source'] == 'torrent' and not item['source'] == 'usenet') and not tools.Settings.getBoolean('accounts.debrid.offcloud.instant') and handler.Handler(handler.Handler.TypeHoster).service(handle).id() == handler.HandleOffCloud.Id
+				try: cloud = (not 'premium' in item or not item['premium']) and (not item['source'] == 'torrent' and not item['source'] == 'usenet') and not tools.Settings.getBoolean('accounts.debrid.offcloud.instant') and handler.Handler(handler.Handler.TypeHoster).service(handle).id() == debrid.offcloud.Core().id()
 				except: cloud = False
 
 				# Torrents and usenet have a download dialog with their own thread. Do not start a thread for them here.
@@ -2523,7 +2582,7 @@ class Core:
 
 					labelTransferring = 33674 if item['source'] == 'torrent' else 33675 if item['source'] == 'usenet' else 33943
 					labelTransferring = interface.Translation.string(labelTransferring)
-					self.progressPlaybackUpdate(progress = 10, title = heading, message = labelTransferring)
+					self.progressPlaybackUpdate(progress = 5, title = heading, message = labelTransferring)
 
 					def _resolve(item, handle):
 						try:
@@ -2574,7 +2633,7 @@ class Core:
 							self.loaderHide()
 
 						progress += 0.25
-						progressCurrent = 5 + min(int(progress), 30)
+						progressCurrent = 5 + min(int(progress), 25)
 						self.progressPlaybackUpdate(progress = progressCurrent, title = heading, message = labelTransferring)
 						time.sleep(0.5)
 
@@ -3019,11 +3078,13 @@ class Core:
 				for source in self.sourcesAdjusted:
 					if not 'hash' in source and (source['source'] == handler.Handler.TypeTorrent or source['source'] == handler.Handler.TypeUsenet):
 						links.append(source['url'])
-				hashes = self.cacheOrion.hashes(links = links, chunked = partial)
-				for link, hash in hashes.iteritems():
+				identifiers = self.cacheOrion.identifiers(links = links, chunked = partial)
+				for link, identifier in identifiers.iteritems():
 					for i in range(len(self.sourcesAdjusted)):
 						if self.sourcesAdjusted[i]['url'] == link:
-							self.sourcesAdjusted[i]['hash'] = hash
+							if not identifier is None:
+								self.sourcesAdjusted[i]['hash'] = identifier['hash'].lower()
+								self.sourcesAdjusted[i]['segment'] = identifier['segment']
 							break
 
 			threads = []
@@ -3039,16 +3100,16 @@ class Core:
 			self.cacheBusy = False
 			self.adjustUnlock()
 
-	def _adjustSourceCache(self, debrid, type, timeout, partial = False):
+	def _adjustSourceCache(self, object, type, timeout, partial = False):
 		try:
-			debridId = debrid.id()
+			debridId = object.id()
 			self.adjustLock()
 			hashes = []
 			sources = []
 
-			modes = debrid.cachedModes()
-			modeHash = debridx.Debrid.ModeTorrent in modes or debridx.Debrid.ModeUsenet in modes
-			modeLink = debridx.Debrid.ModeHoster in modes
+			modes = object.cachedModes()
+			modeHash = handler.Handler.TypeTorrent in modes or handler.Handler.TypeUsenet in modes
+			modeLink = handler.Handler.TypeHoster in modes
 			for source in self.sourcesAdjusted:
 				if (source['source'] == type or (modeLink and type == handler.Handler.TypeHoster)) and (not 'premium' in source or not source['premium']):
 					# Only check those that were not previously inspected.
@@ -3061,10 +3122,12 @@ class Core:
 						'''if not 'hash' in source:
 							container = network.Container(link = source['url'])
 							source['hash'] = container.hash()'''
-						if modeHash and 'hash' in source and not source['hash'] == None and not source['hash'] == '':
+
+						torrentOrUsenet = source['source'] == handler.Handler.TypeTorrent or source['source'] == handler.Handler.TypeUsenet
+						if torrentOrUsenet and modeHash and 'hash' in source and not source['hash'] == None and not source['hash'] == '':
 							hashes.append(source['hash'])
 							sources.append(source)
-						elif modeLink and 'url' in source and not source['url'] == None and not source['url'] == '':
+						elif not torrentOrUsenet and modeLink and 'url' in source and not source['url'] == None and not source['url'] == '':
 							hashes.append(source['url'])
 							sources.append(source)
 
@@ -3081,22 +3144,22 @@ class Core:
 					source['cache'][debridId] = False
 			self.adjustUnlock()
 
-			def _updateIndividually(debrid, hash, cached):
+			def _updateIndividually(id, hash, cached):
 				hashLower = hash.lower()
 				self.adjustLock()
 				for i in range(len(self.sourcesAdjusted)):
 					try:
 						if self.sourcesAdjusted[i]['hash'].lower() == hashLower:
-							if cached and (not debrid in self.sourcesAdjusted[i]['cache'] or not self.sourcesAdjusted[i]['cache'][debrid]):
-								self.sourcesAdjusted[i]['cache'][debrid] = cached
+							if cached and (not id in self.sourcesAdjusted[i]['cache'] or not self.sourcesAdjusted[i]['cache'][id]):
+								self.sourcesAdjusted[i]['cache'][id] = cached
 								if cached and sum(self.sourcesAdjusted[i]['cache'].values()) == 1: # Only count one of the debird service caches.
 									self.streamsCached += 1
 							break
 					except: pass
 					try:
 						if self.sourcesAdjusted[i]['url'] == hash:
-							if cached and (not debrid in self.sourcesAdjusted[i]['cache'] or not self.sourcesAdjusted[i]['cache'][debrid]):
-								self.sourcesAdjusted[i]['cache'][debrid] = cached
+							if cached and (not id in self.sourcesAdjusted[i]['cache'] or not self.sourcesAdjusted[i]['cache'][id]):
+								self.sourcesAdjusted[i]['cache'][id] = cached
 								if cached and sum(self.sourcesAdjusted[i]['cache'].values()) == 1: # Only count one of the debird service caches.
 									self.streamsCached += 1
 							break
@@ -3106,7 +3169,7 @@ class Core:
 			self.adjustLock()
 			self.progressCache += 1 # Used to determine when the cache-inspection threads are completed.
 			self.adjustUnlock()
-			debrid.cached(id = hashes, timeout = timeout, callback = _updateIndividually, sources = sources)
+			object.cached(id = hashes, timeout = timeout, callback = _updateIndividually, sources = sources)
 			self.adjustLock()
 			self.progressCache -= 1
 			self.adjustUnlock()
@@ -3182,7 +3245,7 @@ class Core:
 		contains = False
 		if mutex: self.adjustLock()
 		try:
-			debrids = [debridx.Premiumize().id(), debridx.RealDebrid().id()]
+			debrids = [debrid.premiumize.Core().id(), debrid.offcloud.Core().id(), debrid.realdebrid.Core().id()]
 			for i in range(len(self.sourcesAdjusted)):
 				sourceAdjusted = self.sourcesAdjusted[i]
 				if sourceAdjusted['url'] == source['url']:
@@ -3232,7 +3295,7 @@ class Core:
 				if not urlresolved == None:
 					self.sourcesAdjusted[index]['urlresolved'] = urlresolved
 				if not hash == None:
-					self.sourcesAdjusted[index]['hash'] = hash
+					self.sourcesAdjusted[index]['hash'] = hash.lower()
 
 				if mutex: self.adjustUnlock()
 		except:
@@ -3417,12 +3480,14 @@ class Core:
 		if wait: thread.join()
 
 	def sourcesRemoveDuplicates(self, sources, orion = False):
-		def filterLink(link):
+		def filterLink(link, premium):
 			container = network.Container(link)
 			if container.torrentIsMagnet():
 				return container.torrentMagnetClean() # Clean magnet from trackers, name, domain, etc.
 			else:
-				return network.Networker(link).link() # Clean link from HTTP headers.
+				link = network.Networker(link).link() # Clean link from HTTP headers.
+				if premium: link = network.Networker.linkPath(link) # Parallel searches of premium services often returns the same file on different servers. Only check the URL path and ignore the domain.
+				return link
 
 		def cacheUpdate(sourceOld, sourceNew):
 			sourceOld['cache'].update({k : v for k, v in sourceNew['cache'].items() if v})
@@ -3441,8 +3506,10 @@ class Core:
 
 			index = None
 			duplicate = False
-			linkNormal = filterLink(source['url']).lower()
-			linkResolved = filterLink(source['urlresolved']) if 'urlresolved' in source else None
+			try: premium = source['premium']
+			except: premium = False
+			linkNormal = filterLink(source['url'], premium).lower()
+			linkResolved = filterLink(source['urlresolved'], premium) if 'urlresolved' in source else None
 
 			try:
 				index = linksNormal.index(linkNormal)
@@ -3947,9 +4014,9 @@ class Core:
 			# PREPROCESSING
 			####################################################################################
 
-			handlePremiumize = handler.HandlePremiumize()
-			premiumize = debridx.Premiumize()
-			premiumizeEnabled = premiumize.accountValid()
+			premiumizeHandle = debrid.premiumize.Handle()
+			premiumizeCore = debrid.premiumize.Core()
+			premiumizeEnabled = premiumizeCore.accountValid()
 
 			self.countInitial = len(items)
 			self.countDuplicates = 0
@@ -4200,9 +4267,9 @@ class Core:
 					torrentCacheExclude = filterProviderCacheTorrent == 1
 					torrentCacheRequire = filterProviderCacheTorrent == 2
 					if torrentCacheExclude:
-						items = [i for i in items if not i['source'] == 'torrent' or not ('cache' in i and debridx.Debrid.cachedAny(i['cache']))]
+						items = [i for i in items if not i['source'] == 'torrent' or not ('cache' in i and debrid.Debrid.cached(i['cache']))]
 					elif torrentCacheRequire:
-						items = [i for i in items if not i['source'] == 'torrent' or ('cache' in i and debridx.Debrid.cachedAny(i['cache']))]
+						items = [i for i in items if not i['source'] == 'torrent' or ('cache' in i and debrid.Debrid.cached(i['cache']))]
 
 					# Filter - Torrent Seeds
 					if not torrentCacheRequire:
@@ -4217,9 +4284,9 @@ class Core:
 					usenetCacheExclude = filterProviderCacheUsenet == 1
 					usenetCacheRequire = filterProviderCacheUsenet == 2
 					if usenetCacheExclude:
-						items = [i for i in items if not i['source'] == 'usenet' or not ('cache' in i and debridx.Debrid.cachedAny(i['cache']))]
+						items = [i for i in items if not i['source'] == 'usenet' or not ('cache' in i and debrid.Debrid.cached(i['cache']))]
 					elif usenetCacheRequire:
-						items = [i for i in items if not i['source'] == 'usenet' or ('cache' in i and debridx.Debrid.cachedAny(i['cache']))]
+						items = [i for i in items if not i['source'] == 'usenet' or ('cache' in i and debrid.Debrid.cached(i['cache']))]
 				else:
 					items = [i for i in items if not i['source'] == 'usenet']
 
@@ -4232,9 +4299,9 @@ class Core:
 					hosterCacheRequire = filterProviderCacheHoster == 2
 
 					if hosterCacheExclude:
-						items = [i for i in items if not (not i['source'] == 'torrent' and not i['source'] == 'usenet') or not ('cache' in i and debridx.Debrid.cachedAny(i['cache']))]
+						items = [i for i in items if not (not i['source'] == 'torrent' and not i['source'] == 'usenet') or not ('cache' in i and debrid.Debrid.cached(i['cache']))]
 					elif hosterCacheRequire:
-						items = [i for i in items if not (not i['source'] == 'torrent' and not i['source'] == 'usenet') or ('cache' in i and debridx.Debrid.cachedAny(i['cache']))]
+						items = [i for i in items if not (not i['source'] == 'torrent' and not i['source'] == 'usenet') or ('cache' in i and debrid.Debrid.cached(i['cache']))]
 				else:
 					items = [i for i in items if not (not i['source'] == 'torrent' and not i['source'] == 'usenet')]
 
@@ -4243,8 +4310,8 @@ class Core:
 				if costMaximum > 0 and premiumizeEnabled:
 					filter = []
 					for i in items:
-						if handlePremiumize.supported(i):
-							try: cost = premiumize.service(i['source'].lower().rsplit('.', 1)[0])['usage']['factor']['value']
+						if premiumizeHandle.supported(i):
+							try: cost = premiumizeCore.service(i['source'].lower().rsplit('.', 1)[0])['usage']['factor']['value']
 							except: cost = None
 							if cost == None or cost <= costMaximum:
 								filter.append(i)
@@ -4278,7 +4345,7 @@ class Core:
 			filterLocal = _filterMetadata(filterLocal, ['HD8K', 'HD6K', 'HD4K', 'HD2K', 'HD1080', 'HD720', 'SD'])
 
 			# Filter - Add Hosters that are supported by a Debrid service.
-			if debrid.status():
+			if debrid.Debrid.enabled():
 				filter = []
 				for i in range(len(items)):
 					if not 'debrid' in items[i]:
@@ -4520,7 +4587,7 @@ class Core:
 						filter[optionLocal].append(i)
 					elif 'premium' in i and i['premium']:
 						filter[optionPremium].append(i)
-					elif 'cache' in i and debridx.Debrid.cachedAny(i['cache']):
+					elif 'cache' in i and debrid.Debrid.cached(i['cache']):
 						filter[optionCached].append(i)
 					elif 'direct' in i and i['direct']:
 						filter[optionDirect].append(i)
@@ -4600,9 +4667,9 @@ class Core:
 			if not self.navigationStreamsSpecial:
 				duration = self._duration(metadata)
 
-				handlePremiumize = handler.HandlePremiumize()
-				premiumize = debridx.Premiumize()
-				premiumizeEnabled = premiumize.accountValid()
+				premiumizeHandle = debrid.premiumize.Handle()
+				premiumizeCore = debrid.premiumize.Core()
+				premiumizeEnabled = premiumizeCore.accountValid()
 
 				premiumInformation = tools.Settings.getBoolean('interface.information.premium.enabled')
 
@@ -4611,16 +4678,16 @@ class Core:
 				premiumizeInformationUsage = None
 				if premiumInformation and premiumizeInformation > 0 and premiumizeEnabled:
 					if premiumizeInformation == 1 or premiumizeInformation == 2:
-						try: premiumizeInformationUsage = premiumize.account()['usage']['consumed']['description']
+						try: premiumizeInformationUsage = premiumizeCore.account()['usage']['consumed']['description']
 						except: pass
 
-				easynews = debridx.EasyNews()
+				easynewsCore = debrid.easynews.Core()
 				easynewsInformation = tools.Settings.getInteger('interface.information.premium.easynews')
 				easynewsInformationUsage = None
-				if premiumInformation and easynewsInformation > 0 and easynews.accountValid():
+				if premiumInformation and easynewsInformation > 0 and easynewsCore.accountValid():
 					try:
 						easynewsInformationUsage = []
-						usage = easynews.account()['usage']
+						usage = easynewsCore.account()['usage']
 						if easynewsInformation == 1: easynewsInformationUsage.append('%s Consumed' % (usage['consumed']['description']))
 						elif easynewsInformation == 2: easynewsInformationUsage.append('%s Remaining' % (usage['remaining']['description']))
 						elif easynewsInformation == 3: easynewsInformationUsage.append('%s Total' % (usage['total']['size']['description']))
@@ -4633,6 +4700,7 @@ class Core:
 					except:
 						easynewsInformationUsage = None
 
+				prefix = tools.Settings.getInteger('interface.navigation.streams.prefix')
 				precheck = tools.System.developers() and tools.Settings.getBoolean('scraping.precheck.enabled')
 				layout = tools.Settings.getInteger('interface.information.layout')
 				layoutColor = tools.Settings.getBoolean('interface.information.layout.color')
@@ -4671,7 +4739,7 @@ class Core:
 					except: pass
 
 					source = items[i]['source']
-					pro = re.sub('v\d+$', '', items[i]['providerlabel'])
+					pro = re.sub('v\d+$', '', items[i]['provider'])
 					meta = items[i]['metadata']
 
 					infos = []
@@ -4692,10 +4760,16 @@ class Core:
 						value = interface.Format.font(value, bold = True, color = interface.Format.colorMain(), uppercase = True)
 						infos.append(value)
 
+					if prefix > 0:
+						origin = orionoid.Orionoid.Name if 'orion' in items[i] else items[i]['origin']
+						if prefix == 1: origin = origin[:3]
+						elif prefix == 2: origin = re.sub('scrapers*', '', origin, flags = re.IGNORECASE)
+						infos.append(interface.Format.font(origin, bold = True, uppercase = True, color = interface.Format.colorTertiary()))
+
 					if layoutProvider > 0 and not pro == None and not pro == '' and not pro == '0':
 						try:
 							if 'orion' in items[i]:
-								value = interface.Format.font(orionoid.Orionoid.Name, color = interface.Format.colorOrion(), bold = True, uppercase = True)
+								value = interface.Format.font(orionoid.Orionoid.Name, color = interface.Format.colorTertiary(), bold = True, uppercase = True)
 								infos.append(value)
 						except: pass
 						value = pro
@@ -4726,11 +4800,11 @@ class Core:
 
 					labelTop = interface.Format.fontSeparator().join(infos)
 
-					if premiumizeEnabled and premiumizeInformation > 0 and ((not('direct' in items[i] and items[i]['direct']) and debridHas and handlePremiumize.supported(items[i]) or source == 'premiumize')):
-						try: # Somtimes Premiumize().service(source) failes. In such a case, just ignore it.
+					if premiumizeEnabled and premiumizeInformation > 0 and ((not('direct' in items[i] and items[i]['direct']) and debridHas and premiumizeHandle.supported(items[i]) or source == 'premiumize')):
+						try: # Somtimes premiumize.Core().service(source) failes. In such a case, just ignore it.
 							cost = None
 							limit = None
-							service = premiumize.service(source)
+							service = premiumizeCore.service(source)
 							if service:
 								if premiumizeInformation == 1 or premiumizeInformation == 2:
 									cost = service['usage']['factor']['description']
@@ -4833,8 +4907,10 @@ class Core:
 		try:
 			self.downloadCanceled = False
 			log = True
+
 			if not internal: self.url = None
-			u = url = item['url']
+			url = item['url']
+			url = url.replace('filefactory.com/stream/', 'filefactory.com/file/')
 
 			if resolve == network.Networker.ResolveNone:
 				self.url = url
@@ -4861,14 +4937,14 @@ class Core:
 
 				try:
 					# To accomodate Torba's popup dialog.
-					u = url = source.resolve(url, internal = internal)
+					url = source.resolve(url, internal = internal)
 				except:
-					u = url = source.resolve(url)
+					url = source.resolve(url)
 
 				if not item['source'] == 'torrent' and not item['source'] == 'usenet':
 					item['source'] = network.Networker.linkDomain(u).lower()
 			except:
-				u = url
+				pass
 
 			if resolve == network.Networker.ResolveProvider:
 				self.url = url
@@ -4896,7 +4972,7 @@ class Core:
 					self.downloadCanceled = (handle == handler.Handler.ReturnCancel)
 					raise Exception('Error Handler')
 
-			result = sourceHandler.handle(link = u, item = item, name = handle, download = download, popups = popups, close = handleClose, mode = handleMode, cloud = cloud)
+			result = sourceHandler.handle(link = url, item = item, name = handle, download = download, popups = popups, close = handleClose, mode = handleMode, cloud = cloud)
 
 			if not result['success']:
 				if result['error'] == handler.Handler.ReturnUnavailable or result['error'] == handler.Handler.ReturnExternal or result['error'] == handler.Handler.ReturnCancel:
@@ -4924,14 +5000,14 @@ class Core:
 			headers = dict(urlparse.parse_qsl(headers))
 
 			if result['link'].startswith('http') and '.m3u8' in result['link']:
-				resultRequest = client.request(url.split('|')[0], headers=headers, output='geturl', timeout='20')
+				resultRequest = client.request(url.split('|')[0], headers = headers, output = 'geturl', timeout = '20')
 				if resultRequest == None:
 					raise Exception('Error M3U8')
 			elif result['link'].startswith('http'):
 				# Some Premiumize hoster links, eg Vidto, return a 403 error when doing this precheck with client.request, even though the link works.
 				# Do not conduct these prechecks for debrid services. If there is a problem with the link, the Kodi player will just fail.
 				if not 'handle' in result or not result['handle'] in [i['id'] for i in handler.Handler.handles()]:
-					resultRequest = client.request(result['link'].split('|')[0], headers=headers, output='chunk', timeout='20')
+					resultRequest = client.request(result['link'].split('|')[0], headers = headers, output = 'chunk', timeout = '20')
 					if resultRequest == None:
 						raise Exception('Error Server')
 
@@ -4959,7 +5035,7 @@ class Core:
 		self.hostcapDict = ['hugefiles.net', 'kingfiles.net', 'openload.io', 'openload.co', 'oload.tv', 'thevideo.me', 'vidup.me', 'streamin.to', 'torba.se']
 		self.hostblockDict = []
 
-		self.debridServices = debrid.services()
+		self.debridServices = debrid.Debrid.services()
 
 		self.externalServices = {}
 		providers = provider.Provider.providers(enabled = True, local = False)
@@ -4975,8 +5051,11 @@ class Core:
 	def getLocalTitle(self, title, imdb, tvdb, content):
 		language = self.getLanguage()
 		if not language: return title
-		if content.startswith('movie'): titleForeign = trakt.getMovieTranslation(imdb, language)
-		else: titleForeign = tvmaze.tvMaze().getTVShowTranslation(tvdb, language)
+		if content.startswith('movie'):
+			titleForeign = trakt.getMovieTranslation(imdb, language)
+		else:
+			titleForeign = tvmaze.tvMaze().getTVShowTranslation(tvdb, language)
+			if titleForeign == None: titleForeign = trakt.getMovieTranslation(imdb, language)
 		return titleForeign or title
 
 	def getAliasTitles(self, imdb, localtitle, content):
@@ -4989,7 +5068,7 @@ class Core:
 			return []
 
 	def getLanguage(self):
-		if tools.Language.customization(): language = tools.Settings.getString('scraping.foreign.language')
+		if tools.Language.customization(): language = tools.Settings.getString('scraping.alternative.language')
 		else: language = tools.Language.Alternative
 		return tools.Language.code(language)
 

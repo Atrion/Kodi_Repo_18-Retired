@@ -21,13 +21,16 @@
 import re,urllib,urlparse
 from resources.lib.modules import cleantitle
 from resources.lib.modules import client
+from resources.lib.extensions import provider
 from resources.lib.extensions import metadata
 from resources.lib.extensions import tools
 from resources.lib.externals.beautifulsoup import BeautifulSoup
 
-class source:
+class source(provider.ProviderBase):
 
 	def __init__(self):
+		provider.ProviderBase.__init__(self, supportMovies = True, supportShows = False)
+
 		self.pack = True # Checked by provider.py
 		self.priority = 0
 		self.language = ['un']
@@ -36,31 +39,25 @@ class source:
 		self.search_link = '/Movies/%s.aspx'
 		self.download_link = '/Torrents/%s.seventorrents.com.torrent'
 
-	def movie(self, imdb, title, localtitle, year):
-		try:
-			url = {'imdb': imdb, 'title': title, 'year': year}
-			url = urllib.urlencode(url)
-			return url
-		except:
-			return
-
 	def sources(self, url, hostDict, hostprDict):
 		sources = []
 		try:
-			if url == None:
-				raise Exception()
+			if url == None: raise Exception()
 
-			data = urlparse.parse_qs(url)
-			data = dict([(i, data[i][0]) if data[i] else (i, '') for i in data])
+			data = self._decode(url)
 
 			if 'exact' in data and data['exact']:
 				query = title = data['title']
+				titles = None
 				year = None
 			else:
 				title = data['title']
+				titles = data['alternatives'] if 'alternatives' in data else None
 				year = int(data['year']) if 'year' in data and not data['year'] == None else None
 				query = '%s %d' % (title, year)
 				query = re.sub('(\\\|/| -|:|;|\*|\?|"|\'|<|>|\|)', ' ', query)
+
+			if not self._query(query): return sources
 
 			url = urlparse.urljoin(self.base_link, self.search_link) % urllib.quote_plus(query)
 			html = BeautifulSoup(client.request(url))
@@ -86,7 +83,7 @@ class source:
 					htmlSize = htmlData[7].strip().strip("'")
 
 					# Metadata
-					meta = metadata.Metadata(name = htmlName, title = title, year = year, link = htmlLink, size = htmlSize, seeds = 1)
+					meta = metadata.Metadata(name = htmlName, title = title, titles = titles, year = year, link = htmlLink, size = htmlSize, seeds = 1)
 
 					# Ignore
 					meta.mIgnoreLength = 10
@@ -100,6 +97,3 @@ class source:
 			return sources
 		except:
 			return sources
-
-	def resolve(self, url):
-		return url

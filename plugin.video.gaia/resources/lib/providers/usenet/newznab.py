@@ -21,15 +21,15 @@
 import os
 import re
 import sys
-import urllib
 import urlparse
 import datetime
 from resources.lib.modules import client
+from resources.lib.extensions import provider
 from resources.lib.extensions import tools
 from resources.lib.extensions import metadata
 from resources.lib.extensions import network
 
-class NewzNab:
+class NewzNab(provider.ProviderBase):
 
 	TypeMovie = 'movie'
 	TypeShow = 'tvsearch'
@@ -40,7 +40,7 @@ class NewzNab:
 	ParameterType = 't'
 	ParameterOutput = 'o'
 	ParameterId = 'id'
-	ParameterQuery = 'query'
+	ParameterQuery = 'q'
 	ParameterImdb = 'imdbid'
 	ParameterTvdb = 'tvdbid'
 	ParameterSeason = 'season'
@@ -51,6 +51,8 @@ class NewzNab:
 	IdLengths = (40, 32)
 
 	def __init__(self, id, link, domains = []):
+		provider.ProviderBase.__init__(self, supportMovies = True, supportShows = True)
+
 		self.domains = [domain.lower() for domain in domains]
 		domain = network.Networker.linkDomain(link, subdomain = False, topdomain = True).lower()
 		if not domain in self.domains: self.domains.insert(0, domain)
@@ -106,8 +108,8 @@ class NewzNab:
 		parameters.append([NewzNab.ParameterType, type])
 		if not id is None: parameters.append([NewzNab.ParameterId, self._id(id)])
 		if not query is None: parameters.append([NewzNab.ParameterQuery, query])
-		if not imdb is None: parameters.append([NewzNab.ParameterImdb, imdb.replace('tt', '')])
 		if not tvdb is None: parameters.append([NewzNab.ParameterTvdb, tvdb])
+		elif not imdb is None: parameters.append([NewzNab.ParameterImdb, imdb.replace('tt', '')]) # Do not attach an IMDb ID if there is already one for TVDb, otherwise no results are returned.
 		if not season is None: parameters.append([NewzNab.ParameterSeason, season])
 		if not episode is None: parameters.append([NewzNab.ParameterEpisode, episode])
 
@@ -135,42 +137,18 @@ class NewzNab:
 		except:
 			return None
 
-	def movie(self, imdb, title, localtitle, year):
-		try:
-			url = {'imdb': imdb, 'title': title, 'year': year}
-			url = urllib.urlencode(url)
-			return url
-		except: return None
-
-	def tvshow(self, imdb, tvdb, tvshowtitle, localtitle, year):
-		try:
-			url = {'imdb': imdb, 'tvdb': tvdb, 'tvshowtitle': tvshowtitle, 'year': year}
-			url = urllib.urlencode(url)
-			return url
-		except: return None
-
-	def episode(self, url, imdb, tvdb, title, premiered, season, episode):
-		try:
-			if url == None: return
-			url = urlparse.parse_qs(url)
-			url = dict([(i, url[i][0]) if url[i] else (i, '') for i in url])
-			url['title'], url['premiered'], url['season'], url['episode'] = title, premiered, season, episode
-			url = urllib.urlencode(url)
-			return url
-		except: return None
-
 	def sources(self, url, hostDict, hostprDict):
 		sources = []
 		try:
 			if not url == None and self.enabled:
 				ignoreContains = None
-				data = urlparse.parse_qs(url)
-				data = dict([(i, data[i][0]) if data[i] else (i, '') for i in data])
+				data = self._decode(url)
 
 				show = 'tvshowtitle' in data
 				title = data['tvshowtitle'] if show else data['title']
 
 				if 'exact' in data and data['exact']:
+					titles = None
 					year = None
 					season = None
 					episode = None
@@ -178,6 +156,7 @@ class NewzNab:
 					packCount = None
 					link = self._link(type = NewzNab.TypeSearch, query = title)
 				else:
+					titles = data['alternatives'] if 'alternatives' in data else None
 					year = int(data['year']) if 'year' in data and not data['year'] is None else None
 					season = int(data['season']) if show and 'season' in data and not data['season'] is None else None
 					episode = int(data['episode']) if show and 'episode' in data and not data['episode'] is None else None
@@ -189,13 +168,15 @@ class NewzNab:
 						# Search special episodes by name. All special episodes are added to season 0 by Trakt and TVDb. Hence, do not search by filename (eg: S02E00), since the season is not known.
 						if (season == 0 or episode == 0) and ('title' in data and not data['title'] == None and not data['title'] == ''):
 							title = '%s %s' % (data['tvshowtitle'], data['title']) # Change the title for metadata filtering.
-							link = self._link(type = NewzNab.TypeSearch, query = title)
+							link = self._link(type = NewzNab.TypeShow, query = title)
 							ignoreContains = len(data['title']) / float(len(title)) # Increase the required ignore ration, since otherwise individual episodes and season packs are found as well.
 						else:
-							if pack: link = self._link(type = NewzNab.TypeSearch, query = '%s %d' % (title, season))
+							if pack: link = self._link(type = NewzNab.TypeShow, query = '%s %d' % (title, season)) # Do not use geenral search, but TV search instead.
 							else: link = self._link(type = NewzNab.TypeShow, imdb = imdb, tvdb = tvdb, season = season, episode = episode)
 					else:
 						link = self._link(type = NewzNab.TypeMovie, imdb = imdb)
+
+				if not self._query(link): return sources
 
 				data = client.request(link, ignoreErrors = 429)
 				try:
@@ -246,7 +227,7 @@ class NewzNab:
 						jsonSize = int(self._extract(item, 'size'))
 
 						# Metadata
-						meta = metadata.Metadata(name = jsonName, title = title, year = year, season = season, episode = episode, pack = pack, packCount = packCount, link = jsonLink, size = jsonSize, age = jsonAge)
+						meta = metadata.Metadata(name = jsonName, title = title, titles = titles, year = year, season = season, episode = episode, pack = pack, packCount = packCount, link = jsonLink, size = jsonSize, age = jsonAge)
 
 						# Ignore
 						meta.ignoreAdjust(contains = ignoreContains)
@@ -259,6 +240,3 @@ class NewzNab:
 		except:
 			tools.Logger.error()
 		return sources
-
-	def resolve(self, url):
-		return url

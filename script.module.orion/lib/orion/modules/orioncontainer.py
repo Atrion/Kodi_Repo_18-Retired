@@ -112,6 +112,74 @@ class OrionContainer:
 			except: return default
 
 	##############################################################################
+	# SEGMENT
+	##############################################################################
+
+	def segmentFirst(self, default = None):
+		if self.mFull:
+			try: return self.mData['segment']['first']
+			except: return default
+		else:
+			try: return self.mData.values()[0]['segment']['first']
+			except:
+				try: return self.mData.values()[0]['first']
+				except: return default
+
+	def segmentLargest(self, default = None):
+		if self.mFull:
+			try: return self.mData['segment']['largest']
+			except: return default
+		else:
+			try: return self.mData.values()[0]['segment']['largest']
+			except:
+				try: return self.mData.values()[0]['largest']
+				except: return default
+
+	def segmentList(self, default = None):
+		if self.mFull:
+			try: return self.mData['segment']['list']
+			except: return default
+		else:
+			try: return self.mData.values()[0]['segment']['list']
+			except:
+				try: return self.mData.values()[0]['list']
+				except: return default
+
+	##############################################################################
+	# IDENTIFIERS
+	##############################################################################
+
+	@classmethod
+	def identifiers(self, links):
+		if links:
+			if OrionTools.isString(links): links = [links]
+			chunks = [links[i : i + OrionContainer.ChunkSize] for i in xrange(0, len(links), OrionContainer.ChunkSize)]
+			results = []
+			threads = []
+			for i in range(len(chunks)):
+				results.append(None)
+				threads.append(threading.Thread(target = self._identifiers, args = (chunks[i], results, i)))
+			[i.start() for i in threads]
+			[i.join() for i in threads]
+			result = [i for j in results if j for i in j if i]
+			if len(result) > 0: return result
+		return []
+
+	@classmethod
+	def _identifiers(self, links, results, index):
+		try:
+			api = OrionApi()
+			api.containerIdentifier(links = links)
+			if api.statusSuccess():
+				identifiers = []
+				data = api.data()['identifiers']
+				for key, value in data.iteritems():
+					identifiers.append(OrionContainer(data = {key : value}, full = False))
+				results[index] = identifiers
+		except:
+			OrionTools.error()
+
+	##############################################################################
 	# HASHES
 	##############################################################################
 
@@ -142,6 +210,40 @@ class OrionContainer:
 				for key, value in data.iteritems():
 					hashes.append(OrionContainer(data = {key : value}, full = False))
 				results[index] = hashes
+		except:
+			OrionTools.error()
+
+	##############################################################################
+	# SEGMENTS
+	##############################################################################
+
+	@classmethod
+	def segments(self, links):
+		if links:
+			if OrionTools.isString(links): links = [links]
+			chunks = [links[i : i + OrionContainer.ChunkSize] for i in xrange(0, len(links), OrionContainer.ChunkSize)]
+			results = []
+			threads = []
+			for i in range(len(chunks)):
+				results.append(None)
+				threads.append(threading.Thread(target = self._segments, args = (chunks[i], results, i)))
+			[i.start() for i in threads]
+			[i.join() for i in threads]
+			result = [i for j in results if j for i in j if i]
+			if len(result) > 0: return result
+		return []
+
+	@classmethod
+	def _segments(self, links, results, index):
+		try:
+			api = OrionApi()
+			api.containerSegment(links = links)
+			if api.statusSuccess():
+				identifiers = []
+				data = api.data()['segments']
+				for key, value in data.iteritems():
+					identifiers.append(OrionContainer(data = {key : value}, full = False))
+				results[index] = identifiers
 		except:
 			OrionTools.error()
 

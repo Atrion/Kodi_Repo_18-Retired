@@ -19,11 +19,9 @@
 '''
 
 from resources.lib.modules import client
-from resources.lib.modules import debrid as debridold
 from resources.lib.extensions import tools
 from resources.lib.extensions import cache
 from resources.lib.extensions import network
-from resources.lib.extensions import debrid
 from resources.lib.extensions import interface
 from resources.lib.extensions import window
 
@@ -68,43 +66,18 @@ class Handler(object):
 
 	@classmethod
 	def handles(self):
+		from resources.lib import debrid
 		global Handles
-		if Handles == None:
-			Handles = [
-				{
-					'id' : HandlePremiumize.Id,
-					'name' : HandlePremiumize.Name,
-					'abbreviation' : HandlePremiumize.Abbreviation,
-				},
-				{
-					'id' : HandleOffCloud.Id,
-					'name' : HandleOffCloud.Name,
-					'abbreviation' : HandleOffCloud.Abbreviation,
-				},
-				{
-					'id' : HandleRealDebrid.Id,
-					'name' : HandleRealDebrid.Name,
-					'abbreviation' : HandleRealDebrid.Abbreviation,
-				},
-				{
-					'id' : HandleAllDebrid.Id,
-					'name' : HandleAllDebrid.Name,
-					'abbreviation' : HandleAllDebrid.Abbreviation,
-				},
-				{
-					'id' : HandleRapidPremium.Id,
-					'name' : HandleRapidPremium.Name,
-					'abbreviation' : HandleRapidPremium.Abbreviation,
-				},
-			]
+		if Handles == None: Handles = debrid.Debrid.handles(data = True, priority = True)
 		return Handles
 
 	@classmethod
 	def handlesSingleCache(self):
+		from resources.lib import debrid
 		global HandlesCache
 		if HandlesCache == None:
 			HandlesCache = 0
-			services = [debrid.Premiumize(), debrid.OffCloud(), debrid.RealDebrid()]
+			services = [debrid.premiumize.Core(), debrid.offcloud.Core(), debrid.realdebrid.Core()]
 			for service in services:
 				if service.accountValid():
 					HandlesCache += 1
@@ -112,18 +85,19 @@ class Handler(object):
 
 	@classmethod
 	def handlesSingleHoster(self):
+		from resources.lib import debrid
 		global HandlesHoster
 		if HandlesHoster == None:
 			HandlesHoster = 0
-			services = [debrid.Premiumize(), debrid.OffCloud(), debrid.RealDebrid(), debrid.AllDebrid(), debrid.RapidPremium()]
+			services = [debrid.premiumize.Core(), debrid.offcloud.Core(), debrid.realdebrid.Core(), debrid.alldebrid.Core(), debrid.rapidpremium.Core()]
 			for service in services:
 				if service.accountValid():
 					HandlesHoster += 1
 		return HandlesHoster <= 1
 
 	def _initialize(self, type):
-		if type == None:
-			return
+		from resources.lib import debrid
+		if type == None: return
 
 		try:
 			direct = 'direct' in type and type['direct']
@@ -168,20 +142,20 @@ class Handler(object):
 			if HandlerServicesTorrent == None:
 				HandlerServicesTorrent = []
 				if tools.Settings.getBoolean('streaming.torrent.enabled'):
-					premiumize = debrid.Premiumize()
-					offcloud = debrid.OffCloud()
-					realdebrid = debrid.RealDebrid()
+					premiumizeCore = debrid.premiumize.Core()
+					offcloudCore = debrid.offcloud.Core()
+					realdebridCore = debrid.realdebrid.Core()
 					default = tools.Settings.getInteger('streaming.torrent.default')
-					if premiumize.accountValid() and premiumize.streamingTorrent():
-						handle = HandlePremiumize()
+					if premiumizeCore.accountValid() and premiumizeCore.streamingTorrent():
+						handle = debrid.premiumize.Handle()
 						HandlerServicesTorrent.append(handle)
 						if default == 1: HandlerDefaultTorrent = handle
-					if offcloud.accountValid() and offcloud.streamingTorrent():
-						handle = HandleOffCloud()
+					if offcloudCore.accountValid() and offcloudCore.streamingTorrent():
+						handle = debrid.offcloud.Handle()
 						HandlerServicesTorrent.append(handle)
 						if default == 2: HandlerDefaultTorrent = handle
-					if realdebrid.accountValid() and realdebrid.streamingTorrent():
-						handle = HandleRealDebrid()
+					if realdebridCore.accountValid() and realdebridCore.streamingTorrent():
+						handle = debrid.realdebrid.Handle()
 						HandlerServicesTorrent.append(handle)
 						if default == 3: HandlerDefaultTorrent = handle
 					if tools.Settings.getBoolean('streaming.torrent.elementum.enabled') and tools.Settings.getBoolean('streaming.torrent.elementum.connected'):
@@ -201,15 +175,15 @@ class Handler(object):
 			if HandlerServicesUsenet == None:
 				HandlerServicesUsenet = []
 				if tools.Settings.getBoolean('streaming.usenet.enabled'):
-					premiumize = debrid.Premiumize()
-					offcloud = debrid.OffCloud()
+					premiumizeCore = debrid.premiumize.Core()
+					offcloudCore = debrid.offcloud.Core()
 					default = tools.Settings.getInteger('streaming.usenet.default')
-					if premiumize.accountValid() and premiumize.streamingUsenet():
-						handle = HandlePremiumize()
+					if premiumizeCore.accountValid() and premiumizeCore.streamingUsenet():
+						handle = debrid.premiumize.Handle()
 						HandlerServicesUsenet.append(handle)
 						if default == 1: HandlerDefaultUsenet = handle
-					if offcloud.accountValid() and offcloud.streamingUsenet():
-						handle = HandleOffCloud()
+					if offcloudCore.accountValid() and offcloudCore.streamingUsenet():
+						handle = debrid.offcloud.Handle()
 						HandlerServicesUsenet.append(handle)
 						if default == 2: HandlerDefaultUsenet = handle
 					self.mServices = HandlerServicesUsenet
@@ -221,30 +195,30 @@ class Handler(object):
 			if HandlerServicesHoster == None:
 				HandlerServicesHoster = []
 				if tools.Settings.getBoolean('streaming.hoster.enabled'):
-					premiumize = debrid.Premiumize()
-					offcloud = debrid.OffCloud()
-					realdebrid = debrid.RealDebrid()
-					alldebrid = debrid.AllDebrid()
-					rapidpremium = debrid.RapidPremium()
+					premiumizeCore = debrid.premiumize.Core()
+					offcloudCore = debrid.offcloud.Core()
+					realdebridCore = debrid.realdebrid.Core()
+					alldebridCore = debrid.alldebrid.Core()
+					rapidpremiumCore = debrid.rapidpremium.Core()
 					default = tools.Settings.getInteger('streaming.hoster.default')
-					if premiumize.accountValid() and premiumize.streamingHoster():
-						handle = HandlePremiumize()
+					if premiumizeCore.accountValid() and premiumizeCore.streamingHoster():
+						handle = debrid.premiumize.Handle()
 						HandlerServicesHoster.append(handle)
 						if default == 1: HandlerDefaultHoster = handle
-					if offcloud.accountValid() and offcloud.streamingHoster():
-						handle = HandleOffCloud()
+					if offcloudCore.accountValid() and offcloudCore.streamingHoster():
+						handle = debrid.offcloud.Handle()
 						HandlerServicesHoster.append(handle)
 						if default == 2: HandlerDefaultHoster = handle
-					if realdebrid.accountValid() and realdebrid.streamingHoster():
-						handle = HandleRealDebrid()
+					if realdebridCore.accountValid() and realdebridCore.streamingHoster():
+						handle = debrid.realdebrid.Handle()
 						HandlerServicesHoster.append(handle)
 						if default == 3: HandlerDefaultHoster = handle
-					if alldebrid.accountValid() and alldebrid.streamingHoster():
-						handle = HandleAllDebrid()
+					if alldebridCore.accountValid() and alldebridCore.streamingHoster():
+						handle = debrid.alldebrid.Handle()
 						HandlerServicesHoster.append(handle)
 						if default == 4: HandlerDefaultHoster = handle
-					if rapidpremium.accountValid() and rapidpremium.streamingHoster():
-						handle = HandleRapidPremium()
+					if rapidpremiumCore.accountValid() and rapidpremiumCore.streamingHoster():
+						handle = debrid.rapidpremium.Handle()
 						HandlerServicesHoster.append(handle)
 						if default == 5: HandlerDefaultHoster = handle
 					if tools.Settings.getBoolean('streaming.hoster.resolveurl.enabled'):
@@ -303,13 +277,25 @@ class Handler(object):
 
 	def serviceBest(self, item, cached = True, cloud = False):
 		try:
+			from resources.lib import debrid
 			self._initialize(item)
 			services = [i.id() for i in self.mServices if i.supported(item, cloud = cloud)]
 
 			if not 'cache' in item or not any([i for i in item['cache'].iteritems()]): cached = False
 			if cached: cache = item['cache']
 
-			selections = [HandleDirect().id(), HandlePremiumize().id(), HandleOffCloud().id(), HandleRealDebrid().id(), HandleAllDebrid().id(), HandleRapidPremium().id(), HandleElementum().id(), HandleQuasar().id(), HandleResolveUrl().id(), HandleUrlResolver().id()]
+			selections = [
+				HandleDirect().id(),
+				debrid.premiumize.Handle().id(),
+				debrid.offcloud.Handle().id(),
+				debrid.realdebrid.Handle().id(),
+				debrid.alldebrid.Handle().id(),
+				debrid.rapidpremium.Handle().id(),
+				HandleElementum().id(),
+				HandleQuasar().id(),
+				HandleResolveUrl().id(),
+				HandleUrlResolver().id(),
+			]
 			for selection in selections:
 				# Try to find a cached link first.
 				if selection in services and ((not cached) or (cached and selection in cache and cache[selection])):
@@ -444,13 +430,25 @@ class Handler(object):
 
 class Handle(object):
 
-	def __init__(self, name, id = None, abbreviation = None, debrid = False, open = False, addon = False):
+	def __init__(self, name, id = None, abbreviation = None, priority = None, debrid = False, open = False, addon = False):
 		self.mId = name.lower() if id == None else id
 		self.mName = name
 		self.mAbbreviation = abbreviation
+		self.mPriority = priority
 		self.mDebrid = debrid
 		self.mOpen = open
 		self.mAddon = addon
+
+	def data(self):
+		return {
+			'id' : self.mId,
+			'name' : self.mName,
+			'abbreviation' : self.mAbbreviation,
+			'priority' : self.mPriority,
+			'debrid' : self.mDebrid,
+			'open' : self.mOpen,
+			'addon' : self.mAddon,
+		}
 
 	def id(self):
 		return self.mId
@@ -460,6 +458,9 @@ class Handle(object):
 
 	def abbreviation(self):
 		return self.mAbbreviation
+
+	def priority(self):
+		return self.mPriority
 
 	def debrid(self):
 		return self.mDebrid
@@ -499,12 +500,13 @@ class HandleDirect(Handle):
 		Handle.__init__(self, interface.Translation.string(33489))
 
 	def handle(self, link, item, download = False, popups = False, close = True, select = False, cloud = False):
+		from resources.lib import debrid
 		provider = item['provider'].lower()
 
 		# RealDebrid premium links need to be resolved through RealDebrid.
 		# Other debrid services have direct links.
-		if provider == 'realdebrid': return HandleRealDebrid().handle(link = link, item = item, download = download, popups = popups, close = close, select = select, cloud = cloud)
-		else: return debrid.Debrid.addResult(link = link)
+		if provider == 'realdebrid': return debrid.realdebrid.Handle().handle(link = link, item = item, download = download, popups = popups, close = close, select = select, cloud = cloud)
+		else: return debrid.core.Core.addResult(link = link)
 
 	def supported(self, item, cloud = False):
 		if cloud: return False
@@ -521,6 +523,7 @@ class HandleResolveUrl(Handle):
 		self.mServices = None
 
 	def handle(self, link, item, download = False, popups = False, close = True, select = False, cloud = False):
+		from resources.lib.debrid import core
 		try:
 			if item and 'direct' in item and item['direct'] == True:
 				return link
@@ -536,17 +539,17 @@ class HandleResolveUrl(Handle):
 						i.login()
 						host, id = i.get_host_and_id(link)
 						linkNew = i.get_media_url(host, id)
-						if linkNew: return debrid.Debrid.addResult(link = linkNew)
+						if linkNew: return core.Core.addResult(link = linkNew)
 					except: pass
 
 				# If not supported by debrid, try normal resolvers.
 				media = resolveurl.HostedMediaFile(url = link, include_disabled = True, include_universal = False)
 				if media.valid_url() == True:
-					return debrid.Debrid.addResult(link = media.resolve(allow_popups = popups))
+					return core.Core.addResult(link = media.resolve(allow_popups = popups))
 				else:
-					return debrid.Debrid.addResult(link = None)
+					return core.Core.addResult(link = None)
 		except:
-			return debrid.Debrid.addResult(link = None)
+			return core.Core.addResult(link = None)
 
 	def supported(self, item, cloud = False):
 		if cloud: return False
@@ -574,6 +577,7 @@ class HandleUrlResolver(Handle):
 		self.mServices = None
 
 	def handle(self, link, item, download = False, popups = False, close = True, select = False, cloud = False):
+		from resources.lib.debrid import core
 		try:
 			if item and 'direct' in item and item['direct'] == True:
 				return link
@@ -589,17 +593,17 @@ class HandleUrlResolver(Handle):
 						i.login()
 						host, id = i.get_host_and_id(link)
 						linkNew = i.get_media_url(host, id)
-						if linkNew: return debrid.Debrid.addResult(link = linkNew)
+						if linkNew: return core.Core.addResult(link = linkNew)
 					except: pass
 
 				# If not supported by debrid, try normal resolvers.
 				media = urlresolver.HostedMediaFile(url = link, include_disabled = True, include_universal = False)
 				if media.valid_url() == True:
-					return debrid.Debrid.addResult(link = media.resolve(allow_popups = popups))
+					return core.Core.addResult(link = media.resolve(allow_popups = popups))
 				else:
-					return debrid.Debrid.addResult(link = None)
+					return core.Core.addResult(link = None)
 		except:
-			return debrid.Debrid.addResult(link = None)
+			return core.Core.addResult(link = None)
 
 	def supported(self, item, cloud = False):
 		if cloud: return False
@@ -620,208 +624,6 @@ class HandleUrlResolver(Handle):
 				return []
 		return self.mServices
 
-class HandlePremiumize(Handle):
-
-	# Accessed from metadata.
-	Id = 'premiumize'
-	Name = 'Premiumize'
-	Abbreviation = 'P'
-
-	def __init__(self):
-		Handle.__init__(self, id = HandlePremiumize.Id, name = HandlePremiumize.Name, abbreviation = HandlePremiumize.Abbreviation, debrid = True)
-		self.mService = debrid.Premiumize()
-		self.mServices = None
-
-	def handle(self, link, item, download = False, popups = False, close = True, select = False, cloud = False):
-		try: title = item['metadata'].title(extended = True, prefix = True, pack = True)
-		except: title = item['title']
-		try: pack = item['metadata'].pack()
-		except: pack = False
-		try: hash = item['hash']
-		except: hash = None
-		try: cached = item['cache'][HandlePremiumize.Id]
-		except: cached = False
-		try:
-			season = item['information']['season']
-			episode = item['information']['episode']
-		except:
-			season = None
-			episode = None
-		return debridold.resolver(link, debrid = self.id(), title = title, season = season, episode = episode, pack = pack, close = close, source = item['source'], cached = cached, hash = hash, select = select, cloud = cloud)
-
-	def services(self):
-		try:
-			if self.mServices == None and self.mService.accountValid():
-				self.mServices = self.mService.servicesList(onlyEnabled = True)
-		except: pass
-		return self.mServices
-
-	def supported(self, item, cloud = False):
-		if isinstance(item, dict) and 'source' in item:
-			if item['source'] == 'torrent':
-				return True
-			if item['source'] == 'usenet':
-				return True
-		return Handle.supported(self, item)
-
-class HandleOffCloud(Handle):
-
-	# Accessed from metadata.
-	Id = 'offcloud'
-	Name = 'OffCloud'
-	Abbreviation = 'O'
-
-	def __init__(self):
-		Handle.__init__(self, id = HandleOffCloud.Id, name = HandleOffCloud.Name, abbreviation = HandleOffCloud.Abbreviation, debrid = True)
-		self.mService = debrid.OffCloud()
-		self.mServices = None
-
-	def handle(self, link, item, download = False, popups = False, close = True, select = False, cloud = False):
-		try: title = item['metadata'].title(extended = True, prefix = True, pack = True)
-		except: title = item['title']
-		try: pack = item['metadata'].pack()
-		except: pack = False
-		try: hash = item['hash']
-		except: hash = None
-		try: cached = item['cache'][HandleOffCloud.Id]
-		except: cached = False
-		try:
-			season = item['information']['season']
-			episode = item['information']['episode']
-		except:
-			season = None
-			episode = None
-		return debridold.resolver(link, debrid = self.id(), title = title, season = season, episode = episode, pack = pack, close = close, source = item['source'], cached = cached, hash = hash, select = select, cloud = cloud)
-
-	def services(self):
-		try:
-			if self.mServices == None and self.mService.accountValid():
-				self.mServices = self.mService.servicesList(onlyEnabled = True)
-		except: pass
-		return self.mServices
-
-	def supported(self, item, cloud = False):
-		if isinstance(item, dict) and 'source' in item:
-			if item['source'] == 'torrent':
-				return True
-			if item['source'] == 'usenet':
-				return True
-		return Handle.supported(self, item)
-
-class HandleRealDebrid(Handle):
-
-	# Accessed from metadata.
-	Id = 'realdebrid'
-	Name = 'RealDebrid'
-	Abbreviation = 'R'
-
-	def __init__(self):
-		Handle.__init__(self, id = HandleRealDebrid.Id, name = HandleRealDebrid.Name, abbreviation = HandleRealDebrid.Abbreviation, debrid = True)
-		self.mService = debrid.RealDebrid()
-		self.mServices = None
-
-	def handle(self, link, item, download = False, popups = False, close = True, select = False, cloud = False):
-		try: title = item['metadata'].title(extended = True, prefix = True, pack = True)
-		except: title = item['title']
-		try: pack = item['metadata'].pack()
-		except: pack = False
-		try: hash = item['hash']
-		except: hash = None
-		try: cached = item['cache'][HandleRealDebrid.Id]
-		except: cached = False
-		try:
-			season = item['information']['season']
-			episode = item['information']['episode']
-		except:
-			season = None
-			episode = None
-		return debridold.resolver(link, debrid = self.id(), title = title, season = season, episode = episode, pack = pack, close = close, source = item['source'], cached = cached, hash = hash, select = select, cloud = cloud)
-
-	def services(self):
-		try:
-			if self.mServices == None and self.mService.accountValid():
-				self.mServices = self.mService.servicesList(onlyEnabled = True)
-		except: pass
-		return self.mServices
-
-	def supported(self, item, cloud = False):
-		if isinstance(item, dict) and 'source' in item:
-			if item['source'] == 'torrent':
-				return True
-		return Handle.supported(self, item)
-
-class HandleAllDebrid(Handle):
-
-	# Accessed from metadata.
-	Id = 'alldebrid'
-	Name = 'AllDebrid'
-	Abbreviation = 'A'
-
-	def __init__(self):
-		Handle.__init__(self, id = HandleAllDebrid.Id, name = HandleAllDebrid.Name, abbreviation = HandleAllDebrid.Abbreviation, debrid = True)
-		self.mService = debrid.AllDebrid()
-		self.mServices = None
-
-	def handle(self, link, item, download = False, popups = False, close = True, select = False, cloud = False):
-		try: title = item['metadata'].title(extended = True, prefix = True, pack = True)
-		except: title = item['title']
-		try: pack = item['metadata'].pack()
-		except: pack = False
-		try: hash = item['hash']
-		except: hash = None
-		try: cached = item['cache'][HandleAllDebrid.Id]
-		except: cached = False
-		try:
-			season = item['information']['season']
-			episode = item['information']['episode']
-		except:
-			season = None
-			episode = None
-		return debridold.resolver(link, debrid = self.id(), title = title, season = season, episode = episode, pack = pack, close = close, source = item['source'], cached = cached, hash = hash, select = select, cloud = cloud)
-
-	def services(self):
-		try:
-			if self.mServices == None and self.mService.accountValid():
-				self.mServices = self.mService.servicesList(onlyEnabled = True)
-		except: pass
-		return self.mServices
-
-class HandleRapidPremium(Handle):
-
-	# Accessed from metadata.
-	Id = 'rapidpremium'
-	Name = 'RapidPremium'
-	Abbreviation = 'M'
-
-	def __init__(self):
-		Handle.__init__(self, id = HandleRapidPremium.Id, name = HandleRapidPremium.Name, abbreviation = HandleRapidPremium.Abbreviation, debrid = True)
-		self.mService = debrid.RapidPremium()
-		self.mServices = None
-
-	def handle(self, link, item, download = False, popups = False, close = True, select = False, cloud = False):
-		try: title = item['metadata'].title(extended = True, prefix = True, pack = True)
-		except: title = item['title']
-		try: pack = item['metadata'].pack()
-		except: pack = False
-		try: hash = item['hash']
-		except: hash = None
-		try: cached = item['cache'][HandleRapidPremium.Id]
-		except: cached = False
-		try:
-			season = item['information']['season']
-			episode = item['information']['episode']
-		except:
-			season = None
-			episode = None
-		return debridold.resolver(link, debrid = self.id(), title = title, season = season, episode = episode, pack = pack, close = close, source = item['source'], cached = cached, hash = hash, select = select, cloud = cloud)
-
-	def services(self):
-		try:
-			if self.mServices == None and self.mService.accountValid():
-				self.mServices = self.mService.servicesList(onlyEnabled = True)
-		except: pass
-		return self.mServices
-
 class HandleElementum(Handle):
 
 	def __init__(self):
@@ -829,6 +631,7 @@ class HandleElementum(Handle):
 		self.mServices = None
 
 	def handle(self, link, item, download = False, popups = False, close = True, select = False, cloud = False):
+		from resources.lib.debrid import core
 		try:
 			parameters = {}
 
@@ -913,7 +716,7 @@ class HandleElementum(Handle):
 			if interface.Player().isPlaying() and window.WindowStreams.enabled():
 				window.WindowStreams.close()
 
-			return debrid.Debrid.addResult(error = Handler.ReturnExternal) # Return because Elementum will handle the playback.
+			return core.Core.addResult(error = Handler.ReturnExternal) # Return because Elementum will handle the playback.
 		except:
 			tools.Logger.error()
 
@@ -931,6 +734,7 @@ class HandleQuasar(Handle):
 		self.mServices = None
 
 	def handle(self, link, item, download = False, popups = False, close = True, select = False, cloud = False):
+		from resources.lib.debrid import core
 		try:
 			parameters = {}
 
@@ -1015,7 +819,7 @@ class HandleQuasar(Handle):
 			if interface.Player().isPlaying() and window.WindowStreams.enabled():
 				window.WindowStreams.close()
 
-			return debrid.Debrid.addResult(error = Handler.ReturnExternal) # Return because Quasar will handle the playback.
+			return core.Core.addResult(error = Handler.ReturnExternal) # Return because Quasar will handle the playback.
 		except:
 			tools.Logger.error()
 

@@ -157,7 +157,7 @@
 		<setting id="filters.file.size.maximum" label="32112" type="number" default="5000" subsetting="true" visible="eq(-40,true) + eq(-2,true)" />
 		<setting id="filters.file.size.unknown" label="32184" type="bool" default="true" subsetting="true" visible="eq(-41,true) + eq(-3,true)" />
 
-		<setting type="lsep" label="[UPPERCASE][B]$ADDON[script.module.orion 32113][/B][/UPPERCASE]" visible="eq(-42,true)" />
+		<setting type="lsep" label="[UPPERCASE][B]$ADDON[script.module.orion 32244][/B][/UPPERCASE]" visible="eq(-42,true)" />
 		<setting type="sep" visible="eq(-43,true)" />
 		<setting id="filters.meta.release.label" label="32114" type="action" option="close" default="27 $ADDON[script.module.orion 32096]" action="RunPlugin(plugin://script.module.orion/?action=settingsFiltersMetaRelease&type=universal)" visible="eq(-44,true)" />
 			<setting id="filters.meta.release" type="text" default="" visible="false" />

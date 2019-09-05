@@ -415,7 +415,7 @@ elif action.startswith('playlist'): # Must be before the 'play' section.
 		tools.Playlist.clear()
 
 	elif action == 'playlistAdd':
-		label = params.get('label')
+		label = tools.Converter.quoteFrom(params.get('label'))
 		art = params.get('art')
 		context = params.get('context')
 		tools.Playlist.add(link = link, label = label, metadata = metadata, art = art, context = context)
@@ -805,8 +805,8 @@ elif action.startswith('services'):
 elif action.startswith('premiumize'):
 
 	if action == 'premiumizeAuthentication':
-		from resources.lib.extensions import debrid
-		debrid.PremiumizeInterface().accountAuthentication()
+		from resources.lib.debrid import premiumize
+		premiumize.Interface().accountAuthentication()
 
 	elif action == 'premiumizeNavigator':
 		from resources.lib.indexers import navigator
@@ -818,48 +818,48 @@ elif action.startswith('premiumize'):
 		navigator.navigator(type = type, kids = kids).premiumizeDownloadsNavigator(lite = lite)
 
 	elif action == 'premiumizeList':
-		from resources.lib.extensions import debrid
-		debrid.PremiumizeInterface().directoryList()
+		from resources.lib.debrid import premiumize
+		premiumize.Interface().directoryList()
 
 	elif action == 'premiumizeListAction':
-		from resources.lib.extensions import debrid
+		from resources.lib.debrid import premiumize
 		item = params.get('item')
 		context = params.get('context')
-		debrid.PremiumizeInterface().directoryListAction(item, context)
+		premiumize.Interface().directoryListAction(item, context)
 
 	elif action == 'premiumizeItem':
-		from resources.lib.extensions import debrid
+		from resources.lib.debrid import premiumize
 		item = params.get('item')
-		debrid.PremiumizeInterface().directoryItem(item)
+		premiumize.Interface().directoryItem(item)
 
 	elif action == 'premiumizeItemAction':
-		from resources.lib.extensions import debrid
+		from resources.lib.debrid import premiumize
 		item = params.get('item')
-		debrid.PremiumizeInterface().directoryItemAction(item)
+		premiumize.Interface().directoryItemAction(item)
 
 	elif action == 'premiumizeAdd':
-		from resources.lib.extensions import debrid
-		debrid.PremiumizeInterface().addManual()
+		from resources.lib.debrid import premiumize
+		premiumize.Interface().addManual()
 
 	elif action == 'premiumizeInformation':
-		from resources.lib.extensions import debrid
-		debrid.PremiumizeInterface().downloadInformation()
+		from resources.lib.debrid import premiumize
+		premiumize.Interface().downloadInformation()
 
 	elif action == 'premiumizeAccount':
-		from resources.lib.extensions import debrid
-		debrid.PremiumizeInterface().account()
+		from resources.lib.debrid import premiumize
+		premiumize.Interface().account()
 
 	elif action == 'premiumizeWebsite':
-		from resources.lib.extensions import debrid
-		debrid.Premiumize().website(open = True)
+		from resources.lib.debrid import premiumize
+		premiumize.Core().website(open = True)
 
 	elif action == 'premiumizeVpn':
-		from resources.lib.extensions import debrid
-		debrid.Premiumize().vpn(open = True)
+		from resources.lib.debrid import premiumize
+		premiumize.Core().vpn(open = True)
 
 	elif action == 'premiumizeClear':
-		from resources.lib.extensions import debrid
-		debrid.PremiumizeInterface().clear()
+		from resources.lib.debrid import premiumize
+		premiumize.Interface().clear()
 
 	elif action == 'premiumizeSettings':
 		tools.Settings.launch(category = tools.Settings.CategoryAccounts)
@@ -881,59 +881,59 @@ elif action.startswith('offcloud'):
 		navigator.navigator(type = type, kids = kids).offcloudDownloadsNavigator(lite = lite, category = category)
 
 	elif action == 'offcloudList':
-		from resources.lib.extensions import debrid
+		from resources.lib.debrid import offcloud
 		category = params.get('category')
-		debrid.OffCloudInterface().directoryList(category = category)
+		offcloud.Interface().directoryList(category = category)
 
 	elif action == 'offcloudListAction':
-		from resources.lib.extensions import debrid
+		from resources.lib.debrid import offcloud
 		item = params.get('item')
 		context = params.get('context')
-		debrid.OffCloudInterface().directoryListAction(item = item, context = context)
+		offcloud.Interface().directoryListAction(item = item, context = context)
 
 	elif action == 'poffcloudItem':
-		from resources.lib.extensions import debrid
+		from resources.lib.debrid import offcloud
 		item = params.get('item')
-		debrid.OffCloudInterface().directoryItem(item)
+		offcloud.Interface().directoryItem(item)
 
 	elif action == 'offcloudItemAction':
-		from resources.lib.extensions import debrid
+		from resources.lib.debrid import offcloud
 		item = params.get('item')
-		debrid.OffCloudInterface().directoryItemAction(item)
+		offcloud.Interface().directoryItemAction(item)
 
 	elif action == 'offcloudAdd':
-		from resources.lib.extensions import debrid
+		from resources.lib.debrid import offcloud
 		category = params.get('category')
-		debrid.OffCloudInterface().addManual(category = category)
+		offcloud.Interface().addManual(category = category)
 
 	elif action == 'offcloudInformation':
-		from resources.lib.extensions import debrid
+		from resources.lib.debrid import offcloud
 		category = params.get('category')
-		debrid.OffCloudInterface().downloadInformation(category = category)
+		offcloud.Interface().downloadInformation(category = category)
 
 	elif action == 'offcloudAdd':
-		from resources.lib.extensions import debrid
-		debrid.OffCloudInterface().addManual()
+		from resources.lib.debrid import offcloud
+		offcloud.Interface().addManual()
 
 	elif action == 'offcloudAccount':
-		from resources.lib.extensions import debrid
-		debrid.OffCloudInterface().account()
+		from resources.lib.debrid import offcloud
+		offcloud.Interface().account()
 
 	elif action == 'offcloudWebsite':
-		from resources.lib.extensions import debrid
-		debrid.OffCloud().website(open = True)
+		from resources.lib.debrid import offcloud
+		offcloud.Core().website(open = True)
 
 	elif action == 'offcloudClear':
-		from resources.lib.extensions import debrid
+		from resources.lib.debrid import offcloud
 		category = params.get('category')
-		debrid.OffCloudInterface().clear(category = category)
+		offcloud.Interface().clear(category = category)
 
 	elif action == 'offcloudSettings':
 		tools.Settings.launch(category = tools.Settings.CategoryAccounts)
 
 	elif action == 'offcloudSettingsLocation':
-		from resources.lib.extensions import debrid
-		debrid.OffCloudInterface().settingsLocation()
+		from resources.lib.debrid import offcloud
+		offcloud.Interface().settingsLocation()
 
 ####################################################
 # REALDEBRID
@@ -942,8 +942,8 @@ elif action.startswith('offcloud'):
 elif action.startswith('realdebrid'):
 
 	if action == 'realdebridAuthentication':
-		from resources.lib.extensions import debrid
-		debrid.RealDebridInterface().accountAuthentication()
+		from resources.lib.debrid import realdebrid
+		realdebrid.Interface().accountAuthentication()
 
 	elif action == 'realdebridNavigator':
 		from resources.lib.indexers import navigator
@@ -955,33 +955,33 @@ elif action.startswith('realdebrid'):
 		navigator.navigator(type = type, kids = kids).realdebridDownloadsNavigator(lite = lite)
 
 	elif action == 'realdebridList':
-		from resources.lib.extensions import debrid
-		debrid.RealDebridInterface().directoryList()
+		from resources.lib.debrid import realdebrid
+		realdebrid.Interface().directoryList()
 
 	elif action == 'realdebridListAction':
-		from resources.lib.extensions import debrid
+		from resources.lib.debrid import realdebrid
 		item = params.get('item')
-		debrid.RealDebridInterface().directoryListAction(item)
+		realdebrid.Interface().directoryListAction(item)
 
 	elif action == 'realdebridAdd':
-		from resources.lib.extensions import debrid
-		debrid.RealDebridInterface().addManual()
+		from resources.lib.debrid import realdebrid
+		realdebrid.Interface().addManual()
 
 	elif action == 'realdebridInformation':
-		from resources.lib.extensions import debrid
-		debrid.RealDebridInterface().downloadInformation()
+		from resources.lib.debrid import realdebrid
+		realdebrid.Interface().downloadInformation()
 
 	elif action == 'realdebridAccount':
-		from resources.lib.extensions import debrid
-		debrid.RealDebridInterface().account()
+		from resources.lib.debrid import realdebrid
+		realdebrid.Interface().account()
 
 	elif action == 'realdebridWebsite':
-		from resources.lib.extensions import debrid
-		debrid.RealDebrid().website(open = True)
+		from resources.lib.debrid import realdebrid
+		realdebrid.Core().website(open = True)
 
 	elif action == 'realdebridClear':
-		from resources.lib.extensions import debrid
-		debrid.RealDebridInterface().clear()
+		from resources.lib.debrid import realdebrid
+		realdebrid.Interface().clear()
 
 	elif action == 'realdebridSettings':
 		tools.Settings.launch(category = tools.Settings.CategoryAccounts)
@@ -997,16 +997,16 @@ elif action.startswith('easynews'):
 		navigator.navigator(type = type, kids = kids).easynewsNavigator()
 
 	elif action == 'easynewsAccount':
-		from resources.lib.extensions import debrid
-		debrid.EasyNewsInterface().account()
+		from resources.lib.debrid import easynews
+		easynews.Interface().account()
 
 	elif action == 'easynewsWebsite':
-		from resources.lib.extensions import debrid
-		debrid.EasyNews().website(open = True)
+		from resources.lib.debrid import easynews
+		easynews.Core().website(open = True)
 
 	elif action == 'easynewsVpn':
-		from resources.lib.extensions import debrid
-		debrid.EasyNews().vpn(open = True)
+		from resources.lib.debrid import easynews
+		easynews.Core().vpn(open = True)
 
 	elif action == 'easynewsSettings':
 		tools.Settings.launch(category = tools.Settings.CategoryAccounts)
@@ -1224,63 +1224,6 @@ elif action.startswith('nanscrapers'):
 
 	elif action == 'nanscrapersInstall':
 		tools.NanScrapers.enable(refresh = True)
-
-####################################################
-# INCSCRAPERS
-####################################################
-
-elif action.startswith('incscrapers'):
-
-	if action == 'incscrapersNavigator':
-		from resources.lib.indexers import navigator
-		navigator.navigator(type = type, kids = kids).incscrapersNavigator()
-
-	elif action == 'incscrapersSettings':
-		tools.IncScrapers.settings()
-
-	elif action == 'incscrapersProviders':
-		tools.IncScrapers.providers()
-
-	elif action == 'incscrapersInstall':
-		tools.IncScrapers.enable(refresh = True)
-
-####################################################
-# PLASCRAPERS
-####################################################
-
-elif action.startswith('plascrapers'):
-
-	if action == 'plascrapersNavigator':
-		from resources.lib.indexers import navigator
-		navigator.navigator(type = type, kids = kids).plascrapersNavigator()
-
-	elif action == 'plascrapersSettings':
-		tools.PlaScrapers.settings()
-
-	elif action == 'plascrapersProviders':
-		tools.PlaScrapers.providers()
-
-	elif action == 'plascrapersInstall':
-		tools.PlaScrapers.enable(refresh = True)
-
-####################################################
-# YODSCRAPERS
-####################################################
-
-elif action.startswith('yodscrapers'):
-
-	if action == 'yodscrapersNavigator':
-		from resources.lib.indexers import navigator
-		navigator.navigator(type = type, kids = kids).yodscrapersNavigator()
-
-	elif action == 'yodscrapersSettings':
-		tools.YodScrapers.settings()
-
-	elif action == 'yodscrapersProviders':
-		tools.YodScrapers.providers()
-
-	elif action == 'yodscrapersInstall':
-		tools.YodScrapers.enable(refresh = True)
 
 ####################################################
 # EXTENDEDINFO

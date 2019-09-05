@@ -25,11 +25,11 @@ import urllib
 import threading
 import random
 from resources.lib.externals.speedtest import speedtest
+from resources.lib import debrid
 from resources.lib.extensions import interface
 from resources.lib.extensions import tools
 from resources.lib.extensions import convert
 from resources.lib.extensions import network
-from resources.lib.extensions import debrid
 from resources.lib.extensions import api
 from resources.lib.modules import client
 from resources.lib.modules import workers
@@ -1066,7 +1066,7 @@ class SpeedTesterDebrid(SpeedTester):
 					elif result['success']:
 						link = result['link']
 						break
-					elif result['error'] == debrid.RealDebrid.ErrorBlocked: # Blocked RealDebrid IP address.
+					elif result['error'] == debrid.realdebrid.Core.ErrorBlocked: # Blocked RealDebrid IP address.
 						return None
 				except: pass
 			if not network.Networker.linkIs(link): # Errors returned by debrid, eg: ErrorRealDebrid
@@ -1121,10 +1121,10 @@ class SpeedTesterPremiumize(SpeedTesterDebrid):
 		if link == SpeedTesterPremiumize.LinkServer:
 			return link
 		else:
-			return debrid.Premiumize().add(link)
+			return debrid.premiumize.Core().add(link)
 
 	def _validate(self):
-		if not self.mLinks == None and not len(self.mLinks) == 0 and self.mLinks[0] == SpeedTesterPremiumize.LinkServer or debrid.Premiumize().accountValid():
+		if not self.mLinks == None and not len(self.mLinks) == 0 and self.mLinks[0] == SpeedTesterPremiumize.LinkServer or debrid.premiumize.Core().accountValid():
 			return True
 		else:
 			name = interface.Translation.string(33566)
@@ -1163,10 +1163,10 @@ class SpeedTesterOffCloud(SpeedTesterDebrid):
 		if link == self.LinkServer:
 			return link
 		else:
-			return debrid.OffCloud().add(link)
+			return debrid.offcloud.Core().add(link)
 
 	def _validate(self):
-		if not self.mLinks == None and not len(self.mLinks) == 0 and self.mLinks[0] == SpeedTesterOffCloud.LinkServer or debrid.OffCloud().accountValid():
+		if not self.mLinks == None and not len(self.mLinks) == 0 and self.mLinks[0] == SpeedTesterOffCloud.LinkServer or debrid.offcloud.Core().accountValid():
 			return True
 		else:
 			name = interface.Translation.string(35200)
@@ -1184,10 +1184,10 @@ class SpeedTesterRealDebrid(SpeedTesterDebrid):
 		SpeedTesterDebrid.__init__(self, name = SpeedTesterRealDebrid.Name, link = SpeedTesterRealDebrid.Link)
 
 	def _testLink(self, link):
-		return debrid.RealDebrid().add(link)
+		return debrid.realdebrid.Core().add(link)
 
 	def _validate(self):
-		if debrid.RealDebrid().accountValid():
+		if debrid.realdebrid.Core().accountValid():
 			return True
 		else:
 			name = interface.Translation.string(33567)

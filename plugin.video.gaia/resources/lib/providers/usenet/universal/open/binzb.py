@@ -20,46 +20,22 @@
 
 import re,urllib,urlparse,threading
 from resources.lib.modules import client
+from resources.lib.extensions import provider
 from resources.lib.extensions import metadata
 from resources.lib.extensions import tools
 from resources.lib.externals.beautifulsoup import BeautifulSoup
 
-class source:
+class source(provider.ProviderBase):
 
 	def __init__(self):
+		provider.ProviderBase.__init__(self, supportMovies = True, supportShows = True)
+
 		self.pack = True # Checked by provider.py
 		self.priority = 0
 		self.language = ['un']
 		self.domains = ['binzb.com']
 		self.base_link = 'http://binzb.com'
 		self.search_link = '/search?q=%s&p=%i'
-
-	def movie(self, imdb, title, localtitle, year):
-		try:
-			url = {'imdb': imdb, 'title': title, 'year': year}
-			url = urllib.urlencode(url)
-			return url
-		except:
-			return
-
-	def tvshow(self, imdb, tvdb, tvshowtitle, localtitle, year):
-		try:
-			url = {'imdb': imdb, 'tvdb': tvdb, 'tvshowtitle': tvshowtitle, 'year': year}
-			url = urllib.urlencode(url)
-			return url
-		except:
-			return
-
-	def episode(self, url, imdb, tvdb, title, premiered, season, episode):
-		try:
-			if url == None: return
-			url = urlparse.parse_qs(url)
-			url = dict([(i, url[i][0]) if url[i] else (i, '') for i in url])
-			url['title'], url['premiered'], url['season'], url['episode'] = title, premiered, season, episode
-			url = urllib.urlencode(url)
-			return url
-		except:
-			return
 
 	def _link(self, link):
 		try:
@@ -77,15 +53,14 @@ class source:
 		sources = []
 		found = []
 		try:
-			if url == None:
-				raise Exception()
+			if url == None: raise Exception()
 
 			ignoreContains = None
-			data = urlparse.parse_qs(url)
-			data = dict([(i, data[i][0]) if data[i] else (i, '') for i in data])
+			data = self._decode(url)
 
 			if 'exact' in data and data['exact']:
 				query = title = data['tvshowtitle'] if 'tvshowtitle' in data else data['title']
+				titles = None
 				year = None
 				season = None
 				episode = None
@@ -93,6 +68,7 @@ class source:
 				packCount = None
 			else:
 				title = data['tvshowtitle'] if 'tvshowtitle' in data else data['title']
+				titles = data['alternatives'] if 'alternatives' in data else None
 				year = int(data['year']) if 'year' in data and not data['year'] == None else None
 				season = int(data['season']) if 'season' in data and not data['season'] == None else None
 				episode = int(data['episode']) if 'episode' in data and not data['episode'] == None else None
@@ -111,6 +87,8 @@ class source:
 				else:
 					query = '%s %d' % (title, year)
 				query = re.sub('(\\\|/| -|:|;|\*|\?|"|\'|<|>|\|)', ' ', query)
+
+			if not self._query(query): return sources
 
 			url = urlparse.urljoin(self.base_link, self.search_link)
 
@@ -150,7 +128,8 @@ class source:
 					htmlColumns = htmlRow.find_all('td', recursive = False) # Use children and no further.
 
 					# Name
-					htmlName = htmlColumns[0].find_all('a')[0].getText()
+					# Put through BeautifulSoup again to remove highlight HTML tags.
+					htmlName = BeautifulSoup(htmlColumns[0].find_all('a')[0].getText()).text
 
 					# Size
 					htmlSize = htmlColumns[3].getText()
@@ -167,7 +146,7 @@ class source:
 					else: htmlAge = 0
 
 					# Metadata
-					meta = metadata.Metadata(name = htmlName, title = title, year = year, season = season, episode = episode, pack = pack, packCount = packCount, link = htmlLink, size = htmlSize, age = htmlAge)
+					meta = metadata.Metadata(name = htmlName, title = title, titles = titles, year = year, season = season, episode = episode, pack = pack, packCount = packCount, link = htmlLink, size = htmlSize, age = htmlAge)
 					meta.mIgnoreLength *= 10 # Otherwise too restrictive for very long usenet titles.
 
 					# Ignore
@@ -202,6 +181,3 @@ class source:
 				result.append(sources[i])
 		self.tLock.release()
 		return result
-
-	def resolve(self, url):
-		return url

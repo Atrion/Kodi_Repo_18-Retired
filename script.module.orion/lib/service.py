@@ -24,20 +24,28 @@
 # The service to launch on Kodi startup.
 ##############################################################################
 
+import xbmc
 from orion import *
 from orion.modules.orionuser import *
 from orion.modules.orionsettings import *
 from orion.modules.orionintegration import *
 from orion.modules.orionnotification import *
+from orion.modules.oriondatabase import *
 
-OrionTools.log('Orion Service Started')
-OrionSettings.adapt()
-orion = Orion(OrionApi._keyInternal())
-user = OrionUser.instance()
-if user.enabled() and (user.valid() or user.empty()):
-	OrionSettings.externalClean()
-	OrionIntegration.check()
-	user.update()
-	user.subscriptionCheck()
-	OrionNotification.dialogNew()
-OrionTools.log('Orion Service Finished')
+monitor = xbmc.Monitor()
+while not monitor.abortRequested():
+	OrionTools.log('Orion Service Started')
+	OrionSettings.adapt()
+	orion = Orion(OrionApi._keyInternal())
+	user = OrionUser.instance()
+	if user.enabled() and (user.valid() or user.empty()):
+		OrionSettings.externalClean()
+		OrionIntegration.check()
+		user.update()
+		user.subscriptionCheck()
+		OrionNotification.dialogNew()
+	OrionDatabase.instancesClear() # Very important. Without this, Kodi will fail to update the addon if a new version comes out, due to active database connections causing failures.
+	orion = None # Clear to not keep it in memory while waiting.
+	user = None # Clear to not keep it in memory while waiting.
+	OrionTools.log('Orion Service Finished')
+	if monitor.waitForAbort(86400): break # 24 hours

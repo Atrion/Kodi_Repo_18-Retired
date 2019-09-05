@@ -38,13 +38,14 @@ def fetch(items, lang, user):
 	for i in range(0, len(items)):
 		try:
 			imdb = '0' if items[i]['imdb'] == 'tt' else items[i]['imdb']
-			# NB: First lookup by TVDb and then my IMDb, since there are some incorrect shows on Trakt that have the same IMDb ID, but different TVDb IDs (eg: Gotham).
+			tvdb = items[i]['tvdb'] if 'tvdb' in items[i] else '0'
+			# NB: First lookup by TVDb and then by IMDb, since there are some incorrect shows on Trakt that have the same IMDb ID, but different TVDb IDs (eg: Gotham).
 			try:
-				dbcur.execute("SELECT * FROM meta WHERE (imdb = '%s' and tvdb = '%s' and lang = '%s' and user = '%s' and not imdb = '0' and not tvdb = '0')" % (imdb, items[i]['tvdb'], lang, user))
+				dbcur.execute("SELECT * FROM meta WHERE (imdb = '%s' and tvdb = '%s' and lang = '%s' and user = '%s' and not imdb = '0' and not tvdb = '0')" % (imdb, tvdb, lang, user))
 				match = dbcur.fetchone()
 				t1 = int(match[5])
 			except:
-				dbcur.execute("SELECT * FROM meta WHERE (imdb = '%s' and lang = '%s' and user = '%s' and not imdb = '0') OR (tvdb = '%s' and lang = '%s' and user = '%s' and not tvdb = '0')" % (imdb, lang, user, items[i]['tvdb'], lang, user))
+				dbcur.execute("SELECT * FROM meta WHERE (imdb = '%s' and lang = '%s' and user = '%s' and not imdb = '0') OR (tvdb = '%s' and lang = '%s' and user = '%s' and not tvdb = '0')" % (imdb, lang, user, tvdb, lang, user))
 				match = dbcur.fetchone()
 				t1 = int(match[5])
 

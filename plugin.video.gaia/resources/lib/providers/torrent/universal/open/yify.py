@@ -21,13 +21,16 @@
 import re,urllib,urlparse,json,xbmc
 from resources.lib.modules import cleantitle
 from resources.lib.modules import client
+from resources.lib.extensions import provider
 from resources.lib.extensions import metadata
 from resources.lib.extensions import tools
 from resources.lib.extensions import network
 
-class source:
+class source(provider.ProviderBase):
 
 	def __init__(self):
+		provider.ProviderBase.__init__(self, supportMovies = True, supportShows = False)
+
 		self.pack = False # Checked by provider.py
 		self.priority = 0
 		self.language = ['un']
@@ -35,25 +38,16 @@ class source:
 		self.base_link = 'https://yts.lt'
 		self.search_link = '/api/v2/list_movies.json?query_term=%s&limit=50&sort_by=seeds&order_by=desc&with_rt_ratings=false'
 
-	def movie(self, imdb, title, localtitle, year):
-		try:
-			url = {'imdb': imdb, 'title': title, 'year': year}
-			url = urllib.urlencode(url)
-			return url
-		except:
-			return
-
 	def sources(self, url, hostDict, hostprDict):
 		sources = []
 		try:
-			if url == None:
-				raise Exception()
+			if url == None: raise Exception()
 
-			data = urlparse.parse_qs(url)
-			data = dict([(i, data[i][0]) if data[i] else (i, '') for i in data])
+			data = self._decode(url)
 
 			if 'exact' in data and data['exact']:
 				titleYear = title = data['tvshowtitle'] if 'tvshowtitle' in data else data['title']
+				titles = None
 				year = None
 				season = None
 				episode = None
@@ -61,12 +55,15 @@ class source:
 				packCount = None
 			else:
 				title = data['tvshowtitle'] if 'tvshowtitle' in data else data['title']
+				titles = data['alternatives'] if 'alternatives' in data else None
 				titleYear = '%s %s' % (title, str(data['year']))
 				year = int(data['year']) if 'year' in data and not data['year'] == None else None
 				season = int(data['season']) if 'season' in data and not data['season'] == None else None
 				episode = int(data['episode']) if 'episode' in data and not data['episode'] == None else None
 
 			query = data['imdb'] if 'imdb' in data and not data['imdb'] == None else title
+			if not self._query(query): return sources
+
 			url = urlparse.urljoin(self.base_link, self.search_link) % query
 			result = json.loads(client.request(url))
 
@@ -86,7 +83,7 @@ class source:
 				except: jsonSeeds = None
 
 				# Metadata
-				meta = metadata.Metadata(name = jsonName, title = title, year = year, season = season, episode = episode, link = jsonLink, size = jsonSize, seeds = jsonSeeds)
+				meta = metadata.Metadata(name = jsonName, title = title, titles = titles, year = year, season = season, episode = episode, link = jsonLink, size = jsonSize, seeds = jsonSeeds)
 				meta.setUploader(['yify', 'yts'])
 				jsonLink = network.Container(jsonHash).torrentMagnet(title = meta.title(extended = True))
 
@@ -99,6 +96,3 @@ class source:
 			return sources
 		except:
 			return sources
-
-	def resolve(self, url):
-		return url

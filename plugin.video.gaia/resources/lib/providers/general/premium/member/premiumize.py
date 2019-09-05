@@ -18,18 +18,21 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
-import re,urllib,urlparse,time,threading
+import re,time,threading
 from resources.lib.modules import client
 from resources.lib.modules import control
+from resources.lib.extensions import provider
 from resources.lib.extensions import metadata
 from resources.lib.extensions import tools
-from resources.lib.extensions import debrid
+from resources.lib.debrid import premiumize
 
-class source:
+class source(provider.ProviderBase):
 
 	FeedsName = 'Feed Downloads'
 
 	def __init__(self):
+		provider.ProviderBase.__init__(self, supportMovies = True, supportShows = True)
+
 		self.pack = True # Checked by provider.py
 		self.priority = 0
 		self.language = ['un']
@@ -39,38 +42,11 @@ class source:
 		self.items = []
 
 	def instanceEnabled(self):
-		premiumize = debrid.Premiumize()
-		return premiumize.accountEnabled() and premiumize.accountValid()
-
-	def movie(self, imdb, title, localtitle, year):
-		try:
-			url = {'imdb': imdb, 'title': title, 'year': year}
-			url = urllib.urlencode(url)
-			return url
-		except:
-			return
-
-	def tvshow(self, imdb, tvdb, tvshowtitle, localtitle, year):
-		try:
-			url = {'imdb': imdb, 'tvdb': tvdb, 'tvshowtitle': tvshowtitle, 'year': year}
-			url = urllib.urlencode(url)
-			return url
-		except:
-			return
-
-	def episode(self, url, imdb, tvdb, title, premiered, season, episode):
-		try:
-			if url == None: return
-			url = urlparse.parse_qs(url)
-			url = dict([(i, url[i][0]) if url[i] else (i, '') for i in url])
-			url['title'], url['premiered'], url['season'], url['episode'] = title, premiered, season, episode
-			url = urllib.urlencode(url)
-			return url
-		except:
-			return
+		core = premiumize.Core()
+		return core.accountEnabled() and core.accountValid()
 
 	def _item(self, idFolder, idFile, season, episode):
-		item = debrid.Premiumize().item(idFolder = idFolder, idFile = idFile, content = True, season = season, episode = episode)
+		item = premiumize.Core().item(idFolder = idFolder, idFile = idFile, content = True, season = season, episode = episode)
 		try: self.mutex.acquire()
 		except: pass
 		if item: self.items.append(item)
@@ -81,42 +57,42 @@ class source:
 		self.items = [] # NB: The same object of the provider is used for both normal episodes and season packs. Make sure it is cleared from the previous run.
 		sources = []
 		try:
-			if url == None:
-				raise Exception()
+			if url == None: raise Exception()
 
-			premiumize = debrid.Premiumize()
+			core = premiumize.Core()
+			if not core.accountValid(): raise Exception()
 
-			if not premiumize.accountValid():
-				raise Exception()
-
-			data = urlparse.parse_qs(url)
-			data = dict([(i, data[i][0]) if data[i] else (i, '') for i in data])
+			data = self._decode(url)
 
 			if 'exact' in data and data['exact']:
 				title = data['tvshowtitle'] if 'tvshowtitle' in data else data['title']
+				titles = None
 				year = None
 				season = None
 				episode = None
 				pack = False
 			else:
 				title = data['tvshowtitle'] if 'tvshowtitle' in data else data['title']
+				titles = data['alternatives'] if 'alternatives' in data else None
 				year = int(data['year']) if 'year' in data and not data['year'] == None else None
 				season = int(data['season']) if 'season' in data and not data['season'] == None else None
 				episode = int(data['episode']) if 'episode' in data and not data['episode'] == None else None
 				pack = data['pack'] if 'pack' in data else False
+
+			if not self._query(title, year, season, episode, pack): return sources
 
 			timerEnd = tools.Settings.getInteger('scraping.providers.timeout') - 3
 			timer = tools.Time(start = True)
 
 			threads = []
 			ids = []
-			items = premiumize._items()
+			items = core._items()
 			for item in items:
 				id = item['id']
 				if not id in ids:
 					# The RSS feed directory returns the same episodes individually and as a pack. Only add it once.
-					meta = metadata.Metadata(name = item['name'], title = title, year = year, season = season, episode = episode)
-					if (not pack and item['name'] == source.FeedsName) or not pack and not meta.ignore(size = False):
+					meta = metadata.Metadata(name = item['name'], title = title, titles = titles, year = year, season = season, episode = episode)
+					if ((not pack and item['name'] == source.FeedsName) or not pack) and not meta.ignore(size = False):
 						if item['type'] == 'file':
 							item['video'] = item
 							self.items.append(item)
@@ -154,7 +130,7 @@ class source:
 						continue
 
 					# Metadata
-					meta = metadata.Metadata(name = jsonName, title = title, year = year, season = season, episode = episode, size = jsonSize, pack = pack)
+					meta = metadata.Metadata(name = jsonName, title = title, titles = titles, year = year, season = season, episode = episode, size = jsonSize, pack = pack)
 
 					# Add
 					sources.append({'url' : jsonLink, 'premium' : True, 'debridonly' : True, 'direct' : True, 'memberonly' : True, 'source' : 'Premiumize', 'language' : self.language[0], 'quality':  meta.videoQuality(), 'metadata' : meta, 'file' : jsonName})
@@ -163,6 +139,3 @@ class source:
 			return sources
 		except:
 			return sources
-
-	def resolve(self, url):
-		return url

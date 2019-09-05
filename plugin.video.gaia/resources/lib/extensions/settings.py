@@ -18,9 +18,10 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
+from resources.lib import debrid
+from resources.lib.modules import trakt
 from resources.lib.extensions import tools
 from resources.lib.extensions import interface
-from resources.lib.extensions import debrid
 from resources.lib.extensions import verification
 from resources.lib.extensions import provider
 from resources.lib.extensions import vpn
@@ -28,7 +29,6 @@ from resources.lib.extensions import handler
 from resources.lib.extensions import speedtest
 from resources.lib.extensions import support
 from resources.lib.extensions import orionoid
-from resources.lib.modules import trakt
 
 class Selection(object):
 
@@ -243,12 +243,12 @@ class Wizard(object):
 			interface.Format.fontBold('[' + general + '] ' + interface.Translation.string(32315) + ': ') + (enabled if tools.Settings.getBoolean('accounts.informants.trakt.enabled') else disabled),
 			interface.Format.fontBold('[' + general + '] ' + interface.Translation.string(32034) + ': ') + (enabled if tools.Settings.getBoolean('accounts.informants.imdb.enabled') else disabled),
 			interface.Format.fontBold('[' + general + '] ' + interface.Translation.string(35260) + ': ') + (enabled if tools.Settings.getBoolean('accounts.artwork.fanart.enabled') else disabled),
-			interface.Format.fontBold('[' + premium + '] ' + interface.Translation.string(33566) + ': ') + (enabled if debrid.Premiumize().accountValid() else disabled),
-			interface.Format.fontBold('[' + premium + '] ' + interface.Translation.string(35200) + ': ') + (enabled if debrid.OffCloud().accountValid() else disabled),
-			interface.Format.fontBold('[' + premium + '] ' + interface.Translation.string(33567) + ': ') + (enabled if debrid.RealDebrid().accountValid() else disabled),
-			interface.Format.fontBold('[' + premium + '] ' + interface.Translation.string(33794) + ': ') + (enabled if debrid.EasyNews().accountValid() else disabled),
-			interface.Format.fontBold('[' + premium + '] ' + interface.Translation.string(33568) + ': ') + (enabled if debrid.AllDebrid().accountValid() else disabled),
-			interface.Format.fontBold('[' + premium + '] ' + interface.Translation.string(33569) + ': ') + (enabled if debrid.RapidPremium().accountValid() else disabled),
+			interface.Format.fontBold('[' + premium + '] ' + interface.Translation.string(33566) + ': ') + (enabled if debrid.premiumize.Core().accountValid() else disabled),
+			interface.Format.fontBold('[' + premium + '] ' + interface.Translation.string(35200) + ': ') + (enabled if debrid.offcloud.Core().accountValid() else disabled),
+			interface.Format.fontBold('[' + premium + '] ' + interface.Translation.string(33567) + ': ') + (enabled if debrid.realdebrid.Core().accountValid() else disabled),
+			interface.Format.fontBold('[' + premium + '] ' + interface.Translation.string(33794) + ': ') + (enabled if debrid.easynews.Core().accountValid() else disabled),
+			interface.Format.fontBold('[' + premium + '] ' + interface.Translation.string(33568) + ': ') + (enabled if debrid.alldebrid.Core().accountValid() else disabled),
+			interface.Format.fontBold('[' + premium + '] ' + interface.Translation.string(33569) + ': ') + (enabled if debrid.rapidpremium.Core().accountValid() else disabled),
 		]
 
 		choice = interface.Dialog.options(title = 32346, items = items)
@@ -400,9 +400,9 @@ class Wizard(object):
 			if choice == Wizard.ChoiceLeft: return self._cancel()
 		while True:
 			tools.Settings.set('accounts.debrid.premiumize.enabled', True)
-			debrid.PremiumizeInterface().accountAuthentication(openSettings = False)
+			debrid.premiumize.Interface().accountAuthentication(openSettings = False)
 			interface.Loader.show()
-			valid = debrid.Premiumize().accountVerify()
+			valid = debrid.premiumize.Core().accountVerify()
 			interface.Loader.hide()
 			if valid:
 				tools.Settings.set('providers.universal.premium.member.premiumize', True)
@@ -432,7 +432,7 @@ class Wizard(object):
 			interface.Loader.show()
 			tools.Settings.set('accounts.debrid.offcloud.enabled', True)
 			tools.Settings.set('accounts.debrid.offcloud.api', api)
-			valid = debrid.OffCloud().accountVerify()
+			valid = debrid.offcloud.Core().accountVerify()
 			interface.Loader.hide()
 			if valid:
 				tools.Settings.set('providers.universal.premium.member.offcloud', True)
@@ -457,9 +457,9 @@ class Wizard(object):
 			if choice == Wizard.ChoiceLeft: return self._cancel()
 		while True:
 			tools.Settings.set('accounts.debrid.realdebrid.enabled', True)
-			debrid.RealDebridInterface().accountAuthentication(openSettings = False)
+			debrid.realdebrid.Interface().accountAuthentication(openSettings = False)
 			interface.Loader.show()
-			valid = debrid.RealDebrid().accountVerify()
+			valid = debrid.realdebrid.Core().accountVerify()
 			interface.Loader.hide()
 			if valid:
 				tools.Settings.set('providers.universal.premium.member.realdebrid', True)
@@ -494,7 +494,7 @@ class Wizard(object):
 			tools.Settings.set('accounts.debrid.easynews.enabled', True)
 			tools.Settings.set('accounts.debrid.easynews.user', user)
 			tools.Settings.set('accounts.debrid.easynews.pass', password)
-			valid = debrid.EasyNews().accountVerify()
+			valid = debrid.easynews.Core().accountVerify()
 			interface.Loader.hide()
 			if valid:
 				tools.Settings.set('providers.universal.premium.member.easynews', True)
@@ -531,7 +531,7 @@ class Wizard(object):
 			tools.Settings.set('accounts.debrid.alldebrid.enabled', True)
 			tools.Settings.set('accounts.debrid.alldebrid.user', user)
 			tools.Settings.set('accounts.debrid.alldebrid.pass', password)
-			valid = debrid.AllDebrid().accountValid()
+			valid = debrid.alldebrid.Core().accountValid()
 			interface.Loader.hide()
 			if valid:
 				choice = self._option(35272, 33743, 33821)
@@ -567,7 +567,7 @@ class Wizard(object):
 			tools.Settings.set('accounts.debrid.rapidpremium.enabled', True)
 			tools.Settings.set('accounts.debrid.rapidpremium.user', user)
 			tools.Settings.set('accounts.debrid.rapidpremium.api', api)
-			valid = debrid.RapidPremium().accountValid()
+			valid = debrid.rapidpremium.Core().accountValid()
 			interface.Loader.hide()
 			if valid:
 				choice = self._option(35279, 33743, 33821)
@@ -642,11 +642,6 @@ class Wizard(object):
 		choices.append('externalnanscrapers')
 		items.append(interface.Format.fontBold(external + interface.Translation.string(35350) + ': ' + (enabled if tools.Settings.getBoolean('providers.external.universal.open.nanscrapersx') else disabled)))
 		choices.append('externalincscrapers')
-		items.append(interface.Format.fontBold(external + interface.Translation.string(35352) + ': ' + (enabled if tools.Settings.getBoolean('providers.external.universal.open.incscrapersx') else disabled)))
-		choices.append('externalplascrapers')
-		items.append(interface.Format.fontBold(external + interface.Translation.string(35351) + ': ' + (enabled if tools.Settings.getBoolean('providers.external.universal.open.plascrapersx') else disabled)))
-		choices.append('externalyodscrapers')
-		items.append(interface.Format.fontBold(external + interface.Translation.string(35533) + ': ' + (enabled if tools.Settings.getBoolean('providers.external.universal.open.yodscrapersx') else disabled)))
 
 		choice = interface.Dialog.options(title = 33014, items = items)
 		if choice < 0: return self._cancel()
@@ -746,15 +741,6 @@ class Wizard(object):
 		elif choice == 'externalnanscrapers':
 			active = self._option(interface.Translation.string(33907) % interface.Translation.string(35360), 33737, 33192) == Wizard.ChoiceRight
 			tools.Settings.set('providers.external.universal.open.nanscrapersx', active)
-		elif choice == 'externalincscrapers':
-			active = self._option(interface.Translation.string(33907) % interface.Translation.string(35362), 33737, 33192) == Wizard.ChoiceRight
-			tools.Settings.set('providers.external.universal.open.incscrapersx', active)
-		elif choice == 'externalplascrapers':
-			active = self._option(interface.Translation.string(33907) % interface.Translation.string(35361), 33737, 33192) == Wizard.ChoiceRight
-			tools.Settings.set('providers.external.universal.open.plascrapersx', active)
-		elif choice == 'externalyodscrapers':
-			active = self._option(interface.Translation.string(33907) % interface.Translation.string(35535), 33737, 33192) == Wizard.ChoiceRight
-			tools.Settings.set('providers.external.universal.open.yodscrapersx', active)
 
 		return self._showProviders(first = False)
 

@@ -89,6 +89,8 @@ class OrionApi:
 	ActionDownload = 'download'
 	ActionLogin = 'login'
 	ActionRemove = 'remove'
+	ActionIdentifier = 'identifier'
+	ActionSegment = 'segment'
 	ActionHash = 'hash'
 	ActionVote = 'vote'
 	ActionTest = 'test'
@@ -177,7 +179,7 @@ class OrionApi:
 					for key, value in query.iteritems():
 						if key in truncate: query[key] = '-- truncated --'
 				OrionTools.log('ORION API REQUEST: ' + OrionTools.jsonTo(query))
-			
+
 			networker = OrionNetworker(
 				link = OrionTools.linkApi(),
 				parameters = parameters,
@@ -374,8 +376,14 @@ class OrionApi:
 	def containerRetrieve(self, links):
 		return self._request(mode = OrionApi.ModeContainer, action = OrionApi.ActionRetrieve, parameters = {OrionApi.ParameterLinks : links})
 
+	def containerIdentifier(self, links):
+		return self._request(mode = OrionApi.ModeContainer, action = OrionApi.ActionIdentifier, parameters = {OrionApi.ParameterLinks : links})
+
 	def containerHash(self, links):
 		return self._request(mode = OrionApi.ModeContainer, action = OrionApi.ActionHash, parameters = {OrionApi.ParameterLinks : links})
+
+	def containerSegment(self, links):
+		return self._request(mode = OrionApi.ModeContainer, action = OrionApi.ActionSegment, parameters = {OrionApi.ParameterLinks : links})
 
 	def containerDownload(self, id):
 		data = self._request(mode = OrionApi.ModeContainer, action = OrionApi.ActionDownload, parameters = {OrionApi.ParameterId : id}, raw = True)['body']

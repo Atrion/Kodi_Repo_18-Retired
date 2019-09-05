@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="script.extendedinfo" name="OpenInfo" version="6.2.2" provider-name="A4K">
+<addon id="script.extendedinfo" name="OpenInfo" version="6.2.3" provider-name="A4K">
 	<requires>
 		<import addon="xbmc.python" version="2.25.0"/>
 		<import addon="script.module.pil" version="1.1.7"/>
@@ -33,7 +33,8 @@
 			<screenshot>resources/screenshot2.jpg</screenshot>
 			<screenshot>resources/screenshot3.jpg</screenshot>
 		</assets>
-		<news>6.2.2 - Added ability to search using the tvdb_id for "extendedepisodeinfo"
+		<news>6.2.3 - Fix TV Show trailers
+		6.2.2 - Added ability to search using the tvdb_id for "extendedepisodeinfo"
 		6.2.1 - Fix context menu now available for widgets pointing to OpenInfo's video addon items
 		6.2.0 - Added context menu force "player select" to the play button, available via "c" and long press "enter" button
 		</news>

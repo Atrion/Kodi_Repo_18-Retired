@@ -20,13 +20,16 @@
 
 import re,urllib,urlparse,json
 from resources.lib.modules import client
+from resources.lib.extensions import provider
 from resources.lib.extensions import metadata
 from resources.lib.extensions import tools
-from resources.lib.extensions import debrid
+from resources.lib.debrid import easynews
 
-class source:
+class source(provider.ProviderBase):
 
 	def __init__(self):
+		provider.ProviderBase.__init__(self, supportMovies = True, supportShows = True)
+
 		self.pack = False # Checked by provider.py
 		self.priority = 0
 		self.language = ['un']
@@ -39,55 +42,25 @@ class source:
 		self.search_link = '/2.0/search/solr-search/advanced?st=adv&safeO=1&sb=1&from=&ns=&fex=mkv%%2Cmp4%%2Cavi%%2Cmpg%%2Cwebm&vc=&ac=&s1=nsubject&s1d=%%2B&s2=nrfile&s2d=%%2B&s3=dsize&s3d=%%2B&fty[]=VIDEO&spamf=1&u=1&gx=1&pby=3000&pno=1&sS=3&d1=&d1t=&d2=&d2t=&b1=&b1t=11&b2=&b2t=&px1=&px1t=&px2=&px2t=&fps1=&fps1t=&fps2=&fps2t=&bps1=&bps1t=&bps2=&bps2t=&hz1=&hz1t=&hz2=&hz2t=&rn1=&rn1t=&rn2=&rn2t=&gps=%s&sbj=%s'
 
 	def instanceEnabled(self):
-		easynews = debrid.EasyNews()
-		return easynews.accountEnabled() and easynews.accountValid()
-
-	def movie(self, imdb, title, localtitle, year):
-		try:
-			url = {'imdb': imdb, 'title': title, 'year': year}
-			url = urllib.urlencode(url)
-			return url
-		except:
-			return
-
-	def tvshow(self, imdb, tvdb, tvshowtitle, localtitle, year):
-		try:
-			url = {'imdb': imdb, 'tvdb': tvdb, 'tvshowtitle': tvshowtitle, 'year': year}
-			url = urllib.urlencode(url)
-			return url
-		except:
-			return
-
-	def episode(self, url, imdb, tvdb, title, premiered, season, episode):
-		try:
-			if url == None: return
-			url = urlparse.parse_qs(url)
-			url = dict([(i, url[i][0]) if url[i] else (i, '') for i in url])
-			url['title'], url['premiered'], url['season'], url['episode'] = title, premiered, season, episode
-			url = urllib.urlencode(url)
-			return url
-		except:
-			return
+		core = easynews.Core()
+		return core.accountEnabled() and core.accountValid()
 
 	def sources(self, url, hostDict, hostprDict):
 		sources = []
 		try:
-			if url == None:
-				raise Exception()
+			if url == None: raise Exception()
 
-			easynews = debrid.EasyNews()
+			core = easynews.Core()
+			if not core.accountValid(): raise Exception()
 
-			if not easynews.accountValid():
-				raise Exception()
-
-			cookie = easynews.accountCookie()
+			cookie = core.accountCookie()
 
 			ignoreContains = None
-			data = urlparse.parse_qs(url)
-			data = dict([(i, data[i][0]) if data[i] else (i, '') for i in data])
+			data = self._decode(url)
 
 			if 'exact' in data and data['exact']:
 				query = title = data['tvshowtitle'] if 'tvshowtitle' in data else data['title']
+				titles = None
 				year = None
 				season = None
 				episode = None
@@ -96,6 +69,7 @@ class source:
 			else:
 				movie = not 'tvshowtitle' in data
 				title = data['title'] if movie else data['tvshowtitle']
+				titles = data['alternatives'] if 'alternatives' in data else None
 				year = int(data['year']) if 'year' in data and not data['year'] == None else None
 				season = int(data['season']) if 'season' in data and not data['season'] == None else None
 				episode = int(data['episode']) if 'episode' in data and not data['episode'] == None else None
@@ -113,6 +87,8 @@ class source:
 				query = re.sub('(\\\|/| -|:|;|\*|\?|"|\'|<|>|\|)', ' ', query)
 
 			query = urllib.quote_plus(query)
+			if not self._query(query): return sources
+
 			query = self.search_link % (query, query)
 			query = urlparse.urljoin(self.base_link, query)
 
@@ -163,11 +139,10 @@ class source:
 					jsonLink = urllib.quote('%s%s/%s%s' % (result['0'], result['11'], result['10'], result['11']))
 					jsonLink = '%s/dl/%s|Cookie=%s' % (self.base_link, jsonLink, urllib.quote_plus(cookie))
 					jsonLink = jsonLink.encode('utf-8')
-					if jsonLink in links:
-						continue
+					if jsonLink in links: continue
 
 					# Metadata
-					meta = metadata.Metadata(name = jsonName, title = title, year = year, season = season, episode = episode, link = jsonLink, size = jsonSize, quality = jsonQuality)
+					meta = metadata.Metadata(name = jsonName, title = title, titles = titles, year = year, season = season, episode = episode, link = jsonLink, size = jsonSize, quality = jsonQuality)
 
 					# Ignore
 					meta.ignoreAdjust(contains = ignoreContains)
@@ -186,6 +161,3 @@ class source:
 			return sources
 		except:
 			return sources
-
-	def resolve(self, url):
-		return url

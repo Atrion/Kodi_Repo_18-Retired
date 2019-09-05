@@ -225,6 +225,11 @@ class Networker(object):
 		except: return None
 
 	@classmethod
+	def linkPath(self, link):
+		import urlparse
+		return urlparse.urlparse(link).path
+
+	@classmethod
 	def ipIs(self, link):
 		return isinstance(link, basestring) and bool(re.match('^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$', link))
 
@@ -238,17 +243,23 @@ class Networker(object):
 		return self.mResponse
 
 	def cookies(self, link = None, parameters = None, headers = None, timeout = 30, range = None, force = False, addon = False, flare = True, form = None, json = None, method = None, raw = False):
-		import urllib2
-		import cookielib
-		jar = cookielib.LWPCookieJar()
-		handlers = [urllib2.HTTPHandler(), urllib2.HTTPSHandler(), urllib2.HTTPCookieProcessor(jar)]
-		opener = urllib2.build_opener(*handlers)
-		opener = urllib2.install_opener(opener)
-		self.request(link = link, parameters = parameters, headers = headers, timeout = timeout, range = range, force = force, addon = addon, flare = flare, form = form, method = method)
-		cookies = {cookie.name : cookie.value for cookie in jar}
-		if self.mCookies: cookies.update({cookie.name : cookie.value for cookie in self.mCookies}) # CloudFlare cookies.
-		if raw: cookies = '; '.join(['%s=%s' % (key, value) for key, value in cookies.iteritems()])
-		return cookies
+		try:
+			import urllib2
+			import cookielib
+
+			jar = cookielib.LWPCookieJar()
+			handlers = [urllib2.HTTPHandler(), urllib2.HTTPSHandler(), urllib2.HTTPCookieProcessor(jar)]
+			opener = urllib2.build_opener(*handlers)
+			urllib2.install_opener(opener)
+			self.request(link = link, parameters = parameters, headers = headers, timeout = timeout, range = range, force = force, addon = addon, flare = flare, form = form, method = method)
+
+			cookies = {cookie.name : cookie.value for cookie in jar}
+			if self.mCookies: cookies.update({cookie.name : cookie.value for cookie in self.mCookies}) # CloudFlare cookies.
+			if raw: cookies = '; '.join(['%s=%s' % (key, value) for key, value in cookies.iteritems()])
+			return cookies
+		except:
+			tools.Logger.error()
+			return None
 
 	def download(self, path, timeout = 30, range = None, flare = True):
 		data = self.retrieve(timeout = timeout, range = range, force = False, flare = flare)
@@ -278,6 +289,7 @@ class Networker(object):
 				self.mResponse.close()
 				return self.mData
 		except:
+			tools.Logger.error()
 			return None
 
 	def retrieveJson(self, link = None, parameters = None, headers = None, timeout = 30, range = None, force = False, addon = False, flare = True, form = None, json = None, method = None):
@@ -296,6 +308,7 @@ class Networker(object):
 				self.mErrorCode = None
 				self.mResponse = None
 				self.mData = None
+
 				if link is None: link = self.mLink
 				if method: method = method.upper()
 				if link:
@@ -373,12 +386,20 @@ class Networker(object):
 						request.add_header(key, value)
 
 					if method: request.get_method = lambda: method
-					try:
+
+					# The cookies() function does not work if the security context is set. Try first without.
+					'''try:
 						secureContext = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
 						self.mResponse = urllib2.urlopen(request, context = secureContext, timeout = timeout)
 					except:
 						# SPMC (Python < 2.7.8) does not support TLS. Try to do it wihout SSL/TLS, otherwise bad luck.
+						self.mResponse = urllib2.urlopen(request, timeout = timeout)'''
+					try:
 						self.mResponse = urllib2.urlopen(request, timeout = timeout)
+					except:
+						secureContext = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
+						self.mResponse = urllib2.urlopen(request, context = secureContext, timeout = timeout)
+
 			return self.mResponse
 		except urllib2.HTTPError as error: # HTTP error.
 			if flare and error.code in [301, 307, 308, 503] and 'cloudflare' in str(error.info()).lower():
@@ -592,7 +613,7 @@ class Networker(object):
 
 		if None in [globalIpAddress, globalIpName, globalIpType, globalProvider, globalOrganisation, globalSystem, globalContinentName, globalContinentCode, globalCountryName, globalCountryCode, globalRegionName, globalRegionCode, globalCityName, globalCityCode, globalLatitude, globalLongitude] or '' in [globalIpAddress, globalIpName, globalIpType, globalProvider, globalOrganisation, globalSystem, globalContinentName, globalContinentCode, globalCountryName, globalCountryCode, globalRegionName, globalRegionCode, globalCityName, globalCityCode, globalLatitude, globalLongitude]:
 			try:
-				result = tools.Converter.jsonFrom(urllib2.urlopen('https://tools.keycdn.com/geo.json'))['data']['geo']
+				result = tools.Converter.jsonFrom(urllib2.urlopen('https://tools.keycdn.com/geo.json').read())['data']['geo']
 				if 'ip' in result and globalIpAddress in [None, '']: globalIpAddress = result['ip']
 				if 'rdns' in result and globalIpName in [None, '']: globalIpName = result['rdns']
 				if 'continent_code' in result and globalContinentCode in [None, '']: globalContinentCode = result['continent_code']
@@ -606,7 +627,7 @@ class Networker(object):
 
 		if None in [globalIpAddress, globalIpName, globalIpType, globalProvider, globalOrganisation, globalSystem, globalContinentName, globalContinentCode, globalCountryName, globalCountryCode, globalRegionName, globalRegionCode, globalCityName, globalCityCode, globalLatitude, globalLongitude] or '' in [globalIpAddress, globalIpName, globalIpType, globalProvider, globalOrganisation, globalSystem, globalContinentName, globalContinentCode, globalCountryName, globalCountryCode, globalRegionName, globalRegionCode, globalCityName, globalCityCode, globalLatitude, globalLongitude]:
 			try:
-				result = tools.Converter.jsonFrom(urllib2.urlopen('http://extreme-ip-lookup.com/json/'))
+				result = tools.Converter.jsonFrom(urllib2.urlopen('http://extreme-ip-lookup.com/json/').read())
 				if 'query' in result and globalIpAddress in [None, '']: globalIpAddress = result['query']
 				if 'ipName' in result and globalIpName in [None, '']: globalIpName = result['ipName']
 				if 'ipType' in result and globalIpType in [None, '']: globalIpType = result['ipType']
@@ -623,7 +644,7 @@ class Networker(object):
 
 		if None in [globalIpAddress, globalIpName, globalIpType, globalProvider, globalOrganisation, globalSystem, globalContinentName, globalContinentCode, globalCountryName, globalCountryCode, globalRegionName, globalRegionCode, globalCityName, globalCityCode, globalLatitude, globalLongitude] or '' in [globalIpAddress, globalIpName, globalIpType, globalProvider, globalOrganisation, globalSystem, globalContinentName, globalContinentCode, globalCountryName, globalCountryCode, globalRegionName, globalRegionCode, globalCityName, globalCityCode, globalLatitude, globalLongitude]:
 			try:
-				result = tools.Converter.jsonFrom(urllib2.urlopen('http://ip-api.com/json'))
+				result = tools.Converter.jsonFrom(urllib2.urlopen('http://ip-api.com/json').read())
 				if 'query' in result and globalIpAddress in [None, '']: globalIpAddress = result['query']
 				if 'isp' in result and globalProvider in [None, '']: globalProvider = result['isp']
 				if 'org' in result and globalOrganisation in [None, '']: globalOrganisation = result['org']
@@ -640,7 +661,7 @@ class Networker(object):
 
 		if None in [globalIpAddress, globalIpName, globalIpType, globalProvider, globalOrganisation, globalSystem, globalContinentName, globalContinentCode, globalCountryName, globalCountryCode, globalRegionName, globalRegionCode, globalCityName, globalCityCode, globalLatitude, globalLongitude] or '' in [globalIpAddress, globalIpName, globalIpType, globalProvider, globalOrganisation, globalSystem, globalContinentName, globalContinentCode, globalCountryName, globalCountryCode, globalRegionName, globalRegionCode, globalCityName, globalCityCode, globalLatitude, globalLongitude]:
 			try:
-				result = tools.Converter.jsonFrom(urllib2.urlopen('http://freegeoip.net/json/'))
+				result = tools.Converter.jsonFrom(urllib2.urlopen('http://freegeoip.net/json/').read())
 				if 'ip' in result and globalIpAddress in [None, '']: globalIpAddress = result['ip']
 				if 'country_name' in result and globalCountryName in [None, '']: globalCountryName = result['country_name']
 				if 'country_code' in result and globalCountryCode in [None, '']: globalCountryCode = result['country_name']

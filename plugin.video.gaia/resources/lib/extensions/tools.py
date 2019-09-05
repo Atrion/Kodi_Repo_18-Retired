@@ -1114,7 +1114,11 @@ class File(object):
 
 	@classmethod
 	def joinPath(self, path, *paths):
-		return os.path.join(path, *paths)
+		parts = []
+		for p in paths:
+			if isinstance(p, (list, tuple)): parts.extend(p)
+			else: parts.append(p)
+		return os.path.join(path, *parts)
 
 	@classmethod
 	def exists(self, path): # Directory must end with slash
@@ -1698,8 +1702,17 @@ class System(object):
 			thread.start()
 
 	@classmethod
-	def launchAddon(self):
-		return System.execute('RunAddon(%s)' % self.id())
+	def launchAddon(self, wait = True):
+		System.execute('RunAddon(%s)' % self.id())
+		if wait:
+			for i in range(0, 150):
+				if self.infoLabel('Container.PluginName') == self.GaiaAddon:
+					try: items = int(self.infoLabel('Container.NumItems'))
+					except: items = 0
+					# Check NumItems, because the addon might have been launched, but the container/directory is still loading.
+					# The container must be done loading, otherwise if a container update is executed right afterwards, the main menu items and the container update items might be mixed and displayed as the same list.
+					if items > 0: break
+				Time.sleep(0.2)
 
 	@classmethod
 	def launchInitialize(self):
@@ -1721,8 +1734,8 @@ class System(object):
 		try: idle = (Time.timestamp() - int(value)) > 10800 # If the last launch was more than 3 hours ago.
 		except: idle = True
 		if first or idle:
+			from resources.lib import debrid
 			from resources.lib.extensions import interface
-			from resources.lib.extensions import debrid
 			from resources.lib.extensions import settings
 			from resources.lib.extensions import provider
 			from resources.lib.extensions import window
@@ -1852,17 +1865,14 @@ class System(object):
 			GloScrapers.check()
 			UniScrapers.check()
 			NanScrapers.check()
-			IncScrapers.check()
-			PlaScrapers.check()
-			YodScrapers.check()
 
 			# Intialize Premiumize
-			debrid.Premiumize().initialize()
+			debrid.premiumize.Core().initialize()
 
 			# Clear debrid files
-			debrid.Premiumize().deleteLaunch()
-			debrid.OffCloud().deleteLaunch()
-			debrid.RealDebrid().deleteLaunch()
+			debrid.premiumize.Core().deleteLaunch()
+			debrid.offcloud.Core().deleteLaunch()
+			debrid.realdebrid.Core().deleteLaunch()
 
 			# Copy the select theme background as fanart to the root folder.
 			# Ensures that the selected theme also shows outside the addon.
@@ -2567,6 +2577,7 @@ class Media(object):
 	TypeSeason = 'season'
 	TypeEpisode = 'episode'
 
+	NameSeasonSpecial = xbmcaddon.Addon(System.GaiaAddon).getLocalizedString(35637).encode('utf-8')
 	NameSeasonLong = xbmcaddon.Addon(System.GaiaAddon).getLocalizedString(32055).encode('utf-8')
 	NameSeasonShort = NameSeasonLong[0].upper()
 	NameEpisodeLong = xbmcaddon.Addon(System.GaiaAddon).getLocalizedString(33028).encode('utf-8')
@@ -2652,10 +2663,11 @@ class Media(object):
 		(OrderSeasonEpisode,		NameSeasonShort + '%02d' + NameEpisodeShort + '%02d'),
 	]
 
-	Formats = None
+	FormatsSkin = None
+	FormatsDefault = None
 
 	@classmethod
-	def _format(self, format, title = None, year = None, season = None, episode = None):
+	def _format(self, format, title = None, year = None, season = None, episode = None, special = False):
 		order = format[0]
 		format = format[1]
 		if order == Media.OrderTitle:
@@ -2665,7 +2677,8 @@ class Media(object):
 		elif order == Media.OrderYearTitle:
 			return format % (year, title)
 		elif order == Media.OrderSeason:
-			return format % (season)
+			if season == 0 and special: return Media.NameSeasonSpecial
+			else: return format % (season)
 		elif order == Media.OrderEpisode:
 			return format % (episode)
 		elif order == Media.OrderSeasonEpisode:
@@ -2696,56 +2709,49 @@ class Media(object):
 		return (title, year, season, episode)
 
 	@classmethod
-	def _initialize(self):
-		if Media.Formats == None:
+	def _initialize(self, skin = True):
+		data = Media.FormatsSkin if skin else Media.FormatsDefault
+		if data == None:
 			from resources.lib.extensions import interface
-			aeonNox = interface.Skin.isGaiaAeonNox()
-			Media.Formats = {}
+			aeonNox = interface.Skin.isGaiaAeonNox() if skin else False
+			data = {}
 
 			setting = Settings.getInteger('interface.title.movies')
-			if setting == Media.Default:
-				setting = Media.DefaultAeonNoxMovie if aeonNox else Media.DefaultMovie
-			else:
-				setting -= 1
-			Media.Formats[Media.TypeMovie] = Media.FormatsTitle[setting]
+			if setting == Media.Default: setting = Media.DefaultAeonNoxMovie if aeonNox else Media.DefaultMovie
+			else: setting -= 1
+			data[Media.TypeMovie] = Media.FormatsTitle[setting]
 
 			setting = Settings.getInteger('interface.title.documentaries')
-			if setting == Media.Default:
-				setting = Media.DefaultAeonNoxDocumentary if aeonNox else Media.DefaultDocumentary
-			else:
-				setting -= 1
-			Media.Formats[Media.TypeDocumentary] = Media.FormatsTitle[setting]
+			if setting == Media.Default: setting = Media.DefaultAeonNoxDocumentary if aeonNox else Media.DefaultDocumentary
+			else: setting -= 1
+			data[Media.TypeDocumentary] = Media.FormatsTitle[setting]
 
 			setting = Settings.getInteger('interface.title.shorts')
-			if setting == Media.Default:
-				setting = Media.DefaultAeonNoxShort if aeonNox else Media.DefaultShort
-			else:
-				setting -= 1
-			Media.Formats[Media.TypeShort] = Media.FormatsTitle[setting]
+			if setting == Media.Default: setting = Media.DefaultAeonNoxShort if aeonNox else Media.DefaultShort
+			else: setting -= 1
+			data[Media.TypeShort] = Media.FormatsTitle[setting]
 
 			setting = Settings.getInteger('interface.title.shows')
-			if setting == Media.Default:
-				setting = Media.DefaultAeonNoxShow if aeonNox else Media.DefaultShow
-			else:
-				setting -= 1
-			Media.Formats[Media.TypeShow] = Media.FormatsTitle[setting]
+			if setting == Media.Default: setting = Media.DefaultAeonNoxShow if aeonNox else Media.DefaultShow
+			else: setting -= 1
+			data[Media.TypeShow] = Media.FormatsTitle[setting]
 
 			setting = Settings.getInteger('interface.title.seasons')
-			if setting == Media.Default:
-				setting = Media.DefaultAeonNoxSeason if aeonNox else Media.DefaultSeason
-			else:
-				setting -= 1
-			Media.Formats[Media.TypeSeason] = Media.FormatsSeason[setting]
+			if setting == Media.Default: setting = Media.DefaultAeonNoxSeason if aeonNox else Media.DefaultSeason
+			else: setting -= 1
+			data[Media.TypeSeason] = Media.FormatsSeason[setting]
 
 			setting = Settings.getInteger('interface.title.episodes')
-			if setting == Media.Default:
-				setting = Media.DefaultAeonNoxEpisode if aeonNox else Media.DefaultEpisode
-			else:
-				setting -= 1
-			Media.Formats[Media.TypeEpisode] = Media.FormatsEpisode[setting]
+			if setting == Media.Default: setting = Media.DefaultAeonNoxEpisode if aeonNox else Media.DefaultEpisode
+			else: setting -= 1
+			data[Media.TypeEpisode] = Media.FormatsEpisode[setting]
+
+			if skin: Media.FormatsSkin = data
+			else: Media.FormatsDefault = data
+		return data
 
 	@classmethod
-	def title(self, type = TypeNone, metadata = None, title = None, year = None, season = None, episode = None, encode = False, pack = False):
+	def title(self, type = TypeNone, metadata = None, title = None, year = None, season = None, episode = None, encode = False, pack = False, special = False, skin = True):
 		if not metadata == None: title, year, season, episode, packs = self._extract(metadata = metadata, encode = encode)
 		title, year, season, episode = self._data(title = title, year = year, season = season, episode = episode, encode = encode)
 
@@ -2758,9 +2764,9 @@ class Media(object):
 			else:
 				type = Media.TypeMovie
 
-		self._initialize()
-		format = Media.Formats[type]
-		return self._format(format = format, title = title, year = year, season = season, episode = episode)
+		formats = self._initialize(skin = skin)
+		format = formats[type]
+		return self._format(format = format, title = title, year = year, season = season, episode = episode, special = special)
 
 	# Raw title to search on the web/scrapers.
 	@classmethod
@@ -3623,12 +3629,6 @@ class Extensions(object):
 	IdGloScrapers = 'script.module.globalscrapers'
 	IdUniScrapers = 'script.module.universalscrapers'
 	IdNanScrapers = 'script.module.nanscrapers'
-	IdIncursion = 'plugin.video.incursion'
-	IdIncScrapers = 'script.module.incursion'
-	IdPlacenta = 'plugin.video.placenta'
-	IdPlaScrapers = 'script.module.placenta'
-	IdYoda = 'plugin.video.yoda'
-	IdYodScrapers = 'script.module.yoda'
 	IdMetaHandler = 'script.module.metahandler'
 	IdTrakt = 'script.trakt'
 	IdElementum = 'plugin.video.elementum'
@@ -3799,27 +3799,6 @@ class Extensions(object):
 				'icon' : 'extensionsnanscrapers.png',
 			},
 			{
-				'id' : Extensions.IdIncursion,
-				'name' : 'Incursion Scrapers',
-				'type' : Extensions.TypeOptional,
-				'description' : 33963,
-				'icon' : 'extensionsincscrapers.png',
-			},
-			{
-				'id' : Extensions.IdPlacenta,
-				'name' : 'Placenta Scrapers',
-				'type' : Extensions.TypeOptional,
-				'description' : 33963,
-				'icon' : 'extensionsplascrapers.png',
-			},
-			{
-				'id' : Extensions.IdYoda,
-				'name' : 'Yoda Scrapers',
-				'type' : Extensions.TypeOptional,
-				'description' : 33963,
-				'icon' : 'extensionsyodscrapers.png',
-			},
-			{
 				'id' : Extensions.IdMetaHandler,
 				'name' : 'MetaHandler',
 				'type' : Extensions.TypeOptional,
@@ -3918,9 +3897,6 @@ class Extensions(object):
 					GloScrapers.check()
 					UniScrapers.check()
 					NanScrapers.check()
-					IncScrapers.check()
-					PlaScrapers.check()
-					YodScrapers.check()
 
 				return True
 		return False
@@ -4385,141 +4361,6 @@ class NanScrapers(object):
 	@classmethod
 	def disable(self, refresh = False):
 		result = Extensions.disable(id = NanScrapers.Id, refresh = refresh)
-		self.check()
-		return result
-
-###################################################################
-# INCSCRAPERS
-###################################################################
-
-class IncScrapers(object):
-
-	Id = Extensions.IdIncScrapers
-	IdMain = Extensions.IdIncursion
-
-	@classmethod
-	def settings(self):
-		if Extensions.installed(id = IncScrapers.IdMain):
-			Extensions.settings(id = IncScrapers.IdMain)
-		else:
-			from resources.lib.extensions import interface
-			name = 'Incursion'
-			interface.Dialog.confirm(title = 33391, message = (interface.Translation.string(35336) % (name, name)))
-
-	@classmethod
-	def providers(self, settings = True):
-		from resources.lib.providers.external.universal.open import incscrapersx
-		incscrapersx.source.instancesSettings()
-		if settings: Settings.launch(Settings.CategoryProviders)
-
-	@classmethod
-	def check(self):
-		Settings.set('providers.external.universal.open.incscrapersx.installed', self.installed())
-
-	@classmethod
-	def installed(self, full = False):
-		if full: return Extensions.installed(id = IncScrapers.IdMain)
-		else: return Extensions.installed(id = IncScrapers.Id)
-
-	@classmethod
-	def enable(self, refresh = False):
-		result = Extensions.enable(id = IncScrapers.Id, refresh = refresh)
-		self.check()
-		return result
-
-	@classmethod
-	def disable(self, refresh = False):
-		result = Extensions.disable(id = IncScrapers.Id, refresh = refresh)
-		self.check()
-		return result
-
-###################################################################
-# PLASCRAPERS
-###################################################################
-
-class PlaScrapers(object):
-
-	Id = Extensions.IdPlaScrapers
-	IdMain = Extensions.IdPlacenta
-
-	@classmethod
-	def settings(self):
-		if Extensions.installed(id = PlaScrapers.IdMain):
-			Extensions.settings(id = PlaScrapers.IdMain)
-		else:
-			from resources.lib.extensions import interface
-			name = 'Placenta'
-			interface.Dialog.confirm(title = 33391, message = (interface.Translation.string(35336) % (name, name)))
-
-	@classmethod
-	def providers(self, settings = True):
-		from resources.lib.providers.external.universal.open import plascrapersx
-		plascrapersx.source.instancesSettings()
-		if settings: Settings.launch(Settings.CategoryProviders)
-
-	@classmethod
-	def check(self):
-		Settings.set('providers.external.universal.open.plascrapersx.installed', self.installed())
-
-	@classmethod
-	def installed(self, full = False):
-		if full: return Extensions.installed(id = PlaScrapers.IdMain)
-		else: return Extensions.installed(id = PlaScrapers.Id)
-
-	@classmethod
-	def enable(self, refresh = False):
-		result = Extensions.enable(id = PlaScrapers.Id, refresh = refresh)
-		self.check()
-		return result
-
-	@classmethod
-	def disable(self, refresh = False):
-		result = Extensions.disable(id = PlaScrapers.Id, refresh = refresh)
-		self.check()
-		return result
-
-###################################################################
-# YODSCRAPERS
-###################################################################
-
-class YodScrapers(object):
-
-	Id = Extensions.IdYodScrapers
-	IdMain = Extensions.IdYoda
-
-	@classmethod
-	def settings(self):
-		if Extensions.installed(id = YodScrapers.IdMain):
-			Extensions.settings(id = YodScrapers.IdMain)
-		else:
-			from resources.lib.extensions import interface
-			name = 'Yoda'
-			interface.Dialog.confirm(title = 33391, message = (interface.Translation.string(35336) % (name, name)))
-
-	@classmethod
-	def providers(self, settings = True):
-		from resources.lib.providers.external.universal.open import yodscrapersx
-		yodscrapersx.source.instancesSettings()
-		if settings: Settings.launch(Settings.CategoryProviders)
-
-	@classmethod
-	def check(self):
-		Settings.set('providers.external.universal.open.yodscrapersx.installed', self.installed())
-
-	@classmethod
-	def installed(self, full = False):
-		if full: return Extensions.installed(id = YodScrapers.IdMain)
-		else: return Extensions.installed(id = YodScrapers.Id)
-
-	@classmethod
-	def enable(self, refresh = False):
-		result = Extensions.enable(id = YodScrapers.Id, refresh = refresh)
-		self.check()
-		return result
-
-	@classmethod
-	def disable(self, refresh = False):
-		result = Extensions.disable(id = YodScrapers.Id, refresh = refresh)
 		self.check()
 		return result
 
@@ -5172,11 +5013,12 @@ class Playlist(object):
 			item.setArt(art)
 			item.setInfo(type = 'Video', infoLabels = Media.metadataClean(metadata))
 
-			if not context == None:
+			# Use the global context menu instead.
+			'''if not context == None:
 				from resources.lib.extensions import interface
 				menu = interface.Context()
 				menu.jsonFrom(context)
-				item.addContextMenuItems([menu.menu()])
+				item.addContextMenuItems([menu.menu()])'''
 
 			self.playlist().add(url = link, listitem = item)
 			if notification:
@@ -5219,8 +5061,8 @@ class Statistics(object):
 		try:
 			if not self.enabled(): return
 
+			from resources.lib import debrid
 			from resources.lib.extensions import api
-			from resources.lib.extensions import debrid
 			from resources.lib.extensions import network
 			from resources.lib.extensions import orionoid
 
@@ -5241,12 +5083,12 @@ class Statistics(object):
 
 				'premium' :
 				{
-					'premiumize' : debrid.Premiumize().accountValid(),
-					'offcloud' : debrid.OffCloud().accountValid(),
-					'realdebrid' : debrid.RealDebrid().accountValid(),
-					'easynews' : debrid.EasyNews().accountValid(),
-					'alldebrid' : debrid.AllDebrid().accountValid(),
-					'rapidpremium' : debrid.RapidPremium().accountValid(),
+					'premiumize' : debrid.premiumize.Core().accountValid(),
+					'offcloud' : debrid.offcloud.Core().accountValid(),
+					'realdebrid' : debrid.realdebrid.Core().accountValid(),
+					'easynews' : debrid.easynews.Core().accountValid(),
+					'alldebrid' : debrid.alldebrid.Core().accountValid(),
+					'rapidpremium' : debrid.rapidpremium.Core().accountValid(),
 				},
 			}
 

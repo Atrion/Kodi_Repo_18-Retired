@@ -1,12 +1,13 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import xbmc,xbmcgui,xbmcaddon
+from kodi_six import xbmc, xbmcaddon, xbmcgui
 import resources.lib.ColorPicker as cp
 
 ADDON_ID = "script.skin.helper.colorpicker"
 ADDON = xbmcaddon.Addon(ADDON_ID)
-ADDON_PATH = ADDON.getAddonInfo('path').decode("utf-8")
+ADDON_PATH = ADDON.getAddonInfo('path')
+MONITOR = xbmc.Monitor()
 
 class Main(object):
     '''Main entrypoint for our colorpicker'''
@@ -41,7 +42,6 @@ class Main(object):
         '''extract the params from the called script path'''
         params = {}
         for arg in sys.argv:
-            arg = arg.decode("utf-8")
             if arg == 'script.skin.helper.colorpicker' or arg == 'default.py':
                 continue
             elif "=" in arg:
@@ -54,11 +54,9 @@ class Main(object):
     @staticmethod
     def wait_for_skinshortcuts_window():
         '''wait untill skinshortcuts is active window (because of any animations that may have been applied)'''
-        for i in range(40):
-            if not xbmc.getCondVisibility("Window.IsActive(DialogSelect.xml) | \
+        while not MONITOR.abortRequested() and not xbmc.getCondVisibility("Window.IsActive(DialogSelect.xml) | \
                 Window.IsActive(script-skin_helper_service-ColorPicker.xml) | Window.IsActive(DialogKeyboard.xml)"):
-                break
-            else: xbmc.sleep(100)
+            MONITOR.waitForAbort(0.1)
 
 
 #MAIN ENTRY POINT

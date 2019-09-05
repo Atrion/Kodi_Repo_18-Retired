@@ -462,23 +462,28 @@ class Emby(object):
 		except:
 			tools.Logger.error()
 
-	def _search(self, index, type, title, year, season, episode):
+	def _search(self, index, type, title, year, season, episode, exact):
 		try:
-			television = tools.Media.typeTelevision(type)
-			type = 'Episode' if television else 'Movie'
+			television = None
+			if exact:
+				type = 'Movie,Episode'
+			else:
+				television = tools.Media.typeTelevision(type)
+				type = 'Episode' if television else 'Movie'
 			items = self._request(index = index, method = network.Networker.MethodGet, category = Emby.CategorySearch, action = Emby.ActionHints, parameters = {'SearchTerm' : title, 'IncludeItemTypes' : type})
 			items = items['SearchHints']
-			if television: items = [i for i in items if i['ParentIndexNumber'] == season and i['IndexNumber'] == episode]
-			else: items = [i for i in items if i['ProductionYear'] == year]
+			if not exact:
+				if television: items = [i for i in items if i['ParentIndexNumber'] == season and i['IndexNumber'] == episode]
+				else: items = [i for i in items if i['ProductionYear'] == year]
 			threads = [threading.Thread(target = self._info, args = (index, i['Id'])) for i in items]
 			[i.start() for i in threads]
 			[i.join() for i in threads]
 		except:
 			tools.Logger.error()
 
-	def search(self, type, title, year = None, season = None, episode = None):
+	def search(self, type, title, year = None, season = None, episode = None, exact = False):
 		self.mResults = []
-		self._execute(self._search, type, title, year, season, episode)
+		self._execute(self._search, type, title, year, season, episode, exact)
 
 		# Emby can return mutiple item IDs, but all items have the same source ID.
 		# Seems to be episodes that can be listed multiple times (show, season, episode, etc).

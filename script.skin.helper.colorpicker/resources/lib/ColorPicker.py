@@ -1,44 +1,52 @@
 from xml.dom.minidom import parse
-import xbmc
-import xbmcgui
-import xbmcaddon
-import xbmcvfs
 import os
 import sys
 import math
 from traceback import format_exc
+from kodi_six import xbmc, xbmcaddon, xbmcgui, xbmcvfs
+from contextlib import contextmanager
 
 ADDON_ID = "script.skin.helper.colorpicker"
 ADDON = xbmcaddon.Addon(ADDON_ID)
-ADDON_PATH = ADDON.getAddonInfo('path').decode("utf-8")
-COLORFILES_PATH = xbmc.translatePath("special://profile/addon_data/%s/colors/" % ADDON_ID).decode("utf-8")
-SKINCOLORFILES_PATH = xbmc.translatePath("special://profile/addon_data/%s/colors/" % xbmc.getSkinDir()).decode("utf-8")
-SKINCOLORFILE = xbmc.translatePath("special://skin/extras/colors/colors.xml").decode("utf-8")
+ADDON_PATH = ADDON.getAddonInfo('path')
+COLORFILES_PATH = xbmc.translatePath("special://profile/addon_data/%s/colors/" % ADDON_ID)
+SKINCOLORFILES_PATH = xbmc.translatePath("special://profile/addon_data/%s/colors/" % xbmc.getSkinDir())
+SKINCOLORFILE = xbmc.translatePath("special://skin/extras/colors/colors.xml")
 WINDOW = xbmcgui.Window(10000)
 SUPPORTS_PIL = False
+PYTHON3 = True if sys.version_info.major == 3 else False
 
 # HELPERS ###########################################
 
 
 def log_msg(msg, level=xbmc.LOGDEBUG):
     '''log message to kodi log'''
-    if isinstance(msg, unicode):
-        msg = msg.encode('utf-8')
     xbmc.log("Skin Helper Service ColorPicker --> %s" % msg, level=level)
 
 
 def log_exception(modulename, exceptiondetails):
     '''helper to properly log an exception'''
-    log_msg(format_exc(sys.exc_info()), xbmc.LOGWARNING)
     log_msg("Exception in %s ! --> %s" % (modulename, exceptiondetails), xbmc.LOGERROR)
 
 
 def try_encode(text, encoding="utf-8"):
     '''helper method'''
+    if PYTHON3:
+        return text
     try:
         return text.encode(encoding, "ignore")
     except Exception:
         return text
+
+
+@contextmanager
+def busy_dialog():
+    xbmc.executebuiltin('ActivateWindow(busydialognocancel)')
+    try:
+        yield
+    finally:
+        xbmc.executebuiltin('Dialog.Close(busydialognocancel)')
+
 
 # IMPORT PIL/PILLOW ###################################
 
@@ -83,7 +91,7 @@ class ColorPicker(xbmcgui.WindowXMLDialog):
     active_palette = None
 
     def __init__(self, *args, **kwargs):
-        xbmcgui.WindowXMLDialog.__init__(self, *args, **kwargs)
+        super(xbmcgui.WindowXMLDialog, self).__init__()
         self.action_exitkeys_id = [10, 13]
         self.win = xbmcgui.Window(10000)
         self.build_colors_list()
@@ -97,8 +105,11 @@ class ColorPicker(xbmcgui.WindowXMLDialog):
 
     def add_color_to_list(self, colorname, colorstring):
         '''adds the coloroption as listitem to the list'''
+        if not colorname:
+            colorname = colorstring
         color_image_file = self.create_color_swatch_image(colorstring)
-        listitem = xbmcgui.ListItem(label=colorname, iconImage=color_image_file)
+        listitem = xbmcgui.ListItem(label=colorname)
+        listitem.setArt({'icon': color_image_file})
         listitem.setProperty("colorstring", colorstring)
         self.colors_list.addItem(listitem)
 
@@ -113,7 +124,7 @@ class ColorPicker(xbmcgui.WindowXMLDialog):
             colors_file = SKINCOLORFILE
             self.colors_path = SKINCOLORFILES_PATH
         else:
-            colors_file = os.path.join(ADDON_PATH, 'resources', 'colors', 'colors.xml').decode("utf-8")
+            colors_file = os.path.join(ADDON_PATH, 'resources', 'colors', 'colors.xml')
             self.colors_path = COLORFILES_PATH
 
         doc = parse(colors_file)
@@ -146,52 +157,50 @@ class ColorPicker(xbmcgui.WindowXMLDialog):
 
     def onInit(self):
         '''Called after initialization, get all colors and build the listing'''
-        xbmc.executebuiltin("ActivateWindow(busydialog)")
-        self.current_window = xbmcgui.Window(xbmcgui.getCurrentWindowDialogId())
-        self.colors_list = self.getControl(3110)
-        # set header_label
-        try:
-            self.getControl(1).setLabel(self.header_label)
-        except Exception:
-            pass
+        with busy_dialog():
+            self.current_window = xbmcgui.Window(xbmcgui.getCurrentWindowDialogId())
+            self.colors_list = self.getControl(3110)
+            # set header_label
+            try:
+                self.getControl(1).setLabel(self.header_label)
+            except Exception:
+                pass
 
-        # get current color that is stored in the skin setting
-        curvalue = ""
-        curvalue_name = ""
-        if self.skinstring:
-            curvalue = xbmc.getInfoLabel("Skin.String(%s)" % self.skinstring)
-            curvalue_name = xbmc.getInfoLabel("Skin.String(%s.name)" % self.skinstring)
-        if self.win_property:
-            curvalue = WINDOW.getProperty(self.win_property)
-            curvalue_name = xbmc.getInfoLabel('%s.name)' % self.win_property)
-        if curvalue:
-            self.current_window.setProperty("colorstring", curvalue)
-            if curvalue != curvalue_name:
-                self.current_window.setProperty("colorname", curvalue_name)
-            self.current_window.setProperty("current.colorstring", curvalue)
-            if curvalue != curvalue_name:
-                self.current_window.setProperty("current.colorname", curvalue_name)
+            # get current color that is stored in the skin setting
+            curvalue = ""
+            curvalue_name = ""
+            if self.skinstring:
+                curvalue = xbmc.getInfoLabel("Skin.String(%s)" % self.skinstring)
+                curvalue_name = xbmc.getInfoLabel("Skin.String(%s.name)" % self.skinstring)
+            if self.win_property:
+                curvalue = WINDOW.getProperty(self.win_property)
+                curvalue_name = xbmc.getInfoLabel('%s.name)' % self.win_property)
+            if curvalue:
+                self.current_window.setProperty("colorstring", curvalue)
+                if curvalue != curvalue_name:
+                    self.current_window.setProperty("colorname", curvalue_name)
+                self.current_window.setProperty("current.colorstring", curvalue)
+                if curvalue != curvalue_name:
+                    self.current_window.setProperty("current.colorname", curvalue_name)
 
-        # load colors in the list
-        self.load_colors_palette(self.active_palette)
+            # load colors in the list
+            self.load_colors_palette(self.active_palette)
 
-        # focus the current color
-        if self.current_window.getProperty("colorstring"):
-            self.current_window.setFocusId(3010)
-        else:
-            # no color setup so we just focus the colorslist
-            self.current_window.setFocusId(3110)
-            self.colors_list.selectItem(0)
-            self.current_window.setProperty("colorstring",
-                                            self.colors_list.getSelectedItem().getProperty("colorstring"))
-            self.current_window.setProperty("colorname",
-                                            self.colors_list.getSelectedItem().getLabel())
+            # focus the current color
+            if self.current_window.getProperty("colorstring"):
+                self.current_window.setFocusId(3010)
+            else:
+                # no color setup so we just focus the colorslist
+                self.current_window.setFocusId(3110)
+                self.colors_list.selectItem(0)
+                self.current_window.setProperty("colorstring",
+                                                self.colors_list.getSelectedItem().getProperty("colorstring"))
+                self.current_window.setProperty("colorname",
+                                                self.colors_list.getSelectedItem().getLabel())
 
-        # set opacity slider
-        if self.current_window.getProperty("colorstring"):
-            self.set_opacity_slider()
-
-        xbmc.executebuiltin("Dialog.Close(busydialog)")
+            # set opacity slider
+            if self.current_window.getProperty("colorstring"):
+                self.set_opacity_slider()
 
     def onFocus(self, controlId):
         '''builtin kodi event'''

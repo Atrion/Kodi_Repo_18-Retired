@@ -236,7 +236,7 @@ class Format(object):
 	ColorNone = None
 	ColorPrimary = 'FFA0C12C'
 	ColorSecondary = 'FF3C7DBF'
-	ColorOrion = 'FF637385'
+	ColorTertiary = 'FF777777'
 	ColorMain = 'FF2396FF'
 	ColorAlternative = 'FF004F98'
 	ColorSpecial = 'FF6C3483'
@@ -337,7 +337,7 @@ class Format(object):
 	def _colorSettings(self, customize, type, default):
 		if customize:
 			color = tools.Settings.getString('interface.color.' + type)
-			try: return re.search('\\[.*\\](.*)\\[.*\\]', color, re.IGNORECASE).group(1)
+			try: return re.search('\\[.*\\](.*)\\[.*\\]', color, re.IGNORECASE).group(1).encode('utf-8') # Important to encode, otherwise custom colors fail.
 			except: return ''
 		else:
 			return default
@@ -348,7 +348,7 @@ class Format(object):
 			Format.ColorCustomize = tools.Settings.getBoolean('interface.color.enabled')
 			Format.ColorPrimary = self._colorSettings(Format.ColorCustomize, 'primary', Format.ColorPrimary)
 			Format.ColorSecondary = self._colorSettings(Format.ColorCustomize, 'secondary', Format.ColorSecondary)
-			Format.ColorOrion = self._colorSettings(Format.ColorCustomize, 'orion', Format.ColorOrion)
+			Format.ColorTertiary = self._colorSettings(Format.ColorCustomize, 'tertiary', Format.ColorTertiary)
 			Format.ColorMain = self._colorSettings(Format.ColorCustomize, 'main', Format.ColorMain)
 			Format.ColorAlternative = self._colorSettings(Format.ColorCustomize, 'alternative', Format.ColorAlternative)
 			Format.ColorSpecial = self._colorSettings(Format.ColorCustomize, 'special', Format.ColorSpecial)
@@ -370,9 +370,9 @@ class Format(object):
 		return Format.ColorSecondary
 
 	@classmethod
-	def colorOrion(self):
+	def colorTertiary(self):
 		self._colorIninitialize()
-		return Format.ColorOrion
+		return Format.ColorTertiary
 
 	@classmethod
 	def colorMain(self):
@@ -1158,7 +1158,6 @@ class Splash(xbmcgui.WindowDialog):
 	def __init__(self, type, message = None, donation = None):
 		Loader.show()
 
-		from resources.lib.extensions import debrid
 		self.mType = type
 		self.mSplash = None
 
@@ -1579,18 +1578,23 @@ class Splash(xbmcgui.WindowDialog):
 		return int((self.mHeight - height) / 2)
 
 	def __referalPremiumize(self):
-		from resources.lib.extensions import debrid
-		debrid.Premiumize.website(open = True)
+		from resources.lib.debrid import premiumize
+		premiumize.Core.website(open = True)
+		self.close()
+
+	def __referalOffCloud(self):
+		from resources.lib.debrid import offcloud
+		offcloud.Core.website(open = True)
 		self.close()
 
 	def __referalRealDebrid(self):
-		from resources.lib.extensions import debrid
-		debrid.RealDebrid.website(open = True)
+		from resources.lib.debrid import realdebrid
+		realdebrid.Core.website(open = True)
 		self.close()
 
 	def __referalEasyNews(self):
-		from resources.lib.extensions import debrid
-		debrid.EasyNews.website(open = True)
+		from resources.lib.debrid import easynews
+		easynews.Core.website(open = True)
 		self.close()
 
 	def __referalCoinBase(self):
@@ -1614,7 +1618,7 @@ class Splash(xbmcgui.WindowDialog):
 			actions.append(self.__referalPremiumize)
 		if self.mButtonOffCloud:
 			distances.append(abs(control.getX() - self.mButtonOffCloud[0]) + abs(control.getY() - self.mButtonOffCloud[1]))
-			actions.append(self.__referalRealDebrid)
+			actions.append(self.__referalOffCloud)
 		if self.mButtonRealDebrid:
 			distances.append(abs(control.getX() - self.mButtonRealDebrid[0]) + abs(control.getY() - self.mButtonRealDebrid[1]))
 			actions.append(self.__referalRealDebrid)
@@ -2072,6 +2076,16 @@ class Context(object):
 	EnabledManagerManual = None
 	EnabledManagerCache = None
 
+	SettingsEnabled = False
+	SettingsEnabledGaia = False
+	SettingsEnabledAddon = False
+	SettingsEnabledWidget = False
+	SettingsEnabledPlaylist = False
+	SettingsLayout = False
+	SettingsLayoutPrefix = False
+	SettingsLayoutBold = False
+	SettingsLayoutColor = False
+
 	def __init__(self, mode = ModeNone, items = None, source = None, metadata = None, art = None, link = None, trailer = None, label = None, title = None, year = None, season = None, episode = None, imdb = None, tmdb = None, tvdb = None, id = None, orion = None, location = None, create = None, delete = None, library = None, queue = None, watched = None, refresh = None, type = None, kids = None, loader = False):
 		if loader: Loader.show()
 		if not mode == self.ModeNone: self._load(mode = mode, items = items, source = source, metadata = metadata, art = art, link = link, trailer = trailer, label = label, title = title, year = year, season = season, episode = episode, imdb = imdb, tmdb = tmdb, tvdb = tvdb, id = id, orion = orion, location = location, create = create, delete = delete, library = library, queue = queue, watched = watched, refresh = refresh, type = type, kids = kids, loader = loader)
@@ -2118,7 +2132,7 @@ class Context(object):
 			self.mWatched = watched
 			self.mRefresh = refresh
 
-			self._initialize()
+			self.initialize()
 			if len(self.mItems) == 0:
 				if self.mMode == Context.ModeGeneric: self.addGeneric()
 				elif self.mMode == Context.ModeItem: self.addItem()
@@ -2126,7 +2140,8 @@ class Context(object):
 		except:
 			tools.Logger.error()
 
-	def _initialize(self):
+	@classmethod
+	def initialize(self):
 		if Context.LabelMenu == None:
 			# Use a Kodi global property to cache the context variables.
 			# Because the import of "downloader" and "debrid" takes too long.
@@ -2141,24 +2156,36 @@ class Context(object):
 			Context.LabelMenu = window.Window.propertyGlobal('GaiaContextLabelMenu')
 			Context.LabelBack = window.Window.propertyGlobal('GaiaContextLabelBack')
 			Context.LabelClose = window.Window.propertyGlobal('GaiaContextLabelClose')
-			Context.EnabledOrion = bool(window.Window.propertyGlobal('GaiaContextEnabledOrion'))
-			Context.EnabledTrakt = bool(window.Window.propertyGlobal('GaiaContextEnabledTrakt'))
-			Context.EnabledYoutube = bool(window.Window.propertyGlobal('GaiaContextEnabledYoutube'))
-			Context.EnabledLibrary = bool(window.Window.propertyGlobal('GaiaContextEnabledLibrary'))
-			Context.EnabledPresets = bool(window.Window.propertyGlobal('GaiaContextEnabledPresets'))
-			Context.EnabledBinge = bool(window.Window.propertyGlobal('GaiaContextEnabledBinge'))
-			Context.EnabledAutoplay = bool(window.Window.propertyGlobal('GaiaContextEnabledAutoplay'))
-			Context.EnabledDownloadCloud = bool(window.Window.propertyGlobal('GaiaContextEnabledDownloadCloud'))
-			Context.EnabledDownloadManual = bool(window.Window.propertyGlobal('GaiaContextEnabledDownloadManual'))
-			Context.EnabledDownloadCache = bool(window.Window.propertyGlobal('GaiaContextEnabledDownloadCache'))
-			Context.EnabledManagerManual = bool(window.Window.propertyGlobal('GaiaContextEnabledManagerManual'))
-			Context.EnabledManagerCache = bool(window.Window.propertyGlobal('GaiaContextEnabledManagerCache'))
 
+			Context.EnabledOrion = tools.Converter.boolean(window.Window.propertyGlobal('GaiaContextEnabledOrion'))
+			Context.EnabledTrakt = tools.Converter.boolean(window.Window.propertyGlobal('GaiaContextEnabledTrakt'))
+			Context.EnabledYoutube = tools.Converter.boolean(window.Window.propertyGlobal('GaiaContextEnabledYoutube'))
+			Context.EnabledLibrary = tools.Converter.boolean(window.Window.propertyGlobal('GaiaContextEnabledLibrary'))
+			Context.EnabledPresets = tools.Converter.boolean(window.Window.propertyGlobal('GaiaContextEnabledPresets'))
+			Context.EnabledBinge = tools.Converter.boolean(window.Window.propertyGlobal('GaiaContextEnabledBinge'))
+			Context.EnabledAutoplay = tools.Converter.boolean(window.Window.propertyGlobal('GaiaContextEnabledAutoplay'))
+			Context.EnabledDownloadCloud = tools.Converter.boolean(window.Window.propertyGlobal('GaiaContextEnabledDownloadCloud'))
+			Context.EnabledDownloadManual = tools.Converter.boolean(window.Window.propertyGlobal('GaiaContextEnabledDownloadManual'))
+			Context.EnabledDownloadCache = tools.Converter.boolean(window.Window.propertyGlobal('GaiaContextEnabledDownloadCache'))
+			Context.EnabledManagerManual = tools.Converter.boolean(window.Window.propertyGlobal('GaiaContextEnabledManagerManual'))
+			Context.EnabledManagerCache = tools.Converter.boolean(window.Window.propertyGlobal('GaiaContextEnabledManagerCache'))
+
+			Context.SettingsEnabled = tools.Converter.boolean(window.Window.propertyGlobal('GaiaContextSettingsEnabled'))
+			Context.SettingsEnabledGaia = tools.Converter.boolean(window.Window.propertyGlobal('GaiaContextSettingsEnabledGaia'))
+			Context.SettingsEnabledAddon = tools.Converter.boolean(window.Window.propertyGlobal('GaiaContextSettingsEnabledAddon'))
+			Context.SettingsEnabledWidget = tools.Converter.boolean(window.Window.propertyGlobal('GaiaContextSettingsEnabledWidget'))
+			Context.SettingsEnabledPlaylist = tools.Converter.boolean(window.Window.propertyGlobal('GaiaContextSettingsEnabledPlaylist'))
+			Context.SettingsLayout = tools.Converter.boolean(window.Window.propertyGlobal('GaiaContextSettingsLayout'))
+			Context.SettingsLayoutPrefix = tools.Converter.boolean(window.Window.propertyGlobal('GaiaContextSettingsLayoutPrefix'))
+			Context.SettingsLayoutBold = tools.Converter.boolean(window.Window.propertyGlobal('GaiaContextSettingsLayoutBold'))
+			Context.SettingsLayoutColor = tools.Converter.boolean(window.Window.propertyGlobal('GaiaContextSettingsLayoutColor'))
+
+	@classmethod
 	def _initializeRefresh(self):
 		# NB: Save each variable individually, instead of a JSON object, since encoding/decoding JSON objects takes too long.
 
+		from resources.lib import debrid
 		from resources.lib.extensions import downloader
-		from resources.lib.extensions import debrid
 		from resources.lib.extensions import window
 
 		manualEnabled = tools.Settings.getBoolean('downloads.manual.enabled')
@@ -2166,13 +2193,14 @@ class Context(object):
 
 		try:
 			from resources.lib.extensions import orionoid
-			window.Window.propertyGlobalSet('GaiaContextEnabledOrion' ,orionoid.Orionoid().accountEnabled())
+			window.Window.propertyGlobalSet('GaiaContextEnabledOrion', orionoid.Orionoid().accountEnabled())
 		except:
 			window.Window.propertyGlobalSet('GaiaContextEnabledOrion', False)
 
 		window.Window.propertyGlobalSet('GaiaContextLabelMenu', self._label(tools.System.name(), next = True, color = True))
 		window.Window.propertyGlobalSet('GaiaContextLabelBack', self._labelBack())
 		window.Window.propertyGlobalSet('GaiaContextLabelClose', self._labelClose())
+
 		window.Window.propertyGlobalSet('GaiaContextEnabledTrakt', tools.Trakt.accountEnabled())
 		window.Window.propertyGlobalSet('GaiaContextEnabledYoutube', tools.YouTube.installed())
 		window.Window.propertyGlobalSet('GaiaContextEnabledLibrary', tools.Settings.getBoolean('library.enabled'))
@@ -2182,8 +2210,18 @@ class Context(object):
 		window.Window.propertyGlobalSet('GaiaContextEnabledDownloadCloud', debrid.Debrid.enabled())
 		window.Window.propertyGlobalSet('GaiaContextEnabledDownloadManual', manualEnabled)
 		window.Window.propertyGlobalSet('GaiaContextEnabledDownloadCache', cacheEnabled)
-		window.Window.propertyGlobalSet('GaiaContextEnabledManagerManual', not(self.mKids == tools.Selection.TypeInclude) and manualEnabled)
-		window.Window.propertyGlobalSet('GaiaContextEnabledManagerCache', not(self.mKids == tools.Selection.TypeInclude) and cacheEnabled)
+		window.Window.propertyGlobalSet('GaiaContextEnabledManagerManual', manualEnabled)
+		window.Window.propertyGlobalSet('GaiaContextEnabledManagerCache', cacheEnabled)
+
+		window.Window.propertyGlobalSet('GaiaContextSettingsEnabled', tools.Settings.getBoolean('interface.context.enabled'))
+		window.Window.propertyGlobalSet('GaiaContextSettingsEnabledGaia', tools.Settings.getBoolean('interface.context.enabled.gaia'))
+		window.Window.propertyGlobalSet('GaiaContextSettingsEnabledAddon', tools.Settings.getBoolean('interface.context.enabled.addon'))
+		window.Window.propertyGlobalSet('GaiaContextSettingsEnabledWidget', tools.Settings.getBoolean('interface.context.enabled.widget'))
+		window.Window.propertyGlobalSet('GaiaContextSettingsEnabledPlaylist', tools.Settings.getBoolean('interface.context.enabled.playlist'))
+		window.Window.propertyGlobalSet('GaiaContextSettingsLayout', tools.Settings.getBoolean('interface.context.layout'))
+		window.Window.propertyGlobalSet('GaiaContextSettingsLayoutPrefix', tools.Settings.getBoolean('interface.context.layout.prefix'))
+		window.Window.propertyGlobalSet('GaiaContextSettingsLayoutBold', tools.Settings.getBoolean('interface.context.layout.bold'))
+		window.Window.propertyGlobalSet('GaiaContextSettingsLayoutColor', tools.Settings.getBoolean('interface.context.layout.color'))
 
 	@classmethod
 	def _translate(self, label, replace = None):
@@ -2197,16 +2235,18 @@ class Context(object):
 
 	@classmethod
 	def _label(self, label, next, color):
-		if color == True: color = Format.colorPrimary()
+		if color == True: color = Format.colorPrimary() if not Context.SettingsLayout or Context.SettingsLayoutColor else None
 		elif color == False: color = None
-		prefix = None
-		if next:
-			if Context.PrefixNext is None: Context.PrefixNext = Format.font(Dialog.PrefixNext, color = Format.colorPrimary(), bold = True, translate = False)
-			prefix = Context.PrefixNext
-		else:
-			if Context.PrefixBack is None: Context.PrefixBack = Format.font(Dialog.PrefixBack, color = Format.colorPrimary(), bold = True, translate = False)
-			prefix = Context.PrefixBack
-		return prefix + Format.font(label, bold = True, color = color)
+		bold = not Context.SettingsLayout or Context.SettingsLayoutBold
+		prefix = ''
+		if not Context.SettingsLayout or Context.SettingsLayoutPrefix:
+			if next:
+				if Context.PrefixNext is None: Context.PrefixNext = Format.font(Dialog.PrefixNext, color = color, bold = bold, translate = False)
+				prefix = Context.PrefixNext
+			else:
+				if Context.PrefixBack is None: Context.PrefixBack = Format.font(Dialog.PrefixBack, color = color, bold = bold, translate = False)
+				prefix = Context.PrefixBack
+		return prefix + Format.font(label, bold = bold, color = color)
 
 	@classmethod
 	def _labelNext(self, label):
@@ -2288,6 +2328,69 @@ class Context(object):
 		if isinstance(data, basestring): data = tools.Converter.jsonFrom(data)
 		self._load(**data)
 
+	@classmethod
+	def enabled(self, gaia = True):
+		self.initialize()
+		result = Context.SettingsEnabled
+		if gaia: result = result and Context.SettingsEnabledGaia
+		return result
+
+	@classmethod
+	def create(self):
+		import sys
+		import urlparse
+
+		def extract(value, default, parameters, metadata):
+			result = default
+			if not result:
+				try: result = parameters[value]
+				except: pass
+			if not result:
+				try: result = metadata[value]
+				except: pass
+			return None if isinstance(result, int) and result < 0 else result
+
+		Loader.show()
+
+		item = sys.listitem
+		info = item.getVideoInfoTag()
+		type = info.getMediaType()
+
+		path = item.getPath()
+		parameters = dict(urlparse.parse_qsl(path.replace('?','')))
+
+		metadata = parameters.get('metadata')
+		if not metadata == None: metadata = tools.Converter.dictionary(metadata)
+
+		code = item.getProperty('code')
+		imdb = info.getIMDBNumber()
+		if not imdb and code and code.startswith('tt'): imdb = code
+		imdb = extract('imdb', imdb, parameters, metadata)
+
+		tmdb = extract('tmdb', None, parameters, metadata)
+		tvdb = extract('tvdb', None, parameters, metadata)
+		title = extract('title', info.getTitle(), parameters, metadata)
+		tvshowtitle = extract('tvshowtitle', info.getTVShowTitle(), parameters, metadata)
+		year = extract('year', info.getYear(), parameters, metadata)
+		season = extract('season', info.getSeason(), parameters, metadata)
+		episode = extract('episode', info.getEpisode(), parameters, metadata)
+
+		if type == 'movie':
+			from resources.lib.indexers import movies
+			context = movies.movies().context(imdb = imdb)
+		elif type == 'tvshow':
+			from resources.lib.indexers import tvshows
+			context = tvshows.tvshows().context(tvshowtitle = tvshowtitle, title = title, year = year, imdb = imdb, tvdb = tvdb)
+		elif type == 'season':
+			from resources.lib.indexers import seasons
+			context = seasons.seasons().context(tvshowtitle = tvshowtitle, title = title, year = year, imdb = imdb, tvdb = tvdb, season = season)
+		elif type == 'episode':
+			from resources.lib.indexers import episodes
+			context = episodes.episodes().context(tvshowtitle = tvshowtitle, title = title, year = year, imdb = imdb, tvdb = tvdb, season = season, episode = episode)
+
+		tools.System.execute(context)
+		Loader.hide()
+
 	def menu(self):
 		return (Context.LabelMenu, self._commandPlugin(action = 'contextShow', parameters = {'context' : self.jsonTo()}))
 
@@ -2367,24 +2470,18 @@ class Context(object):
 		return self._commandPlugin(action = 'playlistRemove', parameters = {'label' : label})
 
 	def commandTrailer(self):
-		return self._commandContainer(action = 'streamsTrailer', parameters = {'title' : self.mTrailer, 'imdb' : self.mImdb, 'art' : self.mArt})
+		return self._commandPlugin(action = 'streamsTrailer', parameters = {'title' : self.mTrailer, 'imdb' : self.mImdb, 'art' : self.mArt})
 
 	def commandRefresh(self):
+		tools.System.launchAddon() # Important when called from outside Gaia.
 		return self._commandContainer(action = 'navigatorRefresh')
 
 	def commandBrowse(self):
+		tools.System.launchAddon() # Important when called from outside Gaia.
 		return self._commandContainer(action = 'seasonsRetrieve', parameters = {'tvshowtitle' : self.mTitle, 'year' : self.mYear, 'imdb' : self.mImdb, 'tvdb' : self.mTvdb})
 
 	def commandDownloadsCloud(self):
-		return self._commandContainer(action = 'downloadCloud', parameters = {'source' : self.mSource})
-
-	def commandDownloadsManual(self):
-		from resources.lib.extensions import downloader
-		return self._commandContainer(action = 'downloadsManager', parameters = {'downloadType' : downloader.Downloader.TypeManual})
-
-	def commandDownloadsCache(self):
-		from resources.lib.extensions import downloader
-		return self._commandContainer(action = 'downloadsManager', parameters = {'downloadType' : downloader.Downloader.TypeCache})
+		return self._commandPlugin(action = 'downloadCloud', parameters = {'source' : self.mSource})
 
 	def commandManualDefault(self):
 		from resources.lib.extensions import handler
@@ -2409,6 +2506,7 @@ class Context(object):
 
 	def commandManualManager(self):
 		from resources.lib.extensions import downloader
+		tools.System.launchAddon() # Important when called from outside Gaia.
 		return self._commandContainer(action = 'downloadsManager', parameters = {'downloadType' : downloader.Downloader.TypeManual})
 
 	def commandCacheDefault(self):
@@ -2426,6 +2524,7 @@ class Context(object):
 
 	def commandCacheManager(self):
 		from resources.lib.extensions import downloader
+		tools.System.launchAddon() # Important when called from outside Gaia.
 		return self._commandContainer(action = 'downloadsManager', parameters = {'downloadType' : downloader.Downloader.TypeCache})
 
 	def commandPlayDefault(self):
@@ -2614,13 +2713,13 @@ class Context(object):
 			self.add(label = 32072, command = 'commandRefresh', loader = True)
 
 	def addBrowse(self):
-		if not self.mEpisode == None:
+		if tools.Media.typeTelevision(self.mType):
 			self.add(label = 32071, command = 'commandBrowse')
 
 	def addDownloads(self):
 		self.add(label = 32009, items = [
-			{'label' : 33585, 'command' : 'commandDownloadsManual', 'close' : True, 'condition' : 'Context.EnabledDownloadManual and Context.EnabledManagerManual'},
-			{'label' : 35499, 'command' : 'commandDownloadsCache', 'close' : True, 'condition' : 'Context.EnabledDownloadCache and Context.EnabledManagerCache'},
+			{'label' : 33585, 'command' : 'commandManualManager', 'close' : True, 'condition' : 'Context.EnabledDownloadManual and Context.EnabledManagerManual'},
+			{'label' : 35499, 'command' : 'commandCacheManager', 'close' : True, 'condition' : 'Context.EnabledDownloadCache and Context.EnabledManagerCache'},
 		])
 
 	def addManual(self):

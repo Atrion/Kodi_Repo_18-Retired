@@ -167,6 +167,11 @@ class Metadata(object):
 		'ep %d',
 		'ep %02d',
 	]
+	EpisodesExtra = [
+		'%03d',
+		'%02d',
+		'%d',
+	]
 
 	# Must be in order, so that eg DVD Rip comes before DVD.
 	# Do not add space to end of values. otherwise detects it everywhere.
@@ -209,9 +214,6 @@ class Metadata(object):
 		('HDSector' , ['hdsector']),
 		('TJET' , ['tjet']),
 		('RiCK' , ['rick']),
-
-		('10bit' , ['10bit']),
-		('8bit' , ['8bit']),
 		('KILLERS' , ['killers']),
 		('FGT' , ['fgt']),
 		('AVS' , ['avs']),
@@ -249,11 +251,11 @@ class Metadata(object):
 		('HEEL' , ['heel']),
 		('STUTTERSHIT' , ['stuttershit']),
 		('ShAaNiG' , ['shaanig']),
-		('Dublado' , ['dublado']),
 		('CPG' , ['cpg']),
 		('Exclusive' , ['exclusive']),
 		('HQMic' , ['hqmic']),
 		('HiveCM8' , ['hivecm8', 'hive cm8']),
+		('HiveCM' , ['hivecm', 'hive cm']),
 		('NVEE' , ['nvee']),
 		('FLT' , ['flt']),
 		('JYK' , ['jyk']),
@@ -331,7 +333,7 @@ class Metadata(object):
 		('Grym' , ['grym']),
 		('HiDt' , ['hidt']),
 		('EbP' , ['ebp']),
-		('DZON3' , ['d-zon3', 'dzon3']),
+		('DZON3' , ['zon3', 'd zon3', 'dzon3']),
 		('MTeam' , ['mteam']),
 		('RAPiDCOWS' , ['rapidcows']),
 		('ExKinoRay' , ['exkinoray']),
@@ -483,6 +485,173 @@ class Metadata(object):
 		('afm72', ['afm72']),
 		('Natty', ['natty']),
 		('TAiCHi', ['taichi']),
+
+		('SharpHD', ['sharphd']),
+		('MW', ['mw']),
+		('TTG', ['ttg']),
+		('GalaxyRG', ['galaxyrg']),
+		('Extreme', ['extreme']),
+		('TGx', ['tgx']),
+		('CHS', ['chs']),
+		('GUACAMOLE', ['guacamole']),
+		('MkvHub', ['mkvhub']),
+		('Speranzah', ['speranzah']),
+		('Cinecalidad', ['cinecalidad']),
+		('seleZen', ['selezen']),
+		('FllorTV', ['fllortv']),
+		('LOKiHD', ['lokihd']),
+		('ORCA88', ['orca88']),
+		('HELLYWOOD', ['hellywood']),
+		('CZ', ['cz']),
+		('B4ND1T69', ['b4nd1t69']),
+		('MegaPeer', ['megapeer']),
+		('CaFaRDaX', ['cafardax']),
+		('NEW', ['new', 'newteam', 'new team']),
+		('HEVCBay', ['hevcbay']),
+		('YG', ['yg']),
+		('DoKtor', ['dokktor']),
+		('Will1869', ['will1869']),
+		('WoW', ['wow']),
+		('TioKen', ['tioken']),
+		('RTM', ['rtm']),
+		('FerraBit', ['ferrabit']),
+		('ROn!N', ['ron!n', 'ron n']),
+		('DEVIVED', ['devived']),
+		('Zagon', ['zagon']),
+		('XpoZ', ['xpoz']),
+		('IcTv', ['ictv']),
+		('MB', ['mb']),
+		('iSTANCE', ['istance']),
+		('1XBET', ['1xbet']),
+		('xBay', ['xbay']),
+		('LoveRulz', ['loverulz', 'love rulz']),
+		('ANothERONE', ['anotherone']),
+		('MP4KiNG', ['mp4king']),
+		('DRSD', ['drsd', 'teamdrsd']),
+		('PL4Y3R', ['pl4y3r']),
+		('BHD', ['bhd']),
+		('BeyondHD', ['beyondhd']),
+		('MOMA', ['moma']),
+		('TOXIC', ['toxic']),
+		('HDLight', ['hdlight']),
+		('MOVCR', ['movcr']),
+		('Rapta', ['rapta']),
+		('RPG', ['rpg']),
+		('ExYuSubs', ['exyusubs']),
+		('DDNCREW', ['ddncrew']),
+		('THREESOME', ['threesome']),
+		('BuLLiT', ['bullit']),
+		('MTK', ['mtk']),
+		('iDNCreW', ['idn', 'idncrew', 'idn crew']),
+		('Mp4Ba', ['mp4ba']),
+		('99Mp4', ['99mp4']),
+		('Justiso', ['justiso']),
+		('Tapochek', ['tapochek']),
+		('mkvCinemas', ['mkvcinemas']),
+		('StB', ['stb']),
+		('nltRo', ['nltro']),
+		('OlLanDGroup', ['olland', 'ollandgroup']),
+		('BLiTZKRiEG', ['blitzkrieg']),
+		('KOSHARA', ['koshara']),
+		('FuN', ['fun']),
+		('NVM', ['nvm']),
+		('5KULL5', ['5kull5']),
+		('PhunPsyz', ['phunpsyz', 'phun psyz']),
+		('GreenStorm', ['greenstorm']),
+		('SHITBOX', ['shitbox']),
+		('NextBit', ['nextbit']),
+		('Vito', ['vito']),
+		('OpenTsubasa', ['opentsubasa']),
+		('Aneeq', ['aneeq']),
+		('LOK', ['lok']),
+		('Ganool', ['ganool']),
+		('TR', ['tr']),
+		('BiGFArT', ['bigfart']),
+		('Paulista', ['paulista']),
+		('SSN', ['ssn']),
+		('MT', ['mt']),
+		('JustWatch', ['justwatch']),
+		('ATG', ['atg']),
+		('BADQUALITY', ['badquality']),
+		('FG4LL4', ['fg4ll4']),
+		('KK650', ['kk650']),
+		('Omikron', ['omikron']),
+		('WATCHMO', ['watchmo']),
+		('DiVERSiTY', ['diversity']),
+		('revittony', ['revittony']),
+		('6iXT33N', ['6ixt33n']),
+		('EtMovies', ['etmovies']),
+		('Napisy', ['napisy']),
+		('AgusiQ', ['agusiq']),
+		('h3llg0d', ['h3llg0d']),
+		('SeeHD', ['seehd']),
+		('MIRCrew', ['mircrew']),
+		('CYBER', ['cyber']),
+		('BluHD', ['bluhd']),
+		('Tasko', ['tasko']),
+		('POOP', ['poop']),
+		('FFansWEB', ['ffansweb']),
+		('REAPER', ['reaper']),
+		('KiT', ['kit']),
+		('BTshoufa', ['btshoufa']),
+		('T4P3', ['t4p3']),
+		('StormRG', ['stormrg']),
+		('APA', ['apa']),
+		('BD25', ['bd25']),
+		('LLG', ['llg']),
+		('4EVERDOWNS', ['4everdowns']),
+		('LAZERS', ['lazers']),
+		('DDLV', ['ddlv']),
+		('Crisgsm33', ['crisgsm33']),
+		('TeamTR', ['teamtr']),
+		('M3Q', ['m3q']),
+		('HDHub', ['hdhub']),
+		('Magic', ['magic']),
+		('ROBiN', ['robin']),
+		('KiNGDOM', ['kingdom']),
+		('WMAN', ['wman']),
+		('FOXPRO', ['foxpro']),
+		('FOX', ['fox']),
+		('Scarabey', ['scarabey']),
+		('HDFilmBoss', ['hdfilmboss']),
+		('VaPooR', ['vapoor']),
+		('JusTiN', ['justin']),
+		('WorldMkv', ['worldmkv']),
+		('xPau', ['xpau']),
+		('BTDX8', ['btdx8']),
+		('Prof', ['prof']),
+		('CAFFEiNE', ['caffeine']),
+		('DiN', ['din']),
+		('24HD', ['24hd']),
+		('CPD', ['cpd']),
+		('WATCHABLE', ['watchable']),
+		('NESMEURED', ['nesmeured']),
+		('PmBD', ['pmdb']),
+		('ARK01', ['ark01']),
+		('CYD', ['cyd']),
+		('Treygad', ['treygad']),
+		('PSYCHO791', ['psycho791']),
+		('AQOS', ['aqos']),
+		('HURTOM', ['hurtom']),
+		('MORS', ['mors']),
+		('HUD', ['hud']),
+		('Portablius', ['portablius']),
+		('NICK', ['nick']),
+		('RUNNER', ['runner']),
+		('dem3nt3', ['dem3nt3']),
+		('NNMClub', ['nnmclub', 'nnm club']),
+		('MoviesMB', ['moviesmb']),
+		('inTGrity', ['intgrity']),
+		('DivXNL', ['divxnl']),
+		('Nanban', ['nanban']),
+		('homefei', ['homefei']),
+		('STVFRV', ['stvfrv']),
+		('G4RiS', ['g4ris']),
+		('Revertron', ['revertron']),
+		('Siambit', ['siambit']),
+		('playBD', ['playbd']),
+		('LEGiON', ['legion']),
+		('QxR', ['qxr']),
 	])
 
 	VideoQualityUltra = 'HDULTRA'
@@ -661,12 +830,12 @@ class Metadata(object):
 
 	DictionaryIgnore = OrderedDict([
 		('Extras' , ['extra', 'extras']),
-		('Soundtrack' , ['ost', 'soundtrack', 'soundtracks', 'thememusic', 'theme music', 'themesong', 'themesongs', 'theme song', 'theme songs', 'music', 'album', 'albums', 'mp3', 'flac']),
+		('Soundtrack' , ['ost', 'soundtrack', 'soundtracks', 'thememusic', 'theme music', 'themesong', 'themesongs', 'theme song', 'theme songs', 'music', 'album', 'albums', 'flac']), # Do not include "mp3", since this removes valid links (eg: Kim.Possible.Intégrale.VF.PDTV.XviD.MP3-splanck-BaLLanTeAm).
 		('Trailer' , ['trailer', 'trailers']),
 		('Sample' , ['sample', 'samples', 'preview', 'previews']),
 	])
 
-	def __init__(self, name = None, title = None, year = None, season = None, episode = None, pack = None, packCount = None, link = None, quality = None, size = None, languageAudio = None, seeds = None, age = None, popularity = None, source = None):
+	def __init__(self, name = None, title = None, titles = None, year = None, season = None, episode = None, pack = None, packCount = None, link = None, quality = None, size = None, languageAudio = None, seeds = None, age = None, popularity = None, source = None):
 		# So that they can be overwritten by providers
 		self.mIgnoreDifference = Metadata.IgnoreDifference
 		self.mIgnoreContains = Metadata.IgnoreContains
@@ -683,6 +852,10 @@ class Metadata(object):
 		self.mTitle = None
 		self.mTitleProcessed = None
 		self.mTitleSplit = None
+
+		self.mTitles = None
+		self.mTitlesProcessed = None
+		self.mTitlesSplit = None
 
 		self.mYear = None
 		self.mSeason = None
@@ -724,7 +897,7 @@ class Metadata(object):
 		self.mAge = None
 		self.mPopularity = None
 
-		self.load(name = name, title = title, year = year, season = season, episode = episode, pack = pack, packCount = packCount, link = link, quality = quality, size = size, languageAudio = languageAudio, seeds = seeds, age = age, popularity = popularity, source = source)
+		self.load(name = name, title = title, titles = titles, year = year, season = season, episode = episode, pack = pack, packCount = packCount, link = link, quality = quality, size = size, languageAudio = languageAudio, seeds = seeds, age = age, popularity = popularity, source = source)
 
 	@classmethod
 	def serialize(self, metadata):
@@ -1450,16 +1623,6 @@ class Metadata(object):
 		if value: return value
 		else: return interface.Format.font(Metadata.Fill, bold = bold, color = color, translate = False)
 
-	def labelOrion(self, format = True, color = None, bold = True, uppercase = True):
-		if color is None: color = interface.Format.colorOrion()
-		label = None
-		if self.orion():
-			from resources.lib.extensions import orionoid
-			label = orionoid.Orionoid.Name
-			if format:
-				label = interface.Format.font(label, bold = bold, color = color, uppercase = uppercase)
-		return label
-
 	def labelType(self, format = True, color = None, bold = True, uppercase = True, setting = None):
 		if color is None: color = interface.Format.colorMain()
 		label = None
@@ -1749,10 +1912,10 @@ class Metadata(object):
 		value = re.sub(r'[^\w]', '', value)
 		return cleantitle.get(value).lower()
 
-	def __match(self):
+	def __match(self, season = True):
 		# Match the parts of the title with the name, since self.__match() is not enough. Eg Detective Conan (anime) S19E01 gets True Detective episodes.
 		try:
-			if not self.__containsEpisode():
+			if not self.__containsEpisode(season = season):
 				return False
 			if not self.__containsTitle():
 				return False
@@ -1766,6 +1929,7 @@ class Metadata(object):
 			return False
 
 	def __matchTitle(self):
+		# NB: If this function is used again, add alterntive titles (self.mTitlesProcessed).
 		value1 = self.__matchClean(self.mNameProcessed)
 		value2 = self.__matchClean(self.mTitleProcessed)
 		if SequenceMatcher(None, value1, value2).ratio() >= self.mIgnoreDifference:
@@ -1814,23 +1978,34 @@ class Metadata(object):
 				except: episodes[i] = episodes[i] % episode
 		return episodes
 
-	def episodeContains(self, title, season, episode):
-		if season == None or episode == None: return True # For movies
+	def episodeContains(self, title, season, episode, extra = False):
+		if episode == None: return True # For movies
 		processedTitle, splitTitle = self.__loadValue(title)
 		joinedTitle = ' '.join(splitTitle)
-		season = int(season)
+		if not season is None: season = int(season)
 		episode = int(episode)
-		for i in Metadata.Episodes:
-			try: name = i % (season, episode)
-			except: name = i % episode
-			processedEpisode, splitEpisode = self.__loadValue(name, splitAll = False)
-			if self.__matchSequential(joinedTitle, splitEpisode):
-				return True
+		formats = Metadata.Episodes
+		if extra: formats.extend(Metadata.EpisodesExtra)
+		for i in formats:
+			try:
+				if season is None:
+					name = i % episode
+				else:
+					try: name = i % (season, episode)
+					except: name = i % episode
+				processedEpisode, splitEpisode = self.__loadValue(name, splitAll = False)
+
+				# This returns True for S18E01 for file "South.Park.S18E10.720p.BluRay.x264-REWARD.mkv", because if will say that S18E1 is in the title and ignore the 0 affterwards.
+				#if self.__matchSequential(joinedTitle, splitEpisode):
+				if all(x in splitTitle for x in splitEpisode):
+					return True
+			except: pass
 		return False
 
-	def __containsEpisode(self):
+	# season: ingore the season number (for season packs on YggTorrent).
+	def __containsEpisode(self, season = True):
 		# Must always match the episode number.
-		if self.mSeason == None or self.mEpisode == None: # Eg: movie, does not contain season/episode.
+		if not season or self.mSeason == None or self.mEpisode == None: # Eg: movie, does not contain season/episode.
 			return True
 
 		# Special seasons and episodes.
@@ -1840,12 +2015,20 @@ class Metadata(object):
 		splitName = self.mNameSplit
 		joinedName = ' '.join(splitName)
 
+		processed = self.mTitlesProcessed
+		processed.append(self.mTitleProcessed)
+
 		# Ignore for season packs:
 		if self.mPack:
 			for i in Metadata.Seasons:
 				seasonValue = i % self.mSeason
-				if self.__matchSequential(joinedName, seasonValue) and not re.search(Metadata.SeasonsExclude, self.mTitleProcessed):
-					return True
+				if self.__matchSequential(joinedName, seasonValue):
+					contains = False
+					for process in processed:
+						if re.search(Metadata.SeasonsExclude, process):
+							contains = True
+							break
+					if not contains: return True
 		else:
 			for i in Metadata.Episodes:
 				try: name = i % (self.mSeason, self.mEpisode)
@@ -1857,37 +2040,45 @@ class Metadata(object):
 		return False
 
 	def __containsTitle(self):
-		total = len(self.mTitleSplit)
-		split = copy.deepcopy(self.mNameSplit)
-		count = 0
+		splits = self.mTitlesSplit
+		splits.append(self.mTitleSplit)
 
-		# Check if the file name does not contain too many words.
-		# Otherwise "Wonder 2017" will mostly detect "Wonder Woman 2017" links.
-		# Only check until the year, ignore everything after the year (eg: uploader, metadata, etc).
-		skip = False
-		if self.mSeason == None and self.mEpisode == None:
-			try: index = split.index(str(self.mYear))
-			except: index = -1
-			if index > 0: skip = index > total * self.mIgnoreLength
+		for s in splits:
+			total = len(s)
+			split = copy.deepcopy(self.mNameSplit)
+			count = 0
 
-		setting = tools.Settings.getInteger('scraping.providers.filename')
-		for i in self.mTitleSplit:
-			try:
-				index = split.index(i)
-				count += 1
-				if setting == 1: split.remove(i)
-				elif setting == 2: split = split[index + 1:]
-			except: pass
-		percentage = count / float(total)
+			# Check if the file name does not contain too many words.
+			# Otherwise "Wonder 2017" will mostly detect "Wonder Woman 2017" links.
+			# Only check until the year, ignore everything after the year (eg: uploader, metadata, etc).
+			skip = False
+			if self.mSeason == None and self.mEpisode == None:
+				try: index = split.index(str(self.mYear))
+				except: index = -1
+				if index > 0: skip = index > total * self.mIgnoreLength
 
-		if total <= 2: # Short titles
-			return percentage >= (self.mIgnoreContains * 1.25) and not skip
-		else:
-			return percentage >= self.mIgnoreContains and not skip
+			setting = tools.Settings.getInteger('scraping.providers.filename')
+			for i in s:
+				try:
+					index = split.index(i)
+					count += 1
+					if setting == 1: split.remove(i)
+					elif setting == 2: split = split[index + 1:]
+				except: pass
+			percentage = count / float(total)
 
-	def ignore(self, size = True, seeds = True):
+			if total <= 2: # Short titles
+				if percentage >= (self.mIgnoreContains * 1.25) and not skip:
+					return True
+			else:
+				if percentage >= self.mIgnoreContains and not skip:
+					return True
+
+		return False
+
+	def ignore(self, size = True, seeds = True, season = True):
 		# Ignore if the title and name do not correspond.
-		if not self.__match():
+		if not self.__match(season = season):
 			return True
 
 		for value in Metadata.DictionaryIgnore.itervalues():
@@ -1904,7 +2095,7 @@ class Metadata(object):
 
 		return False
 
-	def load(self, name = None, title = None, year = None, season = None, episode = None, pack = None, packCount = None, link = None, quality = None, size = None, languageAudio = None, seeds = None, age = None, popularity = None, source = None):
+	def load(self, name = None, title = None, titles = None, year = None, season = None, episode = None, pack = None, packCount = None, link = None, quality = None, size = None, languageAudio = None, seeds = None, age = None, popularity = None, source = None):
 		try:
 			if source:
 
@@ -1913,15 +2104,37 @@ class Metadata(object):
 				if isinstance(source, dict) and 'url' in source:
 					self.setLink(source['url'])
 					if name == None or name == '':
-						self.mName = self.mLink.rsplit('/', 1)[-1]
-						if not '.' in self.mName or re.match('^[a-zA-Z0-9]*$', self.mName) or re.match('^[a-zA-Z0-9]{16,}$', self.mName) or re.match('^[0-9]{6,}$', self.mName): # Links that end with a hash or random strings should not be used.
-							self.mName = None
+						from resources.lib.extensions import network
+						container = network.Container(self.mLink)
+						if container.torrentIsMagnet():
+							self.mName = container.torrentName()
+						else:
+							self.mName = self.mLink.rsplit('|')[0].rsplit('/', 1)[-1].rsplit('?')[0]
+
+							# Links without an extension
+							if not '.' in self.mName:
+								self.mName = None
+
+							elif re.match('^[a-zA-Z0-9]*$', self.mName) or re.match('^[a-zA-Z0-9]{16,}$', self.mName) or re.match('^[0-9]{6,}$', self.mName):
+								self.mName = None
+
+							# For links with a lot of remaining parameters. Like googlevideos links that are incorrectly split on the last /, since it contains the mime (eg: video/mp4).
+							# https://redirector.googlevideo.com/videoplayback?id=77d2a520f352e14e&itag=22&source=picasa&begin=0&requiressl=yes&mm=30&mn=sn-4g5e6nsz&ms=nxu&mv=u&mvi=1&pl=24&sc=yes&ei=WqVGXb3jCayS8gP_lpHoBQ&susc=ph&app=fife&mime=video/mp4&cnr=14&dur=7329.982&lmt=1564884531604866&mt=1564910760&ipbits=0&cms_redirect=yes&keepalive=yes&ratebypass=yes&ip=116.202.109.242&expire=1564918138&sparams=ip,ipbits,expire,id,itag,source,requiressl,mm,mn,ms,mv,mvi,pl,sc,ei,susc,app,mime,cnr,dur,lmt&signature=BEC2A56CFB94CF190DD5EBE580DD5994BDBD1679859F8E2D45A8C1514992C656.705016C2F34F23F9E0DD8F28971099926E48127219A7DCB473FABC85CC1739E0&key=us0
+							elif self.mName.count('&') > 3:
+								self.mName = None
+
+							# https://www.fembed.com/v/dk05nuxn3e8kqn3.html
+							elif re.match('^[a-zA-Z0-9-]{15}\.html$', self.mName):
+								self.mName = None
+
 				if not self.mName: self.mName = ''
 				self.setName(self.mName)
 
 				self.mTitle = title
 				if not self.mTitle:
 					self.mTitle = ''
+
+				self.mTitles = titles
 
 				if 'year' in source:
 					self.mYear = int(source['year'])
@@ -2008,12 +2221,13 @@ class Metadata(object):
 					self.mVideoQuality = self.videoQualityConvert(quality.replace(' ', '').lower())
 				elif isinstance(source, dict) and 'quality' in source:
 					self.mVideoQuality = self.videoQualityConvert(source['quality'].replace(' ', '').lower())
-			else:
+			elif not name == None or not title == None or not year == None or not season == None or not episode == None: # Check if parameters where set, otherwise creating an empty Metadata object takes too long.
 				self.mName = name
 				if not self.mName: self.mName = ''
 				self.setName(self.mName)
 				self.mTitle = title
 				if not self.mTitle: self.mTitle = ''
+				self.mTitles = titles
 
 				self.mYear = None if year == None else int(year)
 				self.mSeason = None if season == None else int(season)
@@ -2109,6 +2323,18 @@ class Metadata(object):
 
 			if 'quality' in source:
 				self.mVideoQuality = self.videoQualityConvert(source['quality'].replace(' ', '').lower())
+
+			# External hoster links.
+			if 'info' in source:
+				try:
+					infos = source['info']
+					if not isinstance(infos, (list, tuple)): infos = [infos]
+					for info in infos:
+						size = re.search('(\d+\.*\d*\s*[mMgGtT][bB])', info).group(0)
+						if size:
+							self.setSize(size)
+							break
+				except: pass
 
 			if self.mName == None:
 				if 'file' in source:
@@ -2226,22 +2452,39 @@ class Metadata(object):
 			pass
 
 	def __loadValues(self):
-		self.mNameProcessed, self.mNameSplit = self.__loadValue(self.mName)
-		self.mTitleProcessed, self.mTitleSplit = self.__loadValue(self.mTitle)
+		try:
+			self.mNameProcessed, self.mNameSplit = self.__loadValue(self.mName)
+			self.mTitleProcessed, self.mTitleSplit = self.__loadValue(self.mTitle)
 
-		# This is needed, otherwise the audio channels are detected as 8CH in a string link "S10E07 1080p".
-		self.mNameReduced = ' '.join(self.mNameSplit)
-		for split in self.mTitleSplit:
-			self.mNameReduced = self.mNameReduced.replace(split, '')
-		if not self.mSeason == None or not self.mEpisode == None:
-			self.mNameReduced = re.sub('[sS]\d{1,5}[eE]\d{1,5}|[sS]\d{1,5}', '', self.mNameReduced)
+			self.mTitlesProcessed = []
+			self.mTitlesSplit = []
+			if self.mTitles:
+				for title in self.mTitles:
+					processed, split = self.__loadValue(title)
+					self.mTitlesProcessed.append(processed)
+					self.mTitlesSplit.append(split)
+
+			# This is needed, otherwise the audio channels are detected as 8CH in a string link "S10E07 1080p".
+			self.mNameReduced = ' '.join(self.mNameSplit)
+			for split in self.mTitleSplit:
+				try: self.mNameReduced = self.mNameReduced.replace(split, '')
+				except: self.mNameReduced = self.mNameReduced.encode('utf-8').replace(split, '')
+			for title in self.mTitlesSplit:
+				for split in title:
+					try: self.mNameReduced = self.mNameReduced.replace(split, '')
+					except: self.mNameReduced = self.mNameReduced.encode('utf-8').replace(split, '')
+			if not self.mSeason == None or not self.mEpisode == None:
+				self.mNameReduced = re.sub('[sS]\d{1,5}[eE]\d{1,5}|[sS]\d{1,5}', '', self.mNameReduced)
+		except:
+			tools.Logger.error()
 
 	def __loadValue(self, value, splitAll = True):
 		if value:
-			value = value.encode('utf-8').lower()
+			try: value = value.encode('utf-8').lower()
+			except: value = value.lower()
 			value = client.replaceHTMLCodes(value)
 			value = value.replace("\n", '') # Double quotes with escape characters.
-			if splitAll: split = [item for item in re.split('\.|\,|\(|\)|\[|\]|\s|\-|\_|\+|\/|\\\'|\"', value) if not item == '']
+			if splitAll: split = [item for item in re.split('[-!$%^&*()_+|~=`{}\[\]:";\'<>?,.\/\s]', value) if not item == '']
 			else: split = [item for item in re.split('\s', value) if not item == '']
 			return value, split
 		else:
@@ -2352,6 +2595,14 @@ class Metadata(object):
 					if not value == split:
 						result.append(value)
 				values = result
+		if self.mTitlesSplit:
+			for title in self.mTitlesSplit:
+				for split in title:
+					result = []
+					for value in values:
+						if not value == split:
+							result.append(value)
+					values = result
 		return values
 
 	def __searchLanguages(self, language = None):
@@ -2372,6 +2623,11 @@ class Metadata(object):
 							if l == t:
 								titleContains = True
 								break
+						for title in self.mTitlesSplit:
+							for t in title:
+								if l == t:
+									titleContains = True
+									break
 						if titleContains: break
 
 					if not titleContains:

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addons>
-<addon id="script.extendedinfo" name="OpenInfo" version="6.2.2" provider-name="A4K">
+<addon id="script.extendedinfo" name="OpenInfo" version="6.2.3" provider-name="A4K">
 	<requires>
 		<import addon="xbmc.python" version="2.25.0"/>
 		<import addon="script.module.pil" version="1.1.7"/>
@@ -34,7 +34,8 @@
 			<screenshot>resources/screenshot2.jpg</screenshot>
 			<screenshot>resources/screenshot3.jpg</screenshot>
 		</assets>
-		<news>6.2.2 - Added ability to search using the tvdb_id for "extendedepisodeinfo"
+		<news>6.2.3 - Fix TV Show trailers
+		6.2.2 - Added ability to search using the tvdb_id for "extendedepisodeinfo"
 		6.2.1 - Fix context menu now available for widgets pointing to OpenInfo's video addon items
 		6.2.0 - Added context menu force "player select" to the play button, available via "c" and long press "enter" button
 		</news>
@@ -192,12 +193,13 @@ Documentation: https://github.com/tamland/kodi-plugin-routing</description>
   </extension>
 </addon>
 
-<addon id="skin.arctic.zephyr.2" name="Arctic Zephyr 2" provider-name="jurialmunkey" version="0.9.41-alpha6">
+<addon id="skin.arctic.zephyr.2" name="Arctic Zephyr 2" provider-name="jurialmunkey" version="0.9.46-alpha6">
     <requires>
         <import addon="xbmc.gui" version="5.14.0" />
         <import addon="script.skinshortcuts" version="0.4.0" />
         <import addon="script.image.resource.select" version="0.0.5" />
         <import addon="plugin.program.autocompletion" version="1.0.1" />
+        <import addon="plugin.video.themoviedb.helper" version="0.1.9" />
         <import addon="resource.images.studios.white" version="0.0.10" />
         <import addon="resource.images.moviegenreicons.transparent" version="0.0.6" />
         <import addon="resource.images.weathericons.outline-hd" version="0.0.1" />
@@ -662,7 +664,7 @@ Documentation: https://github.com/tamland/kodi-plugin-routing</description>
   </extension>
 </addon>
 
-<addon id="plugin.video.seren" version="1.0.24" name="Seren" provider-name="Nixgates">
+<addon id="plugin.video.seren" version="1.4.8" name="Seren" provider-name="Nixgates">
 	<requires>
 		<import addon="xbmc.python" version="2.19.0" />
 		<import addon="script.module.requests" version="2.19.1" />
@@ -671,6 +673,7 @@ Documentation: https://github.com/tamland/kodi-plugin-routing</description>
 		<import addon="plugin.video.youtube" version="6.2.0"/>
 		<import addon="script.module.addon.signals" version="0.0.1"/>
 		<import addon="script.module.dateutil" version="2.7.3"/>
+        <import addon="context.seren" version="1.0.3"/>
 <!--		<import addon="script.module.inputstreamhelper" version="0.3.3"/> #### Not yet big boy ####-->
 	</requires>
 	<extension point="xbmc.python.pluginsource" library="seren.py">
@@ -692,6 +695,145 @@ Documentation: https://github.com/tamland/kodi-plugin-routing</description>
 			<fanart>fanart-fox-gold-final.png</fanart>
 		</assets>
 		<news>
+Changelog 1.4.8:
+Nonsensical version bump because Kodi (FML)
+
+Changelog 1.4.7:
+Enable Kodi Menu caching on search results
+Increase source info identification
+Fix mislabeled strings in trakt manager
+Adjust premiered meta key to be gathered from trakt information instead of alternative indexer
+Add fallback to account for empty premiered key set to empty string
+
+Changelog 1.4.6:
+Removed duplicate caching from meta provider modules
+Fixed typos
+Additional translation strings added
+Fixed potential deadlocks from occuring in the worker module
+Reduced workers for Trakt Sync operations
+
+Changelog 1.4.5:
+Inceased speed in TMDb module by threading more network requests
+
+Changelog 1.4.4:
+Fixed accidental swap of preferred source of artwork labels
+Duplicated poster value to thumb for show and season objects
+
+Changelog 1.4.3:
+Created Artwork Category in settings
+Adjusted artwork settings visibility to better represent end format
+
+Changelog 1.4.2:
+Adjust Advanced artwork strings
+Fixed Premiumize Max Storage setting visibility
+Changing highlight color now re-opens settings menu
+Adjusted getInfo to support more information tags
+
+Changelog 1.4.1:
+Created worker module and lazy threadpool
+Increased title and information identification for sources
+Added advanced settings for item artwork
+Increased network request caching
+Uninstall in provider manager now works similar to disabling providers
+Threadlocked SQL database entries
+
+Changelog 1.4.0:
+Fixed Provider Manager Default Focus
+Fixed language string spacing for Disable All Hosters
+Fixed Notification timeouts for available updates
+Added multiple fall backs for metadata information to better support outages
+Fixed Premiumize visibility equations
+Settings re-work for better flow
+Added settings to allow user to choose artwork service
+Fix setCast for items, cast items now display images
+Updated last_meta_update for trakt sync database
+
+Changelog 1.3.6:
+Fix skin_dir XML pointer
+
+Changelog 1.3.5:
+Theme Manager now uses pointer to reduce file movements
+Fixed Unicode errors on deaccentString method
+Fixed SkinManager import for Provider Manager
+Fixed type issues with tuples for view types
+
+Changelog 1.3.4:
+Fixed Cache Assist always triggering
+Fixed cache clear notification appearing if user cancels process
+Increased fall backs for TV show artwork
+Fixed series posters being served as thumbnail fallback, changed to fanart
+Removed Caching of Trakt user lists
+Increased text translation
+Added Dutch Translations
+
+Changelog 1.3.3:
+Added check to confirm folder "Default" is included in theme package
+Added new language strings
+
+Changelog 1.3.2:
+Fixed Scrobbling
+
+Changelog 1.3.1:
+Fixed delay when resuming items
+Fixed issues with missing theme variables in tools module
+Lowered RD request timeout
+Improved Seren's ability to detect moment playback has started
+Improved handeling of accented text in Premiumize resolver
+
+Changelog 1.3.0:
+Serens skins renamed to "Themes" to try avoid confusion with Kodi skins
+Fixed issue displaying show seasons where season numbering does not start from 1 eg BBC Horizon
+Added Flatten Seasons setting
+Small improvements to player module
+
+Changelog 1.2.2:
+Fixed search history results not searching
+Fixed issue with providers not displaying names correctly
+Fixed RD Cloud movie sources showing incorrect size meta
+Movies Fanart now acquired using TMDB ID
+Added redundant reset to scrobble status on playback start in player module
+Fixed and confirmed all searching related items
+
+Changelog 1.2.1:
+Fixed providers not refreshing after new dialog raised with Toolbox button in Provider Manager
+Added touch/mouse support for Provider Manager window
+Fixed Kodi crashing on playback from widgets
+Fixed Kodi playback error displaying when played from skin info dialog
+
+Changelog 1.2.0:
+Fixed arguments or Trakt Manager context item
+Fixed playlist not clearing on cancel of source select
+Re-design of provider package management
+
+Changelog 1.1.3:
+Updated hash regex to support uncommon magnets
+Fixed browse show from mixed episode lists
+Language string "32055" change to "Clear Local Torrent Cache"
+Added confirmation at clearing of torrent cache
+Added confirmation at clearing of search history
+Removed multiline source select setting as it is no longer required
+Setting "Hide Low Quality Items" renamed to "Hide Common Undesirable Items"
+Setting "Check for Seren Updates" renamed to "Notify Me About Available Updates"
+Removal of orphaned files
+Restructuring of some folders
+Fixed duplicate removal process removing debrid duplicates
+Clean up of player init method
+
+Changelog 1.1.2:
+Added fallback to hash on failure to extract from magnet in RD resolver
+
+Changelog 1.1.1:
+Added the ability to use custom images for custom window skins
+Added the window property "skin.dir", property contains the file path for the current active skin (similar to special://skin/)
+Moved RD premium check further down in auth process
+Trakt username api call changed to users/me endpoint
+
+Changelog 1.1.0:
+Added the Skin Manager Feature
+Users can now install custom XML window packages
+Users can now uninstall custom XML window packages
+Users can now switch between custom XML window packages
+
 Changelog 1.0.24:
 Fix Automatic Episode Resume
 
@@ -701,158 +843,6 @@ Clean up some missed logging
 
 Changelog 1.0.22:
 Fixed Background Scraping Display style
-
-Changelog 1.0.21:
-Fixed issue with Custom Providers refresh not honoring disabled status (Actually this time)
-Added try/except for property/progress updates in getSources module
-Fixed issue with source dicts being stringed during source select
-Added onClick callback for source select
-
-Changelog 1.0.20:
-Fixed Source Select selecting wrong source
-Fixed issue with Custom Providers refresh not honoring disabled status
-
-Changelog 1.0.19:
-Further adjustments of background overlay to better suit brighter fanart images
-
-Changelog 1.0.18:
-Added Overlay to custom windows
-Added re-worked versions of artwork
-Seren Fanart now applies to all items that are missing fanart
-
-Changelog 1.0.17:
-Adjust poster size in Source Select
-Added setting "Auto try next link on resolve failure (Source Select)"
-
-Changelog 1.0.16:
-Cleaned up and re-worked provider database sync function
-Fixed issue with providers not showing on initial install of providers
-
-Changelog 1.0.15:
-Local torrent database restructued to increase speeds and handling of entries
-Increased visibility of selected item in source select view
-Fixed hosters providers not scraping episodes
-Hosters now display the release title of the source if available
-Re-work of Seren artwork
-
-Changelog 1.0.14:
-Fixed Shuffle Play
-Adjusted contrast levels for new windows
-
-Changelog 1.0.13:
-All custom windows have been migrated over to XML based windows
-Tidied code within getSources endpoint
-Failure to resolve an item with source select active now returns the user to the source select window
-Improvements to trakt bookmarks occuring
-Added notification at RD auth to check if users account is premium and advise accordingly
-Adjusted Premiumize Automatic Cloud Removal to support new Fair Usage system
-Premiumize percentage threshold is now maximum GBs of used storage
-Fixed appending seasons to current playlist
-
-Changelog 1.0.12:
-Fixed issues with show year returning INT
-
-Changelog 1.0.11:
-Fixed removal of hidden items during sync
-
-Changelog 1.0.10:
-Fixed Hiding show from episode items
-
-Changelog 1.0.9:
-Fixed Date Display issue with Up Next notification
-Menu caching is now optional within Seren settings, defaulted to On
-Show year meta information now gathered from Trakt instead of TVDB (meta missing on some titles)
-Changes to search menu to provide better usability
-Increasesd title identification
-
-Changelog 1.0.8:
-Improvements to title identification
-Improvements to window handling on playback failure/cancellation
-Disabled Kodi menu caching for all directories
-Moved playback resume execution closer to start of playback
-Fixed IMDB meta confirmation for movies
-
-Changelog 1.0.7:
-Adjusted Trakt Manager method to better suit new URLS
-Fixed Smartplay playlist builder not honoring hide un-aired setting
-Further improvements to show pack filter
-
-Changelog 1.0.6:
-Change movie items action to the correct action
-Changing trakt account now raises an initial sync process.
-Removing trakt account removes all watched status and collected status from local database
-Authorising trakt for the first time raises an initial sync process to occur
-Added trakt_username column to the Trakt Sync activities database
-Added migration for existing trakt users
-Unsuccesful attempts to mark/unmark watched status on items is now notified and logged
-Fixed issue with pre-emptive scraping failing when set to background task style scraping
-TV module functions now use a shared instance of the Trakt Sync database class
-Movie modules functions now use a shared instance of the Trakt Sync database class
-
-Changelog 1.0.5:
-Rollback changes to initial playlist creation due to issues with skin widgets
-
-Changelog 1.0.4:
-Added workaround for getSources api call
-Fixed more URL issues in seren.py breaking play style
-
-Changelog 1.0.3:
-Fixed issue cloud scraping for movie items caused by URL changes
-Fixed Source Select List (Movies) issues due to URL changes
-Fixed issues caused in player module from URL change
-Fixed issues caused in smartPlay from URL change
-
-Changelog 1.0.2:
-Fixed issue with Trakt Sync Database repeatedly downgrading/upgrading
-
-Changelog 1.0.1:
-Fix slow trakt sync speeds caused by maximum SQL statements variable not resetting
-Fix issues with list style source select and URL changes
-Fixed date display in list style source select window
-
-Changelog 1.0.0:
-Removed Building Playlist process, seren now moves straight to scraping and fills in the playlist in the background
-Re-worked smartplay module
-Moving forward, Seren's versioning should now match semantic versioning
-Complete restructure of actionArgs for Seren API endpoints
-Fixed issues with trakt manager when in a mixed episode list
-Fixed Trakt Sync failing with exceptionally large libraries
-
-Changelog 0.2.38:
-Fixed issue with marking items as watched locally
-
-Changelog 0.2.37:
-Fixed Episode File Size setting visibility
-Fixed getSources module displaying checking local database when setting is disabled
-Removed logging of some superficial errors in Trakt Sync and Next Up menu
-Reduced minimum of percentage watched before marked as watched locally
-Fixed issue where seasons would not display for shows with odd season number conventions
-
-Changelog 0.2.36:
-Fixed visibility of Premiumize Account Settings
-Provider update check timeout increased to hourly
-Addon update checks timeout increased to daily
-Drastic increases to trakt sync speeds
-Added fallbacks for possible network failures in trakt syncing process
-Fixed default tuple length in getSources
-Fixed Real-Debrid Cloud Sources breaking due to missing size key
-Disabled cache assist when cloud files are present during scrape process
-Adjusted scrobble check for player module to occur only when successfully scrobbled to trakt
-Added fallback for trakt scrobbling to playbackended player callback
-Removed duplicate trakt prompt on auth failure
-Un-cached Sources in manual cache assist are now sorted by seeds descending
-Added Browse Season option to episode context menu
-Added ability to shuffle play show from an episode item
-Fixed setting retrieval for Apple devices
-Movies and episodes now have seperate file size limits
-Source select view now defaults to list
-Fixed delayed playback failed dialog from Kodi
-Fixed issue with appending next season to active playlist
-Escaped ampersand characters in settings file
-Fixed issue where item meta information would not update unless a Trakt account was authorised
-Disabled caching of results if no sources are found
-Fixed missing settings check for Local Torrent Cache inspection.
-Fixed CM options not showing if context menu addon not installed
 
 		</news>
 	</extension>
@@ -1221,7 +1211,7 @@ Fixed CM options not showing if context menu addon not installed
     </extension>
 </addon>
 
-<addon id="script.module.urlresolver" name="URLResolver" version="5.0.38" provider-name="tvaddons">
+<addon id="script.module.urlresolver" name="URLResolver" version="5.0.39" provider-name="tvaddons">
     <requires>
         <import addon="xbmc.python" version="2.1.0" />
         <import addon="plugin.video.youtube" optional="true" />
@@ -1513,24 +1503,23 @@ Kodi is a registered trademark of the XBMC Foundation. We are not connected to o
   </extension>
 </addon>
 
-<addon id="context.seren" version="1.0.3" name="Seren - Global Context Menu Items" provider-name="Nixgates">
+<addon id="context.seren" version="1.0.4" name="Seren - Global Context Menu Items" provider-name="Nixgates">
 	<requires>
 		<import addon="xbmc.python" version="2.23.0" />
-		<import addon="plugin.video.seren" version="0.1.22" />
 	</requires>
 	<extension point="kodi.context.item">
         <menu id="kodi.core.main">
-			<item library="browseSeason.py">
-				<label>Browse Season</label>
-				<visible>String.StartsWith(ListItem.path,plugin://plugin.video.seren/)+String.IsEqual(ListItem.dbtype,episode)</visible>
+			<item library="quickResume.py">
+				<label>Quick Resume Show</label>
+				<visible>String.StartsWith(ListItem.path,plugin://plugin.video.seren/)+String.IsEqual(ListItem.dbtype,tvshow)</visible>
 			</item>
             <item library="shuffle.py">
                 <label>Shuffle Play</label>
                 <visible>String.StartsWith(ListItem.path,plugin://plugin.video.seren/)+[String.IsEqual(ListItem.dbtype,tvshow)|String.IsEqual(ListItem.dbtype,episode)]</visible>
             </item>
-			<item library="findSimilar.py">
-                <label>Find Similar</label>
-                <visible>String.StartsWith(ListItem.path,plugin://plugin.video.seren/)+[String.IsEqual(ListItem.dbtype,tvshow)|String.IsEqual(ListItem.dbtype,movie)]</visible>
+			<item library="playFromRandomPoint.py">
+                <label>Play From Random Episode</label>
+                <visible>String.StartsWith(ListItem.path,plugin://plugin.video.seren/)+String.IsEqual(ListItem.dbtype,tvshow)</visible>
             </item>
 			<item library="rescrape.py">
                 <label>Rescrape Item</label>
@@ -1540,10 +1529,18 @@ Kodi is a registered trademark of the XBMC Foundation. We are not connected to o
                 <label>Source Select</label>
                 <visible>String.StartsWith(ListItem.path,plugin://plugin.video.seren/)+[String.IsEqual(ListItem.dbtype,episode)|String.IsEqual(ListItem.dbtype,movie)]</visible>
             </item>
+			<item library="findSimilar.py">
+                <label>Find Similar</label>
+                <visible>String.StartsWith(ListItem.path,plugin://plugin.video.seren/)+[String.IsEqual(ListItem.dbtype,tvshow)|String.IsEqual(ListItem.dbtype,movie)]</visible>
+            </item>
 			<item library="browseShow.py">
                 <label>Browse Show</label>
                 <visible>String.StartsWith(ListItem.path,plugin://plugin.video.seren/)+[String.IsEqual(ListItem.dbtype,episode)|String.IsEqual(ListItem.dbtype,tvshow)]</visible>
             </item>
+			<item library="browseSeason.py">
+				<label>Browse Season</label>
+				<visible>String.StartsWith(ListItem.path,plugin://plugin.video.seren/)+String.IsEqual(ListItem.dbtype,episode)</visible>
+			</item>
 			<item library="traktManager.py">
 				<label>Trakt Manager</label>
 				<visible>String.StartsWith(ListItem.path,plugin://plugin.video.seren/)+[String.IsEqual(ListItem.dbtype,episode)|String.IsEqual(ListItem.dbtype,tvshow)|String.IsEqual(ListItem.dbtype,season)|String.IsEqual(ListItem.dbtype,movie)]</visible>
@@ -1565,6 +1562,11 @@ Kodi is a registered trademark of the XBMC Foundation. We are not connected to o
 			<fanart>fanart-fox-gold-final.png</fanart>
 		</assets>
 		<news>
+Changelog 1.0.4:
+Remove plugin.video.seren Dependency
+Added Quick Resume option
+Added Play From Random Episode option
+
 Changelog 1.0.3:
 Updated artwork to match Seren
 
@@ -1613,7 +1615,7 @@ Added Trakt Manager
     </extension>
 </addon>
 
-    <addon id="repository.Atrion18B" name="[COLOR darkgreen]Atrion's Repo for Kodi 18.x Backup[/COLOR]" version="0.2.3" provider-name="Atrion Darnay">
+    <addon id="repository.Atrion18B" name="[COLOR darkgreen]Atrion's Repo for Kodi 18.x Backup[/COLOR]" version="0.2.4" provider-name="Atrion Darnay">
         <requires>
             <import addon="xbmc.addon" version="12.0.0"/>
         </requires>
@@ -1884,7 +1886,7 @@ Zároveň má nastavenia upravujúce výšku stĺpcov spektra, ich rýchlosť a 
 	</extension>
 </addon>
 
-<addon id="script.module.resolveurl" name="ResolveURL" version="5.0.33" provider-name="jsergio">
+<addon id="script.module.resolveurl" name="ResolveURL" version="5.0.34" provider-name="jsergio">
     <requires>
         <import addon="xbmc.python" version="2.1.0" />
         <import addon="plugin.video.youtube" optional="true" />
@@ -2093,7 +2095,7 @@ Zároveň má nastavenia upravujúce výšku stĺpcov spektra, ich rýchlosť a 
 	</extension>
 </addon>
 
-    <addon id="repository.Atrion18" name="[COLOR maroon]Atrion's Repo for Kodi 18.x[/COLOR]" version="0.2.3" provider-name="Atrion Darnay">
+    <addon id="repository.Atrion18" name="[COLOR darkgreen]Atrion's Repo for Kodi 18.x[/COLOR]" version="0.2.4" provider-name="Atrion Darnay">
         <requires>
             <import addon="xbmc.addon" version="12.0.0"/>
         </requires>
@@ -2110,10 +2112,10 @@ Zároveň má nastavenia upravujúce výšku stĺpcov spektra, ich rýchlosť a 
     </extension>
 </addon>
 
-<addon id="repository.orion" version="1.0.0" name="Orion Repository" provider-name="Orion">
+<addon id="repository.orion" version="3.3.0" name="Orion Repository" provider-name="Orion">
 	<extension point="xbmc.addon.repository" name="Orion Repository">
-		<info compressed="false">https://repo.orionoid.com/addons.xml?v=1.0.0</info>
-		<checksum>https://repo.orionoid.com/addons.xml.md5?v=1.0.0</checksum>
+		<info compressed="false">https://repo.orionoid.com/addons.xml?v=3.3.0</info>
+		<checksum>https://repo.orionoid.com/addons.xml.md5?v=3.3.0</checksum>
 		<datadir zip="true">https://repo.orionoid.com</datadir>
 	</extension>
 	<extension point="xbmc.addon.metadata">
@@ -2131,26 +2133,28 @@ Zároveň má nastavenia upravujúce výšku stĺpcov spektra, ich rýchlosť a 
 	</extension>
 </addon>
 
-	<addon id="script.skin.helper.colorpicker" name="Skin Helper Service ColorPicker" version="1.0.12" provider-name="marcelveldt">
+	<addon id="script.skin.helper.colorpicker" name="Skin Helper Service ColorPicker" version="1.0.13" provider-name="marcelveldt,sualfred">
 	<requires>
-		<import addon="xbmc.python" version="2.24.0"/>
-		<import addon="xbmc.addon" version="12.0.0"/>
+		<import addon="xbmc.python" version="2.26.0"/>
 		<import addon="script.module.pil" version="1.1.7"/>
+		<import addon="script.module.kodi-six" />
 	</requires>
-    <extension point="xbmc.python.library" library="default.py" />
+	<extension point="xbmc.python.library" library="default.py" />
 	<extension point="xbmc.addon.metadata">
-		<summary lang="en">Colorpicker for Kodi Skins. Part of Skin Helper Suite</summary>
-        <description>Colorpicker for Kodi Skins. Part of Skin Helper Suite</description>
-		<language></language>
+		<summary lang="en_GB">Colorpicker for Kodi Skins. Part of Skin Helper Suite</summary>
+		<description lang="en_GB">Colorpicker for Kodi Skins. Part of Skin Helper Suite</description>
 		<platform>all</platform>
-		<license>GPL v2.0</license>
-		<forum>http://forum.kodi.tv/showthread.php?tid=235676</forum>
-		<website></website>
-		<source>https://github.com/marcelveldt/script.skin.helper.colorpicker</source>
+		<license>GPL-2.0</license>
+		<forum>https://forum.kodi.tv/showthread.php?tid=235676</forum>
+		<source>https://github.com/kodi-community-addons/script.skin.helper.colorpicker</source>
+		<assets>
+			<icon>resources/icon.png</icon>
+			<fanart>resources/fanart.jpg</fanart>
+		</assets>
 	</extension>
 </addon>
 
-<addon id="resource.images.studios.white" name="Studio Icons - White" version="0.0.21" provider-name="Team Kodi">
+<addon id="resource.images.studios.white" name="Studio Icons - White" version="0.0.22" provider-name="Team Kodi">
 	<extension point="kodi.resource.images" compile="true" type="studios" />
 	<requires>
 		<import addon="kodi.resource" version="1.0.0"/>
@@ -2397,7 +2401,7 @@ Zároveň má nastavenia upravujúce výšku stĺpcov spektra, ich rýchlosť a 
     </extension>
 </addon>
 
-<addon id="script.module.orion" version="3.2.0" name="Orion" provider-name="Orion">
+<addon id="script.module.orion" version="3.3.2" name="Orion" provider-name="Orion">
 	<requires>
 		<import addon="xbmc.python" version="2.1.0"/>
 		<import addon="repository.orion" version="1.0.0" optional="true" />
@@ -2755,15 +2759,15 @@ Zároveň má nastavenia upravujúce výšku stĺpcov spektra, ich rýchlosť a 
 	</extension>
 </addon>
 
-<addon id="repository.gaia" version="4.0.0" name="Gaia Repository" provider-name="Gaia">
+<addon id="repository.gaia" version="5.0.0" name="Gaia Repository" provider-name="Gaia">
 	<extension point="xbmc.addon.repository" name="Gaia Repository">
 		<dir>
-			<info compressed="false">https://github.com/gaiaorigin/gaiaorigin/raw/master/common/addons.xml?v=4.0.0</info>
-			<checksum>https://github.com/gaiaorigin/gaiaorigin/raw/master/common/addons.xml.md5?v=4.0.0</checksum>
+			<info compressed="false">https://github.com/gaiaorigin/gaiaorigin/raw/master/common/addons.xml?v=5.0.0</info>
+			<checksum>https://github.com/gaiaorigin/gaiaorigin/raw/master/common/addons.xml.md5?v=5.0.0</checksum>
 			<datadir zip="true">https://github.com/gaiaorigin/gaiaorigin/raw/master/common/</datadir>
 		</dir>
-		<info compressed="false">https://github.com/gaiaorigin/gaiaorigin/raw/master/addons.xml?v=4.0.0</info>
-		<checksum>https://github.com/gaiaorigin/gaiaorigin/raw/master/addons.xml.md5?v=4.0.0</checksum>
+		<info compressed="false">https://github.com/gaiaorigin/gaiaorigin/raw/master/addons.xml?v=5.0.0</info>
+		<checksum>https://github.com/gaiaorigin/gaiaorigin/raw/master/addons.xml.md5?v=5.0.0</checksum>
 		<datadir zip="true">https://github.com/gaiaorigin/gaiaorigin/raw/master/</datadir>
 	</extension>
 	<extension point="xbmc.addon.metadata">
@@ -2889,7 +2893,7 @@ Zároveň má nastavenia upravujúce výšku stĺpcov spektra, ich rýchlosť a 
 	</extension>
 </addon>
 
-<addon id="script.gaia.resources" version="5.1.1" name="Gaia Resources" provider-name="Gaia">
+<addon id="script.gaia.resources" version="5.3.2" name="Gaia Resources" provider-name="Gaia">
 	<requires>
 		<import addon="xbmc.python" version="2.19.0"/>
 	</requires>
@@ -3062,23 +3066,55 @@ v5.2.14 (2017-01-23)
   </extension>
 </addon>
 
-<addon id="plugin.video.gaia" version="5.1.1" name="Gaia" provider-name="Gaia">
+<addon id="plugin.video.themoviedb.helper"
+version="0.2.6"
+name="TheMovieDb Helper"
+provider-name="jurialmunkey">
+<requires>
+  <import addon="xbmc.python" version="2.25.0"/>
+  <import addon="script.module.simplecache" version="1.0.11" />
+  <import addon="script.module.requests" version="2.9.1"/>
+</requires>
+<extension point="xbmc.python.pluginsource" library="plugin.py">
+  <provides>video</provides>
+</extension>
+<extension point="xbmc.python.script" library="script.py" />
+<extension point="xbmc.addon.metadata">
+  <summary lang="en">TheMovieDb Helper</summary>
+  <description lang="en_GB">TheMovieDb Helper provides skinners a number of ways to access TheMovieDb API</description>
+  <disclaimer lang="en_GB">Provided by TheMovieDb. Please make sure you have your own API key.</disclaimer>
+  <assets>
+    <icon>icon.png</icon>
+    <fanart>fanart.jpg</fanart>
+    <screenshot>resources\screenshot-01.jpg</screenshot>
+    <screenshot>resources\screenshot-02.jpg</screenshot>
+  </assets>
+</extension>
+</addon>
+
+<addon id="plugin.video.gaia" version="5.5.2" name="Gaia" provider-name="Gaia">
 	<requires>
 		<import addon="xbmc.python" version="2.19.0" />
 
-		<import addon="script.gaia.resources" version="5.1.1" />
+		<import addon="script.gaia.resources" version="5.3.2" />
 		<import addon="script.gaia.artwork" version="5.0.0" />
 		<import addon="script.gaia.binaries" version="5.0.0" optional="true" />
 		<import addon="script.gaia.icons" version="5.1.1" optional="true" />
 		<import addon="script.gaia.skins" version="5.0.0" optional="true" />
 		<import addon="repository.gaia" version="5.0.0" optional="true" />
 
-		<import addon="script.module.orion" version="2.0.0" />
+		<import addon="script.module.orion" version="3.0.0" />
 		<import addon="script.module.resolveurl" version="5.0.06" />
 		<import addon="script.module.urlresolver" version="3.0.29" />
 		<import addon="script.module.metahandler" version="2.9.0" />
 		<import addon="script.extendedinfo" version="5.6.1" />
 		<import addon="plugin.video.youtube" version="6.0.0" />
+
+		<import addon="plugin.video.elementum" version="0.0.43" optional="true" />
+		<import addon="plugin.video.quasar" version="0.9.78" optional="true" />
+		<import addon="script.trakt" version="3.1.11" optional="true" />
+		<import addon="service.upnext" version="1.0.0" optional="true" />
+		<import addon="script.module.addon.signals" version="0.0.1" optional="true" />
 
 		<import addon="script.module.openscrapers" version="0.0.0.4" optional="true" />
 		<import addon="script.module.lambdascrapers" version="1.0.0" optional="true" />
@@ -3086,24 +3122,35 @@ v5.2.14 (2017-01-23)
 		<import addon="script.module.globalscrapers" version="3.3.3" optional="true" />
 		<import addon="script.module.universalscrapers" version="1.0.0" optional="true" />
 		<import addon="script.module.nanscrapers" version="0.5.45" optional="true" />
-		<import addon="script.module.incursion" version="0.1.0" optional="true" />
-		<import addon="script.module.placenta" version="1.2.0" optional="true" />
-		<import addon="script.module.yoda" version="1.0.0" optional="true" />
-		<import addon="plugin.video.elementum" version="0.0.43" optional="true" />
-		<import addon="plugin.video.quasar" version="0.9.78" optional="true" />
-		<import addon="script.trakt" version="3.1.11" optional="true" />
-		<import addon="script.module.addon.signals" version="0.0.1" optional="true" />
 	</requires>
 
 	<extension point="xbmc.python.pluginsource" library="gaia.py">
 		<provides>video</provides>
 	</extension>
-	<extension point="xbmc.service" library="service.py" start="startup" />
+
+	<extension point="kodi.context.item">
+		<menu id="kodi.core.main">
+			<item library="context.py">
+				<label>$INFO[Window(Home).Property(GaiaContextLabelMenu)]</label>
+				<visible>
+					[!String.StartsWith(Container.PluginName,plugin.video.gaia) + Integer.IsEqual(Window(Home).Property(GaiaContextSettingsEnabled),1)] +
+					[String.IsEqual(ListItem.DBTYPE,movie) | String.IsEqual(ListItem.DBTYPE,tvshow) | String.IsEqual(ListItem.DBTYPE,season) | String.IsEqual(ListItem.DBTYPE,episode)] +
+					[
+						[!String.StartsWith(Container.FolderPath,playlistvideo://) + !String.IsEmpty(Container.PluginName) + Integer.IsEqual(Window(Home).Property(GaiaContextSettingsEnabledAddon),1)] |
+						[!String.StartsWith(Container.FolderPath,playlistvideo://) + String.IsEmpty(Container.PluginName) + Integer.IsEqual(Window(Home).Property(GaiaContextSettingsEnabledWidget),1)] |
+						[String.StartsWith(Container.FolderPath,playlistvideo://) + Integer.IsEqual(Window(Home).Property(GaiaContextSettingsEnabledPlaylist),1)]
+					]
+				</visible>
+			</item>
+		</menu>
+	</extension>
+
+	<extension point="xbmc.service" library="service.py" start="startup" /> <!-- Must be placed after xbmc.python.pluginsource, otherwise widgets do not pick up the aaddon. -->
 
 	<extension point="xbmc.addon.metadata">
 		<summary lang="en">Stream Movies and Shows</summary>
 		<description lang="en">Stream movies, shows, documentaries, and short films from a variety of sources, such as torrents, usenet, file hosters, and video streaming services.</description>
-		<disclaimer lang="en">Gaia and its developers are not in any way affiliated with Kodi, Premiumize, OffCloud, RealDebrid, EasyNews, Orion, or any of the sites and providers used in the addon.<br/>Gaia is and always will be free and open-source. None of its code and resources may be sold or redistributed for any commercial purposes.<br/>Gaia and its developers do not host, create, or distribute any of the content displayed in the addon, it simply searches public websites.</disclaimer>
+		<disclaimer lang="en">Gaia and its developers are not in any way affiliated with Kodi, Premiumize, OffCloud, RealDebrid, EasyNews, Orion, or any of the sites and providers used in the addon. Gaia is and always will be free and open-source. None of its code and resources may be sold or redistributed for any commercial purposes. Gaia and its developers do not host, create, or distribute any of the content displayed in the addon, it simply searches public websites.</disclaimer>
 		<platform>all</platform>
 		<license>GPL 3.0</license>
 		<website>https://gaiakodi.com</website>
@@ -3125,7 +3172,7 @@ v5.2.14 (2017-01-23)
 	</extension>
 </addon>
 
-<addon id="script.module.openscrapers" name="OpenScrapers Module" version="0.0.1.93" provider-name="Addons4Kodi">
+<addon id="script.module.openscrapers" name="OpenScrapers Module" version="0.0.1.95" provider-name="Addons4Kodi">
     <requires>
         <import addon="xbmc.python" version="2.25.0" />
         <import addon="script.module.beautifulsoup4"/>
@@ -3371,7 +3418,7 @@ v5.2.14 (2017-01-23)
 	</extension>
 </addon>
 
-<addon id="repository.kodibae" name="[COLOR pink]Kodi Bae Repository[/COLOR]" version="1.0.0" provider-name="kodibae">
+<addon id="repository.kodibae" name="[COLOR pink]Kodi Bae Repository[/COLOR]" version="3.0.0" provider-name="kodibae">
     <extension point="xbmc.addon.repository" name="[COLOR pink]Kodi Bae Repository[/COLOR]">
     <dir>
         <info compressed="false">https://github.com/tvaddonsco/tva-resolvers-repo/raw/master/addons.xml</info>

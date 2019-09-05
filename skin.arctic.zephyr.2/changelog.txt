@@ -1,3 +1,43 @@
+0.9.46
+- Add blur effect settings
+- Add Up Next support
+- Add Next Aired 7.0.1 support
+- Corner icon choices for fixed width horizontal menus
+- Seekbar dot color 
+
+0.9.45
+- Updates to Sets info
+- Show dbid indicator in sets
+- Change container.content checks in info to ListItem.DBType checks
+
+0.9.44
+- Fix for plot overlay auto display
+- Remove extendedinfo completely
+- Update submenu hubs to new widget styles
+- Remove labels from aura showcase views
+- Standardise searchlists to match widgets
+- Add Netflix default search list option
+
+0.9.43
+- Add DBID icons to 1136 person info
+- Make themoviedb helper widgets open info
+- Standardise widget heights
+- Fix browse/play label
+- Fix for minimal busy loader on 1136 and filepath now playing overlap
+- Fix for duration on small landscape youtube
+
+0.9.42
+- REQUIRES: plugin.video.themoviedb.helper
+- Remove extendedinfo and replace with TMDbHelper
+- Extra info on people/videos using TMDbHelper in skin windows
+- Allows for moving through both online and local file infos
+- Fix separator errors
+- Fix top250 not disabling
+- Add Image viewer for persons
+- Add TMDb Helper support to OSD button
+- Re-arrange some lists
+- Add new discover calls for cast features
+
 0.9.41
 - Updates to infoline label handling
 - Fix small landscape scrollbar/alphabet

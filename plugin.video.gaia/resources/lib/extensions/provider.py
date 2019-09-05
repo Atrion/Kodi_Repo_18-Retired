@@ -24,14 +24,548 @@ import sys
 import imp
 import json
 import copy
+import time
 import pkgutil
 import urlparse
-import time
+import urllib
 import threading
 
 from resources.lib.extensions import database
+from resources.lib.extensions import tools
 
 ProviderAddon = None
+
+class ProviderBase(object):
+
+	Queries = []
+
+	def __init__(self, supportMovies = None, supportShows = True):
+		self.mSupportMovies = supportMovies
+		self.mSupportShows = supportShows
+
+	def supportMovies(self):
+		return self.mSupportMovies
+
+	def supportShows(self):
+		return self.mSupportShows
+
+	def _provider(self):
+		id = ''
+		try: id += sys.modules[self.__module__].__file__
+		except: pass
+		try: id += self.instanceId()
+		except: pass
+		return tools.Hash.sha512(id)
+
+	def _encode(self, dictionary):
+		try:
+			result = {}
+			for k, v in dictionary.iteritems():
+				if isinstance(v, (dict, list, tuple)): v =  tools.Converter.jsonTo(v)
+				elif isinstance(v, unicode): v = v.encode('utf8')
+				elif isinstance(v, str): v.decode('utf8') # not "v = v.decode('utf8')"
+				result[k] = v
+			return result
+		except:
+			tools.Logger.error()
+			return None
+
+	def _decode(self, url):
+		try:
+			if isinstance(url, (dict, list, tuple)): return url
+			data = urlparse.parse_qs(url)
+			data = dict([(i, data[i][0]) if data[i] else (i, '') for i in data])
+			try:
+				data['alternatives'] = tools.Converter.jsonFrom(data['alternatives'])
+			except: pass
+			return data
+		except:
+			tools.Logger.error()
+			return None
+
+	def _query(self, *args):
+		# Check if query was already executed, in order to avoid duplicate queries for alternative titles.
+		query = self._provider()
+		for arg in args:
+			if not arg is None:
+				try: arg = str(arg)
+				except: pass
+				try: arg = arg.encode('utf-8')
+				except: pass
+				query += arg
+		if query in ProviderBase.Queries: return False
+		ProviderBase.Queries.append(query)
+		return True
+
+	def movie(self, imdb, title, alternativetitles, localtitle, year):
+		try:
+			if isinstance(alternativetitles, dict): alternativetitles = [v for k, v in alternativetitles.iteritems()]
+			url = {'imdb': imdb, 'title': title, 'year': year, 'alternatives' : alternativetitles}
+			url = urllib.urlencode(self._encode(url))
+			return url
+		except:
+			tools.Logger.error()
+			return None
+
+	def tvshow(self, imdb, tvdb, tvshowtitle, alternativetitles, localtitle, year):
+		try:
+			if isinstance(alternativetitles, dict): alternativetitles = [v for k, v in alternativetitles.iteritems()]
+			url = {'imdb': imdb, 'tvdb': tvdb, 'tvshowtitle': tvshowtitle, 'year': year, 'alternatives' : alternativetitles}
+			url = urllib.urlencode(self._encode(url))
+			return url
+		except:
+			tools.Logger.error()
+			return None
+
+	def episode(self, url, imdb, tvdb, title, premiered, season, episode):
+		try:
+			if url == None: return
+			url = urlparse.parse_qs(url.encode('ascii'))
+			url = dict([(i, url[i][0]) if url[i] else (i, '') for i in url])
+			url['title'], url['premiered'], url['season'], url['episode'] = title, premiered, season, episode
+			url = urllib.urlencode(self._encode(url))
+			return url
+		except:
+			tools.Logger.error()
+			return None
+
+	def resolve(self, url):
+		return url
+
+class ProviderExternal(ProviderBase):
+
+	ScrapersSettings = {}
+	ScrapersProviders = {}
+
+	SettingLabel = 'providers.external.universal.open.%s.providers.label'
+	SettingValue = 'providers.external.universal.open.%s.providers'
+
+	def __init__(self):
+		ProviderBase.__init__(self, supportMovies = True, supportShows = True)
+		self.addon = self.Name
+		self.priority = 1
+		self.language = ['un']
+		self.domains = []
+		self.base_link = ''
+		self.id = ''
+		self.name = ''
+		self.enabled = False
+		self.object = None
+		self.path = ''
+
+	@classmethod
+	def _instancesPath(self):
+		return tools.System.pathProviders(self.Name)
+
+	@classmethod
+	def _instancesInclude(self):
+		sys.path.append(tools.File.joinPath(self._instancesPath(), 'lib'))
+
+	@classmethod
+	def _instancesRename(self, path):
+		# CloudFlare import can clash with an import from another addon.
+		replacements = [
+			['from resources.lib.', 'from %s.' % self.IdLibrary],
+			['from %s.modules import cfscrape' % self.IdLibrary, 'try: from %s.modules import cfscrape\nexcept: pass' % self.IdLibrary],
+			['xbmcaddon.Addon()', 'xbmcaddon.Addon("' + self.IdAddon + '")'],
+			['if debrid.status() is False:', 'if False:'],
+			['if debrid.status() == False:', 'if False:'],
+		]
+
+		try: replacements.extend(self.Replacements)
+		except: pass
+
+		directories, files = tools.File.listDirectory(path, absolute = True)
+		for file in files:
+			if file.endswith('.py'):
+				tools.File.replaceNow(file, replacements)
+		for directory in directories:
+			self._instancesRename(directory)
+
+	@classmethod
+	def _instancesPrepare(self):
+		pathSource = tools.System.path(self.IdAddon)
+		pathDestination = self._instancesPath()
+		file = 'addon.xml'
+		fileSource = tools.File.joinPath(pathSource, file)
+		fileDesitnation = tools.File.joinPath(pathDestination, file)
+		if not tools.File.exists(fileDesitnation) or not tools.Hash.fileSha1(fileSource) == tools.Hash.fileSha1(fileDesitnation):
+			tools.File.copyDirectory(pathSource, pathDestination)
+			self._instancesRename(pathDestination)
+		self._instancesInclude()
+		return tools.File.joinPath(pathDestination, self.Path)
+
+	def instanceAddon(self):
+		return self.addon
+
+	def instanceId(self):
+		return self.id
+
+	def instanceName(self):
+		return self.name
+
+	def instanceEnabled(self):
+		# Get the latests setting.
+		if not self.id == '':
+			try: return self.instancesProviders()[self.id]
+			except: pass
+		return self.enabled
+
+	def instanceParameters(self):
+		return {
+			'id' : self.id,
+			'name' : self.name,
+			'enabled' : self.enabled,
+			'path' : self.path,
+		}
+
+	def instanceParameterize(self, parameters = {}):
+		try:
+			for key, value in parameters.iteritems():
+				try: setattr(self, key, value)
+				except: pass
+		except: pass
+
+	@classmethod
+	def instancesProviders(self):
+		if not self.IdAddon in ProviderExternal.ScrapersProviders:
+			ProviderExternal.ScrapersProviders[self.IdAddon] = tools.Settings.getObject(ProviderExternal.SettingValue % self.IdGaia)
+			if not ProviderExternal.ScrapersProviders[self.IdAddon]: ProviderExternal.ScrapersProviders[self.IdAddon] = {}
+		return ProviderExternal.ScrapersProviders[self.IdAddon]
+
+	@classmethod
+	def instancesSettings(self):
+		from resources.lib.extensions import interface
+		interface.Loader.show()
+
+		self.instancesProviders()
+
+		addon = copy.deepcopy(ProviderExternal.ScrapersProviders[self.IdAddon])
+		addon = {i : False for i in addon}
+
+		enabled = interface.Format.fontColor(32301, interface.Format.colorExcellent())
+		disabled = interface.Format.fontColor(32302, interface.Format.colorBad())
+
+		languages = []
+		labels = []
+		ids = []
+		instances = self.instances()
+		for i in range(len(instances)):
+			instance = instances[i]
+			if not instance.id in ProviderExternal.ScrapersProviders[self.IdAddon]: ProviderExternal.ScrapersProviders[self.IdAddon][instance.id] = instance.enabled
+			addon[instance.id] = instance.enabled
+			try: language = instance.language[0]
+			except: language = 'un'
+			languages.append(language)
+			labels.append('[%s] %s: ' % (language.upper(), instance.name.upper()))
+			ids.append(instance.id)
+
+		languages = list(set(languages))
+		actions = [33486, 35436, 35435, 35437] + [(interface.Translation.string(33192) + ' ' + tools.Language.name(i)) for i in languages]
+		actions = [interface.Dialog.prefixNext(text = interface.Format.fontBold(i), bold = True) for i in actions]
+
+		interface.Loader.hide()
+		while True:
+			items = copy.deepcopy(actions)
+			for i in range(len(labels)):
+				items.append(labels[i] + (enabled if ProviderExternal.ScrapersProviders[self.IdAddon][ids[i]] else disabled))
+			choice = interface.Dialog.select(title = 32345, items = items)
+
+			if choice <= 0: break
+			elif choice == 1: ProviderExternal.ScrapersProviders[self.IdAddon] = {i : False for i in ProviderExternal.ScrapersProviders[self.IdAddon]}
+			elif choice == 2: ProviderExternal.ScrapersProviders[self.IdAddon] = {i : True for i in ProviderExternal.ScrapersProviders[self.IdAddon]}
+			elif choice == 3: ProviderExternal.ScrapersProviders[self.IdAddon] = copy.deepcopy(addon)
+			else:
+				index = choice - 4 - len(languages)
+				if index >= 0:
+					id = ids[index]
+					ProviderExternal.ScrapersProviders[self.IdAddon][id] = not ProviderExternal.ScrapersProviders[self.IdAddon][id]
+				else:
+					language = languages[choice - 4]
+					for i in instances:
+						if i.language[0] == language:
+							ProviderExternal.ScrapersProviders[self.IdAddon][i.id] = True
+
+			tools.Settings.set(ProviderExternal.SettingLabel % self.IdGaia, str(sum(ProviderExternal.ScrapersProviders[self.IdAddon].values())) + ' ' + interface.Translation.string(32301))
+			tools.Settings.set(ProviderExternal.SettingValue % self.IdGaia, ProviderExternal.ScrapersProviders[self.IdAddon])
+
+	@classmethod
+	def instancesEnable(self, providers, enable = True):
+		from resources.lib.extensions import interface
+		self.instancesProviders()
+
+		found = False
+		single = False
+		if not isinstance(providers, list):
+			providers = [providers]
+			single = True
+
+		for i in range(len(providers)):
+			expression = re.search('\w{3}-(.*)', providers[i], re.IGNORECASE)
+			if expression: providers[i] = expression.group(1)
+
+		for i in range(len(ProviderExternal.ScrapersProviders[self.IdAddon])):
+			for j in providers:
+				if j in ProviderExternal.ScrapersProviders[self.IdAddon]:
+					ProviderExternal.ScrapersProviders[self.IdAddon][j] = enable
+					if single:
+						found = True
+						break
+			if single and found: break
+
+		tools.Settings.set(ProviderExternal.SettingLabel % self.IdGaia, str(sum(ProviderExternal.ScrapersProviders[self.IdAddon].values())) + ' ' + interface.Translation.string(32301))
+		tools.Settings.set(ProviderExternal.SettingValue % self.IdGaia, ProviderExternal.ScrapersProviders[self.IdAddon])
+
+	@classmethod
+	def instancesDisable(self, providers, disable = True):
+		self.instancesEnable(providers, not disable)
+
+
+class ProviderExternalUnstructured(ProviderExternal):
+
+	def movie(self, imdb, title, localtitle, aliases, year):
+		try: return self.instanceObject().movie(imdb = imdb, title = title, localtitle = localtitle, aliases = aliases, year = year)
+		except: return None
+
+	def tvshow(self, imdb, tvdb, tvshowtitle, localtvshowtitle, aliases, year):
+		try: return self.instanceObject().tvshow(imdb = imdb, tvdb = tvdb, tvshowtitle = tvshowtitle, localtvshowtitle = localtvshowtitle, aliases = aliases, year = year)
+		except: return None
+
+	def episode(self, url, imdb, tvdb, title, premiered, season, episode):
+		try: return self.instanceObject().episode(url = url, imdb = imdb, tvdb = tvdb, title = title, premiered = premiered, season = season, episode = episode)
+		except: return None
+
+	def sources(self, url, hostDict, hostprDict):
+		sources = []
+		try:
+			if not self._query(url): return sources
+			result = self.instanceObject().sources(url, hostDict, hostprDict) # Don't use named parameters due to CMovies.
+			if result:
+				for item in result:
+					try:
+						item['external'] = True
+
+						if not 'language' in item: item['language'] = self.language[0]
+						try: item['url'] = item['url'].replace('http:http:', 'http:').replace('https:https:', 'https:').replace('http:https:', 'https:').replace('https:http:', 'http:') # Some of the links start with a double http.
+						except: continue
+
+						# External providers (eg: "Get Out"), sometimes has weird characters in the URL.
+						# Ignore the links that have non-printable ASCII or UTF8 characters.
+						try: item['url'].decode('utf-8')
+						except: continue
+
+						source = item['source'].lower().replace(' ', '')
+						if 'torrent' in source: continue
+						if source == 'direct' or source == 'directlink':
+							source = urlparse.urlsplit(item['url'])[1].split(':')[0]
+							from resources.lib.extensions import network
+							if network.Networker.ipIs(source):
+								source = 'Anonymous'
+							else:
+								split = source.split('.')
+								for i in split:
+									i = i.lower()
+									if i in ['www', 'ftp']: continue
+									source = i
+									break
+							item['source'] = source
+
+						sources.append(item)
+					except:
+						tools.Logger.error(self.instanceAddon() + '-' + self.instanceName())
+		except:
+			tools.Logger.error(self.instanceAddon() + '-' + self.instanceName())
+		return sources
+
+	def resolve(self, url):
+		return self.instanceObject().resolve(url)
+
+	def instanceObject(self):
+		try:
+			if self.object == None:
+				self._instancesInclude()
+				self.object = imp.load_source(self.id, self.path).source()
+		except:
+			tools.Logger.error()
+		return self.object
+
+	@classmethod
+	def instances(self):
+		try:
+			if not self.IdAddon in ProviderExternal.ScrapersSettings:
+				tools.System.addon(self.IdAddon).setSetting('_%s_' % tools.System.name().lower(), '') # Forces Kodi to generate the settings profile file if it does not already exist.
+				ProviderExternal.ScrapersSettings[self.IdAddon] = tools.File.readNow(tools.File.joinPath(tools.System.profile(self.IdAddon), 'settings.xml'))
+
+			result = []
+			sources = self._instancesPrepare()
+
+			# Sometimes there is a __init__.py file missing in the directories.
+			# This file is required for a valid Python module and will cause walk_packages to fail if absence.
+			directories, files = tools.File.listDirectory(sources, absolute = True)
+			for directory in directories:
+				path = tools.File.joinPath(directory, '__init__.py')
+				if not tools.File.exists(path): tools.File.create(path)
+
+			try:
+				path1 = [sources]
+				for package1, name1, pkg1 in pkgutil.walk_packages(path1):
+					if not 'torrent' in name1.lower():
+						path2 = [tools.File.joinPath(sources, name1)]
+						walk2 = []
+
+						# If the scraper does not have a second level of directories, like GlobalScrapers.
+						count = 0
+						for package2, name2, pkg2 in pkgutil.walk_packages(path2):
+							if not pkg2:
+								walk2.append((package2, name2, pkg2))
+								count += 1
+						if count == 0:
+							path2 = path1
+							walk2 = [(package1, name1, pkg1)]
+
+						for package2, name2, pkg2 in walk2:
+							if not pkg2:
+								try:
+									id = name2
+									if id == 'orion' or id == 'orionoid': continue
+									name = id.replace(' ', '').replace('-', '').replace('_', '').replace('.', '').capitalize()
+									path = tools.File.joinPath(path2[0], id + '.py')
+									scraper = imp.load_source(id, path).source()
+									scraperNew = self()
+									scraperNew.id = id
+									scraperNew.name = name
+									scraperNew.path = path
+									try: scraperNew.language[0] = scraper.language[0]
+									except:
+										try: scraperNew.language[0] = re.search('^(\w{2})(_.*$|$)', info).group(0)
+										except: pass
+									if not hasattr(scraper, '_base_link'): # _base_link: Do not use base_link that is defined as a property (eg: KinoX), since this can make additional HTTP requests, slowing down the process.
+										if not scraperNew.base_link or scraperNew.base_link == '':
+											try: scraperNew.base_link = scraper.base_link
+											except: pass
+									scraperNew.enabled = tools.Settings.raw('provider.' + id, parameter = tools.Settings.ParameterValue, data = ProviderExternal.ScrapersSettings[self.IdAddon])
+									scraperNew.enabled = not scraperNew.enabled == 'false' and not scraperNew.enabled == None
+									scraperNew.object = scraper
+									result.append(scraperNew)
+								except:
+									pass
+			except:
+				tools.Logger.error()
+			return result
+		except:
+			tools.Logger.error()
+
+
+class ProviderExternalStructured(ProviderExternal):
+
+	def sources(self, url, hostDict, hostprDict):
+		sources = []
+		try:
+			from resources.lib import debrid
+			debridHas = debrid.Debrid.enabled()
+
+			data = urlparse.parse_qs(url)
+			data = dict([(i, data[i][0]) if data[i] else (i, '') for i in data])
+
+			movie = False if 'tvshowtitle' in data else True
+			title = data['tvshowtitle'] if 'tvshowtitle' in data else data['title']
+			year = str(data['year']) if 'year' in data and not data['year'] == None else ''
+			season = str(data['season']) if 'season' in data and not data['season'] == None else ''
+			episode = str(data['episode']) if 'episode' in data and not data['episode'] == None else ''
+			imdb = data['imdb'] if 'imdb' in data else ''
+			tvdb = data['tvdb'] if 'tvdb' in data else ''
+
+			if not self._query(title, year, season, episode, imdb, tvdb): return sources
+
+			scraper = self.instanceScrapers(name = self.name.lower())()
+			if self.base_link and not self.base_link == '': scraper.base_link = self.base_link
+			if movie:
+				result = scraper.scrape_movie(title = title, year = year, imdb = imdb, debrid = debridHas)
+			else:
+				showYear = year
+				try:
+					if 'premiered' in data and not data['premiered'] == None and not data['premiered'] == '':
+						for format in ['%Y-%m-%d', '%Y-%d-%m', '%d-%m-%Y', '%m-%d-%Y']:
+							try:
+								showYear = str(int(convert.ConverterTime(value = data['premiered'], format = format).string(format = '%Y')))
+								if len(showYear) == 4: break
+							except:
+								pass
+				except:
+					pass
+				result = scraper.scrape_episode(title = title, year = year, show_year = showYear, season = season, episode = episode, imdb = imdb, tvdb = tvdb, debrid = debridHas)
+
+			if result:
+				for item in result:
+					item['external'] = True
+					item['language']= self.language[0]
+					item['debridonly'] = False
+					item['url'] = item['url'].replace('http:http:', 'http:').replace('https:https:', 'https:').replace('http:https:', 'https:').replace('https:http:', 'http:') # Some of the links start with a double http.
+
+					# External providers (eg: "Get Out"), sometimes has weird characters in the URL.
+					# Ignore the links that have non-printable ASCII or UTF8 characters.
+					try: item['url'].decode('utf-8')
+					except: continue
+
+					source = item['source'].lower().replace(' ', '')
+					if 'torrent' in source: continue
+					if source == 'direct' or source == 'directlink':
+						from resources.lib.extensions import network
+						source = urlparse.urlsplit(item['url'])[1].split(':')[0]
+						if network.Networker.ipIs(source):
+							source = 'Anonymous'
+						else:
+							split = source.split('.')
+							for i in split:
+								i = i.lower()
+								if i in ['www', 'ftp']: continue
+								source = i
+								break
+						item['source'] = source
+					sources.append(item)
+
+			return sources
+		except:
+			tools.Logger.error()
+			return sources
+
+	@classmethod
+	def instanceScrapers(self, name = None):
+		result = self.Module.relevant_scrapers(names_list = name, include_disabled = True, exclude = None)
+		if not name is None: result = result[0]
+		return result
+
+	@classmethod
+	def instances(self):
+		result = []
+		try:
+			scrapers = self.instanceScrapers()
+			for scraper in scrapers:
+				scraper = scraper()
+
+				# The only way to figure out if it is torrent, is to inspect the source code.
+				import inspect
+				code = inspect.getsource(scraper.__class__).lower()
+				if 'torrent' in code or 'magnet' in code: continue
+
+				id = scraper.name.replace(' ', '').lower()
+				if 'torrent' in id: continue
+				if id == 'orion' or id == 'orionoid': continue
+				scraperNew = self()
+				scraperNew.id = id
+				scraperNew.name = scraper.name
+				try: scraperNew.language[0] = scraper.language[0]
+				except: pass
+				if not hasattr(scraper, '_base_link'): # _base_link: Do not use base_link that is defined as a property (eg: KinoX), since this can make additional HTTP requests, slowing down the process.
+					if not scraperNew.base_link or scraperNew.base_link == '':
+						try: scraperNew.base_link = scraper.base_link
+						except: pass
+				scraperNew.enabled = scraper._is_enabled()
+				result.append(scraperNew)
+		except:
+			tools.Logger.error()
+		return result
+
 
 class Provider(object):
 
@@ -79,7 +613,20 @@ class Provider(object):
 	PerformanceFast = 'fast'
 
 	@classmethod
+	def copy(self, provider):
+		result = {k : v for k, v in provider.iteritems() if not k == 'object'}
+		object = provider['class'].source()
+		try:
+			instanceFunction = getattr(object, 'instanceParameterize')
+			if instanceFunction and callable(instanceFunction): instanceFunction(provider['parameters'])
+		except: pass
+		object.base_link = provider['object'].base_link
+		result['object'] = object
+		return result
+
+	@classmethod
 	def __name(self, data, setting):
+		from resources.lib.extensions import interface
 		name = ''
 		if data:
 			dummy = True
@@ -97,7 +644,6 @@ class Provider(object):
 				if index >= 0:
 					name = data[index + 7 : data.find('" ', index)]
 					if name.isdigit():
-						from resources.lib.extensions import interface
 						name = interface.Translation.string(int(name))
 		if '$NUMBER[' in name: name = name.replace('$NUMBER[', '').replace(']', '')
 		return name
@@ -123,7 +669,6 @@ class Provider(object):
 	@classmethod
 	def _databaseRetrieve(self, description = None, enabled = False, forceAll = False, forcePreset = None, quick = False):
 		try:
-			from resources.lib.extensions import tools
 			base = self._databaseInitialize()
 			result = base._selectSingle('SELECT version, data FROM %s;' % (Provider.DatabaseProviders))
 			version = result[0]
@@ -222,13 +767,12 @@ class Provider(object):
 
 					return providers
 		except:
-			pass
+			tools.Logger.error()
 		return None
 
 	@classmethod
 	def _databaseUpdate(self, data):
 		try:
-			from resources.lib.extensions import tools
 			self.databaseClear()
 			base = self._databaseInitialize()
 			data = '"%s"' % tools.Converter.jsonTo(data).replace('"', '""').replace("'", "''")
@@ -244,7 +788,6 @@ class Provider(object):
 	def addon(self):
 		global ProviderAddon
 		if ProviderAddon == None:
-			from resources.lib.extensions import tools
 			ProviderAddon = tools.System.name()
 		return ProviderAddon
 
@@ -273,10 +816,8 @@ class Provider(object):
 
 	@classmethod
 	def initialize(self, description = None, enabled = False, forceAll = False, forcePreset = None, progress = False, special = False):
+		from resources.lib.extensions import interface
 		try:
-			from resources.lib.extensions import tools
-			from resources.lib.extensions import interface
-
 			progressDialog = None
 			Provider.Providers = []
 			data = self._databaseRetrieve(description = description, enabled = enabled, forceAll = forceAll, forcePreset = forcePreset, quick = progress)
@@ -374,18 +915,30 @@ class Provider(object):
 							try: pack = instance.pack
 							except: pack = False
 
+							groupMovies = None
 							try:
-								functionMovie = getattr(instance, 'movie', None)
-								groupMovies = True if callable(functionMovie) else False
-							except:
-								groupMovies = False
+								support = getattr(instance, 'supportMovies', None)()
+								if not support is None: groupMovies = support
+							except: pass
+							if groupMovies is None:
+								try:
+									functionMovie = getattr(instance, 'movie', None)
+									groupMovies = True if callable(functionMovie) else False
+								except:
+									groupMovies = False
 
+							groupTvshows = None
 							try:
-								functionTvshow = getattr(instance, 'tvshow', None)
-								functionEpisode = getattr(instance, 'episode', None)
-								groupTvshows = True if callable(functionTvshow) or callable(functionEpisode) else False
-							except:
-								groupTvshows = False
+								support = getattr(instance, 'supportShows', None)()
+								if not support is None: groupTvshows = support
+							except: pass
+							if groupTvshows is None:
+								try:
+									functionTvshow = getattr(instance, 'tvshow', None)
+									functionEpisode = getattr(instance, 'episode', None)
+									groupTvshows = True if callable(functionTvshow) or callable(functionEpisode) else False
+								except:
+									groupTvshows = False
 
 							parameters = None
 							try:
@@ -487,6 +1040,8 @@ class Provider(object):
 							total = len(files)
 							progressDialog.update(int(40 + (50 * ((len(providers) - providersExtras) / float(total)))))
 
+					except ImportError:
+						pass # Do not log errors for non-installed external scraping addons.
 					except Exception as error:
 						tools.Logger.log('A provider could not be loaded (%s): %s.' % (str(f[4]), str(error)))
 						tools.Logger.error()
@@ -521,7 +1076,6 @@ class Provider(object):
 	# description can be id, name, file, or setting.
 	@classmethod
 	def provider(self, description, enabled = True, local = True, genres = None, exact = True):
-		from resources.lib.extensions import tools
 		description = description.lower().replace(' ', '') # Important for "local library".
 		sources = self.providers(description = description if exact else None, enabled = enabled, local = local, genres = genres)
 		for source in sources:
@@ -606,8 +1160,6 @@ class Provider(object):
 
 	@classmethod
 	def enable(self, providers, enable = True):
-		from resources.lib.extensions import tools
-
 		found = False
 		single = False
 		if Provider.Providers == None: self.initialize()
@@ -641,15 +1193,12 @@ class Provider(object):
 
 	@classmethod
 	def failureEnabled(self):
-		from resources.lib.extensions import tools
 		return tools.Settings.getBoolean('scraping.failure.enabled')
 
 	@classmethod
 	def failureList(self):
 		result = []
 		if self.failureEnabled():
-			from resources.lib.extensions import tools
-
 			thresholdCount = tools.Settings.getInteger('scraping.failure.count')
 			thresholdTime = tools.Settings.getInteger('scraping.failure.time')
 			if thresholdTime > 0:
@@ -663,7 +1212,6 @@ class Provider(object):
 	@classmethod
 	def failureUpdate(self, finished, unfinished):
 		if self.failureEnabled():
-			from resources.lib.extensions import tools
 			from resources.lib.extensions import orionoid
 
 			data = self._failureInitialize()
@@ -689,9 +1237,7 @@ class Provider(object):
 	# mode: manual or automatic
 	@classmethod
 	def sortDialog(self, mode, slot):
-		from resources.lib.extensions import tools
 		from resources.lib.extensions import interface
-
 		interface.Loader.show()
 		providers = self.providers(enabled = True, local = False)
 		items = [interface.Format.fontBold(33112)]
@@ -713,9 +1259,7 @@ class Provider(object):
 
 	@classmethod
 	def presetDialog(self, slot):
-		from resources.lib.extensions import tools
 		from resources.lib.extensions import interface
-
 		slot = int(slot)
 		slotValues = 'providers.customization.presets.values%d' % slot
 		slotPreset = 'providers.customization.presets.preset%d' % slot
@@ -793,18 +1337,16 @@ class Provider(object):
 
 	@classmethod
 	def language(self):
-		from resources.lib.extensions import tools
 		if tools.Language.customization():
-			language = tools.Settings.getString('scraping.foreign.language')
+			language = tools.Settings.getString('scraping.alternative.language')
 		else:
 			language = tools.Language.Alternative
 		return tools.Language.code(language)
 
 	@classmethod
 	def languageSelect(self):
-		from resources.lib.extensions import tools
 		from resources.lib.extensions import interface
-		id = 'scraping.foreign.language'
+		id = 'scraping.alternative.language'
 		items = tools.Settings.raw(id, 'values').split('|')
 		choice = interface.Dialog.select(title = 33787, items = items)
 		if choice >= 0: tools.Settings.set(id, items[choice])
@@ -818,7 +1360,6 @@ class Provider(object):
 
 	@classmethod
 	def optimizationDevice(self):
-		from resources.lib.extensions import tools
 		from resources.lib.extensions import interface
 		from resources.lib.extensions import convert
 		try:
@@ -844,7 +1385,6 @@ class Provider(object):
 
 	@classmethod
 	def optimizationConnection(self, iterations = 3):
-		from resources.lib.extensions import tools
 		from resources.lib.extensions import interface
 		from resources.lib.extensions import speedtest
 		try:
@@ -889,7 +1429,6 @@ class Provider(object):
 
 	@classmethod
 	def optimizationProviders(self):
-		from resources.lib.extensions import tools
 		from resources.lib.extensions import interface
 		try:
 			providersMovies = len(self.providersMovies(enabled = True, local = False))
@@ -920,7 +1459,6 @@ class Provider(object):
 
 	@classmethod
 	def optimizationForeign(self):
-		from resources.lib.extensions import tools
 		from resources.lib.extensions import interface
 		try:
 			timeout = 0
@@ -939,10 +1477,8 @@ class Provider(object):
 
 	# Cannot be static, since it uses a member variable
 	def optimization(self, title = 33996, introduction = True, settings = False):
+		from resources.lib.extensions import interface
 		try:
-			from resources.lib.extensions import tools
-			from resources.lib.extensions import interface
-
 			if introduction:
 				choice = interface.Dialog.option(title = title, message = 35005)
 				if not choice:
@@ -1006,11 +1542,9 @@ class Provider(object):
 			tools.Logger.error()
 
 	def customization(self, settings = False):
+		from resources.lib.extensions import interface
+		from resources.lib.extensions import verification
 		try:
-			from resources.lib.extensions import tools
-			from resources.lib.extensions import interface
-			from resources.lib.extensions import verification
-
 			def extract(providers, category):
 				try:
 					subproviders = [i for i in providers if i['category'] == category]

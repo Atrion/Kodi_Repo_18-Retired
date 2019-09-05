@@ -5941,31 +5941,31 @@ msgid "Launches the UniversalScrapers settings."
 msgstr ""
 
 msgctxt "#34325"
-msgid "Enables the use of external hoster providers using the Placenta addon."
+msgid "Enables a custom Gaia menu in the context menu."
 msgstr ""
 
 msgctxt "#34326"
-msgid "Installs the Placenta addon."
+msgid "Shows the context menu within Gaia. Requires Kodi to be restarted."
 msgstr ""
 
 msgctxt "#34327"
-msgid "Launches the Placenta settings."
+msgid "Shows the context menu within other addons. Requires Kodi to be restarted."
 msgstr ""
 
 msgctxt "#34328"
-msgid "Enables the use of external hoster providers using the Incursion addon."
+msgid "Shows the context menu within widgets. Requires Kodi to be restarted."
 msgstr ""
 
 msgctxt "#34329"
-msgid "Installs the Incursion addon."
+msgid "Shows the context menu within playlists. Requires Kodi to be restarted."
 msgstr ""
 
 msgctxt "#34330"
-msgid "Launches the Incursion settings."
+msgid "Shows the name of the addon the stream originated from. The full name, or a short or mini abbreviation can be displayed."
 msgstr ""
 
 msgctxt "#34331"
-msgid "Enables the use of external hoster providers using the VideoScraper addon."
+msgid "The maximum number of alternative titles to search for. More titles mean longer scraping times, but can increase the chances of finding foreign titles."
 msgstr ""
 
 msgctxt "#34332"
@@ -6069,11 +6069,11 @@ msgid "Sequentially play streams until a working one was found. If a link is dow
 msgstr ""
 
 msgctxt "#34355"
-msgid "Enable or disable individual Incursion providers."
+msgid "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 msgstr ""
 
 msgctxt "#34356"
-msgid "Enable or disable individual Placenta providers."
+msgid "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 msgstr ""
 
 msgctxt "#34357"
@@ -6105,19 +6105,19 @@ msgid "Filters out unsupported streams that cannot be played with any of the ava
 msgstr ""
 
 msgctxt "#34364"
-msgid "Enables the use of external hoster providers using the Yoda addon."
+msgid "Customizes the layout of the context menu. Requires Kodi to be restarted."
 msgstr ""
 
 msgctxt "#34365"
-msgid "Installs the Yoda addon."
+msgid "Shows the prefix in front of menu items. Requires Kodi to be restarted."
 msgstr ""
 
 msgctxt "#34366"
-msgid "Launches the Yoda settings."
+msgid "Formats menu items with bold. Requires Kodi to be restarted."
 msgstr ""
 
 msgctxt "#34367"
-msgid "Enable or disable individual Yoda providers."
+msgid "Formats menu items with color. Requires Kodi to be restarted."
 msgstr ""
 
 msgctxt "#34368"
@@ -6181,7 +6181,7 @@ msgid "Enables the use of distributed universal torrent providers. Distributed p
 msgstr ""
 
 msgctxt "#34393"
-msgid "Immediately start scraping an episode from the Trakt list instead of showing a list of all unwatched episodes."
+msgid "Immediately start scraping an episode from the Trakt progress list or show calendar instead of showing a list of all unwatched episodes."
 msgstr ""
 
 msgctxt "#34394"
@@ -7665,15 +7665,15 @@ msgid "NaN Scrapers"
 msgstr ""
 
 msgctxt "#35333"
-msgid "Placenta Scrapers"
+msgid "Prefix"
 msgstr ""
 
 msgctxt "#35334"
-msgid "Incursion Scrapers"
+msgid "Tertiary"
 msgstr ""
 
 msgctxt "#35335"
-msgid "Video Scraper"
+msgid "Title Limit"
 msgstr ""
 
 msgctxt "#35336"
@@ -7737,11 +7737,11 @@ msgid "NanScrapers Providers"
 msgstr ""
 
 msgctxt "#35351"
-msgid "Placenta Providers"
+msgid "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 msgstr ""
 
 msgctxt "#35352"
-msgid "Incursion Providers"
+msgid "Context Menu"
 msgstr ""
 
 msgctxt "#35353"
@@ -7777,11 +7777,11 @@ msgid "NanScrapers"
 msgstr ""
 
 msgctxt "#35361"
-msgid "Placenta"
+msgid "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 msgstr ""
 
 msgctxt "#35362"
-msgid "Incursion"
+msgid "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 msgstr ""
 
 msgctxt "#35363"
@@ -8157,7 +8157,7 @@ msgid "Filtered"
 msgstr ""
 
 msgctxt "#35456"
-msgid "Yoda Scrapers"
+msgid "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 msgstr ""
 
 msgctxt "#35457"
@@ -8301,7 +8301,7 @@ msgid "Minimum Popularity"
 msgstr ""
 
 msgctxt "#35492"
-msgid "Direct Progress"
+msgid "Direct Scraping"
 msgstr ""
 
 msgctxt "#35493"
@@ -8465,7 +8465,7 @@ msgid "GlobalScrapers Providers"
 msgstr ""
 
 msgctxt "#35533"
-msgid "Yoda Providers"
+msgid "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 msgstr ""
 
 msgctxt "#35534"
@@ -8473,7 +8473,7 @@ msgid "GlobalScrapers"
 msgstr ""
 
 msgctxt "#35535"
-msgid "Yoda"
+msgid "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 msgstr ""
 
 msgctxt "#35536"
@@ -8661,7 +8661,7 @@ msgid "Continuation Delay"
 msgstr ""
 
 msgctxt "#35582"
-msgid "Continue Next Episode In"
+msgid "Next Episode In"
 msgstr ""
 
 msgctxt "#35583"
@@ -8681,7 +8681,7 @@ msgid "Binge Scrape"
 msgstr ""
 
 msgctxt "#35587"
-msgid "No Unwatched Episode Available For Binge Watching"
+msgid "No New Episode Available For Binge Watching"
 msgstr ""
 
 msgctxt "#35588"
@@ -8849,7 +8849,7 @@ msgid "Interrupt Playback"
 msgstr ""
 
 msgctxt "#35629"
-msgid "Cancel Next Episode In"
+msgid "Canceling In"
 msgstr ""
 
 msgctxt "#35630"
@@ -8882,4 +8882,36 @@ msgstr ""
 
 msgctxt "#35636"
 msgid "Uninstall"
+msgstr ""
+
+msgctxt "#35637"
+msgid "Specials"
+msgstr ""
+
+msgctxt "#35638"
+msgid "Scraping Terminated With Enough Streams"
+msgstr ""
+
+msgctxt "#35639"
+msgid "Gaia"
+msgstr ""
+
+msgctxt "#35640"
+msgid "Addons"
+msgstr ""
+
+msgctxt "#35641"
+msgid "Widgets"
+msgstr ""
+
+msgctxt "#35642"
+msgid "Playlists"
+msgstr ""
+
+msgctxt "#35643"
+msgid "Customize"
+msgstr ""
+
+msgctxt "#35644"
+msgid "Bold"
 msgstr ""

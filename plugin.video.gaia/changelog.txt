@@ -1,4 +1,115 @@
 
+[B]5.5.2 (2019.09.04)[/B]
+- Updated uploader name list.
+- Fixed Premiumize interface issues.
+- Fixed Premiumize cloud downloads.
+- Removed MP3 file name filter.
+- Fixed local library provider.
+- Fixed various debrid issues.
+- Fixed color customization.
+
+[B]5.5.1 (2019.09.03)[/B]
+- Added debrid priority.
+- Updated uploader name list.
+
+[B]5.5.0 (2019.09.03)[/B]
+- Added custom context menu.
+- Improved metadata provision.
+- Fixed member usenet providers.
+- Updated uploader name list.
+- Fixed direct link handling.
+- Fixed various debrid and handler bugs.
+
+[B]5.4.2 (2019.08.29)[/B]
+- Fixed Orion threading issue.
+
+[B]5.4.1 (2019.08.29)[/B]
+- Add adapted settings for older versions.
+
+[B]5.4.0 (2019.08.29)[/B]
+- Restructured debrid classes.
+- Improved RealDebrid token refresh.
+- Fixed 1337x provider.
+- Fixed TorrentApi provider.
+- Improved Orion scraping speed.
+- Improved debrid cache lookups.
+
+[B]5.3.2 (2019.08.27)[/B]
+- Fixed duplicate scraping process.
+- Fixed OffCloud cache lookup.
+- Fixed TorrentApi locking.
+- Improved file name filtering.
+
+[B]5.3.1 (2019.08.27)[/B]
+- Changed default settings layout.
+
+[B]5.3.0 (2019.08.27)[/B]
+- Fixed TorrentApi rate limit.
+- Disabled alternative titles by default.
+- Added preemptive termination notification.
+- Fixed multiple scrapes with IDs.
+- Adjusted alternative title scraping.
+- Added support for Emby exact searches.
+- Improved duplicate removal for premium providers.
+- Fixed Premiumize cache unicode encoding.
+- Improved debrid cache lookups.
+- Added decorations for the special window.
+- Fixed various debrid issues.
+
+[B]5.2.7 (2019.08.19)[/B]
+- Fixed Orion integration.
+
+[B]5.2.6 (2019.08.15)[/B]
+- Changed the default binge cancel action.
+- Fixed direct episode scraping.
+
+[B]5.2.5 (2019.08.12)[/B]
+- Improved episode detection in season packs.
+
+[B]5.2.4 (2019.08.10)[/B]
+- Fixed title abbreviation search.
+- Fixed TVMaze lookups.
+- Fixed episode detection with file names.
+
+[B]5.2.3 (2019.08.07)[/B]
+- Fixed NewzNab providers.
+- Fixed metadata encoding issues.
+
+[B]5.2.2 (2019.08.05)[/B]
+- Fixed launch error.
+
+[B]5.2.1 (2019.08.05)[/B]
+- Fixed metadata file name filtering.
+- Fixed BitLord provider.
+
+[B]5.2.0 (2019.08.05)[/B]
+- Dynamic button sizes for binge window.
+- Improved binge watching process.
+- Faster season pack scraping.
+- Fixed foreign title scraping and encoding.
+- Rewritten providers for unicode titles.
+- Added generic interface for external providers.
+- Improved file name detection for external providers.
+- Improved file size detection for external providers.
+- Fixed Torrent9 provider.
+- Fixed Cpabien provider.
+- Fixed BiNzb file name.
+- Fixed FindNzb file size.
+- Removed Incursion provider.
+- Removed Placenta provider.
+- Removed Yoda provider.
+- Removed VideoScraper provider.
+
+[B]5.1.3 (2019.08.01)[/B]
+- Changed season 0 label.
+- Better season pack detection for YggTorrent.
+
+[B]5.1.2 (2019.08.01)[/B]
+- Fixed unicode decoding in titles.
+- Fixed network detection.
+- Added show sorting back to the settings.
+- Fixed exact search.
+
 [B]5.1.1 (2019.07.22)[/B]
 - Fixed hash calculation of torrent containers.
 - Removed old version data clearance.

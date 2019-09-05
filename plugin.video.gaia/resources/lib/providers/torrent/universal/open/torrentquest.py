@@ -21,14 +21,17 @@
 import re,urllib,urlparse
 from resources.lib.modules import cleantitle
 from resources.lib.modules import client
+from resources.lib.extensions import provider
 from resources.lib.extensions import metadata
 from resources.lib.extensions import tools
 from resources.lib.extensions import network
 from resources.lib.externals.beautifulsoup import BeautifulSoup
 
-class source:
+class source(provider.ProviderBase):
 
 	def __init__(self):
+		provider.ProviderBase.__init__(self, supportMovies = True, supportShows = True)
+
 		self.pack = True # Checked by provider.py
 		self.priority = 0
 		self.language = ['un']
@@ -36,45 +39,17 @@ class source:
 		self.base_link = 'https://torrentquest.com'
 		self.search_link = '/%s/%s/se/desc/%d/'
 
-	def movie(self, imdb, title, localtitle, year):
-		try:
-			url = {'imdb': imdb, 'title': title, 'year': year}
-			url = urllib.urlencode(url)
-			return url
-		except:
-			return
-
-	def tvshow(self, imdb, tvdb, tvshowtitle, localtitle, year):
-		try:
-			url = {'imdb': imdb, 'tvdb': tvdb, 'tvshowtitle': tvshowtitle, 'year': year}
-			url = urllib.urlencode(url)
-			return url
-		except:
-			return
-
-	def episode(self, url, imdb, tvdb, title, premiered, season, episode):
-		try:
-			if url == None: return
-			url = urlparse.parse_qs(url)
-			url = dict([(i, url[i][0]) if url[i] else (i, '') for i in url])
-			url['title'], url['premiered'], url['season'], url['episode'] = title, premiered, season, episode
-			url = urllib.urlencode(url)
-			return url
-		except:
-			return
-
 	def sources(self, url, hostDict, hostprDict):
 		sources = []
 		try:
-			if url == None:
-				raise Exception()
+			if url == None: raise Exception()
 
 			ignoreContains = None
-			data = urlparse.parse_qs(url)
-			data = dict([(i, data[i][0]) if data[i] else (i, '') for i in data])
+			data = self._decode(url)
 
 			if 'exact' in data and data['exact']:
 				query = title = data['tvshowtitle'] if 'tvshowtitle' in data else data['title']
+				titles = None
 				type = None
 				year = None
 				season = None
@@ -84,6 +59,7 @@ class source:
 			else:
 				type = 'tv' if 'tvshowtitle' in data else 'movie'
 				title = data['tvshowtitle'] if 'tvshowtitle' in data else data['title']
+				titles = data['alternatives'] if 'alternatives' in data else None
 				year = int(data['year']) if 'year' in data and not data['year'] == None else None
 				season = int(data['season']) if 'season' in data and not data['season'] == None else None
 				episode = int(data['episode']) if 'episode' in data and not data['episode'] == None else None
@@ -105,6 +81,7 @@ class source:
 
 			query = query.replace(' ', '-') # Uses - not + to separate words.
 			query = query.lower() # Only lower case letters work.
+			if not self._query(query): return sources
 
 			url = urlparse.urljoin(self.base_link, self.search_link)
 
@@ -157,7 +134,7 @@ class source:
 						htmlSeeds = int(htmlColumns[6].getText().strip())
 
 						# Metadata
-						meta = metadata.Metadata(name = htmlName, title = title, year = year, season = season, episode = episode, pack = pack, packCount = packCount, link = htmlLink, size = htmlSize, seeds = htmlSeeds)
+						meta = metadata.Metadata(name = htmlName, title = title, titles = titles, year = year, season = season, episode = episode, pack = pack, packCount = packCount, link = htmlLink, size = htmlSize, seeds = htmlSeeds)
 
 						# Ignore
 						meta.ignoreAdjust(contains = ignoreContains)
@@ -175,6 +152,3 @@ class source:
 			return sources
 		except:
 			return sources
-
-	def resolve(self, url):
-		return url

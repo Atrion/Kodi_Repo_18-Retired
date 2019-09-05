@@ -147,7 +147,7 @@ def authTrakt(openSettings = True):
 		if getTraktCredentialsInfo() == True:
 			if interface.Dialog.option(title = 32315, message = control.lang(32511).encode('utf-8') + ' ' + control.lang(32512).encode('utf-8')):
 				pass
-			else: # Gaia
+			else:
 				return False
 
 		result = getTrakt('/oauth/device/code', {'client_id': getTrakt1()}, direct = True)

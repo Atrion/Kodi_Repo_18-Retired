@@ -731,6 +731,16 @@ class OrionSettings:
 			return OrionTools.fileCopy(fileFrom, fileTo, overwrite = True)
 
 	@classmethod
+	def backupCheck(self, path):
+		try:
+			if OrionTools.fileExists(path):
+				file = zipfile.ZipFile(path, 'r')
+				file.close()
+				return True
+		except: pass
+		return False
+
+	@classmethod
 	def backupImport(self, path = None, extension = ExtensionManual):
 		try:
 			from orion.modules.orionuser import OrionUser
@@ -786,8 +796,6 @@ class OrionSettings:
 				suffix = ' [%d]' % counter
 			path = path % suffix
 
-			file = zipfile.ZipFile(path, 'w')
-
 			directory = self._backupPath(clear = True)
 			directoryData = OrionTools.addonProfile()
 			directories, files = OrionTools.directoryList(directoryData)
@@ -802,14 +810,27 @@ class OrionSettings:
 			froms = [OrionTools.pathJoin(directoryData, i) for i in content]
 
 			for i in range(len(content)):
-				try:
-					OrionTools.fileCopy(froms[i], tos[i], overwrite = True)
-					file.write(tos[i], content[i])
+				try: OrionTools.fileCopy(froms[i], tos[i], overwrite = True)
 				except: pass
 
-			file.close()
+			# On some Android devices, the zipfile library creates corrupted archives.
+			# First try to create an archive with shutil, also because it creates smaller files than zipfile.
+			try:
+				import shutil
+				shutil.make_archive(path.strip('.' + extension), 'zip', directory)
+			except: pass
+
+			if not self.backupCheck(path):
+				OrionTools.log('Primary backup creation failed. Trying alternative approach.')
+				OrionTools.fileDelete(path)
+				file = zipfile.ZipFile(path, 'w')
+				for i in range(len(content)):
+					try: file.write(tos[i], content[i])
+					except: pass
+				file.close()
+
 			OrionTools.directoryDelete(path = directory, force = True)
-			if OrionTools.fileExists(path):
+			if self.backupCheck(path):
 				OrionInterface.dialogNotification(title = 32170, message = 33013, icon = OrionInterface.IconSuccess)
 				return True
 			else:

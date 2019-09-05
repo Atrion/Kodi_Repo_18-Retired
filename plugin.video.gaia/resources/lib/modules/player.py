@@ -25,15 +25,14 @@ import hashlib,os,zlib,base64,codecs,xmlrpclib,threading
 try: from sqlite3 import dbapi2 as database
 except: from pysqlite2 import dbapi2 as database
 
+from resources.lib import debrid
 from resources.lib.modules import control
 from resources.lib.modules import cleantitle
 from resources.lib.modules import playcount
 from resources.lib.modules import trakt
-
 from resources.lib.extensions import tools
 from resources.lib.extensions import interface
 from resources.lib.extensions import window
-from resources.lib.extensions import debrid
 from resources.lib.extensions import handler
 from resources.lib.extensions import metadata
 from resources.lib.extensions import library
@@ -146,14 +145,7 @@ class player(xbmc.Player):
 			else:
 				self.progress = 0
 
-			poster, thumb, meta = self.getMeta(meta)
-
-			item = control.item(path = url)
-			item.setArt({'icon' : thumb, 'thumb' : thumb, 'poster' : poster, 'tvshow.poster' : poster, 'season.poster' : poster})
-			item.setInfo(type = 'Video', infoLabels = tools.Media.metadataClean(meta))
-
 			self.url = url
-			self.item = item
 			self.timeTotal = 0
 			self.timeCurrent = 0
 			self.timeProgress = 0
@@ -161,6 +153,11 @@ class player(xbmc.Player):
 			self.sizeCurrent = 0
 			self.sizeProgress = 0
 			self.dialog = None
+
+			poster, thumb, meta = self.getMeta(meta)
+			self.item = control.item(path = self.url)
+			self.item.setArt({'icon' : thumb, 'thumb' : thumb, 'poster' : poster, 'tvshow.poster' : poster, 'season.poster' : poster})
+			self.item.setInfo(type = 'Video', infoLabels = tools.Media.metadataClean(meta))
 
 			self.downloadCheck = False
 			if downloadType and downloadId:
@@ -177,25 +174,24 @@ class player(xbmc.Player):
 				self.bufferCounter = None
 				self.bufferShow = None
 
-			self.handle = handle
 			self.source = source
 			metadata.Metadata.initialize(self.source)
 
 			self.progressMessage = ''
 			self.progressRemaining = 0
 			self.progressTotal = 1
-			success = False
-			delay = 0
+			self.progressDelay = 0
 			if tools.Settings.getBoolean('playback.retry.enabled'):
 				self.progressTotal += tools.Settings.getInteger('playback.retry.limit')
-				delay = tools.Settings.getInteger('playback.retry.delay')
+				self.progressDelay = tools.Settings.getInteger('playback.retry.delay')
 			self.progressRemaining = self.progressTotal
 
 			success = False
 			xbmc.executebuiltin('Dialog.Close(notification,true)') # Hide the caching/download notification if still showing.
 			while self.progressRemaining > 0:
 				self.progressRemaining -= 1
-				self.play(url, item)
+				self.error = False
+				self.play(self.url, self.item)
 				interface.Loader.hide()
 				success = self.keepPlaybackAlive()
 				if success or tools.System.aborted(): break
@@ -207,15 +203,19 @@ class player(xbmc.Player):
 						elif self.progressRemaining > 1: self.progressMessage = interface.Translation.string(35293) % (self.progressRemaining + 1)
 
 			if not success and self.progressRemaining == 0:
+				# Close Kodi's "Playback Failed" dialog.
+				if window.Window.currentDialog(id = window.Window.IdWindowOk):
+					window.Window.close(id = window.Window.IdWindowOk)
 				interface.Dialog.notification(title = 33448, message = 33450, icon = interface.Dialog.IconError)
 
 			# This should solve the issue of Gaia videos being played twice when launched from OpenMeta or widgets when using the directory structure.
 			# Setting it to True will cause the video to play again after finishing playback, when launched from the local library.
 			#control.resolve(int(sys.argv[1]), True, item)
-			control.resolve(int(sys.argv[1]), False, item)
+			control.resolve(int(sys.argv[1]), False, self.item)
 
 			ids = {}
 			if imdb: ids['imdb'] = imdb
+			if tmdb: ids['tmdb'] = tmdb
 			if tvdb: ids['tvdb'] = tvdb
 			control.window.setProperty('script.trakt.ids', json.dumps(ids))
 			control.window.clearProperty('script.trakt.ids')
@@ -318,26 +318,8 @@ class player(xbmc.Player):
 				self.core.showStreams()
 
 	def _debridClear(self):
-		if self.handle:
-			if not isinstance(self.handle, basestring):
-				self.handle = self.handle.id()
-			self.handle = self.handle.lower()
-			source = self.source['source']
-			try: id = self.source['stream']['id']
-			except: id = self.url
-			try: handle = self.source['stream']['handle']
-			except: handle = None
-			if handle == handler.HandlePremiumize.Id and debrid.Premiumize.deletePossible(source):
-				pack = self.source['pack'] if 'pack' in self.source else None
-				debrid.Premiumize().deletePlayback(id, pack)
-			elif handle == handler.HandleOffCloud.Id and debrid.OffCloud.deletePossible(source):
-				try: category = self.source['stream']['category']
-				except: category = None
-				pack = self.source['pack'] if 'pack' in self.source else None
-				debrid.OffCloud().deletePlayback(id, pack, category)
-			elif handle == handler.HandleRealDebrid.Id and debrid.RealDebrid.deletePossible(source):
-				debrid.RealDebrid().deletePlayback(id)
-
+		debrid.Debrid.deletePlayback(link = self.url, source = self.source)
+		
 	def _downloadStop(self):
 		self._downloadClear(delete = False)
 		if not self.download == None:
@@ -488,6 +470,7 @@ class player(xbmc.Player):
 					except: pass
 				self.bingeDelay = 30 if self.bingeDelay == 0 else int(self.bingeDelay / 60.0)
 				if tools.Binge.dialogFull(): self.bingeDelay = int(self.bingeDelay / 3.0)
+				self.bingeDelay = min(90, self.bingeDelay)
 		return self.bingeDelay
 
 	def _bingeCheck(self):
@@ -515,7 +498,8 @@ class player(xbmc.Player):
 			from resources.lib.extensions import core
 			from resources.lib.indexers import episodes
 			self.bingeMetadata = episodes.episodes().next(tvshowtitle = self.metadata['tvshowtitle'], year = self.metadata['year'], imdb = self.metadata['imdb'], tvdb = self.metadata['tvdb'], season = self.metadata['season'], episode = self.metadata['episode'])
-			self.bingeItems = core.Core(type = self.type, kids = self.kids, silent = True).scrape(title = self.bingeMetadata['title'], year = self.bingeMetadata['year'], imdb = self.bingeMetadata['imdb'], tvdb = self.bingeMetadata['tvdb'], season = self.bingeMetadata['season'], episode = self.bingeMetadata['episode'], tvshowtitle = self.bingeMetadata['tvshowtitle'], metadata = self.bingeMetadata)
+			if self.bingeMetadata: self.bingeItems = core.Core(type = self.type, kids = self.kids, silent = True).scrape(title = self.bingeMetadata['title'], year = self.bingeMetadata['year'], imdb = self.bingeMetadata['imdb'], tvdb = self.bingeMetadata['tvdb'], season = self.bingeMetadata['season'], episode = self.bingeMetadata['episode'], tvshowtitle = self.bingeMetadata['tvshowtitle'], metadata = self.bingeMetadata)
+			elif not self.bingeSuppress: interface.Dialog.notification(title = 35580, message = 35587, icon = interface.Dialog.IconInformation)
 		except:
 			tools.Logger.error()
 
@@ -655,16 +639,27 @@ class player(xbmc.Player):
 
 	def keepPlaybackWait(self, title, message, status, substatus1, substatus2, timeout):
 		from resources.lib.extensions import core
-		for i in range(0, timeout):
-			if self.isPlayback(): break
+		wasPlaying = False
+		delay = 0.3
+		iterations = int(timeout / delay)
+		for i in range(0, iterations):
+			# Close Kodi's "Playback Failed" dialog.
+			if window.Window.currentDialog(id = window.Window.IdWindowOk):
+				window.Window.close(id = window.Window.IdWindowOk)
+
+			if self.isPlaying(): wasPlaying = True
+			elif wasPlaying: break # Was playing, but not anymore. This is when the video playback fails. Kodi for some reason does not trigger the onPlayBackError signal.
+
+			if self.isPlayback() or self.error: break
+
 			if self.download == None:
 				if self.core.progressPlaybackCanceled(): break
 				interface.Loader.hide() # Busy icons pops up again in Kodi 18.
-				progress = 50 + int((i / float(timeout)) * 50) # Only half the progress, since the other half is from sources __init__.py.
+				progress = 50 + int((i / float(iterations)) * 50) # Only half the progress, since the other half is from sources __init__.py.
 				self.core.progressPlaybackUpdate(progress = progress, title = title, message = message, status = status, substatus1 = substatus1, substatus2 = substatus2, total = self.progressTotal, remaining = self.progressRemaining, force = True)
 			else:
 				self._downloadCheck()
-			xbmc.sleep(500)
+			tools.Time.sleep(delay)
 
 	def keepPlaybackAlive(self):
 		from resources.lib.extensions import core
@@ -709,6 +704,8 @@ class player(xbmc.Player):
 
 		# Only show the notification if the player is not able to load the file at all.
 		if not self.isPlayback():
+			self.core.progressPlaybackUpdate(progress = 100, title = title, message = message, status = status, substatus1 = substatus1, substatus2 = substatus2)
+			if self.progressRemaining > 0: tools.Time.sleep(self.progressDelay)
 			self.stop()
 			self.core.progressPlaybackUpdate(progress = 100, message = '', status = None, force = True) # Must be set to 100 for background dialog, otherwise it shows up in a later dialog.
 			control.window.clearProperty(pname)
@@ -893,6 +890,9 @@ class player(xbmc.Player):
 		self.libForPlayback()
 		self._downloadClear()
 		self._debridClear()
+
+	def onPlayBackError(self):
+		self.error = True
 
 class Subtitles:
 
