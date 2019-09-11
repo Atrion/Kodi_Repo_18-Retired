@@ -2054,6 +2054,7 @@ class Context(object):
 	ModeGeneric = 'generic'
 	ModeItem = 'item'
 	ModeStream = 'stream'
+	ModeVideo = 'video'
 
 	PrefixNext = None
 	PrefixBack = None
@@ -2070,6 +2071,15 @@ class Context(object):
 	EnabledPresets = None
 	EnabledAutoplay = None
 	EnabledBinge = None
+	EnabledVideoTrailer = None
+	EnabledVideoRecap = None
+	EnabledVideoReview = None
+	EnabledVideoExtra = None
+	EnabledVideoDeleted = None
+	EnabledVideoMaking = None
+	EnabledVideoDirector = None
+	EnabledVideoInterview = None
+	EnabledVideoExplanation = None
 	EnabledDownloadCloud = None
 	EnabledDownloadManual = None
 	EnabledDownloadCache = None
@@ -2086,13 +2096,14 @@ class Context(object):
 	SettingsLayoutBold = False
 	SettingsLayoutColor = False
 
-	def __init__(self, mode = ModeNone, items = None, source = None, metadata = None, art = None, link = None, trailer = None, label = None, title = None, year = None, season = None, episode = None, imdb = None, tmdb = None, tvdb = None, id = None, orion = None, location = None, create = None, delete = None, library = None, queue = None, watched = None, refresh = None, type = None, kids = None, loader = False):
+	def __init__(self, mode = ModeNone, video = None, items = None, source = None, metadata = None, art = None, link = None, label = None, title = None, year = None, season = None, episode = None, imdb = None, tmdb = None, tvdb = None, id = None, orion = None, location = None, create = None, delete = None, library = None, queue = None, watched = None, refresh = None, type = None, kids = None, loader = False):
 		if loader: Loader.show()
-		if not mode == self.ModeNone: self._load(mode = mode, items = items, source = source, metadata = metadata, art = art, link = link, trailer = trailer, label = label, title = title, year = year, season = season, episode = episode, imdb = imdb, tmdb = tmdb, tvdb = tvdb, id = id, orion = orion, location = location, create = create, delete = delete, library = library, queue = queue, watched = watched, refresh = refresh, type = type, kids = kids, loader = loader)
+		if not mode == self.ModeNone: self._load(mode = mode, decode = False, video = video, items = items, source = source, metadata = metadata, art = art, link = link, label = label, title = title, year = year, season = season, episode = episode, imdb = imdb, tmdb = tmdb, tvdb = tvdb, id = id, orion = orion, location = location, create = create, delete = delete, library = library, queue = queue, watched = watched, refresh = refresh, type = type, kids = kids, loader = loader)
 
-	def _load(self, mode = ModeNone, items = None, source = None, metadata = None, art = None, link = None, trailer = None, label = None, title = None, year = None, season = None, episode = None, imdb = None, tmdb = None, tvdb = None, id = None, orion = None, location = None, create = None, delete = None, library = None, queue = None, watched = None, refresh = None, type = None, kids = None, loader = False):
+	def _load(self, mode = ModeNone, video = None, items = None, source = None, metadata = None, art = None, link = None, label = None, title = None, year = None, season = None, episode = None, imdb = None, tmdb = None, tvdb = None, id = None, orion = None, location = None, create = None, delete = None, library = None, queue = None, watched = None, refresh = None, type = None, kids = None, loader = False, decode = True):
 		try:
 			self.mMode = mode
+			self.mVideo = video
 			self.mType = type
 			self.mKids = kids
 
@@ -2113,9 +2124,8 @@ class Context(object):
 			self.mOrion = orion
 
 			self.mLink = tools.Converter.quoteTo(link) # Important to quote (for scrape options, shortcuts, etc).
-			self.mTrailer = trailer
-			self.mLabel = label
-			self.mTitle = title
+			self.mLabel = tools.Converter.quoteFrom(label) if decode else label # Quoted in _command().
+			self.mTitle = tools.Converter.quoteFrom(title) if decode else title # Quoted in _command().
 			self.mYear = year
 			self.mSeason = season
 			self.mEpisode = episode
@@ -2137,6 +2147,7 @@ class Context(object):
 				if self.mMode == Context.ModeGeneric: self.addGeneric()
 				elif self.mMode == Context.ModeItem: self.addItem()
 				elif self.mMode == Context.ModeStream: self.addStream()
+				elif self.mMode == Context.ModeVideo: self.addVideo()
 		except:
 			tools.Logger.error()
 
@@ -2162,8 +2173,17 @@ class Context(object):
 			Context.EnabledYoutube = tools.Converter.boolean(window.Window.propertyGlobal('GaiaContextEnabledYoutube'))
 			Context.EnabledLibrary = tools.Converter.boolean(window.Window.propertyGlobal('GaiaContextEnabledLibrary'))
 			Context.EnabledPresets = tools.Converter.boolean(window.Window.propertyGlobal('GaiaContextEnabledPresets'))
-			Context.EnabledBinge = tools.Converter.boolean(window.Window.propertyGlobal('GaiaContextEnabledBinge'))
 			Context.EnabledAutoplay = tools.Converter.boolean(window.Window.propertyGlobal('GaiaContextEnabledAutoplay'))
+			Context.EnabledBinge = tools.Converter.boolean(window.Window.propertyGlobal('GaiaContextEnabledBinge'))
+			Context.EnabledVideoTrailer = tools.Converter.boolean(window.Window.propertyGlobal('GaiaContextEnabledVideoTrailer'))
+			Context.EnabledVideoRecap = tools.Converter.boolean(window.Window.propertyGlobal('GaiaContextEnabledVideoRecap'))
+			Context.EnabledVideoReview = tools.Converter.boolean(window.Window.propertyGlobal('GaiaContextEnabledVideoReview'))
+			Context.EnabledVideoExtra = tools.Converter.boolean(window.Window.propertyGlobal('GaiaContextEnabledVideoExtra'))
+			Context.EnabledVideoDeleted = tools.Converter.boolean(window.Window.propertyGlobal('GaiaContextEnabledVideoDeleted'))
+			Context.EnabledVideoMaking = tools.Converter.boolean(window.Window.propertyGlobal('GaiaContextEnabledVideoMaking'))
+			Context.EnabledVideoDirector = tools.Converter.boolean(window.Window.propertyGlobal('GaiaContextEnabledVideoDirector'))
+			Context.EnabledVideoInterview = tools.Converter.boolean(window.Window.propertyGlobal('GaiaContextEnabledVideoInterview'))
+			Context.EnabledVideoExplanation = tools.Converter.boolean(window.Window.propertyGlobal('GaiaContextEnabledVideoExplanation'))
 			Context.EnabledDownloadCloud = tools.Converter.boolean(window.Window.propertyGlobal('GaiaContextEnabledDownloadCloud'))
 			Context.EnabledDownloadManual = tools.Converter.boolean(window.Window.propertyGlobal('GaiaContextEnabledDownloadManual'))
 			Context.EnabledDownloadCache = tools.Converter.boolean(window.Window.propertyGlobal('GaiaContextEnabledDownloadCache'))
@@ -2187,6 +2207,7 @@ class Context(object):
 		from resources.lib import debrid
 		from resources.lib.extensions import downloader
 		from resources.lib.extensions import window
+		from resources.lib.extensions import video
 
 		manualEnabled = tools.Settings.getBoolean('downloads.manual.enabled')
 		cacheEnabled = tools.Settings.getBoolean('downloads.cache.enabled')
@@ -2205,8 +2226,17 @@ class Context(object):
 		window.Window.propertyGlobalSet('GaiaContextEnabledYoutube', tools.YouTube.installed())
 		window.Window.propertyGlobalSet('GaiaContextEnabledLibrary', tools.Settings.getBoolean('library.enabled'))
 		window.Window.propertyGlobalSet('GaiaContextEnabledPresets', tools.Settings.getBoolean('providers.customization.presets.enabled'))
-		window.Window.propertyGlobalSet('GaiaContextEnabledBinge', tools.Binge.enabled())
 		window.Window.propertyGlobalSet('GaiaContextEnabledAutoplay', tools.Settings.getBoolean('automatic.enabled'))
+		window.Window.propertyGlobalSet('GaiaContextEnabledBinge', tools.Binge.enabled())
+		window.Window.propertyGlobalSet('GaiaContextEnabledVideoTrailer', video.Trailer.enabled())
+		window.Window.propertyGlobalSet('GaiaContextEnabledVideoRecap', video.Recap.enabled())
+		window.Window.propertyGlobalSet('GaiaContextEnabledVideoReview', video.Review.enabled())
+		window.Window.propertyGlobalSet('GaiaContextEnabledVideoExtra', video.Extra.enabled())
+		window.Window.propertyGlobalSet('GaiaContextEnabledVideoDeleted', video.Deleted.enabled())
+		window.Window.propertyGlobalSet('GaiaContextEnabledVideoMaking', video.Making.enabled())
+		window.Window.propertyGlobalSet('GaiaContextEnabledVideoDirector', video.Director.enabled())
+		window.Window.propertyGlobalSet('GaiaContextEnabledVideoInterview', video.Interview.enabled())
+		window.Window.propertyGlobalSet('GaiaContextEnabledVideoExplanation', video.Explanation.enabled())
 		window.Window.propertyGlobalSet('GaiaContextEnabledDownloadCloud', debrid.Debrid.enabled())
 		window.Window.propertyGlobalSet('GaiaContextEnabledDownloadManual', manualEnabled)
 		window.Window.propertyGlobalSet('GaiaContextEnabledDownloadCache', cacheEnabled)
@@ -2273,7 +2303,7 @@ class Context(object):
 		if not self.mType == None: parameters['type'] = self.mType
 		if not self.mKids == None: parameters['kids'] = self.mKids
 
-		# Could contains special characters like & (eg "Love, Death & Robots").
+		# Could contain special characters like & (eg "Love, Death & Robots").
 		# Quoting is not done automatically, since we are using "basic" with commandPlugin.
 		# Maybe other parameters as well?
 		if 'title' in parameters: parameters['title'] = tools.Converter.quoteTo(parameters['title'])
@@ -2294,6 +2324,7 @@ class Context(object):
 		if force or self.mData == None:
 			self.mData = {
 				'mode' : self.mMode,
+				'video' : self.mVideo,
 
 				'items' : self.mItems,
 				'source' : self.mSource,
@@ -2302,7 +2333,6 @@ class Context(object):
 				'orion' : self.mOrion,
 
 				'link' : tools.Converter.quoteFrom(self.mLink), # Unquote, since it is quoted in constructor.
-				'trailer' : self.mTrailer,
 				'label' : self.mLabel,
 				'title' : self.mTitle,
 				'year' : self.mYear,
@@ -2388,7 +2418,7 @@ class Context(object):
 			from resources.lib.indexers import episodes
 			context = episodes.episodes().context(tvshowtitle = tvshowtitle, title = title, year = year, imdb = imdb, tvdb = tvdb, season = season, episode = episode)
 
-		tools.System.execute(context)
+		context.show()
 		Loader.hide()
 
 	def menu(self):
@@ -2469,8 +2499,17 @@ class Context(object):
 	def commandPlaylistRemove(self):
 		return self._commandPlugin(action = 'playlistRemove', parameters = {'label' : label})
 
-	def commandTrailer(self):
-		return self._commandPlugin(action = 'streamsTrailer', parameters = {'title' : self.mTrailer, 'imdb' : self.mImdb, 'art' : self.mArt})
+	def commandVideo(self, video = None):
+		if video is None: video = self.mVideo
+		return self._commandPlugin(action = 'streamsVideo', parameters = {'title' : self.mTitle, 'year' : self.mYear, 'season' : self.mSeason, 'video' : video, 'imdb' : self.mImdb,  'tvdb' : self.mTvdb, 'art' : self.mArt})
+
+	def commandVideoManual(self):
+		from resources.lib.extensions import video
+		return self._commandPlugin(action = 'streamsVideo', parameters = {'title' : self.mTitle, 'year' : self.mYear, 'season' : self.mSeason, 'video' : self.mVideo, 'selection' : video.Video.ModeManual, 'imdb' : self.mImdb,  'tvdb' : self.mTvdb, 'art' : self.mArt})
+
+	def commandVideoAutomatic(self):
+		from resources.lib.extensions import video
+		return self._commandPlugin(action = 'streamsVideo', parameters = {'title' : self.mTitle, 'year' : self.mYear, 'season' : self.mSeason, 'video' : self.mVideo, 'selection' : video.Video.ModeAutomatic, 'imdb' : self.mImdb,  'tvdb' : self.mTvdb, 'art' : self.mArt})
 
 	def commandRefresh(self):
 		tools.System.launchAddon() # Important when called from outside Gaia.
@@ -2590,12 +2629,15 @@ class Context(object):
 	def commandLibraryUpdate(self):
 		return self._commandPlugin(action = 'libraryUpdate', parameters = {'force' : True})
 
-	def add(self, label, action = None, command = None, condition = None, loader = None, items = None):
+	def add(self, label, action = None, command = None, parameters = None, condition = None, dynamic = None, close = None, loader = None, items = None):
 		try:
 			item = {'label' : self._translate(label)}
 			if action: item['action'] = action
 			if command: item['command'] = command
+			if parameters: item['parameters'] = parameters
 			if condition: item['condition'] = condition
+			if dynamic: item['dynamic'] = dynamic
+			if close: item['close'] = close
 			if loader: item['loader'] = loader
 			if items: item['items'] = [i for i in items if i]
 			self.mItems.append(item)
@@ -2613,7 +2655,7 @@ class Context(object):
 	def addItem(self):
 		try:
 			self.addInformation()
-			self.addTrailer()
+			self.addVideos()
 			self.addRefresh()
 			self.addBrowse()
 			self.addBinge()
@@ -2641,6 +2683,12 @@ class Context(object):
 			self.addPlaylist()
 			self.addShortcut()
 			self.addManual()
+		except:
+			tools.Logger.error()
+
+	def addVideo(self):
+		try:
+			self.addVideoMenu()
 		except:
 			tools.Logger.error()
 
@@ -2704,9 +2752,25 @@ class Context(object):
 			{'label' : 35518, 'command' : 'commandPlaylistRemove', 'condition' : 'tools.Playlist.contains("%s")' % label} if self.mQueue else None,
 		])
 
-	def addTrailer(self):
-		if Context.EnabledYoutube or not tools.Media.typeTelevision(self.mType):
-			self.add(label = 35536, command = 'commandTrailer', loader = True)
+	def addVideos(self):
+		from resources.lib.extensions import video
+		spoilers = Translation.string(35533)
+		spoilers = ' (%s)' % spoilers
+		self.add(label = 35351, items = [
+			{'label' : Translation.string(video.Trailer.Label), 'command' : 'commandVideo', 'parameters' : video.Trailer.Id, 'close' : True, 'loader' : True} if Context.EnabledVideoTrailer and Context.EnabledYoutube or not tools.Media.typeTelevision(self.mType) else None,
+			{'label' : Translation.string(video.Recap.Label), 'command' : 'commandVideo', 'parameters' : video.Recap.Id, 'close' : True, 'loader' : True} if Context.EnabledVideoRecap and Context.EnabledYoutube else None,
+			{'label' : Translation.string(video.Review.Label) + spoilers, 'command' : 'commandVideo', 'parameters' : video.Review.Id, 'close' : True, 'loader' : True} if Context.EnabledVideoReview and Context.EnabledYoutube else None,
+			{'label' : Translation.string(video.Extra.Label) + spoilers, 'command' : 'commandVideo', 'parameters' : video.Extra.Id, 'close' : True, 'loader' : True} if Context.EnabledVideoExtra and Context.EnabledYoutube else None,
+			{'label' : Translation.string(video.Deleted.Label) + spoilers, 'command' : 'commandVideo', 'parameters' : video.Deleted.Id, 'close' : True, 'loader' : True} if Context.EnabledVideoDeleted and Context.EnabledYoutube else None,
+			{'label' : Translation.string(video.Making.Label) + spoilers, 'command' : 'commandVideo', 'parameters' : video.Making.Id, 'close' : True, 'loader' : True} if Context.EnabledVideoMaking and Context.EnabledYoutube else None,
+			{'label' : Translation.string(video.Director.Label) + spoilers, 'command' : 'commandVideo', 'parameters' : video.Director.Id, 'close' : True, 'loader' : True} if Context.EnabledVideoDirector and Context.EnabledYoutube else None,
+			{'label' : Translation.string(video.Interview.Label) + spoilers, 'command' : 'commandVideo', 'parameters' : video.Interview.Id, 'close' : True, 'loader' : True} if Context.EnabledVideoInterview and Context.EnabledYoutube else None,
+			{'label' : Translation.string(video.Explanation.Label) + spoilers, 'command' : 'commandVideo', 'parameters' : video.Explanation.Id, 'close' : True, 'loader' : True} if Context.EnabledVideoExplanation and Context.EnabledYoutube else None,
+		])
+
+	def addVideoMenu(self):
+		self.add(label = 35646, command = 'commandVideoManual', close = True, loader = True)
+		self.add(label = 35647, command = 'commandVideoAutomatic', close = True, loader = True)
 
 	def addRefresh(self):
 		if self.mRefresh:
@@ -2831,13 +2895,21 @@ class Context(object):
 			else:
 				choice -= 1
 				menu = item[choice]
+				if 'dynamic' in menu and not 'items' in menu:
+					Loader.show()
+					exec('dynamic = ' + menu['dynamic'] + '()')
+					items[choice]['items'] = dynamic
+					menu['items'] = dynamic
+					Loader.hide()
+
 				if 'items' in menu:
 					choices.append(choice)
 					continue
 				else:
 					if 'command' in menu and menu['command']:
 						if 'loader' in menu and menu['loader']: Loader.show()
-						tools.System.execute(getattr(self, menu['command'])())
+						if 'parameters' in menu and menu['parameters']: tools.System.execute(getattr(self, menu['command'])(menu['parameters']))
+						else: tools.System.execute(getattr(self, menu['command'])())
 					if 'close' in menu and menu['close']: self._close()
 					break
 

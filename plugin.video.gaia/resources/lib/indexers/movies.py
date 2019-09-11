@@ -1284,8 +1284,7 @@ class movies:
 		try: label = tools.Media().title(self.type, title = title, year = year)
 		except: pass
 		if label == None: label = title
-
-		trailer = label
+		systitle = urllib.quote_plus(title)
 
 		meta = dict((k,v) for k, v in metadata.iteritems() if not v == '0')
 		meta.update({'mediatype': 'movie'})
@@ -1371,11 +1370,10 @@ class movies:
 		if not fanart == '0' and not fanart == None: art.update({'fanart' : fanart})
 		if not landscape == '0' and not landscape == None: art.update({'landscape' : landscape})
 
-		meta.update({'trailer': '%s?action=streamsTrailer&title=%s&imdb=%s&art=%s' % (addon, urllib.quote_plus(trailer), imdb, urllib.quote_plus(json.dumps(art)))})
-		link = self.parameterize('%s?action=scrape&title=%s&year=%s&imdb=%s&metadata=%s' % (addon, urllib.quote_plus(title), year, imdb, urllib.quote_plus(json.dumps(meta))))
+		meta.update({'trailer': self.parameterize('%s?action=streamsVideo&video=trailer&title=%s&year=%s&imdb=%s&art=%s' % (addon, systitle, year, imdb, urllib.quote_plus(json.dumps(art))))})
+		link = self.parameterize('%s?action=scrape&title=%s&year=%s&imdb=%s&metadata=%s' % (addon, systitle, year, imdb, urllib.quote_plus(json.dumps(meta))))
 
-		return interface.Context(mode = interface.Context.ModeItem, type = self.type, kids = self.kids, create = True, queue = True, watched = watched, metadata = meta, art = art, label = label, link = link, trailer = trailer, title = title, year = year, imdb = imdb, tmdb = tmdb).menu()[1]
-
+		return interface.Context(mode = interface.Context.ModeItem, type = self.type, kids = self.kids, create = True, queue = True, watched = watched, metadata = meta, art = art, label = label, link = link, title = title, year = year, imdb = imdb, tmdb = tmdb)
 
 	def super_info(self, i):
 		try:
@@ -1594,7 +1592,6 @@ class movies:
 
 				sysname = urllib.quote_plus('%s (%s)' % (title, year))
 				systitle = urllib.quote_plus(title)
-				trailer = label
 
 				meta = dict((k,v) for k, v in i.iteritems() if not v == '0')
 				meta.update({'mediatype': 'movie'})
@@ -1682,7 +1679,7 @@ class movies:
 				if not fanart == '0' and not fanart == None: art.update({'fanart' : fanart})
 				if not landscape == '0' and not landscape == None: art.update({'landscape' : landscape})
 
-				meta.update({'trailer': '%s?action=streamsTrailer&title=%s&imdb=%s&art=%s' % (sysaddon, urllib.quote_plus(trailer), imdb, urllib.quote_plus(json.dumps(art)))})
+				meta.update({'trailer': self.parameterize('%s?action=streamsVideo&video=trailer&title=%s&year=%s&imdb=%s&art=%s' % (sysaddon, systitle, year, imdb, urllib.quote_plus(json.dumps(art))))})
 				url = self.parameterize('%s?action=scrape&title=%s&year=%s&imdb=%s&metadata=%s' % (sysaddon, systitle, year, imdb, urllib.quote_plus(json.dumps(meta))))
 
 				item = control.item(label = labelProgress)
@@ -1690,7 +1687,7 @@ class movies:
 				item.setArt(art)
 				item.setProperty('IsPlayable', isPlayable)
 				item.setInfo(type = 'Video', infoLabels = tools.Media.metadataClean(meta))
-				if context: item.addContextMenuItems([interface.Context(mode = interface.Context.ModeItem, type = self.type, kids = self.kids, create = True, queue = True, watched = watched, metadata = meta, art = art, label = label, link = url, trailer = trailer, title = title, year = year, imdb = imdb, tmdb = tmdb).menu()])
+				if context: item.addContextMenuItems([interface.Context(mode = interface.Context.ModeItem, type = self.type, kids = self.kids, create = True, queue = True, watched = watched, metadata = meta, art = art, label = label, link = url, title = title, year = year, imdb = imdb, tmdb = tmdb).menu()])
 				control.addItem(handle = syshandle, url = url, listitem = item, isFolder = False)
 			except:
 				pass

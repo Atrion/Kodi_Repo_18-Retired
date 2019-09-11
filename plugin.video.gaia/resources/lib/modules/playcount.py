@@ -218,9 +218,9 @@ def markMovieDuringPlayback(imdb, tmdb, watched):
 		pass
 
 	try:
-		from resources.lib.extensions import trailer
-		if watchedIs: trailer.Trailer().watch(imdb = imdb)
-		else: trailer.Trailer().unwatch(imdb = imdb)
+		from resources.lib.extensions import video
+		if watchedIs: video.Trailer().watch(imdb = imdb)
+		else: video.Trailer().unwatch(imdb = imdb)
 	except:
 		tools.Logger.error()
 
@@ -276,9 +276,9 @@ def markEpisodeDuringPlayback(imdb, tvdb, season, episode, watched):
 		pass
 
 	try:
-		from resources.lib.extensions import trailer
-		if watchedIs: trailer.Trailer().watch(imdb = imdb)
-		else: trailer.Trailer().unwatch(imdb = imdb)
+		from resources.lib.extensions import video
+		if watchedIs: video.Trailer().watch(imdb = imdb)
+		else: video.Trailer().unwatch(imdb = imdb)
 	except:
 		tools.Logger.error()
 
@@ -304,9 +304,9 @@ def movies(imdb, tmdb, watched):
 		pass
 
 	try:
-		from resources.lib.extensions import trailer
-		if watchedIs: trailer.Trailer().watch(imdb = imdb)
-		else: trailer.Trailer().unwatch(imdb = imdb)
+		from resources.lib.extensions import video
+		if watchedIs: video.Trailer().watch(imdb = imdb)
+		else: video.Trailer().unwatch(imdb = imdb)
 	except:
 		tools.Logger.error()
 
@@ -333,9 +333,9 @@ def episodes(imdb, tvdb, season, episode, watched):
 		pass
 
 	try:
-		from resources.lib.extensions import trailer
-		if watchedIs: trailer.Trailer().watch(imdb = imdb)
-		else: trailer.Trailer().unwatch(imdb = imdb)
+		from resources.lib.extensions import video
+		if watchedIs: video.Trailer().watch(imdb = imdb)
+		else: video.Trailer().unwatch(imdb = imdb)
 	except:
 		tools.Logger.error()
 
@@ -395,9 +395,9 @@ def tvshows(tvshowtitle, imdb, tvdb, season, watched):
 		pass
 
 	try:
-		from resources.lib.extensions import trailer
-		if watchedIs: trailer.Trailer().watch(imdb = imdb)
-		else: trailer.Trailer().unwatch(imdb = imdb)
+		from resources.lib.extensions import video
+		if watchedIs: video.Trailer().watch(imdb = imdb)
+		else: video.Trailer().unwatch(imdb = imdb)
 	except:
 		tools.Logger.error()
 

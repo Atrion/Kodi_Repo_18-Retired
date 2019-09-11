@@ -32,14 +32,15 @@ OrionUserInstance = None
 
 class OrionUser:
 
-	PasswordCharacter = '•'
-
 	##############################################################################
 	# CONSTANTS
 	##############################################################################
 
-	KeyLength = 32
+	PackageAnonymous = 'anonymous'
 	PackageFree = 'free'
+
+	LinksAnonymous = 25
+	LinksFree = 50
 
 	# Add 1 day because none-full days are not counted in the notification.
 	# Order is important.
@@ -133,9 +134,13 @@ class OrionUser:
 		try: return self.mData['subscription']['package']['type']
 		except: return default
 
-	def subscriptionPackageFree(self):
+	def subscriptionPackageAnonymous(self):
 		type = self.subscriptionPackageType()
-		return type == None or type == OrionUser.PackageFree
+		return type == None or type == OrionUser.PackageAnonymous
+
+	def subscriptionPackageFree(self, anonymous = True):
+		type = self.subscriptionPackageType()
+		return type == None or type == OrionUser.PackageFree or (anonymous and type == OrionUser.PackageAnonymous)
 
 	def subscriptionPackagePremium(self):
 		return not self.subscriptionPackageFree()
@@ -334,7 +339,7 @@ class OrionUser:
 	def _settingsUpdate(self, valid):
 		self._settingsUserSet(self.mData)
 		OrionSettings.set('account.valid', valid)
-		OrionSettings.set('account.label.api', '' if self.key('') == '' else (OrionUser.PasswordCharacter * OrionUser.KeyLength))
+		OrionSettings.set('account.label.api', OrionTools.translate(32247) if (self.key('') == '' or not valid) else OrionTools.translate(32169))
 		OrionSettings.set('account.label.status', self.status().capitalize() if valid else OrionTools.translate(32033))
 		if valid:
 			# NB: Strings must be cast with str(...), otherwise getting UnicodeDecodeError in Windows.

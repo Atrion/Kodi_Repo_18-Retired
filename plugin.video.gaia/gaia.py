@@ -309,6 +309,13 @@ elif action.startswith('seasons'):
 		from resources.lib.indexers import seasons
 		seasons.seasons.markUnwatch(title = title, imdb = imdb, tvdb = tvdb, season = season)
 
+	elif action == 'seasonsExtras':
+		from resources.lib.indexers import seasons
+		art = params.get('art')
+		if isinstance(metadata, basestring): metadata = tools.Converter.jsonFrom(metadata)
+		if isinstance(art, basestring): art = tools.Converter.jsonFrom(art)
+		seasons.seasons(type = type, kids = kids).extras(metadata = metadata, art = art)
+
 ####################################################
 # EPISODE
 ####################################################
@@ -1813,8 +1820,8 @@ elif action.startswith('scrape'):
 	if action == 'scrape':
 		from resources.lib.extensions import core
 		from resources.lib.extensions import interface
-		from resources.lib.extensions import trailer
-		if not trailer.Trailer.cinemaEnabled() or tools.Settings.getBoolean('automatic.enabled'): interface.Loader.show() # Already show here, since getConstants can take long when retrieving debrid service list.
+		from resources.lib.extensions import video
+		if not video.Trailer.cinemaEnabled() or tools.Settings.getBoolean('automatic.enabled'): interface.Loader.show() # Already show here, since getConstants can take long when retrieving debrid service list.
 		try: binge = int(params.get('binge'))
 		except: binge = None
 		library = tools.Converter.boolean(params.get('library'))
@@ -1885,10 +1892,15 @@ elif action.startswith('streams'):
 		from resources.lib.extensions import metadata as metadatax
 		metadatax.Metadata.showDialog(source = source, metadata = metadata)
 
-	elif action == 'streamsTrailer':
-		from resources.lib.extensions import trailer
+	elif action == 'streamsVideo':
+		from resources.lib.extensions import video
+		mode = params.get('video')
 		art = params.get('art')
-		trailer.Trailer(type = type, kids = kids).play(title = title, link = link, art = art)
+		selection = params.get('selection')
+		if not selection is None: selection = int(selection)
+		if isinstance(metadata, basestring): metadata = tools.Converter.jsonFrom(metadata)
+		if isinstance(art, basestring): art = tools.Converter.jsonFrom(art)
+		getattr(video, mode.capitalize())(type = type, kids = kids).play(title = title, year = year, season = season, link = link, art = art, selection = selection)
 
 ####################################################
 # CONTEXT

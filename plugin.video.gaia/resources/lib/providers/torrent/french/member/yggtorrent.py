@@ -215,8 +215,8 @@ class source(provider.ProviderBase):
 						ignoreContains = len(data['title']) / float(len(title)) # Increase the required ignore ration, since otherwise individual episodes and season packs are found as well.
 					else:
 						if pack:
-							queries = ['%s S%02d' % (title, season), '%s saison %d' % (title, season), '%s intégrale' % title]
-							packExceptions = [2] # Index of query where season pack file name detection should be ignored.
+							queries = ['%s S%02d' % (title, season), '%s saison %d' % (title, season), '%s intégrale' % title, '%s complet' % title]
+							packExceptions = [2, 3] # Index of query where season pack file name detection should be ignored.
 						else:
 							queries = ['%s S%02dE%02d' % (title, season, episode)]
 				else:

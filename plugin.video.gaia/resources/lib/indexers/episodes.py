@@ -1207,8 +1207,7 @@ class episodes:
 		try: label = tools.Media().title(tools.Media.TypeEpisode, title = metadata['label'], season = season, episode = episode)
 		except: pass
 		if label == None: label = metadata['label']
-
-		trailer = '%s Season %s' % (title, str(season))
+		systitle = urllib.quote_plus(title)
 
 		try: seasoncount = metadata['seasoncount']
 		except: seasoncount = None
@@ -1304,12 +1303,13 @@ class episodes:
 		if not fanart == '0' and not fanart == None: art.update({'fanart' : fanart})
 		if not landscape == '0' and not landscape == None: art.update({'landscape' : landscape})
 
-		meta.update({'trailer': '%s?action=streamsTrailer&title=%s&imdb=%s&art=%s' % (addon, urllib.quote_plus(trailer), imdb, urllib.quote_plus(json.dumps(art)))})
-		link = self.parameterize('%s?action=scrape&title=%s&year=%s&imdb=%s&tvdb=%s&season=%s&episode=%s&tvshowtitle=%s&premiered=%s&metadata=%s%s' % (addon, urllib.quote_plus(metadata['title']), year, imdb, tvdb, season, episode, urllib.quote_plus(title), urllib.quote_plus(premiered), urllib.quote_plus(json.dumps(meta)), '' if seasoncount == None else ('&seasoncount=%d' % seasoncount)))
+		meta.update({'trailer': '%s?action=streamsVideo&video=trailer&title=%s&imdb=%s&art=%s' % (addon, systitle, imdb, urllib.quote_plus(json.dumps(art)))})
+		link = self.parameterize('%s?action=scrape&title=%s&year=%s&imdb=%s&tvdb=%s&season=%s&episode=%s&tvshowtitle=%s&premiered=%s&metadata=%s%s' % (addon, urllib.quote_plus(metadata['title']), year, imdb, tvdb, season, episode, systitle, urllib.quote_plus(premiered), urllib.quote_plus(json.dumps(meta)), '' if seasoncount == None else ('&seasoncount=%d' % seasoncount)))
 
-		return interface.Context(mode = interface.Context.ModeItem, type = self.type, kids = self.kids, create = True, watched = watched, season = season, episode = episode, metadata = meta, art = art, label = label, link = link, trailer = trailer, title = title, year = year, imdb = imdb, tvdb = tvdb).menu()[1]
+		return interface.Context(mode = interface.Context.ModeItem, type = tools.Media.TypeEpisode, kids = self.kids, create = True, watched = watched, season = season, episode = episode, metadata = meta, art = art, label = label, link = link, title = title, year = year, imdb = imdb, tvdb = tvdb)
 
 	def episodeDirectory(self, items, multi = None, unfinished = False):
+		from resources.lib.extensions import video
 
 		# Retrieve additional metadata if not super info was retireved (eg: Trakt lists, such as Unfinished and History)
 		try:
@@ -1341,6 +1341,9 @@ class episodes:
 		addonPoster, addonBanner = control.addonPoster(), control.addonBanner()
 		addonFanart, settingFanart = control.addonFanart(), tools.Settings.getBoolean('interface.theme.fanart')
 
+		recapEnabled = video.Recap.enabled()
+		moreEnabled = video.Review.enabled() or video.Extra.enabled() or video.Deleted.enabled() or video.Making.enabled() or video.Director.enabled() or video.Interview.enabled() or video.Explanation.enabled()
+
 		indicators = playcount.getShowIndicators()
 
 		# Different variable to multi.
@@ -1358,7 +1361,8 @@ class episodes:
 		ratingsOwn = tools.Settings.getInteger('interface.ratings.type') == 1
 		unwatchedEnabled = tools.Settings.getBoolean('interface.tvshows.unwatched.enabled')
 		unwatchedLimit = tools.Settings.getBoolean('interface.tvshows.unwatched.limit')
-		futureEpisode = tools.Settings.getBoolean('interface.tvshows.future.episodes')
+		futureEnabled = tools.Settings.getBoolean('interface.tvshows.future.episodes')
+		extrasEnabled = tools.Settings.getBoolean('interface.tvshows.seasons.extras')
 		context = interface.Context.enabled()
 
 		airEnabled = tools.Settings.getBoolean('interface.tvshows.air.enabled')
@@ -1371,7 +1375,10 @@ class episodes:
 			airBold = tools.Settings.getBoolean('interface.tvshows.air.bold')
 			airLabel = interface.Format.bold(interface.Translation.string(35032) + ': ')
 
+		counter = 0
+		total = len(items)
 		for i in items:
+			counter += 1
 			try:
 				imdb, tvdb, year, season, episode, premiered = i['imdb'], i['tvdb'], i['year'], i['season'], i['episode'], i['premiered']
 				title = i['tvshowtitle']
@@ -1385,8 +1392,6 @@ class episodes:
 				try: labelProgress = label + ' [' + str(int(i['progress'] * 100)) + '%]'
 				except: labelProgress = label
 
-				trailer = '%s Season %s' % (title, str(season))
-
 				systitle = urllib.quote_plus(i['title'])
 				systvshowtitle = urllib.quote_plus(title)
 				syspremiered = urllib.quote_plus(premiered)
@@ -1395,11 +1400,13 @@ class episodes:
 				except: seasoncount = None
 
 				# Make new episodes italic.
-				if not futureEpisode and syspremiered and int(re.sub('[^0-9]', '', str(syspremiered))) > int(re.sub('[^0-9]', '', str(self.today_date))): continue
+				futureEpisode = False
+				if not futureEnabled and syspremiered and int(re.sub('[^0-9]', '', str(syspremiered))) > int(re.sub('[^0-9]', '', str(self.today_date))): continue
 				try: # Special episodes without a premiered date.
 					date = tools.Time.datetime(premiered, format = '%Y-%m-%d')
 					current = datetime.datetime.now()
 					if current <= date or current.date() == date.date():
+						futureEpisode = True
 						labelProgress = '[I]' + labelProgress + '[/I]'
 						if (date - current) > datetime.timedelta(days = 1):
 							labelProgress = '[LIGHT]' + labelProgress + '[/LIGHT]'
@@ -1554,7 +1561,7 @@ class episodes:
 				if not fanart == '0' and not fanart == None: art.update({'fanart' : fanart})
 				if not landscape == '0' and not landscape == None: art.update({'landscape' : landscape})
 
-				meta.update({'trailer': '%s?action=streamsTrailer&title=%s&imdb=%s&art=%s' % (sysaddon, urllib.quote_plus(trailer), imdb, urllib.quote_plus(json.dumps(art)))})
+				meta.update({'trailer': self.parameterize('%s?action=streamsVideo&video=trailer&title=%s&year=%s&season=%s&imdb=%s&art=%s' % (sysaddon, systvshowtitle, year, str(season), imdb, urllib.quote_plus(json.dumps(art))))})
 				if isFolder: url = self.parameterize('%s?action=episodesRetrieve&tvshowtitle=%s&year=%s&imdb=%s&tvdb=%s&season=%s&episode=%s&metadata=%s' % (sysaddon, systvshowtitle, year, imdb, tvdb, season, episode, urllib.quote_plus(json.dumps(meta))))
 				else: url = self.parameterize('%s?action=scrape&title=%s&year=%s&imdb=%s&tvdb=%s&season=%s&episode=%s&tvshowtitle=%s&premiered=%s&metadata=%s%s' % (sysaddon, systitle, year, imdb, tvdb, season, episode, systvshowtitle, syspremiered, urllib.quote_plus(json.dumps(meta)), '' if seasoncount == None else ('&seasoncount=%d' % seasoncount)))
 
@@ -1562,8 +1569,60 @@ class episodes:
 				item.setArt(art)
 				item.setProperty('IsPlayable', isPlayable)
 				item.setInfo(type = 'Video', infoLabels = tools.Media.metadataClean(meta))
-				if context: item.addContextMenuItems([interface.Context(mode = interface.Context.ModeItem, type = self.type, kids = self.kids, create = True, watched = watched, season = season, episode = episode, metadata = meta, art = art, label = label, link = url, trailer = trailer, title = title, year = year, imdb = imdb, tvdb = tvdb).menu()])
+
+				# Recap
+				if not multiple and extrasEnabled and recapEnabled and int(season) > 1 and int(episode) <= 1:
+					artRecap = copy.deepcopy(art)
+					if not fanart == '0' and not fanart == None: artRecap['thumb'] = fanart
+					elif not poster == '0' and not poster == None: artRecap['thumb'] = poster
+
+					seasonRecap = int(season) - 1
+					metaRecap = copy.deepcopy(meta)
+					metaRecap['mediatype'] = 'video'
+					metaRecap['episode'] = 0
+					metaRecap['premiered'] = 0
+					metaRecap['rating'] = 0
+					metaRecap['duration'] = video.Recap.Duration
+					metaRecap['title'] = metaRecap['originaltitle'] = re.sub('\s+', ' ', interface.Translation.string(35362) % '')
+					metaRecap['tagline'] = interface.Translation.string(35362) % str(seasonRecap)
+					metaRecap['plot'] = interface.Translation.string(35456) % (str(seasonRecap), title)
+
+					itemRecap = control.item(label = metaRecap['title'])
+					itemRecap.setArt(artRecap)
+					itemRecap.setProperty('IsPlayable', isPlayable)
+					itemRecap.setInfo(type = 'Video', infoLabels = tools.Media.metadataClean(metaRecap))
+
+					urlRecap = self.parameterize('%s?action=streamsVideo&video=%s&title=%s&year=%s&season=%s&imdb=%s&art=%s' % (sysaddon, video.Recap.Id, systvshowtitle, year, str(seasonRecap), imdb, urllib.quote_plus(json.dumps(artRecap))))
+					if context: itemRecap.addContextMenuItems([interface.Context(mode = interface.Context.ModeVideo, video = video.Recap.Id, type = tools.Media.TypeEpisode, kids = self.kids, season = seasonRecap, metadata = metaRecap, art = artRecap, title = title, year = year, imdb = imdb, tvdb = tvdb).menu()])
+					control.addItem(handle = syshandle, url = urlRecap, listitem = itemRecap, isFolder = False)
+
+				# Episode
+				if context: item.addContextMenuItems([interface.Context(mode = interface.Context.ModeItem, type = tools.Media.TypeEpisode, kids = self.kids, create = True, watched = watched, season = season, episode = episode, metadata = meta, art = art, label = label, link = url, title = title, year = year, imdb = imdb, tvdb = tvdb).menu()])
 				control.addItem(handle = syshandle, url = url, listitem = item, isFolder = isFolder)
+
+				# Extras
+				if not multiple and extrasEnabled and moreEnabled and (counter == total or (counter < len(items) and not items[counter - 1]['season'] == items[counter]['season'])) and int(season) > 0 and not futureEpisode:
+					artMore = copy.deepcopy(art)
+					if not fanart == '0' and not fanart == None: artMore['thumb'] = fanart
+					elif not poster == '0' and not poster == None: artMore['thumb'] = poster
+
+					seasonMore = int(season)
+					metaMore = copy.deepcopy(meta)
+					metaMore['mediatype'] = 'video'
+					metaMore['episode'] = 0
+					metaMore['premiered'] = 0
+					metaMore['duration'] = 0
+					metaMore['rating'] = 0
+					metaMore['title'] = metaMore['originaltitle'] = metaMore['tagline'] = interface.Translation.string(35648)
+					metaMore['plot'] = interface.Translation.string(35649) % (str(seasonMore), title)
+
+					itemMore = control.item(label = metaMore['title'])
+					itemMore.setArt(artMore)
+					itemMore.setProperty('IsPlayable', isPlayable)
+					itemMore.setInfo(type = 'Video', infoLabels = tools.Media.metadataClean(metaMore))
+
+					urlMore = self.parameterize('%s?action=seasonsExtras&metadata=%s&art=%s' % (sysaddon, urllib.quote_plus(json.dumps(meta)), urllib.quote_plus(json.dumps(artMore))))
+					control.addItem(handle = syshandle, url = urlMore, listitem = itemMore, isFolder = True)
 			except:
 				tools.Logger.error()
 
@@ -1599,14 +1658,14 @@ class episodes:
 				try: url += '&url=%s' % urllib.quote_plus(link)
 				except: pass
 
-				item = control.item(label=name)
+				item = control.item(label = name)
 
 				if i['image'].startswith('http'): iconIcon = iconThumb = iconPoster = iconBanner = i['image']
 				else: iconIcon, iconThumb, iconPoster, iconBanner = interface.Icon.pathAll(icon = i['image'], default = addonThumb)
 				item.setArt({'icon': iconIcon, 'thumb': iconThumb, 'poster': iconPoster, 'banner': iconBanner})
 				if not addonFanart == None: item.setProperty('Fanart_Image', addonFanart)
 
-				if context: item.addContextMenuItems([interface.Context(mode = interface.Context.ModeGeneric, type = self.type, kids = self.kids, link = url, title = name, create = True, library = link, queue = queue).menu()])
+				if context: item.addContextMenuItems([interface.Context(mode = interface.Context.ModeGeneric, type = tools.Media.TypeEpisode, kids = self.kids, link = url, title = name, create = True, library = link, queue = queue).menu()])
 				control.addItem(handle = syshandle, url = url, listitem = item, isFolder = True)
 			except:
 				pass

@@ -75,12 +75,13 @@ class Time(object):
 
 	# UTC timestamp
 	@classmethod
-	def timestamp(self, fixedTime = None):
+	def timestamp(self, fixedTime = None, format = None):
 		import time
 		if fixedTime == None:
 			# Do not use time.clock(), gives incorrect result for search.py
 			return int(time.time())
 		else:
+			if format: fixedTime = self.datetime(fixedTime, format)
 			try: return int(time.mktime(fixedTime.timetuple()))
 			except: return int(time.strftime('%s')) # Somtimes mktime fails (mktime argument out of range), which seems to be an issue with very large dates (eg 2120-02-03) on Android.
 
@@ -5117,6 +5118,7 @@ class Binge(object):
 	ModeNone = 0
 	ModeFirst = 1
 	ModeContinue = 2
+	ModeBackground = 3
 
 	DialogNone = 0
 	DialogFull = 1

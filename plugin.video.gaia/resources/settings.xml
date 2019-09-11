@@ -89,6 +89,28 @@
 		<setting id="general.language.customization" type="bool" label="35037" default="false" />
 			<setting id="helper.general.language.customization" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34224]  [/LIGHT]" visible="eq(-8,true)" />
 
+		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 35351][/B][/UPPERCASE]" />
+		<setting type="sep" />
+			<setting id="help.general.videos" type="bool" default="false" visible="false" />
+		<setting id="general.videos.trailer" type="enum" label="35536" lvalues="32302|33489|33800|33110" default="2" />
+			<setting id="helper.general.videos.trailer" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34355]  [/LIGHT]" visible="eq(-2,true)" />
+		<setting id="general.videos.recap" type="enum" label="35535" lvalues="32302|33489|33800|33110" default="2" />
+			<setting id="helper.general.videos.recap" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34356]  [/LIGHT]" visible="eq(-4,true)" />
+		<setting id="general.videos.review" type="enum" label="35651" lvalues="32302|33489|33800|33110" default="2" />
+			<setting id="helper.general.videos.review" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34430]  [/LIGHT]" visible="eq(-6,true)" />
+		<setting id="general.videos.extra" type="enum" label="35653" lvalues="32302|33489|33800|33110" default="2" />
+			<setting id="helper.general.videos.extra" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34433]  [/LIGHT]" visible="eq(-8,true)" />
+		<setting id="general.videos.deleted" type="enum" label="35654" lvalues="32302|33489|33800|33110" default="2" />
+			<setting id="helper.general.videos.deleted" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34434]  [/LIGHT]" visible="eq(-10,true)" />
+		<setting id="general.videos.making" type="enum" label="35650" lvalues="32302|33489|33800|33110" default="2" />
+			<setting id="helper.general.videos.making" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34431]  [/LIGHT]" visible="eq(-12,true)" />
+		<setting id="general.videos.director" type="enum" label="35377" lvalues="32302|33489|33800|33110" default="2" />
+			<setting id="helper.general.videos.director" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34435]  [/LIGHT]" visible="eq(-14,true)" />
+		<setting id="general.videos.interview" type="enum" label="35655" lvalues="32302|33489|33800|33110" default="2" />
+			<setting id="helper.general.videos.interview" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34436]  [/LIGHT]" visible="eq(-16,true)" />
+		<setting id="general.videos.explanation" type="enum" label="35652" lvalues="32302|33489|33800|33110" default="2" />
+			<setting id="helper.general.videos.explanation" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34432]  [/LIGHT]" visible="eq(-18,true)" />
+
 		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 33011][/B][/UPPERCASE]" />
 		<setting type="sep" />
 			<setting id="help.general.settings" type="bool" default="false" visible="false" />
@@ -371,24 +393,26 @@
 			<setting id="helper.interface.tvshows.special.seasons" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34009]  [/LIGHT]" visible="eq(-10,true)" />
 		<setting id="interface.tvshows.special.episodes" type="bool" label="33236" default="true" />
 			<setting id="helper.interface.tvshows.special.episodes" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34010]  [/LIGHT]" visible="eq(-12,true)" />
+		<setting id="interface.tvshows.seasons.extras" type="bool" label="35648" default="true" />
+			<setting id="helper.interface.tvshows.seasons.extras" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34437]  [/LIGHT]" visible="eq(-14,true)" />
 		<setting id="interface.tvshows.air.enabled" type="bool" label="35017" default="false" />
-			<setting id="helper.interface.tvshows.air.enabled" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34213]  [/LIGHT]" visible="eq(-14,true)" />
+			<setting id="helper.interface.tvshows.air.enabled" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34213]  [/LIGHT]" visible="eq(-16,true)" />
 		<setting id="interface.tvshows.air.zone" type="enum" label="35018" lvalues="32314|35022|35023" default="0" subsetting="true" visible="eq(-2,true)" />
-			<setting id="helper.interface.tvshows.air.zone" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34214]  [/LIGHT]" visible="eq(-3,true) + eq(-16,true)" />
+			<setting id="helper.interface.tvshows.air.zone" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34214]  [/LIGHT]" visible="eq(-3,true) + eq(-18,true)" />
 		<setting id="interface.tvshows.air.location" type="enum" label="35019" lvalues="35024|35025|35026|35027" default="0" subsetting="true" visible="eq(-4,true)" />
-			<setting id="helper.interface.tvshows.air.location" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34215]  [/LIGHT]" visible="eq(-5,true) + eq(-18,true)" />
+			<setting id="helper.interface.tvshows.air.location" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34215]  [/LIGHT]" visible="eq(-5,true) + eq(-20,true)" />
 		<setting id="interface.tvshows.air.format" type="enum" label="35020" lvalues="35029|35028|35030" default="2" subsetting="true" visible="eq(-6,true)" />
-			<setting id="helper.interface.tvshows.air.format" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34216]  [/LIGHT]" visible="eq(-7,true) + eq(-20,true)" />
+			<setting id="helper.interface.tvshows.air.format" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34216]  [/LIGHT]" visible="eq(-7,true) + eq(-22,true)" />
 		<setting id="interface.tvshows.air.day" type="enum" label="35031" lvalues="35049|35050" default="0" subsetting="true" visible="eq(-8,true) + !eq(-2,0)" />
-			<setting id="helper.interface.tvshows.air.day" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34217]  [/LIGHT]" visible="eq(-9,true) + !eq(-3,0) + eq(-22,true)" />
+			<setting id="helper.interface.tvshows.air.day" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34217]  [/LIGHT]" visible="eq(-9,true) + !eq(-3,0) + eq(-24,true)" />
 		<setting id="interface.tvshows.air.time" type="enum" label="35048" lvalues="35051|35052|35053" default="0" subsetting="true" visible="eq(-10,true) + !eq(-4,1)" />
-			<setting id="helper.interface.tvshows.air.time" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34228]  [/LIGHT]" visible="eq(-11,true) + !eq(-5,1) + eq(-24,true)" />
+			<setting id="helper.interface.tvshows.air.time" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34228]  [/LIGHT]" visible="eq(-11,true) + !eq(-5,1) + eq(-26,true)" />
 		<setting id="interface.tvshows.air.bold" type="bool" label="35021" default="false" subsetting="true" visible="eq(-12,true)" />
-			<setting id="helper.interface.tvshows.air.bold" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34218]  [/LIGHT]" visible="eq(-13,true) + eq(-26,true)" />
+			<setting id="helper.interface.tvshows.air.bold" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34218]  [/LIGHT]" visible="eq(-13,true) + eq(-28,true)" />
 		<setting id="interface.tvshows.unwatched.enabled" type="bool" label="33891" default="true" />
-			<setting id="helper.interface.tvshows.unwatched.enabled" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34208]  [/LIGHT]" visible="eq(-28,true)" />
+			<setting id="helper.interface.tvshows.unwatched.enabled" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34208]  [/LIGHT]" visible="eq(-30,true)" />
 		<setting id="interface.tvshows.unwatched.limit" type="bool" label="33892" default="true" subsetting="true" visible="eq(-2,true)" />
-			<setting id="helper.interface.tvshows.unwatched.limit" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34209]  [/LIGHT]" visible="eq(-3,true) + eq(-30,true)" />
+			<setting id="helper.interface.tvshows.unwatched.limit" type="action" default="[B][COLOR FFA0C12C]$ADDON[plugin.video.gaia 33239][/COLOR][/B]" label="  [B][COLOR FFA0C12C]•[/COLOR][/B] [LIGHT]$ADDON[plugin.video.gaia 34209]  [/LIGHT]" visible="eq(-3,true) + eq(-32,true)" />
 
 		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 35189][/B][/UPPERCASE]" />
 		<setting type="sep" />

@@ -270,7 +270,7 @@ class tvshows:
 		except: pass
 		found = False
 		result = None
-		today = int(re.sub('[^0-9]', '', (datetime.datetime.utcnow() - datetime.timedelta(hours = 5)).strftime('%Y-%m-%d')))
+		today = int(re.sub('[^0-9]', '', (datetime.datetime.utcnow() - datetime.timedelta(hours = 3)).strftime('%Y-%m-%d')))
 
 		resultSeasons = seasons.seasons(type = self.type, kids = self.kids).get(tvshowtitle = title, year = year, imdb = imdb, tvdb = tvdb, idx = False)
 		for i in resultSeasons:
@@ -280,7 +280,9 @@ class tvshows:
 					for j in resultEpisodes:
 						if episode is None or int(j['episode']) >= episode:
 							if not playcount.getEpisodeWatched(imdb = j['imdb'], tvdb = j['tvdb'], season = j['season'], episode = j['episode']):
-								if int(re.sub('[^0-9]', '', str(j['premiered']))) < today: result = j
+								# Check <= instead of <, since we only deal with dates and not times, hence we cannot compare on an hourly basis, but only on a daily basis.
+								# Important for shows where all episodes are released on the same day.
+								if int(re.sub('[^0-9]', '', str(j['premiered']))) <= today: result = j
 								found = True
 								break
 					if found: break
@@ -1315,8 +1317,7 @@ class tvshows:
 		try: label = tools.Media().title(tools.Media.TypeShow, title = title, year = year)
 		except: pass
 		if label == None: label = title
-
-		trailer = '%s Season 1' % title
+		systitle = urllib.quote_plus(title)
 
 		meta = dict((k,v) for k, v in metadata.iteritems() if not v == '0')
 		meta.update({'mediatype': 'tvshow'})
@@ -1406,12 +1407,12 @@ class tvshows:
 		if not fanart == '0' and not fanart == None: art.update({'fanart' : fanart})
 		if not landscape == '0' and not landscape == None: art.update({'landscape' : landscape})
 
-		meta.update({'trailer': '%s?action=streamsTrailer&title=%s&imdb=%s&art=%s' % (addon, urllib.quote_plus(trailer), imdb, urllib.quote_plus(json.dumps(art)))})
-		if flatten == True: link = '%s?action=episodesRetrieve&tvshowtitle=%s&year=%s&imdb=%s&tvdb=%s&metadata=%s' % (addon, urllib.quote_plus(title), year, imdb, tvdb, urllib.quote_plus(json.dumps(meta)))
-		else: link = '%s?action=seasonsRetrieve&tvshowtitle=%s&year=%s&imdb=%s&tvdb=%s&metadata=%s' % (addon, urllib.quote_plus(title), year, imdb, tvdb, urllib.quote_plus(json.dumps(meta)))
+		meta.update({'trailer': self.parameterize('%s?action=streamsVideo&video=trailer&title=%s&year=%s&imdb=%s&art=%s' % (addon, systitle, year, imdb, urllib.quote_plus(json.dumps(art))))})
+		if flatten == True: link = '%s?action=episodesRetrieve&tvshowtitle=%s&year=%s&imdb=%s&tvdb=%s&metadata=%s' % (addon, systitle, year, imdb, tvdb, urllib.quote_plus(json.dumps(meta)))
+		else: link = '%s?action=seasonsRetrieve&tvshowtitle=%s&year=%s&imdb=%s&tvdb=%s&metadata=%s' % (addon, systitle, year, imdb, tvdb, urllib.quote_plus(json.dumps(meta)))
 		link = self.parameterize(link)
 
-		return interface.Context(mode = interface.Context.ModeItem, type = self.type, kids = self.kids, create = True, watched = watched, metadata = meta, art = art, label = label, link = link, trailer = trailer, title = title, year = year, imdb = imdb, tvdb = tvdb).menu()[1]
+		return interface.Context(mode = interface.Context.ModeItem, type = tools.Media.TypeShow, kids = self.kids, create = True, watched = watched, metadata = meta, art = art, label = label, link = link, title = title, year = year, imdb = imdb, tvdb = tvdb)
 
 	def super_info(self, i):
 		try:
@@ -1678,8 +1679,6 @@ class tvshows:
 
 				systitle = urllib.quote_plus(title)
 
-				trailer = '%s Season 1' % title
-
 				meta = dict((k,v) for k, v in i.iteritems() if not v == '0')
 				meta.update({'mediatype': 'tvshow'})
 				meta.update({'code': imdb, 'imdbnumber': imdb, 'imdb_id': imdb, 'tvdb_id': tvdb})
@@ -1781,7 +1780,7 @@ class tvshows:
 				if not fanart == '0' and not fanart == None: art.update({'fanart' : fanart})
 				if not landscape == '0' and not landscape == None: art.update({'landscape' : landscape})
 
-				meta.update({'trailer': '%s?action=streamsTrailer&title=%s&imdb=%s&art=%s' % (sysaddon, urllib.quote_plus(trailer), imdb, urllib.quote_plus(json.dumps(art)))})
+				meta.update({'trailer': self.parameterize('%s?action=streamsVideo&video=trailer&title=%s&year=%s&imdb=%s&art=%s' % (sysaddon, systitle, year, imdb, urllib.quote_plus(json.dumps(art))))})
 				if flatten == True: url = '%s?action=episodesRetrieve&tvshowtitle=%s&year=%s&imdb=%s&tvdb=%s&metadata=%s' % (sysaddon, systitle, year, imdb, tvdb, urllib.quote_plus(json.dumps(meta)))
 				else: url = '%s?action=seasonsRetrieve&tvshowtitle=%s&year=%s&imdb=%s&tvdb=%s&metadata=%s' % (sysaddon, systitle, year, imdb, tvdb, urllib.quote_plus(json.dumps(meta)))
 				url = self.parameterize(url)
@@ -1789,7 +1788,7 @@ class tvshows:
 				if not fanart == '0' and not fanart == None: item.setProperty('Fanart_Image', fanart)
 				item.setArt(art)
 				item.setInfo(type = 'Video', infoLabels = tools.Media.metadataClean(meta))
-				if context: item.addContextMenuItems([interface.Context(mode = interface.Context.ModeItem, type = self.type, kids = self.kids, create = True, watched = watched, metadata = meta, art = art, label = label, link = url, trailer = trailer, title = title, year = year, imdb = imdb, tvdb = tvdb).menu()])
+				if context: item.addContextMenuItems([interface.Context(mode = interface.Context.ModeItem, type = tools.Media.TypeShow, kids = self.kids, create = True, watched = watched, metadata = meta, art = art, label = label, link = url, title = title, year = year, imdb = imdb, tvdb = tvdb).menu()])
 				control.addItem(handle = syshandle, url = url, listitem = item, isFolder = True)
 			except:
 				pass
@@ -1840,7 +1839,7 @@ class tvshows:
 				item.setArt({'icon': iconIcon, 'thumb': iconThumb, 'poster': iconPoster, 'banner': iconBanner})
 				if not addonFanart == None: item.setProperty('Fanart_Image', addonFanart)
 
-				if context: item.addContextMenuItems([interface.Context(mode = interface.Context.ModeGeneric, type = self.type, kids = self.kids, link = url, title = name, create = True, library = link, queue = queue).menu()])
+				if context: item.addContextMenuItems([interface.Context(mode = interface.Context.ModeGeneric, type = tools.Media.TypeShow, kids = self.kids, link = url, title = name, create = True, library = link, queue = queue).menu()])
 				control.addItem(handle=syshandle, url=url, listitem=item, isFolder=True)
 			except:
 				pass

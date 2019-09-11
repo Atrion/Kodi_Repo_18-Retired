@@ -834,6 +834,7 @@ class OrionSettings:
 				OrionInterface.dialogNotification(title = 32170, message = 33013, icon = OrionInterface.IconSuccess)
 				return True
 			else:
+				OrionTools.fileDelete(path)
 				OrionInterface.dialogNotification(title = 32170, message = 33015, icon = OrionInterface.IconError)
 				return False
 		except:
@@ -968,6 +969,113 @@ class OrionSettings:
 	def adapt(self):
 		path = OrionTools.pathJoin(OrionTools.addonPath(), 'resources', 'settings.xml')
 		if not OrionTools.fileExists(path):
-			if OrionTools.kodiVersionNew(): pathOriginal = path + '.basic'
-			else: pathOriginal = path + '.full'
+			version = OrionTools.kodiVersion(major = True)
+			# orionremove
+			'''
+			if version <= 17: pathOriginal = path + '.17'
+			elif version == 18: pathOriginal = path + '.18'
+			elif version >= 19: pathOriginal = path + '.19'
+			'''
+			if version <= 17: pathOriginal = path + '.17'
+			else: pathOriginal = path + '.18'
 			OrionTools.fileCopy(pathFrom = pathOriginal, pathTo = path, overwrite = True)
+
+	##############################################################################
+	# WIZARD
+	##############################################################################
+
+	@classmethod
+	def wizard(self):
+		from orion.modules.orionuser import OrionUser
+		from orion.modules.orionnavigator import OrionNavigator
+		from orion.modules.orionintegration import OrionIntegration
+
+		title = 32249
+		cancel = 32251
+		next = 32250
+		skip = 32260
+
+		# Welcome
+		choice = OrionInterface.dialogOption(title = title, message = 35001, labelConfirm = cancel, labelDeny = next)
+		if choice: return
+
+		# Authentication
+		choice = OrionInterface.dialogOption(title = title, message = 35002, labelConfirm = 32252, labelDeny = 32253)
+		if choice:
+			message = OrionTools.translate(35003) % (OrionInterface.fontBold(str(OrionUser.LinksAnonymous)), OrionInterface.fontBold(str(OrionUser.LinksFree)))
+			choice = OrionInterface.dialogOption(title = title, message = message, labelConfirm = cancel, labelDeny = next)
+			if choice: return
+			OrionUser.anonymous()
+		else:
+			while True:
+				if OrionNavigator.settingsAccountLogin(settings = False):
+					break
+		OrionInterface.containerRefresh()
+
+		# Limit
+		choice = OrionInterface.dialogOption(title = title, message = 35004, labelConfirm = cancel, labelDeny = next)
+		if choice: return
+		choice = OrionInterface.dialogInput(title = 32254, type = OrionInterface.InputNumeric, verify = (1, 30))
+		limit = OrionUser.instance().subscriptionPackageLimitStreams() / float(choice)
+		limit = int(OrionTools.roundDown(limit, nearest = 10 if limit >= 100 else 5 if limit >= 50 else None))
+		self.set('filters.limit.count', limit)
+		self.set('filters.limit.count.movie', limit)
+		self.set('filters.limit.count.show', limit)
+
+		# Quality
+		qualityHigh = OrionInterface.dialogOption(title = title, message = 35005)
+		self.set('filters.video.quality.maximum', 0 if qualityHigh else 9)
+		qualityLow = OrionInterface.dialogOption(title = title, message = 35006)
+		self.set('filters.video.quality.minimum', 0 if qualityLow else 7)
+		self.set('filters.video.quality', not(qualityHigh and qualityLow))
+
+		# Type
+		typeTorrent = OrionInterface.dialogOption(title = title, message = 35007)
+		typeUsenet = OrionInterface.dialogOption(title = title, message = 35008)
+		typeHoster = OrionInterface.dialogOption(title = title, message = 35009)
+		typeStream = None
+		if typeTorrent and typeUsenet and typeHoster: typeStream = 0
+		elif typeTorrent and typeUsenet: typeStream = 1
+		elif typeTorrent and typeHoster: typeStream = 2
+		elif typeUsenet and typeHoster: typeStream = 3
+		elif typeTorrent: typeStream = 4
+		elif typeUsenet: typeStream = 5
+		elif typeHoster: typeStream = 6
+		if not typeStream is None: self.set('filters.stream.type', typeStream)
+
+		# Gaia
+		if OrionTools.addonEnabled('plugin.video.gaia'):
+			choice = OrionInterface.dialogOption(title = title, message = 35010, labelConfirm = 32055, labelDeny = 32054)
+			self.set('general.scraping.mode', 2 if choice else 1)
+			if not choice:
+				count = limit * 0.1
+				count = OrionTools.roundDown(count, nearest = 10 if count >= 100 else 5 if count >= 50 else None)
+				count = min(200, max(5, count))
+				self.set('general.scraping.count', count)
+
+		# Integration
+		restart = False
+		choice = OrionInterface.dialogOption(title = title, message = 35011, labelConfirm = skip, labelDeny = next)
+		if not choice:
+			format = '%s: %s'
+			formatNative = OrionInterface.font(32259, color = OrionInterface.ColorGood)
+			formatIntegrated = OrionInterface.font(32256, color = OrionInterface.ColorMedium)
+			formatNotIntegrated = OrionInterface.font(32257, color = OrionInterface.ColorPoor)
+			formatNotInstalled = OrionInterface.font(32258, color = OrionInterface.ColorBad)
+			while True:
+				addons = OrionIntegration.addons(sort = True) # Refresh to recheck integration.
+				items = [format % (OrionInterface.font(i['name'], bold = True), formatNotInstalled if not i['enabled'] else formatNative if i['native'] else formatIntegrated if i['integrated'] else formatNotIntegrated) for i in addons]
+				choice = OrionInterface.dialogOptions(title = 32174, items = items)
+				if choice < 0: break
+				if addons[choice]['native']:
+					OrionInterface.dialogNotification(title = 32263, message = 33024, icon = OrionInterface.IconSuccess)
+				else:
+					OrionIntegration.integrate(addons[choice]['scrapers'] if addons[choice]['scrapers'] else addons[choice]['name'], silent = True)
+					if not restart: restart = addons[choice]['restart']
+
+		# Finish
+		OrionInterface.dialogConfirm(title = title, message = OrionTools.translate(35012))
+
+		# Restart
+		if restart and OrionInterface.dialogOption(title = 32174, message = 33026, labelConfirm = 32261, labelDeny = 32262):
+			OrionTools.kodiRestart()

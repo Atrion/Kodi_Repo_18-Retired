@@ -34,7 +34,7 @@ from resources.lib.extensions import tools
 from resources.lib.extensions import convert
 from resources.lib.extensions import handler
 from resources.lib.extensions import history
-from resources.lib.extensions import trailer
+from resources.lib.extensions import video
 from resources.lib.extensions import provider
 from resources.lib.extensions import orionoid
 from resources.lib.extensions import metadata as metadatax
@@ -64,10 +64,10 @@ class Core:
 		self.autoplay = tools.Settings.getBoolean('automatic.enabled')
 		self.propertyNotification = 'GaiaStreamsNofitifcation'
 
-		self.navigationCinema = trailer.Trailer.cinemaEnabled()
-		self.navigationCinemaProgress = self.navigationCinema and trailer.Trailer.cinemaProgress()
-		self.navigationCinemaInerrupt = self.navigationCinema and trailer.Trailer.cinemaInterrupt()
-		if self.navigationCinema: self.navigationCinemaTrailer = trailer.Trailer()
+		self.navigationCinema = video.Trailer.cinemaEnabled()
+		self.navigationCinemaProgress = self.navigationCinema and video.Trailer.cinemaProgress()
+		self.navigationCinemaInerrupt = self.navigationCinema and video.Trailer.cinemaInterrupt()
+		if self.navigationCinema: self.navigationCinemaTrailer = video.Trailer(type = self.type, kids = self.kids)
 
 		self.navigationScrape = tools.Settings.getInteger('interface.navigation.scrape')
 		self.navigationScrapeSpecial = self.navigationScrape == 0
@@ -252,17 +252,18 @@ class Core:
 			# The loader is shown in _bingePlay in the player.
 			if self.navigationStreamsSpecial and binge == tools.Binge.ModeContinue: interface.Loader.hide()
 
-			new = items == None
-			if not self.navigationCinema: self.loaderShow()
-			window.Window.propertyGlobalClear(self.propertyNotification)
-			if binge is None: binge = tools.Binge.ModeFirst if tools.Binge.enabled() else tools.Binge.ModeNone
-			if cache is None: cache = True
-
 			# When the play action is called from the skin's widgets.
 			# Otherwise the directory with streams is not shown.
 			# Only has to be done if accessed from the home screen. Not necessary if the user is already in a directory structure.
-			if self.navigationStreamsDirectory and not 'plugin' in tools.System.infoLabel('Container.PluginName') and not tools.System.infoLabel('Container.FolderPath'):
+			# Check for tools.Binge.ModeBackground. Seems to be an issue on Mac devices causing the episode direcotry list to be loaded if binge scraping happens in the background.
+			if not binge == tools.Binge.ModeBackground and self.navigationStreamsDirectory and not 'plugin' in tools.System.infoLabel('Container.PluginName') and not tools.System.infoLabel('Container.FolderPath'):
 				tools.System.launchAddon()
+
+			new = items == None
+			if not self.navigationCinema: self.loaderShow()
+			window.Window.propertyGlobalClear(self.propertyNotification)
+			if binge is None or binge == tools.Binge.ModeBackground: binge = tools.Binge.ModeFirst if tools.Binge.enabled() else tools.Binge.ModeNone
+			if cache is None: cache = True
 
 			if autoplay == None:
 				if tools.Converter.boolean(window.Window.propertyGlobal('PseudoTVRunning')): autoplay = True
@@ -296,7 +297,7 @@ class Core:
 				tools.Logger.log('Initializing Scraping [' + label.encode('utf8') + '] ...', name = 'CORE', level = tools.Logger.TypeNotice)
 				start = tools.Time.timestamp()
 				result = self.scrapeItem(title = title, year = year, imdb = imdb, tvdb = tvdb, season = season, episode = episode, tvshowtitle = tvshowtitle, premiered = premiered, metadata = metadata, preset = preset, seasoncount = seasoncount, exact = exact, autoplay = autoplay, cache = cache)
-				if result == None or self.progressCanceled(): # Avoid the no-streams notification right after the unavailable notification
+				if result == None or (self.progressCanceled() and not self.navigationCinema): # Avoid the no-streams notification right after the unavailable notification
 					self.progressClose(force = True)
 					return None
 

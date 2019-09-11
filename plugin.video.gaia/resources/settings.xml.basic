@@ -85,6 +85,24 @@
 		<setting id="general.language.tertiary" type="select" label="35036" default="None" values="None|Abkhaz|Afar|Afrikaans|Akan|Albanian|Amharic|Arabic|Aragonese|Armenian|Assamese|Avaric|Avestan|Aymara|Azerbaijani|Bambara|Bashkir|Basque|Belarusian|Bengali|Bihari|Bislama|Bokmal|Bosnian|Breton|Bulgarian|Burmese|Catalan|Chamorro|Chechen|Chichewa|Chinese|Chuvash|Cornish|Corsican|Cree|Croatian|Czech|Danish|Divehi|Dutch|Dzongkha|English|Esperanto|Estonian|Ewe|Faroese|Fijian|Finnish|French|Fula|Gaelic|Galician|Ganda|Georgian|German|Greek|Guarani|Gujarati|Haitian|Hausa|Hebrew|Herero|Hindi|Hiri Motu|Hungarian|Icelandic|Ido|Igbo|Indonesian|Interlingua|Interlingue|Inuktitut|Inupiaq|Irish|Italian|Japanese|Javanese|Kalaallisut|Kannada|Kanuri|Kashmiri|Kazakh|Khmer|Kikuyu|Kinyarwanda|Kirundi|Komi|Kongo|Korean|Kurdish|Kwanyama|Kyrgyz|Lao|Latin|Latvian|Limburgish|Lingala|Lithuanian|Luba-Katanga|Luxembourgish|Macedonian|Malagasy|Malay|Malayalam|Maltese|Manx|Maori|Marathi|Marshallese|Mongolian|Nauruan|Navajo|Ndonga|Nepali|Northern Ndebele|Northern Sami|Norwegian|Nuosu|Nynorsk|Occitan|Ojibwe|Oriya|Oromo|Ossetian|Pali|Pashto|Pushto|Persian|Polish|Portuguese|Punjabi|Quechua|Romanian|Romansh|Russian|Samoan|Sango|Sanskrit|Sardinian|Serbian|Shona|Sindhi|Sinhalese|Slavonic|Slovak|Slovene|Somali|Southern Ndebele|Southern Sotho|Spanish|Sundanese|Swahili|Swati|Swedish|Tagalog|Tahitian|Tajik|Tamil|Tatar|Telugu|Thai|Tibetan|Tigrinya|Tonga|Tsonga|Tswana|Turkish|Turkmen|Twi|Ukrainian|Urdu|Uyghur|Uzbek|Venda|Vietnamese|Volapuk|Walloon|Welsh|Western Frisian|Wolof|Xhosa|Yiddish|Yoruba|Zhuang|Zulu" />
 		<setting id="general.language.customization" type="bool" label="35037" default="false" />
 
+		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 35351][/B][/UPPERCASE]" />
+		<setting type="sep" />
+		<setting id="general.videos.trailers" type="enum" label="35566" lvalues="32302|33489|33800|33110" default="2" />
+		<setting id="general.videos.recaps" type="enum" label="35533" lvalues="32302|33489|33800|33110" default="2" />
+		<setting id="general.videos.makings" type="enum" label="35652" lvalues="32302|33489|33800|33110" default="2" />
+
+		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 35351][/B][/UPPERCASE]" />
+		<setting type="sep" />
+		<setting id="general.videos.trailer" type="enum" label="35536" lvalues="32302|33489|33800|33110" default="2" />
+		<setting id="general.videos.recap" type="enum" label="35535" lvalues="32302|33489|33800|33110" default="2" />
+		<setting id="general.videos.review" type="enum" label="35651" lvalues="32302|33489|33800|33110" default="2" />
+		<setting id="general.videos.extra" type="enum" label="35653" lvalues="32302|33489|33800|33110" default="2" />
+		<setting id="general.videos.deleted" type="enum" label="35654" lvalues="32302|33489|33800|33110" default="2" />
+		<setting id="general.videos.making" type="enum" label="35650" lvalues="32302|33489|33800|33110" default="2" />
+		<setting id="general.videos.director" type="enum" label="35377" lvalues="32302|33489|33800|33110" default="2" />
+		<setting id="general.videos.interview" type="enum" label="35655" lvalues="32302|33489|33800|33110" default="2" />
+		<setting id="general.videos.explanation" type="enum" label="35652" lvalues="32302|33489|33800|33110" default="2" />
+
 		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 33011][/B][/UPPERCASE]" />
 		<setting type="sep" />
 		<setting id="general.settings.cache" type="bool" label="33937" default="true" />
@@ -245,6 +263,7 @@
 		<setting id="interface.tvshows.future.episodes" type="bool" label="35118" default="true" />
 		<setting id="interface.tvshows.special.seasons" type="bool" label="33235" default="true" />
 		<setting id="interface.tvshows.special.episodes" type="bool" label="33236" default="true" />
+		<setting id="interface.tvshows.seasons.extras" type="bool" label="35648" default="true" />
 		<setting id="interface.tvshows.air.enabled" type="bool" label="35017" default="false" />
 		<setting id="interface.tvshows.air.zone" type="enum" label="35018" lvalues="32314|35022|35023" default="0" subsetting="true" visible="eq(-1,true)" />
 		<setting id="interface.tvshows.air.location" type="enum" label="35019" lvalues="35024|35025|35026|35027" default="0" subsetting="true" visible="eq(-2,true)" />

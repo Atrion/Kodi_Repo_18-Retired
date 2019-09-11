@@ -438,8 +438,8 @@ class navigator:
 
 	def clearTrailers(self, confirm = True):
 		if not confirm or self._clearConfirm():
-			from resources.lib.extensions import trailer
-			trailer.Trailer().clear(confirm = False)
+			from resources.lib.extensions import video
+			video.Trailer().clear(confirm = False)
 			if confirm: self._clearNotify()
 
 	def clearDownloads(self, confirm = True, automatic = False):

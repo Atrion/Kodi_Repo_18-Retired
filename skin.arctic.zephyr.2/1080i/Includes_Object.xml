@@ -1,5 +1,68 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <includes>
+
+    <include name="Object_ShadowSpot_Label">
+        <param name="font" default="font_tiny" />
+        <param name="textcolor" default="panel_fg_70" />
+        <param name="height" default="40" />
+        <param name="top" default="0" />
+        <definition>
+            <control type="label" id="$PARAM[id]">
+                <top>$PARAM[top]</top>
+                <width>auto</width>
+                <height>$PARAM[height]</height>
+                <align>left</align>
+                <aligny>top</aligny>
+                <textcolor>$PARAM[textcolor]</textcolor>
+                <font>$PARAM[font]</font>
+                <label>$PARAM[label]</label>
+            </control>
+        </definition>
+    </include>
+
+    <include name="Object_ShadowSpot_Grouplist">
+        <control type="grouplist">
+            <orientation>vertical</orientation>
+            <left>view_pad</left>
+            <top>view_pad</top>
+            <itemgap>0</itemgap>
+            <usecontrolcoords>true</usecontrolcoords>
+            <nested />
+        </control>
+    </include>
+
+    <include name="Object_ShadowSpot_Group">
+        <param name="width" default="1000" />
+        <param name="height" default="300" />
+        <param name="left" default="0" />
+        <definition>
+            <control type="group" id="$PARAM[id]">
+                <include>Animation_FadeIn</include>
+                <left>$PARAM[left]</left>
+                <top>0</top>
+                <width>$PARAM[width]</width>
+                <height>$PARAM[height]</height>
+                <control type="image">
+                    <left>-500</left>
+                    <right>-500</right>
+                    <top>-300</top>
+                    <bottom>-300</bottom>
+                    <aspectratio>stretch</aspectratio>
+                    <texture>common/shadowspot.png</texture>
+                </control>
+                <control type="image">
+                    <left>-500</left>
+                    <right>-500</right>
+                    <top>-300</top>
+                    <bottom>-300</bottom>
+                    <aspectratio>stretch</aspectratio>
+                    <texture>common/shadowspot.png</texture>
+                </control>
+                <nested />
+            </control>
+        </definition>
+    </include>
+
     <include name="Object_NextAired_Template">
         <definition>
             <include content="View_Cast_Toplabel">
@@ -24,8 +87,8 @@
                 <param name="includecontent" value="false" />
                 <param name="smallsquarecondition" value="false" />
                 <param name="squarecondition" value="false" />
-                <param name="smalllandscapecondition" value="true" />
-                <param name="landscapecondition" value="false" />
+                <param name="smalllandscapecondition" value="Skin.String(NextAired.View,Default)" />
+                <param name="landscapecondition" value="Skin.String(NextAired.View,Landscape)" />
                 <param name="iconcondition" value="false" />
                 <onback>301</onback>
                 <movement>6</movement>
@@ -1226,7 +1289,7 @@
                 </control>
                 <control type="group">
                     <width>84</width>
-                    <visible>[!String.IsEmpty($PARAM[imdb_prop]) + String.IsEqual(Container($PARAM[id]).ListItem.DBType,movie)] | !String.IsEmpty(Container($PARAM[id]).ListItem.Rating)</visible>
+                    <visible>!String.IsEmpty($PARAM[imdb_prop])</visible>
                     <visible>!Skin.HasSetting(Ratings.IMDB)</visible>
                     <control type="image">
                         <top>0</top>
@@ -1243,7 +1306,19 @@
                         <align>center</align>
                         <font>font_tiny_bold</font>
                         <label>$INFO[$PARAM[imdb_prop]]</label>
-                        <visible>!String.IsEmpty($PARAM[imdb_prop]) + String.IsEqual(Container($PARAM[id]).ListItem.DBType,movie)</visible>
+                        <visible>!String.IsEmpty($PARAM[imdb_prop])</visible>
+                    </control>
+                </control>
+                <control type="group">
+                    <width>64</width>
+                    <visible>!String.IsEmpty(Container($PARAM[id]).ListItem.Rating)</visible>
+                    <visible>!Skin.HasSetting(DisableStarRating)</visible>
+                    <control type="image">
+                        <top>-16</top>
+                        <centerleft>50%</centerleft>
+                        <width>64</width>
+                        <height>64</height>
+                        <texture colordiffuse="main_fg_100">flags/star10.png</texture>
                     </control>
                     <control type="label">
                         <textcolor>main_fg_70</textcolor>
@@ -1253,7 +1328,7 @@
                         <align>center</align>
                         <font>font_tiny_bold</font>
                         <label>$INFO[Container($PARAM[id]).ListItem.Rating]</label>
-                        <visible>String.IsEmpty($PARAM[imdb_prop]) | !String.IsEqual(Container($PARAM[id]).ListItem.DBType,movie)</visible>
+                        <visible>!String.IsEmpty(Container($PARAM[id]).ListItem.Rating)</visible>
                     </control>
                 </control>
                 <control type="group">
@@ -2393,6 +2468,16 @@
         </definition>
     </include>
 
+    <include name="Object_Scrollbars">
+        <include content="Object_Scrollbar_Vert">
+            <param name="visible" value="Control.IsVisible(50) | Control.IsVisible(500) | Control.IsVisible(501) | Control.IsVisible(502) | Control.IsVisible(503) | Control.IsVisible(51) | Control.IsVisible(510) | Control.IsVisible(511) | Control.IsVisible(512) | Control.IsVisible(513) | Control.IsVisible(514) | Control.IsVisible(515)" />
+        </include>
+
+        <include content="Object_Scrollbar_Horz">
+            <param name="visible" value="Control.IsVisible(52) | Control.IsVisible(520) | Control.IsVisible(521) | Control.IsVisible(522) | Control.IsVisible(523) | Control.IsVisible(53)" />
+        </include>
+    </include>
+
     <include name="Object_Scrollbar_Vert">
         <control type="scrollbar" id="60">
             <onback>50</onback>
@@ -2408,14 +2493,14 @@
             <texturesliderbar colordiffuse="main_fg_30" border="4">scrollbar/scrollv.png</texturesliderbar>
             <texturesliderbarfocus colordiffuse="main_fg_100" border="4">scrollbar/scrollv.png</texturesliderbarfocus>
             <animation effect="fade" start="100" end="0" time="400" condition="!Control.HasFocus(60) + !Container.Scrolling">Conditional</animation>
-            <visible>![String.IsEqual(Container.SortMethod,$LOCALIZE[551]) | String.IsEqual(Container.SortMethod,$LOCALIZE[556]) | String.IsEqual(Container.SortMethod,$LOCALIZE[561])]</visible>
+            <visible>![String.IsEqual(Container.SortMethod,$LOCALIZE[551]) | String.IsEqual(Container.SortMethod,$LOCALIZE[556]) | String.IsEqual(Container.SortMethod,$LOCALIZE[561]) | String.IsEqual(Container.SortMethod,$LOCALIZE[558]) | String.IsEqual(Container.SortMethod,$LOCALIZE[557])]</visible>
             <include>Animation_FadeIn</include>
             <include>Animation_FadeOut</include>
         </control>
 
         <control type="button" id="60">
             <visible>$PARAM[visible]</visible>
-            <visible>[String.IsEqual(Container.SortMethod,$LOCALIZE[551]) | String.IsEqual(Container.SortMethod,$LOCALIZE[556]) | String.IsEqual(Container.SortMethod,$LOCALIZE[561])]</visible>
+            <visible>[String.IsEqual(Container.SortMethod,$LOCALIZE[551]) | String.IsEqual(Container.SortMethod,$LOCALIZE[556]) | String.IsEqual(Container.SortMethod,$LOCALIZE[561]) | String.IsEqual(Container.SortMethod,$LOCALIZE[558]) | String.IsEqual(Container.SortMethod,$LOCALIZE[557])]</visible>
             <font />
             <texturefocus />
             <texturenofocus />
@@ -2460,7 +2545,7 @@
             <include content="Object_AlphabetLetter"><param name="label" value="M" /></include>
             <include content="Object_AlphabetLetter"><param name="label" value="N" /></include>
             <animation effect="fade" start="100" end="0" condition="[String.IsEqual(ListItem.SortLetter,N) | String.IsEqual(ListItem.SortLetter,O) | String.IsEqual(ListItem.SortLetter,P) | String.IsEqual(ListItem.SortLetter,Q) | String.IsEqual(ListItem.SortLetter,R) | String.IsEqual(ListItem.SortLetter,S) | String.IsEqual(ListItem.SortLetter,T) | String.IsEqual(ListItem.SortLetter,U) | String.IsEqual(ListItem.SortLetter,V) | String.IsEqual(ListItem.SortLetter,W) | String.IsEqual(ListItem.SortLetter,X) | String.IsEqual(ListItem.SortLetter,Y) | String.IsEqual(ListItem.SortLetter,Z)]">Conditional</animation>
-            <visible>[String.IsEqual(Container.SortMethod,$LOCALIZE[551]) | String.IsEqual(Container.SortMethod,$LOCALIZE[556]) | String.IsEqual(Container.SortMethod,$LOCALIZE[561])]</visible>
+            <visible>[String.IsEqual(Container.SortMethod,$LOCALIZE[551]) | String.IsEqual(Container.SortMethod,$LOCALIZE[556]) | String.IsEqual(Container.SortMethod,$LOCALIZE[561]) | String.IsEqual(Container.SortMethod,$LOCALIZE[558]) | String.IsEqual(Container.SortMethod,$LOCALIZE[557])]</visible>
         </control>
 
         <control type="grouplist">
@@ -2491,7 +2576,7 @@
             <include content="Object_AlphabetLetter"><param name="label" value="Y" /></include>
             <include content="Object_AlphabetLetter"><param name="label" value="Z" /></include>
             <animation effect="fade" start="100" end="0" condition="![String.IsEqual(ListItem.SortLetter,N) | String.IsEqual(ListItem.SortLetter,O) | String.IsEqual(ListItem.SortLetter,P) | String.IsEqual(ListItem.SortLetter,Q) | String.IsEqual(ListItem.SortLetter,R) | String.IsEqual(ListItem.SortLetter,S) | String.IsEqual(ListItem.SortLetter,T) | String.IsEqual(ListItem.SortLetter,U) | String.IsEqual(ListItem.SortLetter,V) | String.IsEqual(ListItem.SortLetter,W) | String.IsEqual(ListItem.SortLetter,X) | String.IsEqual(ListItem.SortLetter,Y) | String.IsEqual(ListItem.SortLetter,Z)]">Conditional</animation>
-            <visible>[String.IsEqual(Container.SortMethod,$LOCALIZE[551]) | String.IsEqual(Container.SortMethod,$LOCALIZE[556]) | String.IsEqual(Container.SortMethod,$LOCALIZE[561])]</visible>
+            <visible>[String.IsEqual(Container.SortMethod,$LOCALIZE[551]) | String.IsEqual(Container.SortMethod,$LOCALIZE[556]) | String.IsEqual(Container.SortMethod,$LOCALIZE[561]) | String.IsEqual(Container.SortMethod,$LOCALIZE[558]) | String.IsEqual(Container.SortMethod,$LOCALIZE[557])]</visible>
         </control>
     </include>
 

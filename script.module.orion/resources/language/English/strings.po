@@ -146,7 +146,7 @@ msgid "Invalid"
 msgstr ""
 
 msgctxt "#32034"
-msgid "API"
+msgid "Authentication"
 msgstr ""
 
 msgctxt "#32035"
@@ -158,7 +158,7 @@ msgid "Default"
 msgstr ""
 
 msgctxt "#32037"
-msgid "Location"
+msgid "Server Location"
 msgstr ""
 
 msgctxt "#32038"
@@ -186,7 +186,7 @@ msgid "Dark"
 msgstr ""
 
 msgctxt "#32044"
-msgid "Premium"
+msgid "Go Premium"
 msgstr ""
 
 msgctxt "#32045"
@@ -714,11 +714,11 @@ msgid "Integration Failed"
 msgstr ""
 
 msgctxt "#32176"
-msgid "Integration Succeeded"
+msgid "Integration Successful"
 msgstr ""
 
 msgctxt "#32177"
-msgid "Cleanup Succeeded"
+msgid "Cleanup Successful"
 msgstr ""
 
 msgctxt "#32178"
@@ -989,6 +989,82 @@ msgctxt "#32244"
 msgid "Meta"
 msgstr ""
 
+msgctxt "#32245"
+msgid "%d Seconds"
+msgstr ""
+
+msgctxt "#32246"
+msgid "%d Streams"
+msgstr ""
+
+msgctxt "#32247"
+msgid "Unauthenticated"
+msgstr ""
+
+msgctxt "#32248"
+msgid "Go Free"
+msgstr ""
+
+msgctxt "#32249"
+msgid "Wizard"
+msgstr ""
+
+msgctxt "#32250"
+msgid "Continue"
+msgstr ""
+
+msgctxt "#32251"
+msgid "Cancel"
+msgstr ""
+
+msgctxt "#32252"
+msgid "Free"
+msgstr ""
+
+msgctxt "#32253"
+msgid "Authenticate"
+msgstr ""
+
+msgctxt "#32254"
+msgid "Daily Plays"
+msgstr ""
+
+msgctxt "#32255"
+msgid "Invalid Value"
+msgstr ""
+
+msgctxt "#32256"
+msgid "Integrated"
+msgstr ""
+
+msgctxt "#32257"
+msgid "Not Integrated"
+msgstr ""
+
+msgctxt "#32258"
+msgid "Not Installed"
+msgstr ""
+
+msgctxt "#32259"
+msgid "Native"
+msgstr ""
+
+msgctxt "#32260"
+msgid "Skip"
+msgstr ""
+
+msgctxt "#32261"
+msgid "Restart"
+msgstr ""
+
+msgctxt "#32262"
+msgid "Later"
+msgstr ""
+
+msgctxt "#32263"
+msgid "Integration Unnecessary"
+msgstr ""
+
 ##############################################################################
 # MESSAGES
 ##############################################################################
@@ -1086,7 +1162,7 @@ msgid "%s uses third-party scrapers from %s. Do you want to continue with the %s
 msgstr ""
 
 msgctxt "#33024"
-msgid "%s supports Orion natively so there is no need for integration."
+msgid "No Integration Needed For Natively Supported Addons"
 msgstr ""
 
 msgctxt "#33025"
@@ -1094,7 +1170,7 @@ msgid "Orion was successfully integrated into %s."
 msgstr ""
 
 msgctxt "#33026"
-msgid "Please restart Kodi for the integration to take effect."
+msgid "Kodi has to be restarted for the integration to take effect. Do you want to restart Kodi now?"
 msgstr ""
 
 msgctxt "#33027"
@@ -1125,12 +1201,32 @@ msgctxt "#33032"
 msgid "Your Premium Subscription Expired"
 msgstr ""
 
+msgctxt "#33033"
+msgid "You can use an free anonymous account with %s daily links without having to register an account. Register a free account on our website to get %s daily links."
+msgstr ""
+
+msgctxt "#33034"
+msgid "Do you want to automatically create and authenticate a free anonymous account now?"
+msgstr ""
+
+msgctxt "#33035"
+msgid "Register a premium account on our website to increase your daily limits and prioritize your requests."
+msgstr ""
+
+msgctxt "#33036"
+msgid "Do you want to use the step-by-step configuration wizard or launch the advanced settings dialog?"
+msgstr ""
+
+msgctxt "#33037"
+msgid "Value Must Be Between %s And %s"
+msgstr ""
+
 ##############################################################################
 # HELP
 ##############################################################################
 
 msgctxt "#34001"
-msgid "The fanart used for the background. If enabled, the Orion fanart is used, otherwise the default skin background is shown."
+msgid "The art used for the background. If enabled, the Orion art is used, otherwise the default skin background is shown."
 msgstr ""
 
 msgctxt "#34002"
@@ -1138,7 +1234,7 @@ msgid "The icon theme used for the Orion menus."
 msgstr ""
 
 msgctxt "#34003"
-msgid "The notifications shown for the API status and errors. Hide all, show all, or only display essential API messages."
+msgid "The notifications shown for the API status and errors. Show or hide all messages, or only display essential messages."
 msgstr ""
 
 msgctxt "#34004"
@@ -1146,7 +1242,7 @@ msgid "The number of seconds to wait for the Orion API to respond. Do not set th
 msgstr ""
 
 msgctxt "#34005"
-msgid "The order in which providers should be scraped. Query Orion alone, in parallel with other providers, or first check Orion and if not enough links were returned, scrape the other providers. The addon calling Orion must have implemented this feature for the setting to work."
+msgid "The order in which providers should be scraped. Query Orion alone, in parallel with other providers, or first check Orion and if not enough links were found, scrape the other providers. The addon calling Orion must implement this feature for the setting to work."
 msgstr ""
 
 msgctxt "#34006"
@@ -1154,7 +1250,7 @@ msgid "The minimum number of streams that must be returned from Orion in order t
 msgstr ""
 
 msgctxt "#34007"
-msgid "The Orion API key. The key can be found under the account section of registered users on the Orion website."
+msgid "Authenticate your Orion account using your API key or your email address and password. The API key can be found under the account section of registered users on the Orion website."
 msgstr ""
 
 msgctxt "#34008"
@@ -1367,4 +1463,56 @@ msgstr ""
 
 msgctxt "#34060"
 msgid "The maximum number of streams to retrieve per requests. Set the limit to your package's daily limit divided by the number of movies or shows you watch per day."
+msgstr ""
+
+##############################################################################
+# WIZARD
+##############################################################################
+
+msgctxt "#35001"
+msgid "Welcome to the Orion setup wizard. The wizard will help you to easily configure your Orion setup."
+msgstr ""
+
+msgctxt "#35002"
+msgid "If you already have an Orion account, you can authenticate it now. Otherwise you can automatically create a free account without the need to register."
+msgstr ""
+
+msgctxt "#35003"
+msgid "The free account without registration has a daily limit of %s links. If you register a free account on our website, the daily limit will be increased to %s links."
+msgstr ""
+
+msgctxt "#35004"
+msgid "How many movies or episodes do you typically watch per day? This number will be used to adjust your daily limit based on your subscription."
+msgstr ""
+
+msgctxt "#35005"
+msgid "Do you want to retrieve ultra HD quality content (4K and higher)?"
+msgstr ""
+
+msgctxt "#35006"
+msgid "Do you want to retrieve low quality content (cam and screeners)?"
+msgstr ""
+
+msgctxt "#35007"
+msgid "Do you want to retrieve [B]torrent[/B] content? This requires a supported debrid account (Premiumize, OffCloud, RealDebrid, and others) or a third-party addon (Elementum)."
+msgstr ""
+
+msgctxt "#35008"
+msgid "Do you want to retrieve [B]usenet[/B] content? This requires a supported debrid account (Premiumize, OffCloud)."
+msgstr ""
+
+msgctxt "#35009"
+msgid "Do you want to retrieve [B]hoster[/B] content? Some hosters can be accessed without any additional account, others require a supported debrid account (Premiumize, OffCloud, RealDebrid, and others)."
+msgstr ""
+
+msgctxt "#35010"
+msgid "You have Gaia installed. Do you want to scrape Orion at the same time as the native Gaia providers (parallel), or do you want to first scrape Orion and only use the native Gaia providers if Orion did not return enough links (sequential)?"
+msgstr ""
+
+msgctxt "#35011"
+msgid "Some addons support Orion natively, while others require manual integration. During the integration, Orion will insert code into these addons. Do you want to continue with the code integration?"
+msgstr ""
+
+msgctxt "#35012"
+msgid "Orion is now configured. You can always adjust the filters manually in the settings dialog."
 msgstr ""

@@ -98,13 +98,18 @@ class OrionNavigator:
 	##############################################################################
 
 	@classmethod
-	def menuMain(self):
+	def menuMain(self, wizard = True):
 		menu = OrionNavigator()
-		if OrionUser.instance().subscriptionPackageFree(): menu.buildAdd(label = 32044, action = 'dialogLink', folder = False, icon = 'premium')
+		user = OrionUser.instance()
+		if user.subscriptionPackageFree(): menu.buildAdd(label = 32044, action = 'dialogPremium', folder = False, icon = 'premium')
+		if user.valid(): menu.buildAdd(label = 32017, action = 'dialogUser', folder = False, icon = 'account')
+		else: menu.buildAdd(label = 32248, action = 'dialogFree', folder = False, icon = 'free')
 		menu.buildAdd(label = 32002, action = 'menuApps', folder = True, icon = 'app')
-		menu.buildAdd(label = 32017, action = 'dialogUser', folder = False, icon = 'account')
 		menu.buildAdd(label = 32004, action = 'menuTools', folder = True, icon = 'tools')
 		menu.buildFinish()
+		if wizard and not user.valid() and not OrionSettings.getBoolean('internal.initial'):
+			OrionSettings.wizard()
+		OrionSettings.set('internal.initial', True)
 
 	@classmethod
 	def menuApps(self):
@@ -120,7 +125,7 @@ class OrionNavigator:
 	@classmethod
 	def menuTools(self):
 		menu = OrionNavigator()
-		menu.buildAdd(label = 32005, action = 'dialogSettings', folder = False, icon = 'settings')
+		menu.buildAdd(label = 32005, action = 'dialogSettings', parameters = {'option' : True}, folder = False, icon = 'settings')
 		menu.buildAdd(label = 32174, action = 'menuIntegration', folder = True, icon = 'integration')
 		menu.buildAdd(label = 32056, action = 'dialogNotification', folder = False, icon = 'notification')
 		menu.buildAdd(label = 32006, action = 'menuClean', folder = False, icon = 'clean')
@@ -175,8 +180,13 @@ class OrionNavigator:
 	##############################################################################
 
 	@classmethod
-	def dialogSettings(self):
-		OrionSettings.launch()
+	def dialogSettings(self, option = False):
+		if option:
+			choice = OrionInterface.dialogOption(title = 32005, message = 33036, labelConfirm = 32249, labelDeny = 32186)
+			if choice: OrionSettings.wizard()
+			else: OrionSettings.launch()
+		else:
+			OrionSettings.launch()
 
 	@classmethod
 	def dialogApp(self, id):
@@ -223,6 +233,18 @@ class OrionNavigator:
 	def dialogLink(self, link = None):
 		OrionTools.linkOpen(link)
 
+	@classmethod
+	def dialogPremium(self):
+		OrionInterface.dialogConfirm(title = 32044, message = OrionTools.translate(33035) +  (OrionInterface.fontNewline() * 2) + OrionInterface.fontBold(OrionTools.link()))
+		OrionTools.linkOpen(dialog = False)
+
+	@classmethod
+	def dialogFree(self):
+		OrionInterface.dialogConfirm(title = 32248, message = (OrionTools.translate(33033) % (OrionInterface.fontBold(str(OrionUser.LinksAnonymous)), OrionInterface.fontBold(str(OrionUser.LinksFree)))) +  (OrionInterface.fontNewline() * 2) + OrionInterface.fontBold(OrionTools.link()))
+		if OrionInterface.dialogOption(title = 32248, message = 33034):
+			OrionUser.anonymous()
+			OrionInterface.containerRefresh()
+
 	##############################################################################
 	# SETTINGS
 	##############################################################################
@@ -240,19 +262,21 @@ class OrionNavigator:
 
 			# Reduce the limits for free users.
 			if user.subscriptionPackageFree():
-				OrionSettings.setFiltersLimitCount(25)
+				OrionSettings.setFiltersLimitCount(OrionUser.LinksAnonymous)
 				OrionSettings.setFiltersLimitRetry(0)
 		else:
 			user.settingsKeySet('') # Remove key and disable account.
 			user.update(disable = True)
 
 		if settings: OrionSettings.launch(category = OrionSettings.CategoryAccount)
+		OrionInterface.containerRefresh()
 		OrionInterface.loaderHide()
+		return user.valid(True)
 
 	@classmethod
 	def settingsAccountKey(self, loader = True, hide = True):
 		user = OrionUser.instance()
-		if OrionInterface.dialogOption(title = 32167, message = 33010, labelConfirm = 32020, labelDeny = 32018):
+		if OrionInterface.dialogOption(title = 32034, message = 33010, labelConfirm = 32020, labelDeny = 32018):
 			email = self.settingsAccountInput(title = 32020)
 			password = self.settingsAccountInput(title = 32168)
 			if loader: OrionInterface.loaderShow()

@@ -30,6 +30,7 @@ import sys
 import json
 import time
 import stat
+import math
 import shutil
 import datetime
 import random
@@ -433,16 +434,49 @@ class OrionTools:
 		return xbmc.getInfoLabel(value)
 
 	@classmethod
-	def kodiVersion(self, full = False):
+	def kodiPlugin(self):
+		return self.kodiInfo('Container.PluginName')
+
+	@classmethod
+	def kodiRestart(self):
+		# On both Linux and Windows, seems to close Kodi, but not start it up again.
+		self.execute('XBMC.RestartApp()')
+
+	@classmethod
+	def kodiVersion(self, full = False, major = False):
 		version = self.kodiInfo('System.BuildVersion')
-		if not full:
+		if not full or major:
 			try: version = float(re.search('^\d+\.?\d+', version).group(0))
+			except: pass
+		if major:
+			import math
+			try: version = int(math.floor(version))
 			except: pass
 		return version
 
 	@classmethod
+	def kodiVersionOld(self):
+		try: return self.kodiVersion(major = True) <= 17
+		except: return False
+
+	@classmethod
 	def kodiVersionNew(self):
-		try: return self.kodiVersion() >= 18
+		try: return self.kodiVersion(major = True) >= 18
+		except: return False
+
+	@classmethod
+	def kodiVersion17(self):
+		try: return self.kodiVersion(major = True) <= 17
+		except: return False
+
+	@classmethod
+	def kodiVersion18(self):
+		try: return self.kodiVersion(major = True) == 18
+		except: return False
+
+	@classmethod
+	def kodiVersion19(self):
+		try: return self.kodiVersion(major = True) >= 19
 		except: return False
 
 	##############################################################################
@@ -615,6 +649,11 @@ class OrionTools:
 		value = round(value, places)
 		if places == 0: return int(value)
 		else: return value
+
+	@classmethod
+	def roundDown(self, value, nearest = None):
+		if nearest is None: return math.floor(value)
+		else: return value - (value % nearest)
 
 	@classmethod
 	def thousands(self, value):

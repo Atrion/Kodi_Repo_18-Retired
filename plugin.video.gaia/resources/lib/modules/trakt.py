@@ -257,8 +257,8 @@ def watch(type = None, imdb = None, tmdb = None, tvdb = None, season = None, epi
 	if notification: interface.Dialog.notification(title = 32315, message = 35502, icon = interface.Dialog.IconSuccess)
 
 	try:
-		from resources.lib.extensions import trailer
-		trailer.Trailer().watch(imdb = imdb)
+		from resources.lib.extensions import video
+		video.Trailer().watch(imdb = imdb)
 	except:
 		tools.Logger.error()
 
@@ -282,8 +282,8 @@ def unwatch(type = None, imdb = None, tmdb = None, tvdb = None, season = None, e
 	if notification: interface.Dialog.notification(title = 32315, message = 35503, icon = interface.Dialog.IconSuccess)
 
 	try:
-		from resources.lib.extensions import trailer
-		trailer.Trailer().unwatch(imdb = imdb)
+		from resources.lib.extensions import video
+		video.Trailer().unwatch(imdb = imdb)
 	except:
 		tools.Logger.error()
 

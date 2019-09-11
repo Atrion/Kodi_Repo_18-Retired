@@ -84,8 +84,14 @@ elif action == 'dialogNotification':
 elif action == 'dialogLink':
     OrionNavigator.dialogLink()
 
+elif action == 'dialogPremium':
+    OrionNavigator.dialogPremium()
+
+elif action == 'dialogFree':
+    OrionNavigator.dialogFree()
+
 elif action == 'dialogSettings':
-    OrionNavigator.dialogSettings()
+    OrionNavigator.dialogSettings(option = OrionTools.toBoolean(parameters.get('option')))
 
 ##############################################################################
 # SETTINGS
@@ -211,6 +217,9 @@ elif action == 'integrationDeathStreams':
 
 elif action == 'integrationBoomMovies':
 	OrionIntegration.executeBoomMovies()
+
+elif action == 'integrationContinuum':
+	OrionIntegration.executeContinuum()
 
 elif action == 'integrationOpenScrapers':
 	OrionIntegration.executeOpenScrapers()

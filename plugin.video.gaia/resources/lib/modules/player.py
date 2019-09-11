@@ -319,7 +319,7 @@ class player(xbmc.Player):
 
 	def _debridClear(self):
 		debrid.Debrid.deletePlayback(link = self.url, source = self.source)
-		
+
 	def _downloadStop(self):
 		self._downloadClear(delete = False)
 		if not self.download == None:
@@ -498,7 +498,7 @@ class player(xbmc.Player):
 			from resources.lib.extensions import core
 			from resources.lib.indexers import episodes
 			self.bingeMetadata = episodes.episodes().next(tvshowtitle = self.metadata['tvshowtitle'], year = self.metadata['year'], imdb = self.metadata['imdb'], tvdb = self.metadata['tvdb'], season = self.metadata['season'], episode = self.metadata['episode'])
-			if self.bingeMetadata: self.bingeItems = core.Core(type = self.type, kids = self.kids, silent = True).scrape(title = self.bingeMetadata['title'], year = self.bingeMetadata['year'], imdb = self.bingeMetadata['imdb'], tvdb = self.bingeMetadata['tvdb'], season = self.bingeMetadata['season'], episode = self.bingeMetadata['episode'], tvshowtitle = self.bingeMetadata['tvshowtitle'], metadata = self.bingeMetadata)
+			if self.bingeMetadata: self.bingeItems = core.Core(type = self.type, kids = self.kids, silent = True).scrape(binge = tools.Binge.ModeBackground, title = self.bingeMetadata['title'], year = self.bingeMetadata['year'], imdb = self.bingeMetadata['imdb'], tvdb = self.bingeMetadata['tvdb'], season = self.bingeMetadata['season'], episode = self.bingeMetadata['episode'], tvshowtitle = self.bingeMetadata['tvshowtitle'], metadata = self.bingeMetadata)
 			elif not self.bingeSuppress: interface.Dialog.notification(title = 35580, message = 35587, icon = interface.Dialog.IconInformation)
 		except:
 			tools.Logger.error()

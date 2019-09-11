@@ -55,14 +55,14 @@ class OrionIntegration:
 	AddonNeptuneRising = 'Neptune Rising'
 	AddonDeathStreams = 'Death Streams'
 	AddonBoomMovies = 'Boom Movies'
+	AddonContinuum = 'Continuum'
 	AddonOpenScrapers = 'Open Scrapers'
 	AddonLambdaScrapers = 'Lambda Scrapers'
 	AddonUniversalScrapers = 'Universal Scrapers'
 	AddonNanScrapers = 'NaN Scrapers'
 	AddonElementum = 'Elementum'
 	AddonQuasar = 'Quasar'
-	Addons = [AddonGaia, AddonSeren, AddonIncursion, AddonPlacenta, AddonCovenant, AddonMagicality, AddonTheOath, AddonYoda, AddonBodie, AddonNymeria, AddonVenom, AddonScrubs, AddonMedusa, AddonMercury, AddonDeceit, AddonFen, AddonGenesis, AddonExodus, AddonExodusRedux, AddonNeptuneRising, AddonDeathStreams, AddonBoomMovies, AddonOpenScrapers, AddonLambdaScrapers, AddonUniversalScrapers, AddonNanScrapers, AddonElementum, AddonQuasar]
-	AddonsNative = [AddonGaia, AddonTheOath]
+	Addons = [AddonGaia, AddonSeren, AddonIncursion, AddonPlacenta, AddonCovenant, AddonMagicality, AddonTheOath, AddonYoda, AddonBodie, AddonNymeria, AddonVenom, AddonScrubs, AddonMedusa, AddonMercury, AddonDeceit, AddonFen, AddonGenesis, AddonExodus, AddonExodusRedux, AddonNeptuneRising, AddonDeathStreams, AddonBoomMovies, AddonContinuum, AddonOpenScrapers, AddonLambdaScrapers, AddonUniversalScrapers, AddonNanScrapers, AddonElementum, AddonQuasar]
 
 	LanguageXml = 'xml'
 	LanguagePython = 'python'
@@ -151,12 +151,21 @@ class OrionIntegration:
 			elif addon == OrionIntegration.AddonMagicality: integration._magicalityInitialize()
 			elif addon == OrionIntegration.AddonTheOath: integration._theOathInitialize()
 			elif addon == OrionIntegration.AddonYoda: integration._yodaInitialize()
-			elif addon == OrionIntegration.AddonDeathStreams: integration._deathStreamsInitialize()
-			elif addon == OrionIntegration.AddonBoomMovies: integration._boomMoviesInitialize()
+			elif addon == OrionIntegration.AddonBodie: integration._bodieInitialize()
+			elif addon == OrionIntegration.AddonNymeria: integration._nymeriaInitialize()
+			elif addon == OrionIntegration.AddonVenom: integration._venomInitialize()
 			elif addon == OrionIntegration.AddonScrubs: integration._scrubsInitialize()
+			elif addon == OrionIntegration.AddonMedusa: integration._medusaInitialize()
+			elif addon == OrionIntegration.AddonMercury: integration._mercuryInitialize()
+			elif addon == OrionIntegration.AddonDeceit: integration._deceitInitialize()
 			elif addon == OrionIntegration.AddonFen: integration._fenInitialize()
 			elif addon == OrionIntegration.AddonGenesis: integration._genesisInitialize()
 			elif addon == OrionIntegration.AddonExodus: integration._exodusInitialize()
+			elif addon == OrionIntegration.AddonExodusRedux: integration._exodusReduxInitialize()
+			elif addon == OrionIntegration.AddonNeptuneRising: integration._neptuneRisingInitialize()
+			elif addon == OrionIntegration.AddonDeathStreams: integration._deathStreamsInitialize()
+			elif addon == OrionIntegration.AddonBoomMovies: integration._boomMoviesInitialize()
+			elif addon == OrionIntegration.AddonContinuum: integration._continuumInitialize()
 			elif addon == OrionIntegration.AddonOpenScrapers: integration._openScrapersInitialize()
 			elif addon == OrionIntegration.AddonLambdaScrapers: integration._lambdaScrapersInitialize()
 			elif addon == OrionIntegration.AddonUniversalScrapers: integration._universalScrapersInitialize()
@@ -176,11 +185,46 @@ class OrionIntegration:
 			try:
 				integration = self.initialize(addon)
 				setting = OrionSettings.getIntegration(integration.id)
-				if (not setting == '' or addon in OrionIntegration.AddonsNative) and not setting == integration.version:
+				try: native = integration.native
+				except: native = False
+				if ((not setting == '' and not setting == '0') or native) and not setting == integration.version:
 					integration._integrate(addon)
 					OrionSettings.setIntegration(integration.id, integration.version)
+			except: pass
+
+	##############################################################################
+	# ADDONS
+	##############################################################################
+
+	@classmethod
+	def addons(self, sort = False):
+		result = []
+		for addon in OrionIntegration.Addons:
+			try:
+				integration = self.initialize(addon)
+				idAddon = None
+				try: idAddon = integration.idPlugin
+				except: idAddon = integration.idModule
+				try: version = OrionTools.addonVersion(idAddon)
+				except: version = None
+				try: native = integration.native
+				except: native = False
+				try: restart = not native and integration.restart
+				except: restart = True
+				try:
+					scrapers = integration.scrapers
+					scrapersId = self.initialize(scrapers).id
+				except:
+					scrapers = None
+					scrapersId = None
+				enabled = OrionTools.addonEnabled(idAddon)
+				integrated = OrionSettings.getIntegration(integration.id)
+				integrated = native or not integrated == '' or (enabled and scrapersId and OrionSettings.getIntegration(scrapersId))
+				result.append({'id' : integration.id, 'name' : addon, 'addon' : idAddon, 'enabled' : enabled, 'integrated' : integrated, 'native' : native, 'restart' : restart, 'scrapers' : scrapers})
 			except:
-				pass
+				OrionTools.error()
+		if sort: result = sorted(result, key = lambda i: i['name'])
+		return result
 
 	##############################################################################
 	# CLEAN
@@ -209,6 +253,7 @@ class OrionIntegration:
 				integration._clean()
 				integration._backupRestore()
 				integration._deintegrate(addon)
+				OrionSettings.setIntegration(integration.id, '')
 				OrionInterface.dialogNotification(title = 32177, message = 33019, icon = OrionInterface.IconSuccess)
 				return True
 		else:
@@ -220,21 +265,24 @@ class OrionIntegration:
 	##############################################################################
 
 	@classmethod
-	def integrate(self, addon):
+	def integrate(self, addon, silent = False):
 		integration = self.initialize(addon)
 		if OrionTools.addonEnabled(integration.idPlugin):
-			if OrionInterface.dialogOption(title = 32174, message = OrionTools.translate(33020) % (addon, addon)):
+			if silent or OrionInterface.dialogOption(title = 32174, message = OrionTools.translate(33020) % (addon, addon)):
 				if integration._integrate(addon):
-					try: reintegrate = integration.reintegrate
+					try: reintegrate = integration.reintegrate or silent
 					except: reintegrate = True
 					try: restart = integration.restart
 					except: restart = True
-					if reintegrate and OrionInterface.dialogOption(title = 32174, message = OrionTools.translate(33022) % (addon, addon)):
+					if reintegrate and not addon == OrionIntegration.AddonSeren and (silent or OrionInterface.dialogOption(title = 32174, message = OrionTools.translate(33022) % (addon, addon))):
 						OrionSettings.setIntegration(integration.id, integration.version)
 					else:
-						OrionSettings.setIntegration(integration.id, '')
-					if restart:
-						OrionInterface.dialogConfirm(title = 32174, message = (OrionTools.translate(33025) % addon) + OrionInterface.fontNewline() + OrionInterface.font(33026, bold = True, color = OrionInterface.ColorPrimary))
+						OrionSettings.setIntegration(integration.id, 0)
+					if not silent and restart:
+						message = (OrionTools.translate(33025) % addon) + OrionInterface.fontNewline() + OrionInterface.font(33026, bold = True)
+						if OrionInterface.dialogOption(title = 32174, message = message, labelConfirm = 32261, labelDeny = 32262):
+							OrionTools.kodiRestart()
+					return True
 		else:
 			OrionInterface.dialogNotification(title = 32175, message = 33027, icon = OrionInterface.IconError)
 		return False
@@ -253,6 +301,7 @@ class OrionIntegration:
 		elif addon == OrionIntegration.AddonYoda: result = self._yodaIntegrate()
 		elif addon == OrionIntegration.AddonDeathStreams: result = self._deathStreamsIntegrate()
 		elif addon == OrionIntegration.AddonBoomMovies: result = self._boomMoviesIntegrate()
+		elif addon == OrionIntegration.AddonContinuum: result = self._continuumIntegrate()
 		elif addon == OrionIntegration.AddonScrubs: result = self._scrubsIntegrate()
 		elif addon == OrionIntegration.AddonFen: result = self._fenIntegrate()
 		elif addon == OrionIntegration.AddonGenesis: result = self._genesisIntegrate()
@@ -308,14 +357,28 @@ class OrionIntegration:
 	##############################################################################
 
 	@classmethod
-	def execute(self, addon, integration = True):
+	def execute(self, addon, integrate = True):
+		integration = self.initialize(addon)
+
+		try: native = integration.native
+		except: native = False
+		try: scrapers = integration.scrapers
+		except: scrapers = None
+
+		if native:
+			OrionInterface.dialogNotification(title = 32263, message = 33024, icon = OrionInterface.IconSuccess)
+			integrate = False
+		elif not scrapers is None:
+			if OrionInterface.dialogOption(title = 32174, message = OrionTools.translate(33023) % (addon, scrapers, scrapers)):
+				addon = scrapers
+
 		items = []
-		if integration:
+		if integrate:
 			items.append(OrionInterface.fontBold(32178) + ': ' + OrionTools.translate(32179))
 			items.append(OrionInterface.fontBold(32006) + ': ' + OrionTools.translate(32180))
 		items.append(OrionInterface.fontBold(32181) + ': ' + OrionTools.translate(32182))
 		choice = OrionInterface.dialogOptions(title = 32174, items = items)
-		if integration:
+		if integrate:
 			if choice == 0: return self.integrate(addon)
 			elif choice == 1: return self.clean(addon)
 			elif choice == 2: return self.launch(addon)
@@ -324,8 +387,7 @@ class OrionIntegration:
 
 	@classmethod
 	def executeGaia(self):
-		OrionInterface.dialogConfirm(title = 32174, message = OrionTools.translate(33024) % OrionIntegration.AddonGaia)
-		return self.execute(OrionIntegration.AddonGaia, integration = False)
+		return self.execute(OrionIntegration.AddonGaia)
 
 	@classmethod
 	def executeSeren(self):
@@ -349,8 +411,7 @@ class OrionIntegration:
 
 	@classmethod
 	def executeTheOath(self):
-		OrionInterface.dialogConfirm(title = 32174, message = OrionTools.translate(33024) % OrionIntegration.AddonTheOath)
-		return self.execute(OrionIntegration.AddonTheOath, integration = False)
+		return self.execute(OrionIntegration.AddonTheOath)
 
 	@classmethod
 	def executeYoda(self):
@@ -358,24 +419,15 @@ class OrionIntegration:
 
 	@classmethod
 	def executeBodie(self):
-		if OrionInterface.dialogOption(title = 32174, message = OrionTools.translate(33023) % (OrionIntegration.AddonBodie, OrionIntegration.AddonLambdaScrapers, OrionIntegration.AddonLambdaScrapers)):
-			return self.executeLambdaScrapers()
-		else:
-			return False
+		return self.execute(OrionIntegration.AddonBodie)
 
 	@classmethod
 	def executeNymeria(self):
-		if OrionInterface.dialogOption(title = 32174, message = OrionTools.translate(33023) % (OrionIntegration.AddonNymeria, OrionIntegration.AddonUniversalScrapers, OrionIntegration.AddonUniversalScrapers)):
-			return self.executeUniversalScrapers()
-		else:
-			return False
+		return self.execute(OrionIntegration.AddonNymeria)
 
 	@classmethod
 	def executeVenom(self):
-		if OrionInterface.dialogOption(title = 32174, message = OrionTools.translate(33023) % (OrionIntegration.AddonVenom, OrionIntegration.AddonOpenScrapers, OrionIntegration.AddonUniversalScrapers)):
-			return self.executeOpenScrapers()
-		else:
-			return False
+		return self.execute(OrionIntegration.AddonVenom)
 
 	@classmethod
 	def executeScrubs(self):
@@ -383,24 +435,15 @@ class OrionIntegration:
 
 	@classmethod
 	def executeMedusa(self):
-		if OrionInterface.dialogOption(title = 32174, message = OrionTools.translate(33023) % (OrionIntegration.AddonMedusa, OrionIntegration.AddonUniversalScrapers, OrionIntegration.AddonUniversalScrapers)):
-			return self.executeUniversalScrapers()
-		else:
-			return False
+		return self.execute(OrionIntegration.AddonMedusa)
 
 	@classmethod
 	def executeMercury(self):
-		if OrionInterface.dialogOption(title = 32174, message = OrionTools.translate(33023) % (OrionIntegration.AddonMercury, OrionIntegration.AddonUniversalScrapers, OrionIntegration.AddonUniversalScrapers)):
-			return self.executeUniversalScrapers()
-		else:
-			return False
+		return self.execute(OrionIntegration.AddonMercury)
 
 	@classmethod
 	def executeDeceit(self):
-		if OrionInterface.dialogOption(title = 32174, message = OrionTools.translate(33023) % (OrionIntegration.AddonDeceit, OrionIntegration.AddonUniversalScrapers, OrionIntegration.AddonUniversalScrapers)):
-			return self.executeUniversalScrapers()
-		else:
-			return False
+		return self.execute(OrionIntegration.AddonDeceit)
 
 	@classmethod
 	def executeFen(self):
@@ -416,17 +459,11 @@ class OrionIntegration:
 
 	@classmethod
 	def executeExodusRedux(self):
-		if OrionInterface.dialogOption(title = 32174, message = OrionTools.translate(33023) % (OrionIntegration.AddonExodusRedux, OrionIntegration.AddonOpenScrapers, OrionIntegration.AddonOpenScrapers)):
-			return self.executeOpenScrapers()
-		else:
-			return False
+		return self.execute(OrionIntegration.AddonExodusRedux)
 
 	@classmethod
 	def executeNeptuneRising(self):
-		if OrionInterface.dialogOption(title = 32174, message = OrionTools.translate(33023) % (OrionIntegration.AddonNeptuneRising, OrionIntegration.AddonUniversalScrapers, OrionIntegration.AddonUniversalScrapers)):
-			return self.executeUniversalScrapers()
-		else:
-			return False
+		return self.execute(OrionIntegration.AddonNeptuneRising)
 
 	@classmethod
 	def executeDeathStreams(self):
@@ -435,6 +472,10 @@ class OrionIntegration:
 	@classmethod
 	def executeBoomMovies(self):
 		return self.execute(OrionIntegration.AddonBoomMovies)
+
+	@classmethod
+	def executeContinuum(self):
+		return self.execute(OrionIntegration.AddonContinuum)
 
 	@classmethod
 	def executeOpenScrapers(self):
@@ -469,6 +510,7 @@ class OrionIntegration:
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.gaia'
 		self.version = OrionTools.addonVersion(self.idPlugin)
+		self.native = True
 		self.files = []
 		self.deletes = []
 
@@ -724,6 +766,7 @@ class OrionIntegration:
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.theoath'
 		self.version = OrionTools.addonVersion(self.idPlugin)
+		self.native = True
 		self.files = []
 		self.deletes = []
 
@@ -783,92 +826,43 @@ class OrionIntegration:
 		return self._integrateSuccess()
 
 	##############################################################################
-	# DEATH STREAMS
+	# BODIE
 	##############################################################################
 
-	def _deathStreamsInitialize(self):
-		self.name = OrionIntegration.AddonDeathStreams
+	def _bodieInitialize(self):
+		self.name = OrionIntegration.AddonBodie
 		self.id = self.id(self.name)
-		self.idPlugin = 'plugin.video.blamo'
+		self.idPlugin = 'plugin.video.bodiekodi'
 		self.version = OrionTools.addonVersion(self.idPlugin)
-
-		self.pathPlugin = OrionTools.addonPath(self.idPlugin)
-
-		self.pathAddon = OrionTools.pathJoin(self.pathPlugin, 'addon.xml')
-		self.pathOrionoid = OrionTools.pathJoin(self.pathPlugin, 'scrapers', 'orionoid.py')
-
+		self.scrapers = OrionIntegration.AddonLambdaScrapers
 		self.files = []
-		self.files.append(self.pathAddon)
-
 		self.deletes = []
-		self.deletes.append(self.pathOrionoid)
-
-	def _deathStreamsIntegrate(self):
-		# addon.xml
-		data = self._comment(self._content('addon.xml') % (OrionTools.addonId(), OrionTools.addonVersion()), OrionIntegration.LanguageXml, '\t\t')
-		if not OrionTools.fileInsert(self.pathAddon, '<import\s+addon\s*=\s*[\'"]script\.module\.dateutil[\'"]\s*\/>', data):
-			return self._integrateFailure('Death Streams addon metadata integration failure', self.pathAddon)
-
-		# orionoid.py
-		if not OrionTools.fileCopy(self._path('orionoid.py'), self.pathOrionoid, overwrite = True):
-			return self._integrateFailure('Death Streams provider integration failure', self.pathOrionoid)
-
-		return self._integrateSuccess()
 
 	##############################################################################
-	# BOOMMOVIES
+	# NYMERIA
 	##############################################################################
 
-	def _boomMoviesInitialize(self):
-		self.name = OrionIntegration.AddonBoomMovies
+	def _nymeriaInitialize(self):
+		self.name = OrionIntegration.AddonNymeria
 		self.id = self.id(self.name)
-		self.idPlugin = 'plugin.video.BoomMovies'
-		self.idModule = 'script.module.BoomMovies'
-		self.version = OrionTools.addonVersion(self.idPlugin) + '-' + OrionTools.addonVersion(self.idModule)
-
-		self.pathPlugin = OrionTools.addonPath(self.idPlugin)
-		self.pathModule = OrionTools.addonPath(self.idModule)
-
-		self.pathSettings = OrionTools.pathJoin(self.pathPlugin, 'resources', 'settings.xml')
-		self.pathAddon = OrionTools.pathJoin(self.pathModule, 'addon.xml')
-		self.pathSources = OrionTools.pathJoin(self.pathModule, 'lib', 'resources', 'lib', 'sources', '__init__.py')
-		self.pathOrion = OrionTools.pathJoin(self.pathModule, 'lib', 'resources', 'lib', 'sources', 'orion')
-		self.pathOrionoid = OrionTools.pathJoin(self.pathOrion, 'orionoid.py')
-		self.pathInit = OrionTools.pathJoin(self.pathOrion, '__init__.py')
-
+		self.idPlugin = 'plugin.video.nymeria'
+		self.version = OrionTools.addonVersion(self.idPlugin)
+		self.scrapers = OrionIntegration.AddonUniversalScrapers
 		self.files = []
-		self.files.append(self.pathSettings)
-		self.files.append(self.pathAddon)
-		self.files.append(self.pathSources)
-
 		self.deletes = []
-		self.deletes.append(self.pathOrion)
 
-	def _boomMoviesIntegrate(self):
-		# settings.xml
-		data = self._comment(self._content('settings.xml'), OrionIntegration.LanguageXml, '\t\t')
-		if not OrionTools.fileInsert(self.pathSettings, '<\s*category\s+label\s*=\s*[\'"]32345[\'"]\s*>', data):
-			return self._integrateFailure('BoomMovies settings integration failure', self.pathSettings)
+	##############################################################################
+	# VENOM
+	##############################################################################
 
-		# addon.xml
-		data = self._comment(self._content('addon.xml') % (OrionTools.addonId(), OrionTools.addonVersion()), OrionIntegration.LanguageXml, '\t\t')
-		if not OrionTools.fileInsert(self.pathAddon, '<import\s+addon\s*=\s*[\'"]xbmc\.python[\'"].*?\/>', data):
-			return self._integrateFailure('BoomMovies addon metadata integration failure', self.pathAddon)
-
-		# __init__.py
-		data = self._comment(self._content('sources.py'), OrionIntegration.LanguagePython, '                    ')
-		if not OrionTools.fileInsert(self.pathSources, '\.load_module\(module_name\)', data):
-			return self._integrateFailure('BoomMovies sources integration failure', self.pathSources)
-
-		# orionoid.py
-		if not OrionTools.directoryExists(self.pathOrion) and not OrionTools.directoryCreate(self.pathOrion):
-			return self._integrateFailure('BoomMovies directory creation error', self.pathOrion)
-		if not OrionTools.fileCopy(self._path('orionoid.py'), self.pathOrionoid, overwrite = True):
-			return self._integrateFailure('BoomMovies provider integration failure', self.pathOrionoid)
-		if not OrionTools.fileCopy(self._path('module.py'), self.pathInit, overwrite = True):
-			return self._integrateFailure('BoomMovies module integration failure', self.pathInit)
-
-		return self._integrateSuccess()
+	def _venomInitialize(self):
+		self.name = OrionIntegration.AddonVenom
+		self.id = self.id(self.name)
+		self.idPlugin = 'plugin.video.venom'
+		self.version = OrionTools.addonVersion(self.idPlugin)
+		self.scrapers = OrionIntegration.AddonOpenScrapers
+		self.files = []
+		self.deletes = []
 
 	##############################################################################
 	# SCRUBS
@@ -924,6 +918,45 @@ class OrionIntegration:
 			return self._integrateFailure('Scrubs module integration failure', self.pathInit)
 
 		return self._integrateSuccess()
+
+	##############################################################################
+	# MEDUSA
+	##############################################################################
+
+	def _medusaInitialize(self):
+		self.name = OrionIntegration.AddonMedusa
+		self.id = self.id(self.name)
+		self.idPlugin = 'plugin.video.Medusa'
+		self.version = OrionTools.addonVersion(self.idPlugin)
+		self.scrapers = OrionIntegration.AddonUniversalScrapers
+		self.files = []
+		self.deletes = []
+
+	##############################################################################
+	# MERCURY
+	##############################################################################
+
+	def _mercuryInitialize(self):
+		self.name = OrionIntegration.AddonMercury
+		self.id = self.id(self.name)
+		self.idPlugin = 'plugin.video.Mercury'
+		self.version = OrionTools.addonVersion(self.idPlugin)
+		self.scrapers = OrionIntegration.AddonUniversalScrapers
+		self.files = []
+		self.deletes = []
+
+	##############################################################################
+	# DECEIT
+	##############################################################################
+
+	def _deceitInitialize(self):
+		self.name = OrionIntegration.AddonDeceit
+		self.id = self.id(self.name)
+		self.idPlugin = 'plugin.video.deceit'
+		self.version = OrionTools.addonVersion(self.idPlugin)
+		self.scrapers = OrionIntegration.AddonUniversalScrapers
+		self.files = []
+		self.deletes = []
 
 	##############################################################################
 	# FEN
@@ -1092,6 +1125,175 @@ class OrionIntegration:
 			return self._integrateFailure('Exodus provider integration failure', self.pathOrionoid)
 		if not OrionTools.fileCopy(self._path('module.py'), self.pathInit, overwrite = True):
 			return self._integrateFailure('Exodus module integration failure', self.pathInit)
+
+		return self._integrateSuccess()
+
+	##############################################################################
+	# EXODUS REDUX
+	##############################################################################
+
+	def _exodusReduxInitialize(self):
+		self.name = OrionIntegration.AddonExodusRedux
+		self.id = self.id(self.name)
+		self.idPlugin = 'plugin.video.exodusredux'
+		self.version = OrionTools.addonVersion(self.idPlugin)
+		self.scrapers = OrionIntegration.AddonOpenScrapers
+		self.files = []
+		self.deletes = []
+
+	##############################################################################
+	# NEPTUNE RISING
+	##############################################################################
+
+	def _neptuneRisingInitialize(self):
+		self.name = OrionIntegration.AddonNeptuneRising
+		self.id = self.id(self.name)
+		self.idPlugin = 'plugin.video.neptune'
+		self.version = OrionTools.addonVersion(self.idPlugin)
+		self.scrapers = OrionIntegration.AddonUniversalScrapers
+		self.files = []
+		self.deletes = []
+
+	##############################################################################
+	# DEATH STREAMS
+	##############################################################################
+
+	def _deathStreamsInitialize(self):
+		self.name = OrionIntegration.AddonDeathStreams
+		self.id = self.id(self.name)
+		self.idPlugin = 'plugin.video.blamo'
+		self.version = OrionTools.addonVersion(self.idPlugin)
+
+		self.pathPlugin = OrionTools.addonPath(self.idPlugin)
+
+		self.pathAddon = OrionTools.pathJoin(self.pathPlugin, 'addon.xml')
+		self.pathOrionoid = OrionTools.pathJoin(self.pathPlugin, 'scrapers', 'orionoid.py')
+
+		self.files = []
+		self.files.append(self.pathAddon)
+
+		self.deletes = []
+		self.deletes.append(self.pathOrionoid)
+
+	def _deathStreamsIntegrate(self):
+		# addon.xml
+		data = self._comment(self._content('addon.xml') % (OrionTools.addonId(), OrionTools.addonVersion()), OrionIntegration.LanguageXml, '\t\t')
+		if not OrionTools.fileInsert(self.pathAddon, '<import\s+addon\s*=\s*[\'"]script\.module\.dateutil[\'"]\s*\/>', data):
+			return self._integrateFailure('Death Streams addon metadata integration failure', self.pathAddon)
+
+		# orionoid.py
+		if not OrionTools.fileCopy(self._path('orionoid.py'), self.pathOrionoid, overwrite = True):
+			return self._integrateFailure('Death Streams provider integration failure', self.pathOrionoid)
+
+		return self._integrateSuccess()
+
+	##############################################################################
+	# BOOM MOVIES
+	##############################################################################
+
+	def _boomMoviesInitialize(self):
+		self.name = OrionIntegration.AddonBoomMovies
+		self.id = self.id(self.name)
+		self.idPlugin = 'plugin.video.BoomMovies'
+		self.idModule = 'script.module.BoomMovies'
+		self.version = OrionTools.addonVersion(self.idPlugin) + '-' + OrionTools.addonVersion(self.idModule)
+
+		self.pathPlugin = OrionTools.addonPath(self.idPlugin)
+		self.pathModule = OrionTools.addonPath(self.idModule)
+
+		self.pathSettings = OrionTools.pathJoin(self.pathPlugin, 'resources', 'settings.xml')
+		self.pathAddon = OrionTools.pathJoin(self.pathModule, 'addon.xml')
+		self.pathSources = OrionTools.pathJoin(self.pathModule, 'lib', 'resources', 'lib', 'sources', '__init__.py')
+		self.pathOrion = OrionTools.pathJoin(self.pathModule, 'lib', 'resources', 'lib', 'sources', 'orion')
+		self.pathOrionoid = OrionTools.pathJoin(self.pathOrion, 'orionoid.py')
+		self.pathInit = OrionTools.pathJoin(self.pathOrion, '__init__.py')
+
+		self.files = []
+		self.files.append(self.pathSettings)
+		self.files.append(self.pathAddon)
+		self.files.append(self.pathSources)
+
+		self.deletes = []
+		self.deletes.append(self.pathOrion)
+
+	def _boomMoviesIntegrate(self):
+		# settings.xml
+		data = self._comment(self._content('settings.xml'), OrionIntegration.LanguageXml, '\t\t')
+		if not OrionTools.fileInsert(self.pathSettings, '<\s*category\s+label\s*=\s*[\'"]32345[\'"]\s*>', data):
+			return self._integrateFailure('BoomMovies settings integration failure', self.pathSettings)
+
+		# addon.xml
+		data = self._comment(self._content('addon.xml') % (OrionTools.addonId(), OrionTools.addonVersion()), OrionIntegration.LanguageXml, '\t\t')
+		if not OrionTools.fileInsert(self.pathAddon, '<import\s+addon\s*=\s*[\'"]xbmc\.python[\'"].*?\/>', data):
+			return self._integrateFailure('BoomMovies addon metadata integration failure', self.pathAddon)
+
+		# __init__.py
+		data = self._comment(self._content('sources.py'), OrionIntegration.LanguagePython, '                    ')
+		if not OrionTools.fileInsert(self.pathSources, '\.load_module\(module_name\)', data):
+			return self._integrateFailure('BoomMovies sources integration failure', self.pathSources)
+
+		# orionoid.py
+		if not OrionTools.directoryExists(self.pathOrion) and not OrionTools.directoryCreate(self.pathOrion):
+			return self._integrateFailure('BoomMovies directory creation error', self.pathOrion)
+		if not OrionTools.fileCopy(self._path('orionoid.py'), self.pathOrionoid, overwrite = True):
+			return self._integrateFailure('BoomMovies provider integration failure', self.pathOrionoid)
+		if not OrionTools.fileCopy(self._path('module.py'), self.pathInit, overwrite = True):
+			return self._integrateFailure('BoomMovies module integration failure', self.pathInit)
+
+		return self._integrateSuccess()
+
+	##############################################################################
+	# CONTINUUM
+	##############################################################################
+
+	def _continuumInitialize(self):
+		self.name = OrionIntegration.AddonContinuum
+		self.id = self.id(self.name)
+		self.idPlugin = 'plugin.video.cmovies'
+		self.idModule = 'script.module.cmovies'
+		self.version = OrionTools.addonVersion(self.idPlugin) + '-' + OrionTools.addonVersion(self.idModule)
+
+		self.pathPlugin = OrionTools.addonPath(self.idPlugin)
+		self.pathModule = OrionTools.addonPath(self.idModule)
+
+		self.pathSettings = OrionTools.pathJoin(self.pathPlugin, 'resources', 'settings.xml')
+		self.pathAddon = OrionTools.pathJoin(self.pathModule, 'addon.xml')
+		self.pathSources = OrionTools.pathJoin(self.pathModule, 'lib', 'resources', 'lib', 'sources', '__init__.py')
+		self.pathOrion = OrionTools.pathJoin(self.pathModule, 'lib', 'resources', 'lib', 'sources', 'orion')
+		self.pathOrionoid = OrionTools.pathJoin(self.pathOrion, 'orionoid.py')
+		self.pathInit = OrionTools.pathJoin(self.pathOrion, '__init__.py')
+
+		self.files = []
+		self.files.append(self.pathSettings)
+		self.files.append(self.pathAddon)
+		self.files.append(self.pathSources)
+
+		self.deletes = []
+		self.deletes.append(self.pathOrion)
+
+	def _continuumIntegrate(self):
+		# settings.xml
+		data = self._comment(self._content('settings.xml'), OrionIntegration.LanguageXml, '\t\t')
+		if not OrionTools.fileInsert(self.pathSettings, '<\s*category\s+label\s*=\s*[\'"]32345[\'"]\s*>', data):
+			return self._integrateFailure('Continuum settings integration failure', self.pathSettings)
+
+		# addon.xml
+		data = self._comment(self._content('addon.xml') % (OrionTools.addonId(), OrionTools.addonVersion()), OrionIntegration.LanguageXml, '\t\t')
+		if not OrionTools.fileInsert(self.pathAddon, '<import\s+addon\s*=\s*[\'"]xbmc\.python[\'"].*?\/>', data):
+			return self._integrateFailure('Continuum addon metadata integration failure', self.pathAddon)
+
+		# __init__.py
+		data = self._comment(self._content('sources.py'), OrionIntegration.LanguagePython, '                    ')
+		if not OrionTools.fileInsert(self.pathSources, '\.load_module\(module_name\)', data):
+			return self._integrateFailure('Continuum sources integration failure', self.pathSources)
+
+		# orionoid.py
+		if not OrionTools.directoryExists(self.pathOrion) and not OrionTools.directoryCreate(self.pathOrion):
+			return self._integrateFailure('Continuum directory creation error', self.pathOrion)
+		if not OrionTools.fileCopy(self._path('orionoid.py'), self.pathOrionoid, overwrite = True):
+			return self._integrateFailure('Continuum provider integration failure', self.pathOrionoid)
+		if not OrionTools.fileCopy(self._path('module.py'), self.pathInit, overwrite = True):
+			return self._integrateFailure('Continuum module integration failure', self.pathInit)
 
 		return self._integrateSuccess()
 

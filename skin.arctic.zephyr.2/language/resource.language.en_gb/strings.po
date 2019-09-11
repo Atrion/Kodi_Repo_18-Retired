@@ -1014,6 +1014,16 @@ msgctxt "#31205"
 msgid "Animate background using Ken Burns effect"
 msgstr ""
 
+#: /1080i/SkinSettings.xml
+msgctxt "#31206"
+msgid "Channel numbers"
+msgstr ""
+
+#: /1080i/Includes_OSD.xml
+msgctxt "#31207"
+msgid "Ends"
+msgstr ""
+
 #: /shortcuts/overrides.xml
 msgctxt "#31214"
 msgid "Recently Added Episodes"

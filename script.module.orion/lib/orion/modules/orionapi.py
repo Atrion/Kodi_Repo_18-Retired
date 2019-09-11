@@ -209,22 +209,22 @@ class OrionApi:
 				if not OrionSettings.silent():
 					OrionTools.log('ORION API SUCCESS: ' + self._logMessage())
 				if not silent and OrionSettings.silentAllow(self.mStatus):
-					if mode == self.ModeStream:
-						if action == self.ActionVote:
+					if mode == OrionApi.ModeStream:
+						if action == OrionApi.ActionVote:
 							OrionInterface.dialogNotification(title = 32202, message = 33029, icon = OrionInterface.IconSuccess)
-						elif action == self.ActionRemove:
+						elif action == OrionApi.ActionRemove:
 							OrionInterface.dialogNotification(title = 32203, message = 33030, icon = OrionInterface.IconSuccess)
-						elif action == self.ActionRetrieve:
+						elif action == OrionApi.ActionRetrieve:
 							count = self.mData[OrionApi.ParameterCount]
 							message = OrionTools.translate(32062) + ': ' + str(count[OrionApi.ParameterTotal]) + ' • ' + OrionTools.translate(32063) + ': ' + str(count[OrionApi.ParameterRetrieved])
 							OrionTools.log('ORION STREAMS FOUND: ' + message)
 							OrionInterface.dialogNotification(title = 32060, message = message, icon = OrionInterface.IconSuccess)
-					elif mode == self.ModeContainer:
-						if action == self.ActionRetrieve:
+					elif mode == OrionApi.ModeContainer:
+						if action == OrionApi.ActionRetrieve:
 							count = self.mData[OrionApi.ParameterCount]
 							message = OrionTools.translate(32232) + ': ' + str(count[OrionApi.ParameterRequested]) + ' • ' + OrionTools.translate(32233) + ': ' + str(count[OrionApi.ParameterRetrieved])
 							OrionTools.log('ORION CONTAINERS FOUND: ' + message)
-						elif action == self.ActionHash:
+						elif action == OrionApi.ActionHash:
 							count = self.mData[OrionApi.ParameterCount]
 							message = OrionTools.translate(32228) + ': ' + str(count[OrionApi.ParameterRequested]) + ' • ' + OrionTools.translate(32229) + ': ' + str(count[OrionApi.ParameterRetrieved])
 							OrionTools.log('ORION HASHES FOUND: ' + message)
@@ -234,7 +234,8 @@ class OrionApi:
 			try:
 				self.mStatus = OrionApi.StatusError
 				if not networker == None and networker.error() and not silent and not OrionSettings.silent():
-					OrionInterface.dialogNotification(title = 32064, message = 33007, icon = OrionInterface.IconError)
+					if not(mode == OrionApi.ModeStream and action == OrionApi.ActionUpdate):
+						OrionInterface.dialogNotification(title = 32064, message = 33007, icon = OrionInterface.IconError)
 				else:
 					if not OrionSettings.silent():
 						OrionTools.error('ORION API EXCEPTION')

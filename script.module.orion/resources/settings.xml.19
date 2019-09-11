@@ -1,0 +1,320 @@
+<?xml version="1.0" encoding="utf-8"?>
+<settings version="1">
+	<section id="orion">
+
+		<!-- INTERNAL -->
+		<category id="internal">
+			<visible>false</visible>
+			<group>
+				<setting id="internal.backup" type="boolean">
+					<control type="toggle"></control>
+					<level>0</level>
+					<visible>false</visible>
+					<default>false</default>
+				</setting>
+				<setting id="internal.link" type="string">
+					<control type="edit" format="string"></control>
+					<level>0</level>
+					<visible>false</visible>
+					<default>https://orionoid.com</default>
+				</setting>
+				<setting id="internal.providers" type="string">
+					<control type="edit" format="string"></control>
+					<level>0</level>
+					<visible>false</visible>
+					<default>https://providers.orionoid.com</default>
+				</setting>
+				<setting id="internal.domain" type="string">
+					<control type="edit" format="string"></control>
+					<level>0</level>
+					<visible>false</visible>
+					<default>orionoid.com</default>
+				</setting>
+				<setting id="internal.ip" type="string">
+					<control type="edit" format="string"></control>
+					<level>0</level>
+					<visible>false</visible>
+					<default>188.241.58.223</default>
+				</setting>
+				<setting id="internal.api.orion" type="string">
+					<control type="edit" format="string"></control>
+					<level>0</level>
+					<visible>false</visible>
+					<default>PUFGVkNaa1ZycDFiWFprVVdaMWFXeEdWc3AwVlZwV1U0SmxWYWRVWUdoV1ZXWmxXR3BWVjFNbFZzbEVNTlZsVlhKVmJvbGxWR1oxVlNkbFZQVkZiYU5sVEVaa1JXdG1XdmRsUlNabFZzWlZV</default>
+				</setting>
+				<setting id="internal.api.access" type="string">
+					<control type="edit" format="string"></control>
+					<level>0</level>
+					<visible>false</visible>
+					<default></default>
+				</setting>
+				<setting id="internal.api.user" type="string">
+					<control type="edit" format="string"></control>
+					<level>0</level>
+					<visible>false</visible>
+					<default></default>
+				</setting>
+				<setting id="internal.api.apps" type="string">
+					<control type="edit" format="string"></control>
+					<level>0</level>
+					<visible>false</visible>
+					<default></default>
+				</setting>
+				<setting id="internal.api.notification" type="string">
+					<control type="edit" format="string"></control>
+					<level>0</level>
+					<visible>false</visible>
+					<default></default>
+				</setting>
+				<setting id="internal.api.subscription" type="string">
+					<control type="edit" format="string"></control>
+					<level>0</level>
+					<visible>false</visible>
+					<default></default>
+				</setting>
+			</group>
+		</category>
+
+		<!-- GENERAL -->
+		<category id="general" label="32009">
+
+			<!-- GENERAL - INTERFACE -->
+			<group id="general.interface" label="32039">
+				<setting id="general.interface.background" type="boolean" label="32040" help="34001">
+					<control type="toggle"></control>
+					<level>2</level>
+					<default>true</default>
+				</setting>
+				<setting id="general.interface.theme" type="integer" label="32041" help="34002">
+					<control type="spinner" format="integer"></control>
+					<constraints>
+						<options>
+							<option label="32042">0</option>
+							<option label="32043">1</option>
+						</options>
+					</constraints>
+					<level>2</level>
+					<default>0</default>
+				</setting>
+			</group>
+
+			<!-- GENERAL - NOTIFICATIONS -->
+			<group id="general.notifications" label="32056">
+				<setting id="general.notifications.api" type="integer" label="32158" help="34003">
+					<control type="spinner" format="integer"></control>
+					<constraints>
+						<options>
+							<option label="32120">0</option>
+							<option label="32058">1</option>
+							<option label="32059">2</option>
+						</options>
+					</constraints>
+					<level>1</level>
+					<default>2</default>
+				</setting>
+				<setting id="general.notifications.news" type="boolean" label="32159" help="34017">
+					<control type="toggle"></control>
+					<level>1</level>
+					<default>true</default>
+				</setting>
+			</group>
+
+			<!-- GENERAL - SCRAPING -->
+			<group id="general.scraping" label="32049">
+				<setting id="general.scraping.timeout" type="integer" label="32051" help="34004">
+					<control type="slider" format="integer">
+						<formatlabel>32245</formatlabel>
+					</control>
+					<constraints>
+						<minimum>20</minimum>
+						<maximum>300</maximum>
+						<step>1</step>
+					</constraints>
+					<level>2</level>
+					<default>45</default>
+				</setting>
+				<setting id="general.scraping.mode" type="integer" label="32050" help="34005">
+					<control type="spinner" format="integer"></control>
+					<constraints>
+						<options>
+							<option label="32053">0</option>
+							<option label="32054">1</option>
+							<option label="32055">2</option>
+						</options>
+					</constraints>
+					<level>1</level>
+					<default>2</default>
+				</setting>
+				<setting id="general.scraping.count" type="integer" label="32052" help="34006" parent="general.scraping.mode">
+					<control type="edit" format="integer"></control>
+					<constraints>
+						<minimum>1</minimum>
+						<maximum>10000</maximum>
+					</constraints>
+					<dependencies>
+						<dependency type="visible" setting="general.scraping.mode" operator="is">1</dependency>
+					</dependencies>
+					<level>1</level>
+					<default>5</default>
+				</setting>
+				<setting id="general.scraping.quality" type="integer" label="32117" help="34045" parent="general.scraping.mode">
+					<control type="spinner" format="integer"></control>
+					<constraints>
+						<options>
+							<option label="32120">0</option>
+							<option label="32121">1</option>
+							<option label="32122">2</option>
+							<option label="32123">3</option>
+							<option label="32124">4</option>
+							<option label="32125">5</option>
+							<option label="32126">6</option>
+							<option label="32127">7</option>
+							<option label="32128">8</option>
+							<option label="32129">9</option>
+							<option label="32130">10</option>
+							<option label="32131">11</option>
+							<option label="32132">12</option>
+							<option label="32133">13</option>
+						</options>
+					</constraints>
+					<dependencies>
+						<dependency type="visible" setting="general.scraping.mode" operator="is">1</dependency>
+					</dependencies>
+					<level>1</level>
+					<default>0</default>
+				</setting>
+			</group>
+
+			<!-- GENERAL - SETTINGS -->
+			<group id="general.settings" label="32005">
+				<setting id="general.settings.cache" type="boolean" label="32194" help="34053">
+					<control type="toggle"></control>
+					<level>3</level>
+					<default>true</default>
+				</setting>
+				<setting id="general.settings.backup" type="boolean" label="32185" help="34048">
+					<control type="toggle"></control>
+					<level>3</level>
+					<default>true</default>
+				</setting>
+			</group>
+
+			<!-- GENERAL - ADVANCED -->
+			<group id="general.advanced" label="32186">
+				<setting id="general.advanced.enabled" type="boolean" label="32096" help="34049">
+					<control type="toggle"></control>
+					<level>3</level>
+					<default>false</default>
+				</setting>
+				<setting id="general.advanced.connection" type="integer" label="32187" help="34050">
+					<control type="spinner" format="integer"></control>
+					<constraints>
+						<options>
+							<option label="32188">0</option>
+							<option label="32189">1</option>
+							<option label="32190">2</option>
+							<option label="32191">3</option>
+						</options>
+					</constraints>
+					<dependencies>
+						<dependency type="visible" setting="general.advanced.enabled" operator="is">true</dependency>
+					</dependencies>
+					<level>3</level>
+					<default>0</default>
+				</setting>
+				<setting id="general.advanced.connection.location" type="integer" label="32037" help="34008" parent="general.advanced.connection">
+					<control type="spinner" format="integer"></control>
+					<constraints>
+						<options>
+							<option label="32036">0</option>
+						</options>
+					</constraints>
+					<dependencies>
+						<dependency type="visible">
+							<and>
+                				<condition setting="general.advanced.enabled" operator="is">true</condition>
+								<or>
+									<condition setting="general.advanced.connection" operator="is">0</condition>
+									<condition setting="general.advanced.connection" operator="is">1</condition>
+								</or>
+							</and>
+						</dependency>
+					</dependencies>
+					<level>3</level>
+					<default>0</default>
+				</setting>
+				<setting id="general.advanced.connection.domain" type="string" label="32192" help="34051" parent="general.advanced.connection">
+					<control type="edit" format="string"></control>
+					<dependencies>
+						<dependency type="visible">
+							<and>
+                				<condition setting="general.advanced.enabled" operator="is">true</condition>
+								<condition setting="general.advanced.connection" operator="is">2</condition>
+							</and>
+						</dependency>
+					</dependencies>
+					<level>3</level>
+					<default>orionoid.com</default>
+				</setting>
+				<setting id="general.advanced.connection.ip" type="string" label="32193" help="34052" parent="general.advanced.connection">
+					<control type="edit" format="ip"></control>
+					<dependencies>
+						<dependency type="visible">
+							<and>
+                				<condition setting="general.advanced.enabled" operator="is">true</condition>
+								<condition setting="general.advanced.connection" operator="is">3</condition>
+							</and>
+						</dependency>
+					</dependencies>
+					<level>3</level>
+					<default>188.241.58.223</default>
+				</setting>
+			</group>
+
+		</category>
+
+		<!-- ACCOUNT -->
+		<category id="account" label="32017">
+
+			<!-- ACCOUNT - INTERNAL -->
+			<group>
+				<visible>false</visible>
+				<setting id="account.valid" type="boolean">
+					<control type="toggle"></control>
+					<level>0</level>
+					<visible>false</visible>
+					<default>false</default>
+				</setting>
+				<setting id="account.key" type="string">
+					<control type="edit" format="string"></control>
+					<level>0</level>
+					<visible>false</visible>
+					<default></default>
+				</setting>
+			</group>
+
+			<!-- ACCOUNT - API -->
+			<group id="account.authentication" label="32034">
+				<setting id="account.label.api" type="action" label="32018" help="34007">
+					<control type="button" format="action"  action="RunPlugin(plugin://script.module.orion/?action=settingsAccountLogin)">
+
+						 <onclick>XBMC.ActivateWindow(MyVideos)</onclick>
+					</control>
+					<constraints>
+					            <allowempty>true</allowempty>
+					            <options>RunPlugin(plugin://script.module.orion/?action=settingsAccountLogin)</options>
+					          </constraints>
+					<level>0</level>
+					<default></default>
+				</setting>
+			</group>
+
+
+
+
+		</category>
+
+
+
+	</section>
+</settings>

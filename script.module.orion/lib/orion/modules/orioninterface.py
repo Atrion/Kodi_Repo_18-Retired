@@ -162,6 +162,20 @@ class OrionInterface:
 		return OrionInterface.FontDivider
 
 	##############################################################################
+	# CONTAINER
+	##############################################################################
+
+	@classmethod
+	def containerRefresh(self, orion = True):
+		if not orion or OrionTools.kodiPlugin() == OrionTools.addonId():
+			OrionTools.execute('Container.Refresh()')
+
+	@classmethod
+	def containerUpdate(self, orion = True, reset = False):
+		if not orion or OrionTools.kodiPlugin() == OrionTools.addonId():
+			OrionTools.execute('Container.Update' + ('(path,replace)' if reset else '()'))
+
+	##############################################################################
 	# ICON
 	##############################################################################
 
@@ -286,7 +300,7 @@ class OrionInterface:
 	@classmethod
 	def dialogInput(self, type = InputAlphabetic, verify = False, confirm = False, hidden = False, default = None, title = None):
 		default = '' if default == None else default
-		if verify:
+		if verify and not OrionTools.isArray(verify):
 			option = xbmcgui.PASSWORD_VERIFY
 			if OrionTools.isString(verify): default = verify
 		elif confirm: option = 0
@@ -294,8 +308,18 @@ class OrionInterface:
 		else: option = None
 		if option == None: result = xbmcgui.Dialog().input(self._dialogTitle(title), default, type = type)
 		else: result = xbmcgui.Dialog().input(self._dialogTitle(title), default, type = type, option = option)
-		if verify: return not result == ''
-		else: return result
+		if type == OrionInterface.InputNumeric: result = float(result)
+		if verify:
+			if OrionTools.isArray(verify):
+				if result >= verify[0] and result <= verify[1]:
+					return result
+				else:
+					self.dialogNotification(title = 32255, message = OrionTools.translate(33037) % verify, icon = OrionInterface.IconInformation)
+					return self.dialogInput(type = type, verify = verify, confirm = confirm, hidden = hidden, default = default, title = title)
+			else:
+				return not result == ''
+		else:
+			return result
 
 	@classmethod
 	def dialogPage(self, message, title = None, wait = False):

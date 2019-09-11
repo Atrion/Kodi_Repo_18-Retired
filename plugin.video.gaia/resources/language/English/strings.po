@@ -6069,11 +6069,11 @@ msgid "Sequentially play streams until a working one was found. If a link is dow
 msgstr ""
 
 msgctxt "#34355"
-msgid "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+msgid "The manner in which trailer videos are retrieved from YouTube. Directly play the best available trailer without user interaction, manually select a trailer from a list, or automatically try to select the best trailer and fall back to manual selection if none can be found."
 msgstr ""
 
 msgctxt "#34356"
-msgid "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+msgid "The manner in which recaps videos are retrieved from YouTube. Directly play the best available recap without user interaction, manually select a recap from a list, or automatically try to select the best recap and fall back to manual selection if none can be found."
 msgstr ""
 
 msgctxt "#34357"
@@ -6326,6 +6326,38 @@ msgstr ""
 
 msgctxt "#34429"
 msgid "Shows cinema curtains in the window."
+msgstr ""
+
+msgctxt "#34430"
+msgid "The manner in which review videos are retrieved from YouTube. Directly play the best available review without user interaction, manually select a review from a list, or automatically try to select the best review and fall back to manual selection if none can be found."
+msgstr ""
+
+msgctxt "#34431"
+msgid "The manner in which making of videos are retrieved from YouTube. Directly play the best available making of without user interaction, manually select a making of from a list, or automatically try to select the best making of and fall back to manual selection if none can be found."
+msgstr ""
+
+msgctxt "#34432"
+msgid "The manner in which ending explanation videos are retrieved from YouTube. Directly play the best available explanation without user interaction, manually select an explanation from a list, or automatically try to select the best explanation and fall back to manual selection if none can be found."
+msgstr ""
+
+msgctxt "#34433"
+msgid "The manner in which extra feature videos are retrieved from YouTube. Directly play the best available extra feature without user interaction, manually select an extra feature from a list, or automatically try to select the best extra feature and fall back to manual selection if none can be found."
+msgstr ""
+
+msgctxt "#34434"
+msgid "The manner in which deleted scene videos are retrieved from YouTube. Directly play the best available deleted scene without user interaction, manually select a deleted scene from a list, or automatically try to select the best deleted scene and fall back to manual selection if none can be found."
+msgstr ""
+
+msgctxt "#34435"
+msgid "The manner in which director commentary videos are retrieved from YouTube. Directly play the best available director commentary without user interaction, manually select a director commentary from a list, or automatically try to select the best director commentary and fall back to manual selection if none can be found."
+msgstr ""
+
+msgctxt "#34436"
+msgid "The manner in which interview videos are retrieved from YouTube. Directly play the best available interview without user interaction, manually select an interview from a list, or automatically try to select the best interview and fall back to manual selection if none can be found."
+msgstr ""
+
+msgctxt "#34437"
+msgid "Shows recaps and extras in the season directory structure."
 msgstr ""
 
 
@@ -7737,7 +7769,7 @@ msgid "NanScrapers Providers"
 msgstr ""
 
 msgctxt "#35351"
-msgid "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+msgid "Videos"
 msgstr ""
 
 msgctxt "#35352"
@@ -7777,11 +7809,11 @@ msgid "NanScrapers"
 msgstr ""
 
 msgctxt "#35361"
-msgid "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+msgid "Failed To Play Video"
 msgstr ""
 
 msgctxt "#35362"
-msgid "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+msgid "Season %s Recap"
 msgstr ""
 
 msgctxt "#35363"
@@ -8157,7 +8189,7 @@ msgid "Filtered"
 msgstr ""
 
 msgctxt "#35456"
-msgid "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+msgid "A summary of what previously happened in season %s of %s."
 msgstr ""
 
 msgctxt "#35457"
@@ -8465,7 +8497,7 @@ msgid "GlobalScrapers Providers"
 msgstr ""
 
 msgctxt "#35533"
-msgid "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+msgid "Spoilers"
 msgstr ""
 
 msgctxt "#35534"
@@ -8473,7 +8505,7 @@ msgid "GlobalScrapers"
 msgstr ""
 
 msgctxt "#35535"
-msgid "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+msgid "Recap"
 msgstr ""
 
 msgctxt "#35536"
@@ -8914,4 +8946,84 @@ msgstr ""
 
 msgctxt "#35644"
 msgid "Bold"
+msgstr ""
+
+msgctxt "#35645"
+msgid "No Suitable %s Found"
+msgstr ""
+
+msgctxt "#35646"
+msgid "Manual Selection"
+msgstr ""
+
+msgctxt "#35647"
+msgid "Automatic Selection"
+msgstr ""
+
+msgctxt "#35648"
+msgid "Season Extras"
+msgstr ""
+
+msgctxt "#35649"
+msgid "Additional videos for season %s of %s."
+msgstr ""
+
+msgctxt "#35650"
+msgid "Making"
+msgstr ""
+
+msgctxt "#35651"
+msgid "Review"
+msgstr ""
+
+msgctxt "#35652"
+msgid "Explanation"
+msgstr ""
+
+msgctxt "#35653"
+msgid "Extra"
+msgstr ""
+
+msgctxt "#35654"
+msgid "Deleted"
+msgstr ""
+
+msgctxt "#35655"
+msgid "Interview"
+msgstr ""
+
+msgctxt "#35656"
+msgid "Trailers for season %s of %s."
+msgstr ""
+
+msgctxt "#35657"
+msgid "Recaps for season %s of %s."
+msgstr ""
+
+msgctxt "#35658"
+msgid "Reviews for season %s of %s."
+msgstr ""
+
+msgctxt "#35659"
+msgid "Extra scenes of season %s of %s."
+msgstr ""
+
+msgctxt "#35660"
+msgid "Deleted scenes of season %s of %s."
+msgstr ""
+
+msgctxt "#35661"
+msgid "Behind the scenes of season %s of %s."
+msgstr ""
+
+msgctxt "#35662"
+msgid "Director commentary of season %s of %s."
+msgstr ""
+
+msgctxt "#35663"
+msgid "Interviews for season %s of %s."
+msgstr ""
+
+msgctxt "#35664"
+msgid "Ending explanation of season %s of %s."
 msgstr ""

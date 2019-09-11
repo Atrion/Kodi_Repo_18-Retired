@@ -301,7 +301,7 @@ class channels:
 
 				meta = dict((k,v) for k, v in i.iteritems() if not v == '0')
 				meta.update({'mediatype': 'movie'})
-				meta.update({'trailer': '%s?action=streamsTrailer&title=%s&imdb=%s' % (sysaddon, sysname, imdb)})
+				meta.update({'trailer': self.parameterize('%s?action=streamsVideo&video=trailer&title=%s&year=%s&imdb=%s' % (sysaddon, systitle, year, imdb))})
 				meta.update({'playcount': 0, 'overlay': 6})
 				try: meta.update({'genre': cleangenre.lang(meta['genre'], self.lang)})
 				except: pass
@@ -380,7 +380,7 @@ class channels:
 				item.setArt(art)
 				item.setProperty('IsPlayable', isPlayable)
 				item.setInfo(type = 'Video', infoLabels = tools.Media.metadataClean(meta))
-				if context: item.addContextMenuItems([interface.Context(mode = interface.Context.ModeItem, type = self.type, kids = self.kids, create = True, queue = True, watched = watched, refresh = True, metadata = meta, art = art, label = label, trailer = name, link = url, title = title, year = year, imdb = imdb, tmdb = tmdb).menu()])
+				if context: item.addContextMenuItems([interface.Context(mode = interface.Context.ModeItem, type = self.type, kids = self.kids, create = True, queue = True, watched = watched, refresh = True, metadata = meta, art = art, label = label, link = url, title = title, year = year, imdb = imdb, tmdb = tmdb).menu()])
 				control.addItem(handle = syshandle, url = url, listitem = item, isFolder = False)
 			except:
 				pass
