@@ -135,7 +135,14 @@ class OrionApi:
 
 	@classmethod
 	def _keyInternal(self):
-		return OrionSettings.getString('internal.api.orion', raw = True, obfuscate = True)
+		key = OrionSettings.getString('internal.api.orion', raw = True, obfuscate = True)
+		if not key:
+			if OrionSettings.adapt():
+				key = OrionSettings.getString('internal.api.orion', raw = True, obfuscate = True)
+			if not key:
+				OrionInterface.dialogConfirm(message = 33038)
+				OrionTools.quit()
+		return key
 
 	def _logMessage(self):
 		result = []

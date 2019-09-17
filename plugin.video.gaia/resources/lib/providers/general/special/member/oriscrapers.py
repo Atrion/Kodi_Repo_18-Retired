@@ -218,7 +218,7 @@ class source(provider.ProviderBase):
 				season = int(data['season']) if 'season' in data and not data['season'] == None else None
 				episode = int(data['episode']) if 'episode' in data and not data['episode'] == None else None
 
-			if not self._query(query, imdb): return self.tSources
+			if not self._query(query, imdb, season, episode): return self.tSources
 			streams = self.orion.streamRetrieve(type = type, query = query, imdb = imdb, title = title, year = year, season = season, episode = episode)
 			if not streams: return self.tSources
 

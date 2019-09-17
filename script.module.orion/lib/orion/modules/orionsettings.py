@@ -968,7 +968,8 @@ class OrionSettings:
 	@classmethod
 	def adapt(self):
 		path = OrionTools.pathJoin(OrionTools.addonPath(), 'resources', 'settings.xml')
-		if not OrionTools.fileExists(path):
+		exists = OrionTools.fileExists(path)
+		if not exists:
 			version = OrionTools.kodiVersion(major = True)
 			# orionremove
 			'''
@@ -979,6 +980,8 @@ class OrionSettings:
 			if version <= 17: pathOriginal = path + '.17'
 			else: pathOriginal = path + '.18'
 			OrionTools.fileCopy(pathFrom = pathOriginal, pathTo = path, overwrite = True)
+			exists = OrionTools.fileExists(path)
+		return exists
 
 	##############################################################################
 	# WIZARD

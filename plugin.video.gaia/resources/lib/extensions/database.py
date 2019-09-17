@@ -232,10 +232,13 @@ class Database(object):
 	# Deletes all rows in table.
 	# tables can be None, table name, or list of tables names.
 	# If tables is None, deletes all rows in all tables.
-	def _deleteAll(self, tables = None, parameters = None, commit = True):
+	def _deleteAll(self, tables = None, parameters = None, commit = True, compress = True):
 		result = self._executeAll('DELETE FROM %s;', tables, parameters = parameters)
-		if result and commit:
-			result = self._commit()
+		if result:
+			if compress:
+				self._compress(commit = commit)
+			if commit:
+				result = self._commit()
 		return result
 
 	def _deleteFile(self):
@@ -243,15 +246,27 @@ class Database(object):
 		return tools.File.delete(self.mPath)
 
 	# Drops single table.
-	def _drop(self, table, parameters = None, commit = True):
+	def _drop(self, table, parameters = None, commit = True, compress = True):
 		result = self._execute('DROP TABLE IF EXISTS %s;' % table, parameters = parameters)
-		if result and commit:
-			result = self._commit()
+		if result:
+			if compress:
+				self._compress(commit = commit)
+			if commit:
+				result = self._commit()
 		return result
 
 	# Drops all tables.
-	def _dropAll(self, parameters = None, commit = True):
+	def _dropAll(self, parameters = None, commit = True, compress = True):
 		result = self._executeAll('DROP TABLE IF EXISTS %s;', parameters = parameters)
+		if result:
+			if compress:
+				self._compress(commit = commit)
+			if commit:
+				result = self._commit()
+		return result
+
+	def _compress(self, commit = True):
+		result = self._execute('vacuum') # Reduce the file size.
 		if result and commit:
 			result = self._commit()
 		return result

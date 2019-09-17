@@ -78,7 +78,7 @@ class source(provider.ProviderBase):
 
 			query = urllib.quote_plus(query)
 			if not self._query(query): return sources
-			
+
 			url = urlparse.urljoin(self.base_link, self.search_link)
 
 			pageLimit = tools.Settings.getInteger('scraping.providers.pages')
@@ -114,6 +114,7 @@ class source(provider.ProviderBase):
 							htmlLink = htmlColumns[5].find_all('a')[1]['href']
 							htmlLink = urlparse.urlparse(htmlLink)
 							htmlLink = urlparse.parse_qs(htmlLink.query)['url'][0]
+							htmlLink = htmlLink.replace(' ', '%20')
 
 							# Size
 							htmlSize = htmlColumns[1].find_all('div')[0].getText()

@@ -195,7 +195,7 @@
   </extension>
 </addon>
 
-<addon id="skin.arctic.zephyr.2" name="Arctic Zephyr 2" provider-name="jurialmunkey" version="0.9.49-alpha8">
+<addon id="skin.arctic.zephyr.2" name="Arctic Zephyr 2" provider-name="jurialmunkey" version="0.9.50-alpha1">
     <requires>
         <import addon="xbmc.gui" version="5.14.0" />
         <import addon="script.skinshortcuts" version="0.4.0" />
@@ -351,7 +351,7 @@
 
 <addon id="metadata.themoviedb.org"
        name="The Movie Database"
-       version="5.1.8"
+       version="5.1.9"
        provider-name="Team Kodi">
   <requires>
     <import addon="xbmc.metadata" version="2.1.0"/>
@@ -1617,7 +1617,7 @@ Added Trakt Manager
     </extension>
 </addon>
 
-    <addon id="repository.Atrion18B" name="[COLOR darkgreen]Atrion's Repo for Kodi 18.x Backup[/COLOR]" version="0.2.5" provider-name="Atrion Darnay">
+    <addon id="repository.Atrion18B" name="[COLOR darkgreen]Atrion's Repo for Kodi 18.x Backup[/COLOR]" version="0.2.6" provider-name="Atrion Darnay">
         <requires>
             <import addon="xbmc.addon" version="12.0.0"/>
         </requires>
@@ -2134,7 +2134,7 @@ Zároveň má nastavenia upravujúce výšku stĺpcov spektra, ich rýchlosť a 
 	</extension>
 </addon>
 
-    <addon id="repository.Atrion18" name="[COLOR darkgreen]Atrion's Repo for Kodi 18.x[/COLOR]" version="0.2.5" provider-name="Atrion Darnay">
+    <addon id="repository.Atrion18" name="[COLOR darkgreen]Atrion's Repo for Kodi 18.x[/COLOR]" version="0.2.6" provider-name="Atrion Darnay">
         <requires>
             <import addon="xbmc.addon" version="12.0.0"/>
         </requires>
@@ -2440,7 +2440,7 @@ Zároveň má nastavenia upravujúce výšku stĺpcov spektra, ich rýchlosť a 
     </extension>
 </addon>
 
-<addon id="script.module.orion" version="3.4.0" name="Orion" provider-name="Orion">
+<addon id="script.module.orion" version="3.4.1" name="Orion" provider-name="Orion">
 	<requires>
 		<import addon="xbmc.python" version="2.1.0"/>
 		<import addon="repository.orion" version="1.0.0" optional="true" />
@@ -3131,7 +3131,7 @@ provider-name="jurialmunkey">
 </extension>
 </addon>
 
-<addon id="plugin.video.gaia" version="5.5.4" name="Gaia" provider-name="Gaia">
+<addon id="plugin.video.gaia" version="5.5.6" name="Gaia" provider-name="Gaia">
 	<requires>
 		<import addon="xbmc.python" version="2.19.0" />
 

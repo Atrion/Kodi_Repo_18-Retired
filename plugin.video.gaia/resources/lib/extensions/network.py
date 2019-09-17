@@ -314,6 +314,8 @@ class Networker(object):
 				if link:
 					linkHeaders = link.split('|')
 					link = linkHeaders[0]
+					link = link.replace(' ', '%20') # Otherwise throws "URL can't contain control characters".
+
 					if len(linkHeaders) == 1:
 						linkHeaders = {}
 					else:
@@ -396,9 +398,14 @@ class Networker(object):
 						self.mResponse = urllib2.urlopen(request, timeout = timeout)'''
 					try:
 						self.mResponse = urllib2.urlopen(request, timeout = timeout)
-					except:
-						secureContext = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
-						self.mResponse = urllib2.urlopen(request, context = secureContext, timeout = timeout)
+					except Exception as error:
+						# SPMC (Python < 2.7.8) does not support TLS. Try to do it wihout SSL/TLS, otherwise bad luck.
+						message = str(error).lower()
+						if 'ssl' in message or 'cert' in message:
+							secureContext = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
+							self.mResponse = urllib2.urlopen(request, context = secureContext, timeout = timeout)
+						else:
+							raise error
 
 			return self.mResponse
 		except urllib2.HTTPError as error: # HTTP error.

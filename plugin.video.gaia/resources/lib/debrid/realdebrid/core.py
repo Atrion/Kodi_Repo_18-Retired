@@ -236,8 +236,6 @@ class Core(base.Core):
 			else:
 				errorCode = 0
 				errorString = ''
-			self.mError = 'RealDebrid Unavailable [HTTP/URL Error%s]' % errorString
-			self._requestErrors(self.mError, link, httpData, self.mResult)
 			try:
 				errorApi = tools.Converter.jsonFrom(error.read())
 				self.mErrorCode = errorApi['error_code']
@@ -245,11 +243,14 @@ class Core(base.Core):
 			except: pass
 			if self.mErrorDescription == 'bad_token' or errorCode == 401:
 				return redo(mode = mode, link = linkOriginal, parameters = parametersOriginal, httpTimeout = httpTimeout, httpData = httpDataOriginal, httpHeaders = httpHeaders, httpAuthenticate = httpAuthenticate)
-			elif not self.mErrorDescription == None:
-				if 'ip_not_allowed' in self.mErrorDescription:
-					interface.Dialog.closeAllProgress() # The stream connection progress dialog is still showing.
-					interface.Dialog.confirm(title = 33567, message = 35060)
-					self.mErrorCode = Core.ErrorBlocked
+			else:
+				self.mError = 'RealDebrid Unavailable [HTTP/URL Error%s]' % errorString
+				self._requestErrors(self.mError, link, httpData, self.mResult)
+				if not self.mErrorDescription == None:
+					if 'ip_not_allowed' in self.mErrorDescription:
+						interface.Dialog.closeAllProgress() # The stream connection progress dialog is still showing.
+						interface.Dialog.confirm(title = 33567, message = 35060)
+						self.mErrorCode = Core.ErrorBlocked
 		except Exception as error:
 			self.mSuccess = False
 			self.mError = 'Unknown Error'
@@ -373,10 +374,13 @@ class Core(base.Core):
 				}
 
 				result = self._request(mode = Core.ModePost, link = link, parameters = parameters, httpTimeout = 20, httpAuthenticate = False)
-				if result and not 'error' in result and 'access_token' in result:
+				if result and not 'error' in result and 'access_token' in result and 'refresh_token' in result:
 					self.mAuthenticationToken = result['access_token']
+					self.mAuthenticationRefresh = result['refresh_token']
+
 					Core.AuthenticationToken = self.mAuthenticationToken
 					tools.Settings.set('accounts.debrid.realdebrid.token', self.mAuthenticationToken)
+					tools.Settings.set('accounts.debrid.realdebrid.refresh', self.mAuthenticationRefresh)
 			except:
 				tools.Logger.error()
 		else:
@@ -882,7 +886,7 @@ class Core(base.Core):
 	@classmethod
 	def deletePossible(self, source):
 		source = source.lower()
-		return source in [Core.ModeTorrent] or source == self.id()
+		return source in [Core.ModeTorrent] or source == Core.Id
 
 	def delete(self, id):
 		result = self._retrieve(mode = Core.ModeDelete, category = Core.CategoryTorrents, action = Core.ActionDelete, id = id)

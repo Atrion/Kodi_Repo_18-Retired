@@ -378,10 +378,25 @@ class Interface(base.Interface):
 							counter = 0
 							canceled = False
 							item = self.mDebrid.item(idTransfer = id, content = True, season = season, episode = episode)
+							if not item:
+								self._addError(title = 'Download Error', message = 'Download Failure')
+								interface.Core.close()
+								return None
+							else:
+								status = item['status'] if 'status' in item else None
+								if status == core.Core.StatusError:
+									self._addErrorDetermine(item, pack = pack)
+									interface.Core.close()
+									return None
+
 							if select: item = self._addSelect(item)
 							while True:
 								if counter == 10: # Only make an API request every 5 seconds.
 									item = self.mDebrid.item(idTransfer = id, content = True, season = season, episode = episode)
+									if not item:
+										self._addError(title = 'Download Error', message = 'Download Failure')
+										interface.Core.close()
+										return None
 									if select: item = self._addSelect(item)
 									counter = 0
 								counter += 1
@@ -389,16 +404,20 @@ class Interface(base.Interface):
 								status = item['status'] if 'status' in item else None
 								try:
 									self.tLink = item['video']['link']
-									if self.tLink: return
+									if self.tLink: return None
 								except: pass
-								if not status == core.Core.StatusQueued and not status == core.Core.StatusBusy and not status == core.Core.StatusFinalize:
+								if status == core.Core.StatusError:
+									self._addErrorDetermine(item, pack = pack)
+									interface.Core.close()
+									return None
+								elif not status == core.Core.StatusQueued and not status == core.Core.StatusBusy and not status == core.Core.StatusFinalize:
 									close = True
 									self._addErrorDetermine(item, api = True, pack = pack)
 									break
 
-								waiting = item['transfer']['speed']['bytes'] == 0 and item['size']['bytes'] == 0 and item['transfer']['progress']['completed']['value'] == 0 and item['transfer']['progress']['completed']['time']['seconds'] == 0
+								waiting = item['transfer']['speed']['bytes'] == 0 and item['size']['bytes'] == 0 and item['transfer']['progress']['completed']['value'] == 0 and item['transfer']['progress']['completed']['time']['seconds'] == 0 and not status == core.Core.StatusFinished
 
-								if status == core.Core.StatusFinalize:
+								if status == core.Core.StatusFinalize or status == core.Core.StatusFinished:
 									interface.Core.update(progress = 0, title = title, message = descriptionFinalize)
 								elif waiting:
 									interface.Core.update(progress = 0, title = title, message = descriptionWaiting)

@@ -119,8 +119,8 @@ class source(provider.ProviderBase):
 				title = cleantitle.get(data['tvshowtitle'])
 				season, episode = data['season'], data['episode']
 				ids = [data['imdb'], data['tvdb']]
-				
-				if not self._query(title, ids): return sources
+
+				if not self._query(title, ids, season, episode): return sources
 
 				results = control.jsonrpc('{"jsonrpc": "2.0", "method": "VideoLibrary.GetTVShows", "params": {"filter":{"or": [{"field": "year", "operator": "is", "value": "%s"}, {"field": "year", "operator": "is", "value": "%s"}, {"field": "year", "operator": "is", "value": "%s"}]}, "properties": ["imdbnumber", "title"]}, "id": 1}' % years)
 				results = unicode(results, 'utf-8', errors='ignore')

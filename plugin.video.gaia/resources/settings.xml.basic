@@ -246,7 +246,10 @@
 
 		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 35602][/B][/UPPERCASE]" />
 		<setting type="sep" />
-		<setting id="interface.ratings.type" type="enum" label="35603" lvalues="35604|35605" default="1" />
+		<setting id="interface.ratings.movies.type" type="enum" label="35666" lvalues="35670|32034|32315|33508" default="0" />
+		<setting id="interface.ratings.movies.own" type="bool" label="35665" default="true" subsetting="true" />
+		<setting id="interface.ratings.shows.type" type="enum" label="35667" lvalues="35670|32034|32315|35668|35669" default="0" />
+		<setting id="interface.ratings.shows.own" type="bool" label="35665" default="true" subsetting="true" />
 
 		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 33490][/B][/UPPERCASE]" />
 		<setting type="sep" />
@@ -327,7 +330,7 @@
 
 		<setting type="bool" visible="false" /> <!-- Ensures that a separator is drawn at the top. Can be removed if other cross-group elements are added here. -->
 
-		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 35631][/B][/UPPERCASE]" />
+		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 35671][/B][/UPPERCASE]" />
 		<setting type="sep" />
 		<setting id="playback.general.sequential" type="bool" label="35433" default="false" />
 		<setting id="playback.general.resume" type="enum" label="32344" lvalues="32302|33565|33800" default="1" />
@@ -340,13 +343,6 @@
 		<setting id="playback.retry.limit" type="slider" label="35291" range="1,10" option="int" default="1" visible="eq(-1,true)" />
 		<setting id="playback.retry.delay" type="slider" label="35292" range="0,180" option="int" default="3" visible="eq(-2,true)" />
 
-		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 35631][/B][/UPPERCASE]" />
-		<setting type="sep" />
-		<setting id="playback.track.status" type="enum" label="35138" lvalues="32314" default="0" visible="false" />
-		<setting id="playback.track.status.alternative" type="enum" label="35138" lvalues="32314|32315" default="1" visible="true" />
-		<setting id="playback.track.progress" type="enum" label="35139" lvalues="32314" default="0" visible="false" />
-		<setting id="playback.track.progress.alternative" type="enum" label="35139" lvalues="32314|32315" default="1" visible="true" />
-
 		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 35579][/B][/UPPERCASE]" />
 		<setting type="sep" />
 		<setting id="playback.binge.enabled" type="bool" label="33192" default="true" />
@@ -356,6 +352,14 @@
 		<setting id="playback.binge.action.none" type="enum" label="35625" lvalues="33821|33743" default="0" subsetting="true" visible="eq(-4,true) + !eq(-3,0) + !eq(-3,3)" />
 		<setting id="playback.binge.action.continue" type="enum" label="35626" lvalues="35628|35627" default="0" subsetting="true" visible="eq(-5,true) + !eq(-4,0) + !eq(-4,1)" />
 		<setting id="playback.binge.action.cancel" type="enum" label="35105" lvalues="35628|35627" default="1" subsetting="true" visible="eq(-6,true) + eq(-5,2)" />
+
+		<setting type="lsep" label="[UPPERCASE][B]$ADDON[plugin.video.gaia 35631][/B][/UPPERCASE]" />
+		<setting type="sep" />
+		<setting id="playback.track.status" type="enum" label="35138" lvalues="32314" default="0" visible="false" />
+		<setting id="playback.track.status.alternative" type="enum" label="35138" lvalues="32314|32315" default="1" visible="true" />
+		<setting id="playback.track.progress" type="enum" label="35139" lvalues="32314" default="0" visible="false" />
+		<setting id="playback.track.progress.alternative" type="enum" label="35139" lvalues="32314|32315" default="1" visible="true" />
+		<setting id="playback.track.hide" type="enum" label="35672" lvalues="32302|35164|33029" default="0" />
 
 		<setting type="sep" />
 		<setting type="bool" visible="false" /> <!-- Ensures that a separator is drawn at the bottom. -->

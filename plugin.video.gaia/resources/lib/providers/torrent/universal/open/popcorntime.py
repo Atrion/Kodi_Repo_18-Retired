@@ -55,7 +55,7 @@ class source(provider.ProviderBase):
 			season = int(data['season']) if 'season' in data and not data['season'] == None else None
 			episode = int(data['episode']) if 'episode' in data and not data['episode'] == None else None
 
-			if not self._query(imdb): return sources
+			if not self._query(imdb, season, episode): return sources
 
 			category = self.category_movies if movie else self.category_shows
 			url = urlparse.urljoin(self.base_link, self.search_link) % (category, imdb)

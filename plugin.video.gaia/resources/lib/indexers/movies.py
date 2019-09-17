@@ -79,6 +79,8 @@ class movies:
 		else:
 			self.certificates = ''
 
+		self.isRelease = False
+		self.isSearch = False
 		self.list = []
 
 		self.imdb_public = True
@@ -199,7 +201,7 @@ class movies:
 				elif attribute == 2:
 					self.list = sorted(self.list, key = lambda k: float(k['rating']), reverse = reverse)
 				elif attribute == 3:
-					self.list = sorted(self.list, key = lambda k: int(k['votes'].replace(',', '')), reverse = reverse)
+					self.list = sorted(self.list, key = lambda k: int(k['votes']), reverse = reverse)
 				elif attribute == 4:
 					for i in range(len(self.list)):
 						if not 'premiered' in self.list[i]: self.list[i]['premiered'] = ''
@@ -219,6 +221,8 @@ class movies:
 
 	def get(self, url, idx = True, full = False):
 		try:
+			self.isRelease = url in ['new', 'home', 'disc']
+
 			try: url = getattr(self, url + '_link')
 			except: pass
 
@@ -234,6 +238,7 @@ class movies:
 				if idx == True: self.worker()
 
 			elif u in self.trakt_link and self.search_link in url:
+				self.isSearch = True
 				self.list = cache.Cache().cacheMedium(self.trakt_list, url, self.trakt_user)
 				if idx == True: self.worker(level = 0)
 
@@ -252,6 +257,7 @@ class movies:
 
 			elif u in self.imdb_link:
 				if self.home_base in url:
+					self.isRelease = True
 					self.discs = []
 					def home(): self.list = cache.Cache().cacheMedium(self.imdb_list, url, full)
 					def disc(): self.discs = cache.Cache().cacheMedium(self.imdb_list, self.disc_link, full)
@@ -356,6 +362,7 @@ class movies:
 			)
 
 	def arrivals(self, idx = True):
+		self.isRelease = True
 		if self.type == tools.Media.TypeDocumentary: setting = tools.Settings.getInteger('interface.arrivals.documentaries')
 		elif self.type == tools.Media.TypeShort: setting = tools.Settings.getInteger('interface.arrivals.shorts')
 		else: setting = tools.Settings.getInteger('interface.arrivals.movies')
@@ -368,6 +375,7 @@ class movies:
 		else: return self.home(idx = idx)
 
 	def home(self, idx = True):
+		self.isRelease = True
 		return self.get(self.home_link, idx = idx)
 
 	def search(self, terms = None):
@@ -825,8 +833,6 @@ class movies:
 
 				try: votes = str(item['votes'])
 				except: votes = '0'
-				try: votes = str(format(int(votes),',d'))
-				except: pass
 				if votes == None: votes = '0'
 				votes = votes.encode('utf-8')
 
@@ -841,7 +847,9 @@ class movies:
 				plot = client.replaceHTMLCodes(plot)
 				plot = plot.encode('utf-8')
 
-				list.append({'title': title, 'originaltitle': title, 'year': year, 'premiered': premiered, 'genre': genre, 'duration': duration, 'rating': rating, 'votes': votes, 'mpaa': mpaa, 'plot': plot, 'imdb': imdb, 'tmdb': tmdb, 'tvdb': '0', 'poster': '0', 'next': next, 'progress' : progress})
+				item = {'title': title, 'originaltitle': title, 'year': year, 'premiered': premiered, 'genre': genre, 'duration': duration, 'rating': rating, 'votes': votes, 'ratingtrakt' : rating, 'votestrakt' : votes, 'mpaa': mpaa, 'plot': plot, 'imdb': imdb, 'tmdb': tmdb, 'tvdb': '0', 'poster': '0', 'next': next, 'progress' : progress}
+				item.update(tools.Rater.extract(item))
+				list.append(item)
 			except:
 				pass
 
@@ -1102,7 +1110,9 @@ class movies:
 				plot = client.replaceHTMLCodes(plot)
 				plot = plot.encode('utf-8')
 
-				list.append({'title': title, 'originaltitle': title, 'year': year, 'genre': genre, 'duration': duration, 'rating': rating, 'ratingown': ratingown, 'ratingtime' : ratingtime, 'votes': votes, 'mpaa': mpaa, 'director': director, 'cast': cast, 'plot': plot, 'imdb': imdb, 'tmdb': '0', 'tvdb': '0', 'poster': poster, 'next': next})
+				item = {'title': title, 'originaltitle': title, 'year': year, 'genre': genre, 'duration': duration, 'rating': rating, 'votes': votes, 'ratingimdb' : rating, 'ratingown' : ratingown, 'ratingtime' : ratingtime, 'votesimdb' : votes, 'mpaa': mpaa, 'director': director, 'cast': cast, 'plot': plot, 'imdb': imdb, 'tmdb': '0', 'tvdb': '0', 'poster': poster, 'next': next}
+				item.update(tools.Rater.extract(item))
+				list.append(item)
 			except:
 				pass
 
@@ -1274,7 +1284,6 @@ class movies:
 		addonFanart, settingFanart = control.addonFanart(), tools.Settings.getBoolean('interface.theme.fanart')
 
 		indicators = playcount.getMovieIndicators()
-		ratingsOwn = tools.Settings.getInteger('interface.ratings.type') == 1
 
 		imdb, tmdb, year = metadata['imdb'], metadata['tmdb'], metadata['year']
 		try: title = metadata['originaltitle']
@@ -1311,8 +1320,7 @@ class movies:
 		try: meta.update({'year': int(meta['year'])})
 		except: pass
 
-		if ratingsOwn and 'ratingown' in meta and not meta['ratingown'] == '0':
-			meta['rating'] = meta['ratingown']
+		meta.update(tools.Rater.extract(meta)) # Update again, in case the old metadata was retrieved from cache, but the settings changed.
 
 		watched = int(playcount.getMovieOverlay(indicators, imdb)) == 7
 		if watched: meta.update({'playcount': 1, 'overlay': 7})
@@ -1413,11 +1421,8 @@ class movies:
 			if not rating or rating == '0.0': rating = '0'
 
 			votes = item.get('votes', '0')
-			try: votes = str(format(int(votes), ',d'))
-			except: pass
 
 			mpaa = item.get('certification', '0')
-			if not mpaa: mpaa = '0'
 
 			tagline = item.get('tagline', '0')
 
@@ -1539,7 +1544,8 @@ class movies:
 			except:
 				fanart2 = '0'
 
-			item = {'title': title, 'originaltitle': originaltitle, 'year': year, 'imdb': imdb, 'tmdb': tmdb, 'poster': '0', 'poster2': poster2, 'poster3': poster3, 'banner': banner, 'fanart': fanart, 'fanart2': fanart2, 'clearlogo': clearlogo, 'clearart': clearart, 'landscape': landscape, 'premiered': premiered, 'genre': genre, 'duration': duration, 'rating': rating, 'votes': votes, 'mpaa': mpaa, 'director': director, 'writer': writer, 'cast': cast, 'plot': plot, 'tagline': tagline}
+			item = {'title': title, 'originaltitle': originaltitle, 'year': year, 'imdb': imdb, 'tmdb': tmdb, 'poster': '0', 'poster2': poster2, 'poster3': poster3, 'banner': banner, 'fanart': fanart, 'fanart2': fanart2, 'clearlogo': clearlogo, 'clearart': clearart, 'landscape': landscape, 'premiered': premiered, 'genre': genre, 'duration': duration, 'rating': rating, 'votes': votes, 'ratingtrakt' : rating, 'votestrakt' : votes, 'mpaa': mpaa, 'director': director, 'writer': writer, 'cast': cast, 'plot': plot, 'tagline': tagline}
+			item.update(tools.Rater.extract(item))
 			item = dict((k,v) for k, v in item.iteritems() if not v == '0')
 			self.list[i].update(item)
 
@@ -1574,8 +1580,10 @@ class movies:
 		indicators = playcount.getMovieIndicators()
 		isPlayable = 'true' if not 'plugin' in control.infoLabel('Container.PluginName') else 'false'
 		nextMenu = interface.Translation.string(32053)
-		ratingsOwn = tools.Settings.getInteger('interface.ratings.type') == 1
 		context = interface.Context.enabled()
+
+		hideWatched = tools.Settings.getInteger('playback.track.hide')
+		hideWatched = not self.isSearch and ((hideWatched == 1 and self.isRelease) or (hideWatched == 2))
 
 		for i in items:
 			try:
@@ -1620,10 +1628,10 @@ class movies:
 				try: meta.update({'year': int(meta['year'])})
 				except: pass
 
-				if ratingsOwn and 'ratingown' in meta and not meta['ratingown'] == '0':
-					meta['rating'] = meta['ratingown']
+				meta.update(tools.Rater.extract(meta)) # Update again, in case the old metadata was retrieved from cache, but the settings changed.
 
 				watched = int(playcount.getMovieOverlay(indicators, imdb)) == 7
+				if watched and hideWatched: continue
 				if watched: meta.update({'playcount': 1, 'overlay': 7})
 				else: meta.update({'playcount': 0, 'overlay': 6})
 				meta.update({'watched': int(watched)}) # Kodi's documentation says this value is deprecate. However, without this value, Kodi always adds the watched checkmark.

@@ -194,11 +194,8 @@ class channels:
 			if not rating or rating == '0.0': rating = '0'
 
 			votes = item.get('votes', '0')
-			try: votes = str(format(int(votes), ',d'))
-			except: pass
 
 			mpaa = item.get('certification', '0')
-			if not mpaa: mpaa = '0'
 
 			tagline = item.get('tagline', '0')
 
@@ -228,7 +225,9 @@ class channels:
 			except:
 				pass
 
-			self.list.append({'title': title, 'originaltitle': originaltitle, 'year': year, 'premiered': premiered, 'genre': genre, 'duration': duration, 'rating': rating, 'votes': votes, 'mpaa': mpaa, 'director': director, 'writer': writer, 'cast': cast, 'plot': plot, 'tagline': tagline, 'imdb': imdb, 'tmdb': tmdb, 'poster': '0', 'channel': i[0]})
+			item = {'title': title, 'originaltitle': originaltitle, 'year': year, 'premiered': premiered, 'genre': genre, 'duration': duration, 'rating': rating, 'votes': votes, 'ratingtrakt': rating, 'votestrakt': votes, 'mpaa': mpaa, 'director': director, 'writer': writer, 'cast': cast, 'plot': plot, 'tagline': tagline, 'imdb': imdb, 'tmdb': tmdb, 'poster': '0', 'channel': i[0]}
+			item.update(tools.Rater.extract(item))
+			self.list.append(item)
 		except:
 			pass
 
@@ -320,13 +319,12 @@ class channels:
 				sysmeta = urllib.quote_plus(json.dumps(meta))
 				url = self.parameterize('%s?action=scrape&title=%s&year=%s&imdb=%s&metadata=%s' % (sysaddon, systitle, year, imdb, sysmeta))
 
+				meta.update(tools.Rater.extract(meta)) # Update again, in case the old metadata was retrieved from cache, but the settings changed.
+
 				watched = int(playcount.getMovieOverlay(indicators, imdb)) == 7
 				if watched: meta.update({'playcount': 1, 'overlay': 7})
 				else: meta.update({'playcount': 0, 'overlay': 6})
 				meta.update({'watched': int(watched)}) # Kodi's documentation says this value is deprecate. However, without this value, Kodi adds the watched checkmark over the remaining episode count.
-
-				if ratingsOwn and 'ratingown' in meta and not meta['ratingown'] == '0':
-					meta['rating'] = meta['ratingown']
 
 				item = control.item(label = label)
 

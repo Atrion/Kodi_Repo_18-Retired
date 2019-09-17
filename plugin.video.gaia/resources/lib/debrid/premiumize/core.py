@@ -153,6 +153,7 @@ class Core(base.Core):
 	ErrorPremiumize = 'premiumize' # Error from Premiumize server.
 	ErrorSelection = 'selection' # No file selected from list of items.
 	ErrorUnsupported = 'unsupported' # Not official Premiumize error. Indicates that a certain feature isd not supported.
+	ErrorDuplicate = 'duplicate' # Already aadded to Premiumize.
 
 	# Client
 	ClientId = tools.System.obfuscate(tools.Settings.getString('internal.premiumize.client', raw = True))
@@ -302,7 +303,9 @@ class Core(base.Core):
 			self.mSuccess = self._success(self.mResult)
 			self.mError = self._error(self.mResult)
 			if not self.mSuccess:
-				if self.mError == 'bad_token' and httpAuthenticate:
+				if 'error' in self.mResult and self.mResult['error'] == Core.ErrorDuplicate:
+					self.mSuccess = True
+				elif self.mError == 'bad_token' and httpAuthenticate:
 					return redo(link = linkOriginal, parameters = parametersOriginal, httpTimeout = httpTimeout, httpData = httpDataOriginal, httpHeaders = httpHeaders, httpAuthenticate = httpAuthenticate, fallback = fallback)
 				else:
 					self._requestErrors('The call to the Premiumize API failed', link, httpData, self.mResult, exception = False)
@@ -744,7 +747,7 @@ class Core(base.Core):
 	@classmethod
 	def deletePossible(self, source):
 		source = source.lower()
-		return source in [Core.ModeTorrent, Core.ModeUsenet] or source == self.id()
+		return source in [Core.ModeTorrent, Core.ModeUsenet] or source == Core.Id
 
 	# Delete single transfer
 	def deleteTransfer(self, id):
@@ -995,19 +998,20 @@ class Core(base.Core):
 			elif 'downloading at' in message or 'running' in message:
 				return Core.StatusBusy
 
-		status = status.lower()
-		if any(state == status for state in ['error', 'fail', 'failure']):
-			return Core.StatusError
-		elif any(state == status for state in ['timeout', 'time']):
-			return Core.StatusTimeout
-		elif any(state == status for state in ['queued', 'queue']):
-			return Core.StatusQueued
-		elif any(state == status for state in ['waiting', 'wait', 'running', 'busy']):
-			return Core.StatusBusy
-		elif any(state == status for state in ['finished', 'finish', 'seeding', 'seed', 'success']):
-			return Core.StatusFinished
-		else:
-			return Core.StatusUnknown
+		if not status == None:
+			status = status.lower()
+			if any(state == status for state in ['error', 'fail', 'failure']):
+				return Core.StatusError
+			elif any(state == status for state in ['timeout', 'time']):
+				return Core.StatusTimeout
+			elif any(state == status for state in ['queued', 'queue']):
+				return Core.StatusQueued
+			elif any(state == status for state in ['waiting', 'wait', 'running', 'busy']):
+				return Core.StatusBusy
+			elif any(state == status for state in ['finished', 'finish', 'seeding', 'seed', 'success']):
+				return Core.StatusFinished
+
+		return Core.StatusUnknown
 
 	def _itemSeeding(self, status, message = None):
 		status = status.lower()
@@ -1330,13 +1334,12 @@ class Core(base.Core):
 					# Transfer
 					item['transfer'] = transfer
 
-					if id and idCurrent == id:
-						return item
+					if id and idCurrent == id: return item
 
 					# Append
 					items.append(item)
 
-			if id: return items[0]
+			if id: return items[0] if len(items) > 0 else None
 			else: return items
 		except:
 			tools.Logger.error()
@@ -1479,17 +1482,20 @@ class Core(base.Core):
 			tools.Logger.error()
 		return largest
 
-	def _item(self, idTransfer = None, idFolder = None, idFile = None, season = None, episode = None, data = None):
+	def _item(self, idTransfer = None, idFolder = None, idFile = None, season = None, episode = None, data = None, transfer = None):
 		try:
-			if data == None:
-				if idTransfer:
-					result = self._itemTransfer(id = idTransfer)
-					if result:
-						idFolder = result['folder']
-						idFile = result['file']
-					else:
-						return None
-				if not idFolder and not idFile:
+			status = None
+
+			if data == None: # Check for cached season pack selection.
+				if transfer == None and idTransfer:
+					transfer = self._itemTransfer(id = idTransfer)
+
+				if transfer:
+					status = transfer['status']
+					idFolder = transfer['folder']
+					idFile = transfer['file']
+
+				if (not idFolder and not idFile) or not self._itemStatus(status = status) == Core.StatusFinished:
 					return None
 
 			item = {}
@@ -1552,17 +1558,17 @@ class Core(base.Core):
 				transfer = None
 			else:
 				transfer = self._itemsTransfer(id = idTransfer)
-				for i in transfer:
-					if (not idFolder == None and i['folder'] == idFolder) or (not idFile == None and i['file'] == idFile):
-						transfer = i
-						break
-				try:
-					idFolder = transfer['folder']
-					idFile = transfer['file']
-				except:
-					pass
+				if transfer:
+					for i in transfer:
+						if (not idFolder == None and i['folder'] == idFolder) or (not idFile == None and i['file'] == idFile):
+							transfer = i
+							break
+					try:
+						idFolder = transfer['folder']
+						idFile = transfer['file']
+					except: pass
 
-			item = self._item(idFolder = idFolder, idFile = idFile, season = season, episode = episode)
+			item = self._item(idFolder = idFolder, idFile = idFile, season = season, episode = episode, transfer = transfer)
 
 			result = None
 			if not transfer == None and not item == None:

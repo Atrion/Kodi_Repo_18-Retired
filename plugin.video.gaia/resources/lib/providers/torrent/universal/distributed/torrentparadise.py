@@ -91,7 +91,7 @@ class source(provider.ProviderBase):
 		except: pass
 		return False
 
-	def _query(self, query, exclude = True, mini = False):
+	def _queryCreate(self, query, exclude = True, mini = False):
 		if not query: return None
 		query = re.sub('[^\w\s]', '', query) # Remove symbols
 		query = query.lower().split(' ')
@@ -320,9 +320,9 @@ class source(provider.ProviderBase):
 					required = str(year)
 
 			if not self._query(query): return sources
-			queryFull = self._query(query, True)
-			query = self._query(query, True, True)
-			required = self._query(required, False)
+			queryFull = self._queryCreate(query, True)
+			query = self._queryCreate(query, True, True)
+			required = self._queryCreate(required, False)
 
 			if self._meta(query):
 				self._retrieveInv(query, required)

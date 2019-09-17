@@ -1810,6 +1810,12 @@ class System(object):
 				from resources.lib.extensions import cache
 				cache.Cache()._deleteFile()
 
+			# gaiaremove
+			if versionOld < 555 and versionNew >= 555:
+				# Clear old metadata due to rating and vote changes.
+				from resources.lib.modules import metacache
+				metacache.clear()
+
 			# Backup - Import
 			Backup.automaticImport()
 
@@ -5375,3 +5381,122 @@ class Promotions(object):
 						message += interface.Format.newline() + Promotions.Cache[i]['description'] + interface.Format.newline()
 						interface.Dialog.page(title = Promotions.Cache[i]['provider'] +' ' + interface.Translation.string(35442), message = message)
 						break
+
+###################################################################
+# RATER
+###################################################################
+
+class Rater(object):
+
+	ModeRating = 'rating'
+	ModeVotes = 'votes'
+
+	@classmethod
+	def _extract(self, mode, item, own, order):
+		if own: order.insert(0, 'own')
+		for i in order:
+			i = mode + i
+			if i in item and item[i] and not item[i] == '0':
+				if mode == Rater.ModeRating:
+					try: return float(item[i])
+					except: continue
+				else:
+					try: return int(item[i])
+					except: continue
+		return item[mode] if mode in item else None
+
+	@classmethod
+	def _average(self, item, own):
+		ratingGlobal = []
+		votesGlobal = []
+		for i in ['imdb', 'tmdb', 'tvdb', 'trakt', 'tvmaze']:
+			key = Rater.ModeRating + i
+			if key in item and item[key] and not item[key] == '0':
+				try:
+					ratingGlobal.append(float(item[key]))
+					found = False
+					key = Rater.ModeVotes + i
+					if key in item and item[key] and not item[key] == '0':
+						try:
+							votesGlobal.append(int(re.sub(',', '', item[key])))
+							found = True
+						except: pass
+					if not found: votesGlobal.append(1)
+				except: pass
+
+		if len(ratingGlobal) == 0:
+			try:
+				ratingGlobal.append(float(item[Rater.ModeRating]))
+				try: votesGlobal.append(int(re.sub(',', '', item[Rater.ModeVotes])))
+				except: votesGlobal.append(1)
+			except: pass
+
+		rating = 0
+		total = sum(votesGlobal)
+		if own and 'ratingown' in item and item['ratingown'] and not item['ratingown'] == '0':
+			rating = item['ratingown']
+		elif total > 0:
+			for i in range(len(ratingGlobal)):
+				rating += (ratingGlobal[i] / total) * votesGlobal[i]
+
+		return rating, total
+
+	@classmethod
+	def extract(self, item, mode = None):
+		rating = None
+		votes = None
+
+		if 'tvshowtitle' in item or 'season' in item or 'episode' in item:
+			type = Settings.getInteger('interface.ratings.shows.type')
+			own = Settings.getBoolean('interface.ratings.shows.own')
+
+			if type == 0:
+				rating, votes = self._average(item = item, own = own)
+				if mode == Rater.ModeRating: return rating
+				if mode == Rater.ModeVotes: return votes
+			else:
+				if mode is None or mode == Rater.ModeRating:
+					if type == 1: rating = self._extract(mode = Rater.ModeRating, item = item, own = own, order = ['imdb', 'tvdb', 'trakt', 'tvmaze'])
+					elif type == 2: rating = self._extract(mode = Rater.ModeRating, item = item, own = own, order = ['trakt', 'imdb', 'tvdb', 'tvmaze'])
+					elif type == 3: rating = self._extract(mode = Rater.ModeRating, item = item, own = own, order = ['tvdb', 'imdb', 'trakt', 'tvmaze'])
+					elif type == 4: rating = self._extract(mode = Rater.ModeRating, item = item, own = own, order = ['tvmaze', 'imdb', 'tvdb', 'trakt'])
+					if mode == Rater.ModeRating: return rating
+
+				if mode is None or mode == Rater.ModeVotes:
+					if type == 1: votes = self._extract(mode = Rater.ModeVotes, item = item, own = own, order = ['imdb', 'tvdb', 'trakt', 'tvmaze'])
+					elif type == 2: votes = self._extract(mode = Rater.ModeVotes, item = item, own = own, order = ['trakt', 'imdb', 'tvdb', 'tvmaze'])
+					elif type == 3: votes = self._extract(mode = Rater.ModeVotes, item = item, own = own, order = ['tvdb', 'imdb', 'trakt', 'tvmaze'])
+					elif type == 4: votes = self._extract(mode = Rater.ModeVotes, item = item, own = own, order = ['tvmaze', 'imdb', 'tvdb', 'trakt'])
+					if mode == Rater.ModeVotes: return votes
+		else:
+			type = Settings.getInteger('interface.ratings.movies.type')
+			own = Settings.getBoolean('interface.ratings.movies.own')
+
+			if type == 0:
+				rating, votes = self._average(item = item, own = own)
+				if mode == Rater.ModeRating: return rating
+				if mode == Rater.ModeVotes: return votes
+			else:
+				if mode is None or mode == Rater.ModeRating:
+					if type == 1: rating = self._extract(mode = Rater.ModeRating, item = item, own = own, order = ['imdb', 'tmdb', 'trakt'])
+					elif type == 2: rating = self._extract(mode = Rater.ModeRating, item = item, own = own, order = ['trakt', 'imdb', 'tmdb'])
+					elif type == 3: rating = self._extract(mode = Rater.ModeRating, item = item, own = own, order = ['tmdb', 'imdb', 'trakt'])
+					if mode == Rater.ModeRating: return rating
+
+				if mode is None or mode == Rater.ModeVotes:
+					if type == 1: votes = self._extract(mode = Rater.ModeVotes, item = item, own = own, order = ['imdb', 'tmdb', 'trakt'])
+					elif type == 2: votes = self._extract(mode = Rater.ModeVotes, item = item, own = own, order = ['trakt', 'imdb', 'tmdb'])
+					elif type == 3: votes = self._extract(mode = Rater.ModeVotes, item = item, own = own, order = ['tmdb', 'imdb', 'trakt'])
+					if mode == Rater.ModeVotes: return votes
+
+		ratingown = 0
+		if 'ratingown' in item and item['ratingown'] and not item['ratingown'] == '0': ratingown = item['ratingown']
+		return {Rater.ModeRating : str(rating), Rater.ModeVotes : str(votes), 'userrating' : str(ratingown)}
+
+	@classmethod
+	def rating(self, item):
+		return self.extract(mode = Rater.ModeRating, item = item)
+
+	@classmethod
+	def votes(self, item):
+		return self.extract(mode = Rater.ModeVotes, item = item)

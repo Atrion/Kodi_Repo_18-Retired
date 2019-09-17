@@ -2867,11 +2867,12 @@ class Metadata(object):
 		if label == Metadata.LabelNone:
 			return None
 		elif not self.mAge is None:
+			if self.mAge == 0: return interface.Translation.string(35447)
 			age = str(self.mAge)
 			if label == Metadata.LabelMini: return age
 			if label == Metadata.LabelShort: return age + list(Metadata.DictionaryAge)[0][:1].upper()
 			age += ' ' + list(Metadata.DictionaryAge)[0]
-			if self.mAge == 0 or self.mAge > 1: age += 's'
+			if self.mAge > 1: age += 's'
 			return age
 		else:
 			return None

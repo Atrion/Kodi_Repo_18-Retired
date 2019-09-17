@@ -443,7 +443,9 @@ class seasons:
 				try: seasoncount = counts[season]
 				except: seasoncount = None
 
-				list.append({'season': season, 'seasoncount': seasoncount, 'tvshowtitle': tvshowtitle, 'label': label, 'year': year, 'premiered': premiered, 'status': status, 'studio': studio, 'genre': genre, 'duration': duration, 'rating': rating, 'votes': votes, 'mpaa': mpaa, 'cast': cast, 'plot': plot, 'imdb': imdb, 'tvdb': tvdb, 'poster': poster, 'banner': banner, 'fanart': fanart, 'thumb': thumb})
+				item = {'season': season, 'seasoncount': seasoncount, 'tvshowtitle': tvshowtitle, 'label': label, 'year': year, 'premiered': premiered, 'status': status, 'studio': studio, 'genre': genre, 'duration': duration, 'rating': rating, 'votes': votes, 'ratingtvdb': rating, 'votestvdb': votes, 'mpaa': mpaa, 'cast': cast, 'plot': plot, 'imdb': imdb, 'tvdb': tvdb, 'poster': poster, 'banner': banner, 'fanart': fanart, 'thumb': thumb}
+				item.update(tools.Rater.extract(item))
+				list.append(item)
 			except:
 				pass
 
@@ -532,7 +534,9 @@ class seasons:
 				try: seasoncount = counts[season]
 				except: seasoncount = None
 
-				list.append({'title': title, 'label': label, 'seasoncount' : seasoncount, 'season': season, 'episode': episode, 'tvshowtitle': tvshowtitle, 'year': year, 'premiered': premiered, 'status': status, 'studio': studio, 'genre': genre, 'duration': duration, 'rating': rating, 'votes': votes, 'mpaa': mpaa, 'director': director, 'writer': writer, 'cast': cast, 'plot': episodeplot, 'imdb': imdb, 'tvdb': tvdb, 'poster': poster, 'banner': banner, 'fanart': fanart, 'thumb': thumb})
+				item = {'title': title, 'label': label, 'seasoncount' : seasoncount, 'season': season, 'episode': episode, 'tvshowtitle': tvshowtitle, 'year': year, 'premiered': premiered, 'status': status, 'studio': studio, 'genre': genre, 'duration': duration, 'rating': rating, 'votes': votes, 'ratingtvdb': rating, 'votestvdb': votes, 'mpaa': mpaa, 'director': director, 'writer': writer, 'cast': cast, 'plot': episodeplot, 'imdb': imdb, 'tvdb': tvdb, 'poster': poster, 'banner': banner, 'fanart': fanart, 'thumb': thumb}
+				item.update(tools.Rater.extract(item))
+				list.append(item)
 			except:
 				pass
 
@@ -700,8 +704,7 @@ class seasons:
 		except:
 			pass
 
-		if ratingsOwn and 'ratingown' in meta and not meta['ratingown'] == '0':
-			meta['rating'] = meta['ratingown']
+		meta.update(tools.Rater.extract(meta)) # Update again, in case the old metadata was retrieved from cache, but the settings changed.
 
 		watched = int(playcount.getSeasonOverlay(indicators, imdb, tvdb, season)) == 7
 		if watched: meta.update({'playcount': 1, 'overlay': 7})
@@ -785,6 +788,8 @@ class seasons:
 		metadata['mediatype'] = 'video'
 		metadata['episode'] = 0
 		metadata['rating'] = 0
+		metadata['userrating'] = 0
+		metadata['votes'] = 0
 		metadata['premiered'] = 0
 
 		title = metadata['tvshowtitle']
@@ -900,8 +905,7 @@ class seasons:
 				except:
 					pass
 
-				if ratingsOwn and 'ratingown' in meta and not meta['ratingown'] == '0':
-					meta['rating'] = meta['ratingown']
+				meta.update(tools.Rater.extract(meta)) # Update again, in case the old metadata was retrieved from cache, but the settings changed.
 
 				item = control.item(label = label)
 

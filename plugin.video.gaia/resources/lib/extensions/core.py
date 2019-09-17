@@ -300,7 +300,6 @@ class Core:
 				if result == None or (self.progressCanceled() and not self.navigationCinema): # Avoid the no-streams notification right after the unavailable notification
 					self.progressClose(force = True)
 					return None
-
 				try:
 					api = orionoid.Orionoid()
 					if api.accountAllow():
@@ -459,7 +458,8 @@ class Core:
 								streamsTorrent = self.streamsTorrent, streamsUsenet = self.streamsUsenet, streamsHoster = self.streamsHoster,
 								streamsCached = self.streamsCached, streamsDebrid = self.streamsDebrid, streamsDirect = self.streamsDirect, streamsPremium = self.streamsPremium, streamsLocal = self.streamsLocal,
 								streamsFinished = self.streamsFinished, streamsBusy = self.streamsBusy,
-								providersFinished = self.providersFinished, providersBusy = self.providersBusy, providersLabels = self.providersLabels
+								providersFinished = self.providersFinished, providersBusy = self.providersBusy, providersLabels = self.providersLabels,
+								skip = self.skip
 							)
 						else:
 							if not message2: message2 = ''
@@ -681,11 +681,13 @@ class Core:
 			self.streamsPremium = 0
 			self.streamsLocal = 0
 
+			self.skip = False
 			self.providersLabels = None
 			self.providersFinished = 0
 			self.providersBusy = 0
 			self.streamsFinished = 0
 			self.streamsBusy = 0
+			self.streamsRunning = False
 
 			self.stopThreads = False
 			self.threadsAdjusted = []
@@ -881,6 +883,8 @@ class Core:
 			message = 'Initializing Providers'
 			_progressUpdate(0, message)
 
+			self.skip = True
+			specialAllow = False
 			scrapingContinue = True
 			scrapingExcludeOrion = False
 			try:
@@ -908,7 +912,15 @@ class Core:
 							timerSingle.start()
 							while True:
 								try:
-									if self.progressCanceled(): break
+									if self.progressCanceled():
+										interface.Loader.show()
+										specialAllow = True
+										self.progressClose()
+										tools.Time.sleep(0.2) # Important, otherwise close and open can clash.
+										_progressShow(title = heading, message = message, metadata = metadata)
+										_progressUpdate(percentageOrion, message, ' ', ' ')
+										interface.Loader.hide()
+										break
 									if not threadOrion.is_alive(): break
 									_progressUpdate(int((min(1, timerSingle.elapsed() / float(timeout))) * percentageOrion * 100), message)
 									time.sleep(timeStep)
@@ -925,15 +937,16 @@ class Core:
 			except:
 				scrapingExcludeOrion = True
 
+			self.skip = False
 			if scrapingContinue:
 				# Start the additional information before the providers are intialized.
 				# Save some search time. Even if there are no providers available later, still do this.
 				threadAdditional = None
-				if not exact and not self.progressCanceled() and self.enabledAlternative:
+				if not exact and (specialAllow or not self.progressCanceled()) and self.enabledAlternative:
 					threadAdditional = workers.Thread(additionalInformation, title, tvshowtitle, imdb, tvdb)
 					threadAdditional.start()
 
-				if not self.progressCanceled():
+				if (specialAllow or not self.progressCanceled()):
 					timeout = 10
 					message = 'Initializing Providers'
 					thread = workers.Thread(initializeProviders, movie, preset, imdb, tvdb, [orionoid.Orionoid.Scraper] if scrapingExcludeOrion else None)
@@ -942,7 +955,9 @@ class Core:
 					timerSingle.start()
 					while True:
 						try:
-							if self.progressCanceled(): break
+							if self.progressCanceled():
+								specialAllow = False
+								break
 							if not thread.is_alive(): break
 							_progressUpdate(int((min(1, timerSingle.elapsed() / float(timeout))) * percentageInitialize * 100), message)
 							time.sleep(timeStep)
@@ -951,18 +966,18 @@ class Core:
 							pass
 					del thread
 
-				if len(self.providers) == 0 and not self.progressCanceled():
+				if len(self.providers) == 0 and (specialAllow or not self.progressCanceled()):
 					if not self.silent: interface.Dialog.notification(message = 'No Providers Available', icon = interface.Dialog.IconError)
 					self.stopThreads = True
 					time.sleep(0.3) # Ensure the time thread (0.2 interval) is stopped.
 					if len(self.sourcesAdjusted) == 0: return None # Orion found a few links, but not enough, causing other providers to be searched.
-				elif self.progressCanceled():
+				elif (not specialAllow and self.progressCanceled()):
 					self.stopThreads = True
 					time.sleep(0.3) # Ensure the time thread (0.2 interval) is stopped.
 					return None
 
 				_progressUpdate(int(percentageInitialize * 100), message) # In case the initialization finishes early.
-				if not exact and not self.progressCanceled() and self.enabledAlternative:
+				if not exact and (specialAllow or not self.progressCanceled()) and self.enabledAlternative:
 					percentageDone = percentageInitialize
 					message = 'Retrieving Additional Information'
 					try: timeout = tools.Settings.getInteger('scraping.alternative.timeout')
@@ -971,7 +986,9 @@ class Core:
 					timerSingle.start()
 					while True:
 						try:
-							if self.progressCanceled(): break
+							if self.progressCanceled():
+								specialAllow = False
+								break
 							if not threadAdditional.is_alive(): break
 							_progressUpdate(int((((self.progressInformationLanguage + self.progressInformationCharacters) / 2.0) * percentageForeign) + percentageDone), message)
 							time.sleep(timeStep)
@@ -979,7 +996,7 @@ class Core:
 						except: break
 					del threadAdditional
 
-					if self.progressCanceled():
+					if not specialAllow and self.progressCanceled():
 						self.stopThreads = True
 						time.sleep(0.3) # Ensure the time thread (0.2 interval) is stopped.
 						return None
@@ -1023,7 +1040,8 @@ class Core:
 				[i.start() for i in threads]
 
 			# Finding Sources
-			if not self.progressCanceled():
+			self.skip = True
+			if (specialAllow or not self.progressCanceled()):
 				percentageDone = percentageForeign + percentageInitialize
 				message = 'Finding Stream Sources'
 				stringInput1 = 'Processed Providers: %d of %d'
@@ -1036,7 +1054,11 @@ class Core:
 
 				while True:
 					try:
-						if self.progressCanceled() or timerSingle.elapsed() >= timeout:
+						if self.progressCanceled():
+							interface.Loader.show()
+							specialAllow = True
+							break
+						if timerSingle.elapsed() >= timeout:
 							break
 
 						termination += 1
@@ -1086,22 +1108,23 @@ class Core:
 				if self.adjustTermination():
 					self.termination = True
 
+			self.skip = False
 			self.providersLabels = []
 
 			# Special handle for cancel on scraping. Allows to still inspect debrid cache after cancellation.
-			specialAllow = False
-			if self.progressCanceled():
+			if (specialAllow or not self.progressCanceled()):
 				specialAllow = True
-				self.progressClose()
+				if self.progressCanceled(): self.progressClose()
 				tools.Time.sleep(0.2) # Important, otherwise close and open can clash.
 				percentageDone = percentageForeign + percentageProviders + percentageInitialize
 				message = 'Stopping Stream Collection'
 				_progressShow(title = heading, message = message, metadata = metadata)
 				_progressUpdate(percentageDone, message, ' ', ' ')
+				interface.Loader.hide()
 
 			# Failures
 			# Do not detect failures if the scraping was canceled.
-			if not self.progressCanceled() and self.enabledFailures:
+			if (specialAllow or not self.progressCanceled()) and self.enabledFailures:
 				_progressUpdate(None, 'Detecting Provider Failures', ' ', ' ')
 				threadsFinished = []
 				threadsUnfinished = []
@@ -1190,7 +1213,6 @@ class Core:
 			# Finalizing Providers
 			# Wait for all the source threads to complete.
 			# This is especially important if there are not prechecks, metadata, or debrid cache inspection, and a provider finishes with a lot of streams just before the timeout.
-
 			if specialAllow or not self.progressCanceled():
 				percentageDone = percentageMetadata + percentagePrecheck + percentageForeign + percentageProviders + percentageInitialize
 				message = 'Finalizing Stream Collection'

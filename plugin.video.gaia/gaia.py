@@ -486,6 +486,10 @@ elif action.startswith('clear'):
 		from resources.lib.indexers import navigator
 		navigator.navigator(type = type, kids = kids).clearProviders()
 
+	elif action == 'clearMetadata':
+		from resources.lib.indexers import navigator
+		navigator.navigator(type = type, kids = kids).clearMetadata()
+
 	elif action == 'clearHistory':
 		from resources.lib.indexers import navigator
 		navigator.navigator(type = type, kids = kids).clearHistory()

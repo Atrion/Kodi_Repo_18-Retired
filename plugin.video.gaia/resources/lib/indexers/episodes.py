@@ -62,6 +62,8 @@ class episodes:
 		else:
 			self.certificates = ''
 
+		self.isRelease = False
+		self.isSearch = False
 		self.threads = []
 		self.list = []
 
@@ -140,7 +142,7 @@ class episodes:
 				elif attribute == 2:
 					self.list = sorted(self.list, key = lambda k: float(k['rating']), reverse = reverse)
 				elif attribute == 3:
-					self.list = sorted(self.list, key = lambda k: int(k['votes'].replace(',', '')), reverse = reverse)
+					self.list = sorted(self.list, key = lambda k: int(k['votes']), reverse = reverse)
 				elif attribute == 4:
 					for i in range(len(self.list)):
 						if not 'premiered' in self.list[i]: self.list[i]['premiered'] = ''
@@ -226,6 +228,7 @@ class episodes:
 
 	def calendar(self, url, idx = True, direct = None):
 		try:
+			self.isRelease = True
 			if direct is None: direct = tools.Settings.getBoolean('interface.tvshows.direct')
 
 			multi = False
@@ -234,28 +237,28 @@ class episodes:
 
 			if self.trakt_link in url and url == self.progress_link:
 				multi = True
-				self.list = cache.Cache().cacheMini(self.trakt_progress_list, url, self.trakt_user, self.lang, direct)
+				self.list = cache.Cache().cacheRefresh(self.trakt_progress_list, url, self.trakt_user, self.lang, direct)
 				self.sort(type = 'progress')
 
 			elif self.trakt_link in url and url == self.mycalendar_link:
-				self.list = cache.Cache().cacheMini(self.trakt_episodes_list, url, self.trakt_user, self.lang, direct)
+				self.list = cache.Cache().cacheRefresh(self.trakt_episodes_list, url, self.trakt_user, self.lang, direct)
 				self.sort(type = 'calendar')
 
 			elif self.trakt_link in url and '/users/' in url:
-				self.list = cache.Cache().cacheMini(self.trakt_list, url, self.trakt_user, True, direct)
+				self.list = cache.Cache().cacheRefresh(self.trakt_list, url, self.trakt_user, True, direct)
 				self.list = self.list[::-1]
 
 			elif self.trakt_link in url:
-				self.list = cache.Cache().cacheShort(self.trakt_list, url, self.trakt_user, True, direct)
+				self.list = cache.Cache().cacheRefresh(self.trakt_list, url, self.trakt_user, True, direct)
 
 			elif self.tvmaze_link in url and url == self.added_link:
 				urls = [i['url'] for i in self.calendars(idx = False)][:5]
 				self.list = []
 				for url in urls:
-					self.list += cache.Cache().cacheLong(self.tvmaze_list, url, True, True, direct)
+					self.list += cache.Cache().cacheRefresh(self.tvmaze_list, url, True, True, direct)
 
 			elif self.tvmaze_link in url:
-				self.list = cache.Cache().cacheShort(self.tvmaze_list, url, False, True, direct)
+				self.list = cache.Cache().cacheRefresh(self.tvmaze_list, url, False, True, direct)
 
 			if self.kidsOnly():
 				self.list = [i for i in self.list if 'mpaa' in i and tools.Kids.allowed(i['mpaa'])]
@@ -266,6 +269,7 @@ class episodes:
 			pass
 
 	def arrivals(self, idx = True):
+		self.isRelease = True
 		direct = tools.Settings.getBoolean('interface.tvshows.direct')
 		if trakt.getTraktIndicatorsInfo() == True: setting = tools.Settings.getInteger('interface.arrivals.shows')
 		else: setting = 0
@@ -280,6 +284,7 @@ class episodes:
 		else: return self.home(idx = idx, direct = direct)
 
 	def home(self, idx = True, direct = False):
+		self.isRelease = True
 		date = self.datetime - datetime.timedelta(days = 1)
 		url = self.calendar_link % date.strftime('%Y-%m-%d')
 		self.list = cache.Cache().cacheShort(self.tvmaze_list, url, False, True, direct)
@@ -287,6 +292,7 @@ class episodes:
 		return self.list
 
 	def calendars(self, idx = True):
+		self.isRelease = True
 		m = control.lang(32060).encode('utf-8').split('|')
 		try: months = [(m[0], 'January'), (m[1], 'February'), (m[2], 'March'), (m[3], 'April'), (m[4], 'May'), (m[5], 'June'), (m[6], 'July'), (m[7], 'August'), (m[8], 'September'), (m[9], 'October'), (m[10], 'November'), (m[11], 'December')]
 		except: months = []
@@ -459,8 +465,6 @@ class episodes:
 
 				try: votes = str(item['show']['votes'])
 				except: votes = '0'
-				try: votes = str(format(int(votes),',d'))
-				except: pass
 				if votes == None: votes = '0'
 				votes = votes.encode('utf-8')
 
@@ -479,7 +483,8 @@ class episodes:
 				plot = client.replaceHTMLCodes(plot)
 				plot = plot.encode('utf-8')
 
-				values = {'title': title, 'season': season, 'episode': episode, 'tvshowtitle': tvshowtitle, 'year': year, 'premiered': premiered, 'added' : added, 'watched' : watched, 'status': 'Continuing', 'studio': studio, 'genre': genre, 'duration': duration, 'rating': rating, 'votes': votes, 'mpaa': mpaa, 'plot': plot, 'imdb': imdb, 'tvdb': tvdb, 'poster': '0', 'thumb': '0', 'progress' : progress}
+				values = {'title': title, 'season': season, 'episode': episode, 'tvshowtitle': tvshowtitle, 'year': year, 'premiered': premiered, 'added' : added, 'watched' : watched, 'status': 'Continuing', 'studio': studio, 'genre': genre, 'duration': duration, 'rating': rating, 'votes': votes, 'ratingtrakt': rating, 'votestrakt': votes, 'mpaa': mpaa, 'plot': plot, 'imdb': imdb, 'tvdb': tvdb, 'poster': '0', 'thumb': '0', 'progress' : progress}
+				values.update(tools.Rater.extract(values))
 
 				if not direct: values['action'] = 'episodes'
 
@@ -779,7 +784,8 @@ class episodes:
 				plot = client.replaceHTMLCodes(plot)
 				plot = plot.encode('utf-8')
 
-				values = {'title': title, 'seasoncount' : seasoncount, 'season': season, 'episode': episode, 'year': year, 'tvshowtitle': tvshowtitle, 'tvshowyear': tvshowyear, 'premiered': premiered, 'added' : added, 'watched' : watched, 'status': status, 'studio': studio, 'genre': genre, 'duration': duration, 'rating': rating, 'votes': votes, 'mpaa': mpaa, 'director': director, 'writer': writer, 'cast': cast, 'plot': plot, 'imdb': imdb, 'tvdb': tvdb, 'poster': poster, 'banner': banner, 'fanart': fanart, 'thumb': thumb, 'snum': i['snum'], 'enum': i['enum']}
+				values = {'title': title, 'seasoncount' : seasoncount, 'season': season, 'episode': episode, 'year': year, 'tvshowtitle': tvshowtitle, 'tvshowyear': tvshowyear, 'premiered': premiered, 'added' : added, 'watched' : watched, 'status': status, 'studio': studio, 'genre': genre, 'duration': duration, 'rating': rating, 'votes': votes, 'ratingtvdb': rating, 'votestvdb': votes, 'mpaa': mpaa, 'director': director, 'writer': writer, 'cast': cast, 'plot': plot, 'imdb': imdb, 'tvdb': tvdb, 'poster': poster, 'banner': banner, 'fanart': fanart, 'thumb': thumb, 'snum': i['snum'], 'enum': i['enum']}
+				values.update(tools.Rater.extract(values))
 
 				if not direct: values['action'] = 'episodes'
 
@@ -982,7 +988,8 @@ class episodes:
 				plot = client.replaceHTMLCodes(plot)
 				plot = plot.encode('utf-8')
 
-				values = {'title': title, 'seasoncount' : seasoncount, 'season': season, 'episode': episode, 'year': year, 'tvshowtitle': tvshowtitle, 'tvshowyear': tvshowyear, 'premiered': premiered, 'status': status, 'studio': studio, 'genre': genre, 'duration': duration, 'rating': rating, 'votes': votes, 'mpaa': mpaa, 'director': director, 'writer': writer, 'cast': cast, 'plot': plot, 'imdb': imdb, 'tvdb': tvdb, 'poster': poster, 'banner': banner, 'fanart': fanart, 'thumb': thumb}
+				values = {'title': title, 'seasoncount' : seasoncount, 'season': season, 'episode': episode, 'year': year, 'tvshowtitle': tvshowtitle, 'tvshowyear': tvshowyear, 'premiered': premiered, 'status': status, 'studio': studio, 'genre': genre, 'duration': duration, 'rating': rating, 'votes': votes, 'ratingtvdb': rating, 'votestvdb': votes, 'mpaa': mpaa, 'director': director, 'writer': writer, 'cast': cast, 'plot': plot, 'imdb': imdb, 'tvdb': tvdb, 'poster': poster, 'banner': banner, 'fanart': fanart, 'thumb': thumb}
+				values.update(tools.Rater.extract(values))
 
 				if not direct: values['action'] = 'episodes'
 
@@ -1156,7 +1163,8 @@ class episodes:
 				plot = client.replaceHTMLCodes(plot)
 				plot = plot.encode('utf-8')
 
-				values = {'title': title, 'season': season, 'episode': episode, 'year': year, 'tvshowtitle': tvshowtitle, 'tvshowyear': tvshowyear, 'premiered': premiered, 'status': 'Continuing', 'studio': studio, 'genre': genre, 'duration': duration, 'rating': rating, 'plot': plot, 'imdb': imdb, 'tvdb': tvdb, 'poster': poster, 'thumb': thumb}
+				values = {'title': title, 'season': season, 'episode': episode, 'year': year, 'tvshowtitle': tvshowtitle, 'tvshowyear': tvshowyear, 'premiered': premiered, 'status': 'Continuing', 'studio': studio, 'genre': genre, 'duration': duration, 'rating': rating, 'ratingtvmaze': rating, 'plot': plot, 'imdb': imdb, 'tvdb': tvdb, 'poster': poster, 'thumb': thumb}
+				values.update(tools.Rater.extract(values))
 
 				if not direct: values['action'] = 'episodes'
 
@@ -1244,8 +1252,7 @@ class episodes:
 			if not 'tvshowyear' in meta: meta.update({'tvshowyear': year}) # Kodi uses the year (the year the show started) as the year for the episode. Change it from the premiered date.
 		except: pass
 
-		if ratingsOwn and 'ratingown' in meta and not meta['ratingown'] == '0':
-			meta['rating'] = meta['ratingown']
+		meta.update(tools.Rater.extract(meta)) # Update again, in case the old metadata was retrieved from cache, but the settings changed.
 
 		watched = int(playcount.getEpisodeOverlay(indicators, imdb, tvdb, season, episode)) == 7
 		if watched: meta.update({'playcount': 1, 'overlay': 7})
@@ -1345,6 +1352,9 @@ class episodes:
 		moreEnabled = video.Review.enabled() or video.Extra.enabled() or video.Deleted.enabled() or video.Making.enabled() or video.Director.enabled() or video.Interview.enabled() or video.Explanation.enabled()
 
 		indicators = playcount.getShowIndicators()
+
+		hideWatched = tools.Settings.getInteger('playback.track.hide')
+		hideWatched = not self.isSearch and ((hideWatched == 1 and self.isRelease) or (hideWatched == 2))
 
 		# Different variable to multi.
 		# "multiple" handles the title format and the directory type.
@@ -1485,14 +1495,14 @@ class episodes:
 						elif airLocation == 2: meta['plot'] = '%s%s\r\n%s' % (airLabel, air, meta['plot'])
 						elif airLocation == 3: meta['plot'] = '%s\r\n%s%s' % (meta['plot'], airLabel, air)
 
-				if ratingsOwn and 'ratingown' in meta and not meta['ratingown'] == '0':
-					meta['rating'] = meta['ratingown']
+				meta.update(tools.Rater.extract(meta)) # Update again, in case the old metadata was retrieved from cache, but the settings changed.
 
 				item = control.item(label = labelProgress)
 
 				try:
 					overlay = int(playcount.getEpisodeOverlay(indicators, imdb, tvdb, season, episode))
 					watched = overlay == 7
+					if watched and hideWatched: continue
 
 					# Skip episodes marked as watched for the unfinished list.
 					try:
@@ -1582,6 +1592,8 @@ class episodes:
 					metaRecap['episode'] = 0
 					metaRecap['premiered'] = 0
 					metaRecap['rating'] = 0
+					metaRecap['userrating'] = 0
+					metaRecap['votes'] = 0
 					metaRecap['duration'] = video.Recap.Duration
 					metaRecap['title'] = metaRecap['originaltitle'] = re.sub('\s+', ' ', interface.Translation.string(35362) % '')
 					metaRecap['tagline'] = interface.Translation.string(35362) % str(seasonRecap)

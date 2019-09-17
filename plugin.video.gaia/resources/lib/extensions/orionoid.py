@@ -304,6 +304,9 @@ try:
 						if meta.age() > 0: data['stream']['time'] = tools.Time.timestamp() - (meta.age() * 86400)
 
 						data['access']['direct'] = meta.direct()
+						data['access']['premiumize'] = False
+						data['access']['offcloud'] = False
+						data['access']['realdebrid'] = False
 						if 'cache' in stream:
 							if 'premiumize' in stream['cache']: data['access']['premiumize'] = stream['cache']['premiumize']
 							if 'offcloud' in stream['cache']: data['access']['offcloud'] = stream['cache']['offcloud']

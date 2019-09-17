@@ -1221,6 +1221,10 @@ msgctxt "#33037"
 msgid "Value Must Be Between %s And %s"
 msgstr ""
 
+msgctxt "#33038"
+msgid "Orion could not be initialized due to disk write permissions. Please restart your device and ensure that Kodi has the necessary permissions to write to disk. If all else fails, please contact us."
+msgstr ""
+
 ##############################################################################
 # HELP
 ##############################################################################

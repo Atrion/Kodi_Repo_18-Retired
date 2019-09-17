@@ -67,6 +67,8 @@ class tvshows:
 			self.certificates = ''
 
 		self.list = []
+		self.isRelease = False
+		self.isSearch = False
 
 		self.imdb_public = True
 		self.imdb_link = 'http://www.imdb.com'
@@ -172,7 +174,7 @@ class tvshows:
 				elif attribute == 2:
 					self.list = sorted(self.list, key = lambda k: float(k['rating']), reverse = reverse)
 				elif attribute == 3:
-					self.list = sorted(self.list, key = lambda k: int(k['votes'].replace(',', '')), reverse = reverse)
+					self.list = sorted(self.list, key = lambda k: int(k['votes']), reverse = reverse)
 				elif attribute == 4:
 					for i in range(len(self.list)):
 						if not 'premiered' in self.list[i]: self.list[i]['premiered'] = ''
@@ -220,6 +222,7 @@ class tvshows:
 				if idx == True: self.worker()
 
 			elif u in self.trakt_link and self.search_link in url:
+				self.isSearch = True
 				self.list = cache.Cache().cacheShort(self.trakt_list, url, self.trakt_user)
 				if idx == True: self.worker(level=0)
 
@@ -748,8 +751,6 @@ class tvshows:
 
 				try: votes = str(item['votes'])
 				except: votes = '0'
-				try: votes = str(format(int(votes),',d'))
-				except: pass
 				if votes == None: votes = '0'
 				votes = votes.encode('utf-8')
 
@@ -764,7 +765,9 @@ class tvshows:
 				plot = client.replaceHTMLCodes(plot)
 				plot = plot.encode('utf-8')
 
-				list.append({'title': title, 'originaltitle': title, 'year': year, 'premiered': premiered, 'studio': studio, 'genre': genre, 'duration': duration, 'rating': rating, 'votes': votes, 'mpaa': mpaa, 'plot': plot, 'imdb': imdb, 'tvdb': tvdb, 'poster': '0', 'next': next})
+				item = {'title': title, 'originaltitle': title, 'year': year, 'premiered': premiered, 'studio': studio, 'genre': genre, 'duration': duration, 'rating': rating, 'votes': votes, 'ratingtrakt': rating, 'votestrakt': votes, 'mpaa': mpaa, 'plot': plot, 'imdb': imdb, 'tvdb': tvdb, 'poster': '0', 'next': next}
+				item.update(tools.Rater.extract(item))
+				list.append(item)
 			except:
 				tools.Logger.error()
 				pass
@@ -938,7 +941,8 @@ class tvshows:
 				try:
 					duration = re.search('((\d+\shr\s)?\d+\smin)', item).group(1)
 					duration = str(convert.ConverterDuration(value = duration).value(convert.ConverterDuration.UnitSecond))
-				except: duration = '0'
+				except:
+					duration = '0'
 
 				rating = '0'
 				try: rating = client.parseDOM(item, 'span', attrs = {'class': 'rating-rating'})[0]
@@ -1015,7 +1019,9 @@ class tvshows:
 				plot = client.replaceHTMLCodes(plot)
 				plot = plot.encode('utf-8')
 
-				list.append({'title': title, 'originaltitle': title, 'year': year, 'genre': genre, 'duration': duration, 'rating': rating, 'ratingown': ratingown, 'ratingtime' : ratingtime, 'votes': votes, 'mpaa': mpaa, 'director': director, 'cast': cast, 'plot': plot, 'imdb': imdb, 'tvdb': '0', 'poster': poster, 'next': next})
+				item = {'title': title, 'originaltitle': title, 'year': year, 'genre': genre, 'duration': duration, 'rating': rating, 'ratingown': ratingown, 'ratingtime' : ratingtime, 'votes': votes, 'ratingimdb': rating, 'votesimdb': votes, 'mpaa': mpaa, 'director': director, 'cast': cast, 'plot': plot, 'imdb': imdb, 'tvdb': '0', 'poster': poster, 'next': next}
+				item.update(tools.Rater.extract(item))
+				list.append(item)
 			except:
 				pass
 
@@ -1238,7 +1244,9 @@ class tvshows:
 				if content == None or content == '': content = '0'
 				content = content.encode('utf-8')
 
-				list.append({'title': title, 'originaltitle': title, 'year': year, 'premiered': premiered, 'studio': studio, 'genre': genre, 'duration': duration, 'rating': rating, 'plot': plot, 'imdb': imdb, 'tvdb': tvdb, 'poster': poster, 'content': content})
+				item = {'title': title, 'originaltitle': title, 'year': year, 'premiered': premiered, 'studio': studio, 'genre': genre, 'duration': duration, 'rating': rating, 'ratingtvmaze': rating, 'plot': plot, 'imdb': imdb, 'tvdb': tvdb, 'poster': poster, 'content': content}
+				item.update(tools.Rater.extract(item))
+				list.append(item)
 			except:
 				pass
 
@@ -1348,8 +1356,7 @@ class tvshows:
 			if not 'tvshowyear' in meta: meta.update({'tvshowyear': year})
 		except: pass
 
-		if ratingsOwn and 'ratingown' in meta and not meta['ratingown'] == '0':
-			meta['rating'] = meta['ratingown']
+		meta.update(tools.Rater.extract(meta)) # Update again, in case the old metadata was retrieved from cache, but the settings changed.
 
 		watched = int(playcount.getShowOverlay(indicators, imdb, tvdb)) == 7
 		if watched: meta.update({'playcount': 1, 'overlay': 7})
@@ -1518,16 +1525,12 @@ class tvshows:
 
 			try: rating = client.parseDOM(item, 'Rating')[0]
 			except: rating = ''
-			if 'rating' in self.list[i] and not self.list[i]['rating'] == '0':
-				rating = self.list[i]['rating']
 			if rating == '': rating = '0'
 			rating = client.replaceHTMLCodes(rating)
 			rating = rating.encode('utf-8')
 
 			try: votes = client.parseDOM(item, 'RatingCount')[0]
 			except: votes = ''
-			if 'votes' in self.list[i] and not self.list[i]['votes'] == '0':
-				votes = self.list[i]['votes']
 			if votes == '': votes = '0'
 			votes = client.replaceHTMLCodes(votes)
 			votes = votes.encode('utf-8')
@@ -1626,7 +1629,8 @@ class tvshows:
 			except:
 				landscape = '0'
 
-			item = {'extended' : True, 'title': title, 'year': year, 'imdb': imdb, 'tvdb': tvdb, 'poster': poster, 'poster2': poster2, 'banner': banner, 'banner2': banner2, 'fanart': fanart, 'fanart2': fanart2, 'clearlogo': clearlogo, 'clearart': clearart, 'landscape': landscape, 'premiered': premiered, 'studio': studio, 'genre': genre, 'duration': duration, 'rating': rating, 'votes': votes, 'mpaa': mpaa, 'cast': cast, 'plot': plot}
+			item = {'extended' : True, 'title': title, 'year': year, 'imdb': imdb, 'tvdb': tvdb, 'poster': poster, 'poster2': poster2, 'banner': banner, 'banner2': banner2, 'fanart': fanart, 'fanart2': fanart2, 'clearlogo': clearlogo, 'clearart': clearart, 'landscape': landscape, 'premiered': premiered, 'studio': studio, 'genre': genre, 'duration': duration, 'rating': rating, 'votes': votes, 'ratingtvdb': rating, 'votestvdb': votes, 'mpaa': mpaa, 'cast': cast, 'plot': plot}
+			item.update(tools.Rater.extract(item))
 			item = dict((k,v) for k, v in item.iteritems() if not v == '0')
 			self.list[i].update(item)
 
@@ -1658,6 +1662,9 @@ class tvshows:
 		addonFanart, settingFanart = control.addonFanart(), tools.Settings.getBoolean('interface.theme.fanart')
 
 		indicators = playcount.getShowIndicators()
+
+		hideWatched = tools.Settings.getInteger('playback.track.hide')
+		hideWatched = not self.isSearch and ((hideWatched == 1 and self.isRelease) or (hideWatched == 2))
 
 		flatten = tools.Settings.getBoolean('interface.tvshows.flatten')
 		ratingsOwn = tools.Settings.getInteger('interface.ratings.type') == 1
@@ -1710,14 +1717,14 @@ class tvshows:
 					if not 'tvshowyear' in meta: meta.update({'tvshowyear': year})
 				except: pass
 
-				if ratingsOwn and 'ratingown' in meta and not meta['ratingown'] == '0':
-					meta['rating'] = meta['ratingown']
+				meta.update(tools.Rater.extract(meta)) # Update again, in case the old metadata was retrieved from cache, but the settings changed.
 
 				item = control.item(label = label)
 
 				try:
 					overlay = int(playcount.getShowOverlay(indicators, imdb, tvdb))
 					watched = overlay == 7
+					if watched and hideWatched: continue
 					if watched: meta.update({'playcount': 1, 'overlay': 7})
 					else: meta.update({'playcount': 0, 'overlay': 6})
 					meta.update({'watched': int(watched)}) # Kodi's documentation says this value is deprecate. However, without this value, Kodi adds the watched checkmark over the remaining episode count.
@@ -1788,6 +1795,7 @@ class tvshows:
 				if not fanart == '0' and not fanart == None: item.setProperty('Fanart_Image', fanart)
 				item.setArt(art)
 				item.setInfo(type = 'Video', infoLabels = tools.Media.metadataClean(meta))
+
 				if context: item.addContextMenuItems([interface.Context(mode = interface.Context.ModeItem, type = tools.Media.TypeShow, kids = self.kids, create = True, watched = watched, metadata = meta, art = art, label = label, link = url, title = title, year = year, imdb = imdb, tvdb = tvdb).menu()])
 				control.addItem(handle = syshandle, url = url, listitem = item, isFolder = True)
 			except:

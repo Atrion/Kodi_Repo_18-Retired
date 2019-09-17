@@ -27,6 +27,7 @@ except: from pysqlite2 import dbapi2 as database
 from resources.lib.modules import control
 
 
+
 def fetch(items, lang, user):
 	try:
 		t2 = int(time.time())
@@ -124,3 +125,11 @@ def local(items, link, poster, fanart):
 			pass
 
 	return items
+
+
+def clear():
+	dbcon = database.connect(control.metacacheFile)
+	dbcur = dbcon.cursor()
+	dbcur.execute("DELETE FROM meta;")
+	dbcur.execute("vacuum") # Reduce the file size.
+	dbcon.commit()

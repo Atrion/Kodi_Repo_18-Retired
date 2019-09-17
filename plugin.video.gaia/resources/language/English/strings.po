@@ -6297,7 +6297,7 @@ msgid "Terminates the scraping process once a certain number of hoster streams w
 msgstr ""
 
 msgctxt "#34422"
-msgid "The type of rating to show. Either show the average rating cast by the public, or your own rating if available."
+msgid "Shows the rating from a preferred tracker if available. The weighted average rating across all trackers, proportionally to the number of votes cast, can also be calculated."
 msgstr ""
 
 msgctxt "#34423"
@@ -6358,6 +6358,14 @@ msgstr ""
 
 msgctxt "#34437"
 msgid "Shows recaps and extras in the season directory structure."
+msgstr ""
+
+msgctxt "#34438"
+msgid "Use your own rating if available. Otherwise use the public rating."
+msgstr ""
+
+msgctxt "#34439"
+msgid "Forcefully hides watched items from lists. Hide watched items in progress and new releases lists, or hide them everywhere. Be careful hiding items, since you might not find them if searching for them in the future."
 msgstr ""
 
 
@@ -8777,7 +8785,7 @@ msgid "Ratings"
 msgstr ""
 
 msgctxt "#35603"
-msgid "Rating Type"
+msgid "Rating Preference"
 msgstr ""
 
 msgctxt "#35604"
@@ -8890,10 +8898,6 @@ msgstr ""
 
 msgctxt "#35631"
 msgid "Playback Tracking"
-msgstr ""
-
-msgctxt "#35631"
-msgid "General Playback"
 msgstr ""
 
 msgctxt "#35632"
@@ -9026,4 +9030,36 @@ msgstr ""
 
 msgctxt "#35664"
 msgid "Ending explanation of season %s of %s."
+msgstr ""
+
+msgctxt "#35665"
+msgid "Own Rating"
+msgstr ""
+
+msgctxt "#35666"
+msgid "Movie Ratings"
+msgstr ""
+
+msgctxt "#35667"
+msgid "Show Ratings"
+msgstr ""
+
+msgctxt "#35668"
+msgid "TVDb"
+msgstr ""
+
+msgctxt "#35669"
+msgid "TVmaze"
+msgstr ""
+
+msgctxt "#35670"
+msgid "Average"
+msgstr ""
+
+msgctxt "#35671"
+msgid "General Playback"
+msgstr ""
+
+msgctxt "#35672"
+msgid "Hide Watched"
 msgstr ""

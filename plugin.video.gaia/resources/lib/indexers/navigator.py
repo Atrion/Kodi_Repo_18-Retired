@@ -372,6 +372,7 @@ class navigator:
 		self.addDirectoryItem(33029, 'clearAll', 'clear.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
 		self.addDirectoryItem(33016, 'clearCache', 'clearcache.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
 		self.addDirectoryItem(33014, 'clearProviders', 'clearproviders.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
+		self.addDirectoryItem(33015, 'clearMetadata', 'clearmetadata.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
 		self.addDirectoryItem(32036, 'clearHistory', 'clearhistory.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
 		self.addDirectoryItem(35119, 'clearShortcuts', 'clearshortcuts.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
 		self.addDirectoryItem(33041, 'clearSearches', 'clearsearches.png', 'DefaultAddonProgram.png', isAction = True, isFolder = False)
@@ -395,6 +396,7 @@ class navigator:
 		if force or self._clearConfirm():
 			self.clearCache(confirm = False)
 			self.clearProviders(confirm = False)
+			self.clearMetadata(confirm = False)
 			self.clearHistory(confirm = False)
 			self.clearShortcuts(confirm = False)
 			self.clearSearches(confirm = False)
@@ -417,6 +419,12 @@ class navigator:
 			core.Core().clearSources(confirm = False)
 			provider.Provider.databaseClear()
 			provider.Provider.failureClear()
+			if confirm: self._clearNotify()
+
+	def clearMetadata(self, confirm = True):
+		if not confirm or self._clearConfirm():
+			from resources.lib.modules import metacache
+			metacache.clear()
 			if confirm: self._clearNotify()
 
 	def clearHistory(self, confirm = True):

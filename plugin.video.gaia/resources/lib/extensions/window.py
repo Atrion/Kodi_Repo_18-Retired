@@ -1108,6 +1108,7 @@ class WindowScrape(WindowProgress):
 	def __init__(self, backgroundType, backgroundPath, logo, status):
 		super(WindowScrape, self).__init__(backgroundType = backgroundType, backgroundPath = backgroundPath, logo = logo, status = status)
 
+		self.mSkip = False
 		self.mTime = None
 		self.mStreamsTotal = 0
 		self.mStreamsHdUltra = 0
@@ -1136,6 +1137,7 @@ class WindowScrape(WindowProgress):
 		self.mControlStreams4 = None
 		self.mControlProcessed = None
 		self.mControlProviders = None
+		self.mControlSkip = None
 		self.mControlCancel = None
 
 		self._onAction(WindowBase.ActionMoveLeft, self._actionFocus)
@@ -1162,7 +1164,7 @@ class WindowScrape(WindowProgress):
 		self._dimensionUpdate(self._dimensionLine())
 		if tools.Settings.getBoolean('interface.navigation.scrape.providers'): self._dimensionUpdate(self._dimensionLine())
 		self._dimensionUpdate(self._dimensionSeparator())
-		self._dimensionUpdate(self._dimensionCancel())
+		self._dimensionUpdate(self._dimensionButtons())
 
 	def _initializeEnd(self):
 		super(WindowScrape, self)._initializeEnd()
@@ -1177,7 +1179,7 @@ class WindowScrape(WindowProgress):
 		self._dimensionUpdate(self._addProcessed())
 		if tools.Settings.getBoolean('interface.navigation.scrape.providers'): self._dimensionUpdate(self._addProviders())
 		self._dimensionUpdate(self._addSeparator())
-		self._dimensionUpdate(self._addCancel())
+		self._dimensionUpdate(self._addButtons())
 		self._addCurtains()
 
 	@classmethod
@@ -1185,7 +1187,7 @@ class WindowScrape(WindowProgress):
 		return super(WindowScrape, self).show(backgroundType = tools.Settings.getInteger('interface.navigation.scrape.background'), backgroundPath = background, logo = self.LogoIcon, status = status, wait = wait, initialize = initialize, close = close)
 
 	@classmethod
-	def update(self, progress = None, finished = None, status = None, time = None, streamsTotal = None, streamsHdUltra = None, streamsHd1080 = None, streamsHd720 = None, streamsSd = None, streamsLd = None, streamsTorrent = None, streamsUsenet = None, streamsHoster = None, streamsCached = None, streamsDebrid = None, streamsDirect = None, streamsPremium = None, streamsLocal = None, streamsFinished = None, streamsBusy = None, providersFinished = None, providersBusy = None, providersLabels = None):
+	def update(self, progress = None, finished = None, status = None, time = None, streamsTotal = None, streamsHdUltra = None, streamsHd1080 = None, streamsHd720 = None, streamsSd = None, streamsLd = None, streamsTorrent = None, streamsUsenet = None, streamsHoster = None, streamsCached = None, streamsDebrid = None, streamsDirect = None, streamsPremium = None, streamsLocal = None, streamsFinished = None, streamsBusy = None, providersFinished = None, providersBusy = None, providersLabels = None, skip = False):
 		instance = super(WindowScrape, self).update(progress = progress, finished = finished, status = status)
 		if instance == None: return instance
 		instance._lock()
@@ -1211,6 +1213,15 @@ class WindowScrape(WindowProgress):
 		if not providersBusy == None: instance.mProvidersBusy = providersBusy
 		try: instance.mProvidersLabels = providersLabels[:3]
 		except: instance.mProvidersLabels = providersLabels
+
+		if not instance.mSkip == skip:
+			if skip:
+				[i.setVisible(not skip) for i in instance.mControlCancel]
+				[i.setVisible(skip) for i in instance.mControlSkip]
+			else:
+				[i.setVisible(skip) for i in instance.mControlSkip]
+				[i.setVisible(not skip) for i in instance.mControlCancel]
+			instance.mSkip = skip
 
 		if not progress == None or not time == None:
 			labels = []
@@ -1274,12 +1285,21 @@ class WindowScrape(WindowProgress):
 	def enabled(self):
 		return tools.Settings.getInteger('interface.navigation.scrape') == 0
 
+	@classmethod
+	def skip(self):
+		interface.Loader.show()
+		self.close()
+
 	def _actionFocus(self):
-		try: self.focus(self.mControlCancel[0])
+		try:
+			if self.mControlSkip[0].isVisible():
+				self.focus(self.mControlSkip[0])
+			else:
+				self.focus(self.mControlCancel[0])
 		except: pass
 
-	def _dimensionCancel(self):
-		return self._dimensionButton(text = 33743, icon = True)
+	def _dimensionButtons(self, text = None):
+		return self._dimensionButton(text = text, icon = True)
 
 	def _addDetails(self):
 		self.mControlDetails, dimension = self._addLine()
@@ -1309,11 +1329,18 @@ class WindowScrape(WindowProgress):
 		self.mControlProviders, dimension = self._addLine()
 		return dimension
 
-	def _addCancel(self):
-		dimension = self._dimensionCancel()
+	def _addButtons(self):
+		dimension = self._dimensionButtons(text = 33897)
+		x = self._centerX(dimension[0])
+		y = self._offsetY() + self._scaleHeight(20)
+		self.mControlSkip = self._addButton(text = 33897, x = x, y = y, callback = self.skip, icon = 'change')
+		[i.setVisible(False) for i in self.mControlSkip]
+
+		dimension = self._dimensionButtons(text = 33743)
 		x = self._centerX(dimension[0])
 		y = self._offsetY() + self._scaleHeight(20)
 		self.mControlCancel = self._addButton(text = 33743, x = x, y = y, callback = self.close, icon = 'error')
+
 		return dimension
 
 class WindowPlayback(WindowProgress):
