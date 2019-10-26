@@ -14,11 +14,6 @@
         <value condition="Skin.HasSetting(PVRGuide.ChannelNumber)">$INFO[ListItem.ChannelNumberLabel]</value>
     </variable>
 
-    <variable name="Label_Studio">
-        <value condition="!String.IsEmpty(ListItem.Studio)">$INFO[ListItem.Studio]</value>
-        <value condition="!String.IsEmpty(Window(Home).Property(SkinHelper.ListItem.Studio))">$INFO[Window(Home).Property(SkinHelper.ListItem.Studio)]</value>
-    </variable>
-
     <variable name="Label_Info_PlayButton">
         <value condition="String.IsEqual(ListItem.DBType,tvshow) | String.IsEqual(ListItem.DBType,season)">$LOCALIZE[1024]</value>
         <value>$LOCALIZE[208]</value>
@@ -47,6 +42,11 @@
         <value condition="Skin.HasSetting(HomeMulti) + !Skin.HasSetting(HomeMultiHorizontal)">Vertical menu | Multiple widgets</value>
         <value condition="Skin.HasSetting(HomeMulti) + Skin.HasSetting(HomeMultiHorizontal)">Horizontal menu | Multiple widgets</value>
         <value>Basic</value>
+    </variable>
+
+    <variable name="Label_SkinSettings_WidgetMovement">
+        <value condition="Skin.HasSetting(FixedWidgets)">Fixed</value>
+        <value>Default</value>
     </variable>
 
     <variable name="Label_SkinSettings_CornerIcon">

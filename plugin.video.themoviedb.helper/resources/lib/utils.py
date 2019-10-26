@@ -1,78 +1,39 @@
+import sys
 import xbmc
-import json
+import xbmcgui
+import xbmcaddon
 from datetime import datetime
 from copy import copy
-from globals import _addonlogname, _url
-from urllib import urlencode
+from contextlib import contextmanager
+_addonlogname = '[plugin.video.themoviedb.helper]\n'
+_addon = xbmcaddon.Addon()
 
 
-def jsonrpc_library(method="VideoLibrary.GetMovies", dbtype="movie"):
-    query = {"jsonrpc": "2.0",
-             "params": {"properties": ["title", "imdbnumber", "originaltitle", "year"]},
-             "method": method,
-             "id": 1}
-    response = json.loads(xbmc.executeJSONRPC(json.dumps(query)))
-    my_list = []
-    dbid_name = '{0}id'.format(dbtype)
-    key_to_get = '{0}s'.format(dbtype)
-    for item in response.get('result', {}).get(key_to_get, []):
-        my_list.append({'imdb_id': item.get('imdbnumber'),
-                        'dbid': item.get(dbid_name),
-                        'title': item.get('title'),
-                        'originaltitle': item.get('originaltitle'),
-                        'year': item.get('year')})
-    return my_list
+@contextmanager
+def busy_dialog():
+    xbmc.executebuiltin('ActivateWindow(busydialognocancel)')
+    try:
+        yield
+    finally:
+        xbmc.executebuiltin('Dialog.Close(busydialognocancel)')
 
 
-def get_kodi_dbid(item, kodi_library):
-    dbid = None
-    if kodi_library:
-        index_list = find_dict_in_list(kodi_library, 'imdb_id', item.get('imdb_id')) if item.get('imdb_id') else []
-        if not index_list and item.get('original_title'):
-            index_list = find_dict_in_list(kodi_library, 'originaltitle', item.get('original_title'))
-        if not index_list and item.get('name'):
-            index_list = find_dict_in_list(kodi_library, 'title', item.get('name'))
-        for i in index_list:
-            if item.get('year'):
-                if item.get('year') in str(kodi_library[i].get('year')):
-                    dbid = kodi_library[i].get('dbid')
-            else:
-                dbid = kodi_library[i].get('dbid')
-            if dbid:
-                return dbid
-
-
-def get_kodi_library(list_type):
-    if list_type == 'movie':
-        return jsonrpc_library("VideoLibrary.GetMovies", "movie")
-    elif list_type == 'tv':
-        return jsonrpc_library("VideoLibrary.GetTVShows", "tvshow")
-
-
-def get_title(request_item):
-    if request_item.get('title'):
-        return request_item.get('title')
-    elif request_item.get('name'):
-        return request_item.get('name')
-    elif request_item.get('author'):
-        return request_item.get('author')
-    elif request_item.get('width') and request_item.get('height'):
-        return u'{0}x{1}'.format(request_item.get('width'), request_item.get('height'))
-    else:
-        return u'N/A'
-
-
-def get_year(request_item):
-    if request_item.get('air_date'):
-        return request_item.get('air_date')[:4]
-    if request_item.get('release_date'):
-        return request_item.get('release_date')[:4]
-    if request_item.get('first_air_date'):
-        return request_item.get('first_air_date')[:4]
-
-
-def get_url(**kwargs):
-    return '{0}?{1}'.format(_url, urlencode(kwargs))
+def dialog_select_item(items=None, details=False):
+    item_list = split_items(items)
+    item_index = 0
+    if len(item_list) > 1:
+        if details:
+            detailed_item_list = []
+            for item in item_list:
+                icon = details.get_icon(item)
+                dialog_item = xbmcgui.ListItem(details.get_title(item))
+                dialog_item.setArt({'icon': icon, 'thumb': icon})
+                detailed_item_list.append(dialog_item)
+            item_index = xbmcgui.Dialog().select(_addon.getLocalizedString(32006), detailed_item_list, preselect=0, useDetails=True)
+        else:
+            item_index = xbmcgui.Dialog().select(_addon.getLocalizedString(32006), item_list)
+    if item_index > -1:
+        return item_list[item_index]
 
 
 def filtered_item(item, key, value, false_val=False):
@@ -102,10 +63,11 @@ def age_difference(birthday, deathday=''):
 
 
 def kodi_log(value, level=0):
+    logvalue = u'{0}{1}'.format(_addonlogname, value) if sys.version_info.major == 3 else u'{0}{1}'.format(_addonlogname, value).encode('utf-8', 'ignore')
     if level == 1:
-        xbmc.log('{0}{1}'.format(_addonlogname, value), level=xbmc.LOGNOTICE)
+        xbmc.log(logvalue, level=xbmc.LOGNOTICE)
     else:
-        xbmc.log('{0}{1}'.format(_addonlogname, value), level=xbmc.LOGDEBUG)
+        xbmc.log(logvalue, level=xbmc.LOGDEBUG)
 
 
 def dictify(r, root=True):
@@ -173,38 +135,12 @@ def iter_props(items, property, itemprops, **kwargs):
     return itemprops
 
 
-def convert_to_plural_type(tmdb_type):
-    if tmdb_type == 'tv':
-        return 'Tv Shows'
-    elif tmdb_type == 'person':
-        return 'People'
-    else:
-        return '{0}s'.format(tmdb_type.capitalize())
-
-
-def convert_to_listitem_type(tmdb_type):
-    if tmdb_type == 'tv':
-        return 'tvshow'
-    elif tmdb_type == 'person':
-        return 'actor'
-    else:
-        return tmdb_type
-
-
-def convert_to_container_type(tmdb_type):
-    if tmdb_type == 'tv':
-        return 'tvshows'
-    elif tmdb_type == 'person':
-        return 'actors'
-    else:
-        return '{0}s'.format(tmdb_type)
-
-
-def convert_to_library_type(tmdb_type):
-    if tmdb_type == 'image':
-        return 'pictures'
-    else:
-        return 'video'
+def del_empty_keys(d):
+    my_dict = d.copy()
+    for k, v in d.items():
+        if not v:
+            del my_dict[k]
+    return my_dict
 
 
 def merge_two_dicts(x, y):

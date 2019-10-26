@@ -171,7 +171,7 @@
                         <onclick condition="[!Skin.HasSetting(HomeMulti) | Skin.HasSetting(HomeMultiHorizontal)] + Skin.HasSetting(HomeIcons)">Skin.Reset(HomeIcons)</onclick>
                     </control>
 
-                    <control type="button" id="19108" description="Corner Icon">
+                    <control type="button" id="19119" description="Corner Icon">
                         <visible>Integer.IsEqual(Window.Property(CurrentFocus),9001)</visible>
                         <include>Defs_Settings_Button</include>
                         <label>Corner icon</label>
@@ -181,6 +181,15 @@
                         <onclick condition="String.IsEqual(Skin.String(CornerIcon),Power)">Skin.SetString(CornerIcon,Home)</onclick>
                         <onclick condition="String.IsEqual(Skin.String(CornerIcon),Home)">Skin.Reset(CornerIcon)</onclick>
                         <visible>!Skin.HasSetting(HomeTextAutoWidth) + [Skin.HasSetting(HomeMultiHorizontal) | !Skin.HasSetting(HomeMulti)] + !Skin.HasSetting(HomeIcons)</visible>
+                    </control>
+
+                    <control type="button" id="19108" description="Widget movement">
+                        <visible>Integer.IsEqual(Window.Property(CurrentFocus),9001)</visible>
+                        <include>Defs_Settings_Button</include>
+                        <label>Widget movement</label>
+                        <label2>$VAR[Label_SkinSettings_WidgetMovement]</label2>
+                        <onclick>Skin.ToggleSetting(FixedWidgets)</onclick>
+                        <visible>Skin.HasSetting(HomeMulti)</visible>
                     </control>
 
                     <control type="radiobutton" id="19104" description="Submenu Only">
@@ -592,6 +601,15 @@
                         <onclick condition="String.IsEmpty(SkinHelper.AutoCloseVideoOSD)">Skin.SetNumeric(SkinHelper.AutoCloseVideoOSD)</onclick>
                     </control>
 
+                    <control type="radiobutton" id="19521" description="Show clearart">
+                        <visible>Integer.IsEqual(Window.Property(CurrentFocus),9005)</visible>
+                        <include>Defs_Settings_Button</include>
+                        <label>$LOCALIZE[31434]</label>
+                        <selected>Skin.HasSetting(ShowOSDClearArt)</selected>
+                        <onclick>Skin.ToggleSetting(ShowOSDClearArt)</onclick>
+                        <enable>!Skin.HasSetting(ShowInfoPaused)</enable>
+                    </control>
+
                     <control type="label" id="19507" description="LABEL MUSIC OSD">
                         <visible>Integer.IsEqual(Window.Property(CurrentFocus),9005)</visible>
                         <include>Dialog_Standard_HintLabel</include>
@@ -781,20 +799,20 @@
                         <onclick>Skin.ToggleSetting(DisableCenter)</onclick>
                     </control>
 
-                    <control type="radiobutton" id="19703" description="Clock">
-                        <visible>Integer.IsEqual(Window.Property(CurrentFocus),9007)</visible>
-                        <include>Defs_Settings_Button</include>
-                        <label>$LOCALIZE[31149]</label>
-                        <selected>!Skin.HasSetting(DisableClock)</selected>
-                        <onclick>Skin.ToggleSetting(DisableClock)</onclick>
-                    </control>
-
                     <control type="radiobutton" id="19709" description="Clearlogo">
                         <visible>Integer.IsEqual(Window.Property(CurrentFocus),9007)</visible>
                         <include>Defs_Settings_Button</include>
                         <label>$LOCALIZE[31170]</label>
                         <selected>Skin.HasSetting(EnableClearlogo)</selected>
                         <onclick>Skin.ToggleSetting(EnableClearlogo)</onclick>
+                    </control>
+
+                    <control type="radiobutton" id="19703" description="Clock">
+                        <visible>Integer.IsEqual(Window.Property(CurrentFocus),9007)</visible>
+                        <include>Defs_Settings_Button</include>
+                        <label>$LOCALIZE[31149]</label>
+                        <selected>!Skin.HasSetting(DisableClock)</selected>
+                        <onclick>Skin.ToggleSetting(DisableClock)</onclick>
                     </control>
 
                     <control type="label" id="19782" description="LABEL">
@@ -824,7 +842,8 @@
                         <include>Defs_Settings_Button</include>
                         <label>$LOCALIZE[31151]</label>
                         <selected>Skin.HasSetting(EnableLanguages)</selected>
-                        <onclick>Skin.ToggleSetting(EnableLanguages)</onclick>
+                        <onclick>Skin.SetBool(EnableLanguages)</onclick>
+                        <onclick>ActivateWindow(1141)</onclick>
                     </control>
 
                     <control type="radiobutton" id="19798" description="Minimal Busy Loader">

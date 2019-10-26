@@ -9063,3 +9063,11 @@ msgstr ""
 msgctxt "#35672"
 msgid "Hide Watched"
 msgstr ""
+
+msgctxt "#35673"
+msgid "Item Already In Local Library"
+msgstr ""
+
+msgctxt "#35674"
+msgid "Clean Library"
+msgstr ""

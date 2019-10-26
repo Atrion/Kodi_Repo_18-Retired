@@ -83,7 +83,7 @@
                                 <onclick condition="Skin.HasSetting(DisableExtendedInfo)">SetFocus(50)</onclick>
                                 <onclick>SetFocus(5000)</onclick>
                                 <onclick>SetFocus(300)</onclick>
-                                <onclick>RunScript(plugin.video.themoviedb.helper,add_path=plugin://plugin.video.themoviedb.helper/?info=details&amp;type=person&amp;query=$INFO[Container(50).ListItem.Label],call_id=1137,prevent_del,delay=0.35)</onclick>
+                                <onclick>RunScript(plugin.video.themoviedb.helper,add_query=$INFO[Container(50).ListItem.Label],type=person,call_id=1137,prevent_del,delay=0.35)</onclick>
                                 <onback>300</onback>
                                 <onup>300</onup>
                                 <ondown>5001</ondown>
@@ -133,7 +133,7 @@
                             <onclick condition="Skin.HasSetting(DisableExtendedInfo)">SetFocus(50)</onclick>
                             <onclick>SetFocus(5000)</onclick>
                             <onclick>SetFocus(300)</onclick>
-                            <onclick>RunScript(plugin.video.themoviedb.helper,add_path=plugin://plugin.video.themoviedb.helper/?info=details&amp;type=person&amp;query=$INFO[Container(5077).ListItem.Label],call_id=1137,prevent_del,delay=0.35)</onclick>
+                            <onclick>RunScript(plugin.video.themoviedb.helper,add_query=$INFO[Container(5077).ListItem.Label],type=person,call_id=1137,prevent_del,delay=0.35)</onclick>
                             <include>Defs_InfoList_OnBack</include>
                             <visible>!String.IsEmpty(Container(5001).ListItem.Property(tmdb_id)) + !Container(5001).IsUpdating</visible>
                             <content limit="25" target="videos">plugin://plugin.video.themoviedb.helper/?info=cast&amp;type=movie&amp;tmdb_id=$INFO[Container(5001).ListItem.Property(tmdb_id)]</content>
@@ -325,6 +325,7 @@
                     <onback condition="Skin.HasSetting(DisableExtendedInfo)">SetFocus(50)</onback>
                     <onback>SetFocus(5000)</onback>
                     <onback>300</onback>
+                    <onclick>SetFocus(9569)</onclick>
                     <include condition="String.IsEmpty(ListItem.Property(tmdb_id)) + [!String.IsEmpty(ListItem.Art(fanart1)) | !String.IsEmpty(ListItem.Art(discart))]">Items_Info_Gallery</include>
                     <include condition="!String.IsEmpty(ListItem.Property(tmdb_id)) | [String.IsEmpty(ListItem.Art(fanart1)) + String.IsEmpty(ListItem.Art(discart))]">Info_Fanart_List</include>
                     <visible>Integer.IsGreater(Container(6000).NumItems,0) | Container(6000).IsUpdating</visible>
@@ -360,6 +361,11 @@
         <include content="Info_ImageViewer">
             <param name="listid" value="5059" />
             <param name="buttonid" value="9559" />
+        </include>
+        <include content="Info_ImageViewer">
+            <param name="listid" value="6000" />
+            <param name="buttonid" value="9569" />
+            <param name="art" value="Icon" />
         </include>
         <include>Object_PlotOverlay</include>
     </include>

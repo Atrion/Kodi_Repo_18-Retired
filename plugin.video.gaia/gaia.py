@@ -1704,7 +1704,11 @@ elif action.startswith('library'):
 	elif action == 'libraryUpdate':
 		from resources.lib.extensions import library
 		force = tools.Converter.boolean(params.get('force'))
-		library.Library(type = type).update(force = force)
+		library.Library.update(force = force, type = type)
+
+	elif action == 'libraryClean':
+		from resources.lib.extensions import library
+		library.Library(type = type).clean()
 
 	elif action == 'libraryService':
 		from resources.lib.extensions import library

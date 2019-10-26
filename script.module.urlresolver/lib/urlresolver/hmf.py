@@ -256,6 +256,8 @@ class HostedMediaFile:
         try:
             msg = ''
             request = urllib2.Request(stream_url.split('|')[0], headers=headers)
+            # only do a HEAD request. gujal
+            request.get_method = lambda : 'HEAD'
             #  set urlopen timeout to 15 seconds
             http_code = urllib2.urlopen(request, timeout=15).getcode()
         except urllib2.URLError as e:
@@ -280,7 +282,7 @@ class HostedMediaFile:
         if int(http_code) >= 400:
             common.logger.log_warning('Stream UrlOpen Failed: Url: %s HTTP Code: %s Msg: %s' % (stream_url, http_code, msg))
 
-        return int(http_code) < 400
+        return int(http_code) < 400 or int(http_code) == 504
 
     def __nonzero__(self):
         if self._valid_url is None:

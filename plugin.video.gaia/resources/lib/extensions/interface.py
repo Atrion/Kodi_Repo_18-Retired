@@ -2629,6 +2629,9 @@ class Context(object):
 	def commandLibraryUpdate(self):
 		return self._commandPlugin(action = 'libraryUpdate', parameters = {'force' : True})
 
+	def commandLibraryClean(self):
+		return self._commandPlugin(action = 'libraryClean')
+
 	def add(self, label, action = None, command = None, parameters = None, condition = None, dynamic = None, close = None, loader = None, items = None):
 		try:
 			item = {'label' : self._translate(label)}
@@ -2847,6 +2850,7 @@ class Context(object):
 				items.append({'label' : self._translate(35495, 32055), 'command' : 'commandLibraryAddSeason', 'condition' : 'Context.EnabledLibrary'})
 			items.append({'label' : self._translate(35495, 35498), 'command' : 'commandLibraryAddShow', 'condition' : 'Context.EnabledLibrary'})
 		items.append({'label' : self._translate(35493), 'command' : 'commandLibraryUpdate', 'condition' : 'Context.EnabledLibrary'})
+		items.append({'label' : self._translate(35674), 'command' : 'commandLibraryClean', 'condition' : 'Context.EnabledLibrary'})
 		self.add(label = 35170, items = items)
 
 	def show(self, wait = False):

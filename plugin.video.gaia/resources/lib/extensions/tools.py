@@ -4817,22 +4817,14 @@ class Donations(object):
 	# Type
 	TypeNone = None
 	TypePaypal = 'paypal'
-	TypeAragon = 'aragon'
-	TypeAugur = 'augur'
 	TypeBitcoin = 'bitcoin'
 	TypeBitcoinCash = 'bitcoincash'
 	TypeDash = 'dash'
-	TypeDecred = 'decred'
-	TypeDogecoin = 'dogecoin'
-	TypeEos = 'eos'
 	TypeEthereum = 'ethereum'
-	TypeEthereumClassic = 'ethereumclassic'
-	TypeGolem = 'golem'
 	TypeLitecoin = 'litecoin'
-	TypeGnosis = 'gnosis'
-	TypeOmiseGo = 'omisego'
 	TypeRipple = 'ripple'
 	TypeZcash = 'zcash'
+	TypeMonero = 'monero'
 
 	# Popup
 	PopupThreshold = 50
@@ -4912,7 +4904,7 @@ class Donations(object):
 			{
 				'identifier' : Donations.TypeBitcoinCash,
 				'name' : 'Bitcoin Cash',
-				'color' : 'E97900',
+				'color' : '2DB300',
 				'icon' : 'donationsbitcoincash.png',
 			},
 			{
@@ -4920,18 +4912,6 @@ class Donations(object):
 				'name' : 'Ethereum',
 				'color' : '62688F',
 				'icon' : 'donationsethereum.png',
-			},
-			{
-				'identifier' : Donations.TypeEthereumClassic,
-				'name' : 'Ethereum Classic',
-				'color' : '628A6E',
-				'icon' : 'donationsethereumclassic.png',
-			},
-			{
-				'identifier' : Donations.TypeDash,
-				'name' : 'Dash',
-				'color' : '2588DC',
-				'icon' : 'donationsdash.png',
 			},
 			{
 				'identifier' : Donations.TypeLitecoin,
@@ -4946,10 +4926,10 @@ class Donations(object):
 				'icon' : 'donationsripple.png',
 			},
 			{
-				'identifier' : Donations.TypeOmiseGo,
-				'name' : 'OmiseGo',
-				'color' : '3874F5',
-				'icon' : 'donationsomisego.png',
+				'identifier' : Donations.TypeMonero,
+				'name' : 'Monero',
+				'color' : 'FF6600',
+				'icon' : 'donationsmonero.png',
 			},
 			{
 				'identifier' : Donations.TypeZcash,
@@ -4958,10 +4938,10 @@ class Donations(object):
 				'icon' : 'donationszcash.png',
 			},
 			{
-				'identifier' : Donations.TypeDecred,
-				'name' : 'Decred',
-				'color' : '2ED8A3',
-				'icon' : 'donationsdecred.png',
+				'identifier' : Donations.TypeDash,
+				'name' : 'Dash',
+				'color' : '2588DC',
+				'icon' : 'donationsdash.png',
 			},
 		]
 
@@ -5051,7 +5031,7 @@ class Statistics(object):
 	@classmethod
 	def enabled(self):
 		# Do not share if developer is enabled and sharing is switched off.
-		return not(System.developers() and not self.sharing())
+		return not System.developers() and self.sharing()
 
 	@classmethod
 	def sharing(self):

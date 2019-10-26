@@ -482,7 +482,7 @@ def get_episode_parameters(show, season, episode):
 	if show.get('fanart') != None and show.get('fanart') != '':
 		parameters['fanart'] = show.get('fanart')
 	else:
-		parameters['fanart'] = get_background_path()
+		parameters['fanart'] = ''
 	is_anime = False
 	if parameters['genres'] != None and parameters['absolute_number'] and parameters['absolute_number'] != '0' and 'animation' in parameters['genres'].lower():
 		tmdb_results = Find(show['id']).info(external_source='tvdb_id')

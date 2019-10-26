@@ -123,6 +123,7 @@ class Core(base.Core):
 	ErrorPremium = 'premium'
 	ErrorSelection = 'selection' # No file selected from list of items.
 	ErrorInaccessible = 'inaccessible' # Eg: 404 error.
+	ErrorCopyright = 'copyright'
 
 	# Limits
 	LimitLink = 2000 # Maximum length of a URL.
@@ -205,8 +206,7 @@ class Core(base.Core):
 				self.mSuccess = False
 				self.mError = 'JSON Error'
 
-			if self.mSuccess: return self.mResult
-			else: self._requestErrors('The call to the OffCloud API failed', link, httpData, self.mResult)
+			if not self.mSuccess: self._requestErrors('The call to the OffCloud API failed', link, httpData, self.mResult)
 		except (urllib2.HTTPError, urllib2.URLError) as error:
 			self.mSuccess = False
 			if hasattr(error, 'code'):
@@ -226,7 +226,7 @@ class Core(base.Core):
 			if html: self.mError = 'HTML Error'
 			else: self.mError = 'Unknown Error'
 			self._requestErrors(self.mError, link, httpData, self.mResult)
-		return None
+		return self.mResult
 
 	def _requestErrors(self, message, link, payload, result = None):
 		if self.mDebug:
@@ -277,6 +277,22 @@ class Core(base.Core):
 
 	def error(self):
 		return self.mError
+
+	def _error(self, result, default = ErrorUnknown):
+		try:
+			if 'not_available' in result: result = result['not_available']
+			elif 'error' in result: result = result['error']
+			result = result.lower()
+
+			if 'reserved' in result and 'premium' in result: return Core.ErrorPremium
+			elif 'dmca' in result or 'eucd' in result: return Core.ErrorCopyright
+			elif 'cloud' in result: return Core.ErrorLimitCloud
+			elif 'premium' in result: return Core.ErrorLimitPremium
+			elif 'link' in result: return Core.ErrorLimitLink
+			elif 'video' in result: return Core.ErrorLimitVideo
+			elif 'proxy' in result: return Core.ErrorLimitProxy
+		except: pass
+		return default
 
 	##############################################################################
 	# WEBSITE
@@ -562,18 +578,8 @@ class Core(base.Core):
 		items = None
 		error = None
 		try:
-			if 'not_available' in result:
-				result = result['not_available'].lower()
-				if 'cloud' in result: error = Core.ErrorLimitCloud
-				elif 'premium' in result: error = Core.ErrorLimitPremium
-				elif 'link' in result: error = Core.ErrorLimitLink
-				elif 'video' in result: error = Core.ErrorLimitVideo
-				elif 'proxy' in result: error = Core.ErrorLimitProxy
-				else: error = Core.ErrorUnknown
-			elif 'error' in result:
-				result = result['error'].lower()
-				if 'reserved' in result and 'premium' in result:
-					error = Core.ErrorPremium
+			if 'not_available' in result or 'error' in result:
+				error = self._error(result)
 			elif 'requestId' in result:
 				id = result['requestId']
 				try:
@@ -623,12 +629,12 @@ class Core(base.Core):
 	def addInstant(self, link, season = None, episode = None, proxy = None):
 		result = self._retrieve(mode = Core.ModePost, category = Core.CategoryInstant, action = Core.ActionDownload, url = link, proxyId = proxy)
 		if self.success(): return self._addLink(category = Core.CategoryInstant, result = result, season = season, episode = episode)
-		else: return self.addResult(error = Core.ErrorOffCloud)
+		else: return self.addResult(error = self._error(result, default = Core.ErrorOffCloud))
 
 	def addCloud(self, link, title = None, season = None, episode = None, source = None):
 		result = self._retrieve(mode = Core.ModePost, category = Core.CategoryCloud, action = Core.ActionDownload, url = link)
 		if self.success(): return self._addLink(category = Core.CategoryCloud, result = result, season = season, episode = episode)
-		else: return self.addResult(error = Core.ErrorOffCloud)
+		else: return self.addResult(error = self._error(result, default = Core.ErrorOffCloud))
 
 	# Downloads the torrent, nzb, or any other container supported by Core.
 	# If mode is not specified, tries to detect the file type automatically.
@@ -661,7 +667,7 @@ class Core(base.Core):
 
 			result = self._retrieve(mode = Core.ModePost, category = Core.CategoryTorrent, action = Core.ActionUpload, httpData = data, httpHeaders = headers)
 			if self.success(): return self.addCloud(link = result['url'], title = title, season = season, episode = episode)
-			else: return self.addResult(error = Core.ErrorOffCloud)
+			else: return self.addResult(error = self._error(result, default = Core.ErrorOffCloud))
 		except:
 			tools.Logger.error()
 			return self.addResult(error = Core.ErrorOffCloud)

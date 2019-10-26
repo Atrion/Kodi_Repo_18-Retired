@@ -1296,7 +1296,12 @@ class WindowScrape(WindowProgress):
 				self.focus(self.mControlSkip[0])
 			else:
 				self.focus(self.mControlCancel[0])
-		except: pass
+		except:
+			# For Kodi 17 thaat does not have the isVisible() function.
+			try:
+				if self.mSkip: self.focus(self.mControlSkip[0])
+				else: self.focus(self.mControlCancel[0])
+			except: pass
 
 	def _dimensionButtons(self, text = None):
 		return self._dimensionButton(text = text, icon = True)

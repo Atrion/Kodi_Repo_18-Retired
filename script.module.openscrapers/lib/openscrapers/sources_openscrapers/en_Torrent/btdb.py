@@ -27,7 +27,7 @@ import re
 import urllib
 import urlparse
 
-from openscrapers.modules import cleantitle
+from openscrapers.modules import cfscrape
 from openscrapers.modules import client
 from openscrapers.modules import debrid
 from openscrapers.modules import source_utils
@@ -40,6 +40,7 @@ class source:
         self.domains = ['btdb.eu']
         self.base_link = 'https://btdb.eu/'
         self.search_link = '?search=%s'
+        self.scraper = cfscrape.create_scraper()
 
     def movie(self, imdb, title, localtitle, aliases, year):
         try:
@@ -92,7 +93,7 @@ class source:
             url = urlparse.urljoin(self.base_link, url)
 
             try:
-                r = client.request(url)
+                r = self.scraper.get(url).content
                 posts = client.parseDOM(r, 'li')
                 for post in posts:
                     link = re.findall('a title="Download using magnet" href="(magnet:.+?)"', post, re.DOTALL)

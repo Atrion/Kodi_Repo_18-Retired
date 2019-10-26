@@ -219,6 +219,9 @@ class Interface(base.Interface):
 		elif result['error'] == core.Core.ErrorSelection:
 			title = 'Selection Error'
 			message = 'No File Selected'
+		elif result['error'] == core.Core.ErrorCopyright:
+			title = 'Copyright Error'
+			message = 'Blocked Due To Copyright Reports'
 		else:
 			tools.Logger.errorCustom('Unexpected OffCloud Error: ' + str(result))
 			title = 'Stream Error'
@@ -374,11 +377,20 @@ class Interface(base.Interface):
 							seconds = None
 							counter = 0
 							item = self.mDebrid.item(category = category, id = id, season = season, episode = episode, transfer = True, files = True)
+							if not item:
+
+								self._addError(title = 'Download Error', message = 'Download Failure')
+								interface.Core.close()
+								return None
 							if select: item = self._addSelect(item)
 
 							while True:
 								if (processing and counter == 5) or (not processing and counter == 10): # Only make an API request every 2.5 or 5 seconds.
 									item = self.mDebrid.item(category = category, id = id, season = season, episode = episode, transfer = True, files = True)
+									if not item:
+										self._addError(title = 'Download Error', message = 'Download Failure')
+										interface.Core.close()
+										return None
 									if select: item = self._addSelect(item)
 									counter = 0
 								counter += 1
@@ -396,7 +408,11 @@ class Interface(base.Interface):
 										interface.Core.close()
 										return
 								except: pass
-								if not status == core.Core.StatusQueued and not status == core.Core.StatusInitialize and not status == core.Core.StatusBusy and not status == core.Core.StatusFinalize:
+								if status == core.Core.StatusError:
+									self._addErrorDetermine(item, pack = pack, category = category)
+									interface.Core.close()
+									return None
+								elif not status == core.Core.StatusQueued and not status == core.Core.StatusInitialize and not status == core.Core.StatusBusy and not status == core.Core.StatusFinalize:
 									close = True
 									self._addErrorDetermine(item, api = True, pack = pack, category = category)
 									break

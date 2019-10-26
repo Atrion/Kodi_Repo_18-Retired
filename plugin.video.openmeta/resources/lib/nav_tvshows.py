@@ -430,7 +430,7 @@ def list_trakt_episodes(result):
 		episode_info['title'] = '%s (%02dx%02d): %s' % (tvshow_title, season_num, episode_num, episode_title)
 		context_menu = []
 		showdata = TVDB[int(show_id)]
-		extradata = play_tvshows.get_episode_parameters(showdata, season_num, episode_num)
+		# extradata = play_tvshows.get_episode_parameters(showdata, season_num, episode_num)
 		properties = {}
 		try:
 			if traktenabled and countenabled:
@@ -454,8 +454,8 @@ def list_trakt_episodes(result):
 				'info_type': 'video',
 				'stream_info': {'video': {}},
 				'properties': properties,
-				'thumbnail': extradata['thumbnail'],
-				'poster': extradata['poster'],
+				'thumbnail': episode_info['fanart'],
+				'poster': episode_info['poster'],
 				'fanart': episode_info['fanart']
 			}
 
@@ -746,7 +746,9 @@ def trakt_tv_next_episodes(raw=False):
 	for episode in result:
 		trakt_id = episode['show']['ids']['trakt']
 		episode_info = Trakt.get_episode(trakt_id, episode['season'], episode['number'])
-		first_aired_string = episode_info['first_aired']
+		first_aired_string = episode_info.get('first_aired', '')
+		if not first_aired_string:
+			continue
 		episode['first_aired'] = first_aired_string
 		if int(first_aired_string[:4]) < 1970:
 			items.append(episode)

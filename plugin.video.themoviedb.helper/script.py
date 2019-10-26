@@ -5,9 +5,21 @@
 import sys
 import xbmc
 import xbmcgui
-import time
+import xbmcaddon
+import resources.lib.utils as utils
+from resources.lib.globals import LANGUAGES, APPEND_TO_RESPONSE
+from resources.lib.tmdb import TMDb
 _homewindow = xbmcgui.Window(10000)
 _prefixname = 'TMDbHelper.'
+_addon = xbmcaddon.Addon()
+_addonname = 'plugin.video.themoviedb.helper'
+_languagesetting = _addon.getSettingInt('language')
+_language = LANGUAGES[_languagesetting]
+_cache_long = _addon.getSettingInt('cache_details_days')
+_cache_short = _addon.getSettingInt('cache_list_days')
+_tmdb_apikey = _addon.getSetting('tmdb_apikey')
+_tmdb = TMDb(api_key=_tmdb_apikey, language=_language, cache_long=_cache_long, cache_short=_cache_short,
+             append_to_response=APPEND_TO_RESPONSE, addon_name=_addonname)
 
 
 class Script:
@@ -55,13 +67,11 @@ class Script:
         _homewindow.clearProperty(self.prefixlock)
 
     def call_window(self):
-        sleeper = float(self.params.get('delay', '0'))
-        time.sleep(sleeper)
         if self.params.get('call_id'):
-            xbmc.executebuiltin('Dialog.Close(all, force)')
+            xbmc.executebuiltin('Dialog.Close(12003)')
             xbmc.executebuiltin('ActivateWindow({0})'.format(self.params.get('call_id')))
         elif self.params.get('call_path'):
-            xbmc.executebuiltin('Dialog.Close(all, force)')
+            xbmc.executebuiltin('Dialog.Close(12003)')
             xbmc.executebuiltin('ActivateWindow(videos, {0}, return)'.format(self.params.get('call_path')))
 
     def router(self):
@@ -70,6 +80,26 @@ class Script:
                 self.position = self.position + 1
                 self.set_props(self.position, self.params.get('add_path'))
                 self.lock_path(self.params.get('prevent_del'))
+            elif self.params.get('add_query') and self.params.get('type'):
+                with utils.busy_dialog():
+                    item = utils.dialog_select_item(self.params.get('add_query'))
+                    if not item:
+                        return
+                    tmdb_id = _tmdb.get_tmdb_id(self.params.get('type'), query=item, selectdialog=True)
+                    if tmdb_id:
+                        self.position = self.position + 1
+                        add_paramstring = 'plugin://plugin.video.themoviedb.helper/?info=details&amp;type={0}&amp;tmdb_id={1}'.format(self.params.get('type'), tmdb_id)
+                        self.set_props(self.position, add_paramstring)
+                        self.lock_path(self.params.get('prevent_del'))
+                    else:
+                        utils.kodi_log('Unable to find TMDb ID!\nQuery: {0} Type: {1}'.format(self.params.get('add_query'), self.params.get('type')), 1)
+                        return
+            elif self.params.get('add_prop') and self.params.get('prop_id'):
+                item = utils.dialog_select_item(self.params.get('add_prop'))
+                if not item:
+                    return
+                prop_name = '{0}{1}'.format(_prefixname, self.params.get('prop_id'))
+                _homewindow.setProperty(prop_name, item)
             elif self.params.get('del_path'):
                 if self.prevent_del:
                     self.unlock_path()

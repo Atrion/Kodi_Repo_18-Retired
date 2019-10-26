@@ -45,6 +45,9 @@ class Library(object):
 	LinkTmdb = 'https://www.themoviedb.org/%s/%s'
 	LinkImdb = 'http://www.imdb.com/title/%s/'
 
+	ExtensionStrm = '.strm'
+	ExtensionMeta = '.meta'
+
 	##############################################################################
 	# CONSTRUCTORS
 	##############################################################################
@@ -157,6 +160,7 @@ class Library(object):
 			path = re.sub(r'(?!%s)[^\w\-_\.]', '.', path)
 			path = re.sub('\.+', '.', path)
 			path = re.sub(re.compile('(CON|PRN|AUX|NUL|COM\d|LPT\d)\.', re.I), '\\1_', path)
+			path = path.strip('.')
 		except:
 			pass
 		return path
@@ -239,6 +243,8 @@ class Library(object):
 
 	def _movieAddSingle(self, title, year, imdb, tmdb, metadata, multiple = False, link = None):
 		count = 0
+		locationKodi = self.mLocation
+		locationResolved = tools.File.translate(locationKodi)
 
 		if self._ready() and not multiple:
 			interface.Dialog.notification(title = 33244, message = 35177, icon = interface.Dialog.IconInformation, time = 100000000)
@@ -247,9 +253,9 @@ class Library(object):
 		try:
 			if self.mDuplicates:
 				id = [imdb, tmdb] if not tmdb == '0' else [imdb]
-				library = tools.System.executeJson(method = 'VideoLibrary.GetMovies', parameters = {'filter' : {'or' : [{'field' : 'year', 'operator' : 'is', 'value' : str(year)}, {'field' : 'year', 'operator' : 'is', 'value' : str(int(year) + 1)}, {'field' : 'year', 'operator' : 'is', 'value' : str(int(year) - 1)}]}, 'properties'  : ['imdbnumber', 'originaltitle', 'year']})
+				library = tools.System.executeJson(method = 'VideoLibrary.GetMovies', parameters = {'filter' : {'or' : [{'field' : 'year', 'operator' : 'is', 'value' : str(year)}, {'field' : 'year', 'operator' : 'is', 'value' : str(int(year) + 1)}, {'field' : 'year', 'operator' : 'is', 'value' : str(int(year) - 1)}]}, 'properties'  : ['imdbnumber', 'originaltitle', 'year', 'file']})
 				library = library['result']['movies']
-				library = [i for i in library if str(i['imdbnumber']) in id or (i['originaltitle'].encode('utf-8') == title and str(i['year']) == year)]
+				library = [i for i in library if ((i['file'].startswith(locationKodi) or i['file'].startswith(locationResolved)) and (i['file'].endswith(Library.ExtensionStrm) or i['file'].endswith(Library.ExtensionMeta))) and (str(i['imdbnumber']) in id or (i['originaltitle'].encode('utf-8') == title and str(i['year']) == year))]
 		except:
 			library = []
 
@@ -257,6 +263,8 @@ class Library(object):
 			if not self.mPrecheck or self._checkSources(title, year, imdb, None, None, None, None, None):
 				self._movieFiles(title = title, year = year, imdb = imdb, tmdb = tmdb, metadata = metadata, link = link)
 				count += 1
+		else:
+			count = -1
 
 		return count
 
@@ -283,7 +291,8 @@ class Library(object):
 			for i in items:
 				try:
 					if tools.System.aborted(): return sys.exit()
-					count += self._movieAddSingle(title = i['title'], year = i['year'], imdb = i['imdb'], tmdb = i['tmdb'], metadata = i, multiple = True)
+					value = self._movieAddSingle(title = i['title'], year = i['year'], imdb = i['imdb'], tmdb = i['tmdb'], metadata = i, multiple = True)
+					if value > 0: count += value
 				except:
 					pass
 
@@ -291,16 +300,19 @@ class Library(object):
 
 	def _movieResolve(self, title, year):
 		try:
-			name = re.sub('([^\s\w]|_)+', '', title)
-			nameLegal = self._legalPath(name) + '.' + tools.System.name().lower()
+			name = re.sub('\s\s+', ' ', re.sub('([^\s\w]|_)+', ' ', title))
+			nameLegal = self._legalPath('%s (%s) %s' % (name, year, tools.System.name())) + Library.ExtensionMeta
 			path = tools.File.joinPath(self._path(self.mLocation, name, year), nameLegal)
+			if not tools.File.exists(path): # To accomodate the old file name format that did not contain the year and Gaia.
+				nameLegal = self._legalPath(name) + '.' + tools.System.name().lower()
+				path = tools.File.joinPath(self._path(self.mLocation, name, year), nameLegal)
 			return self._readFile(path)
 		except: return None
 
 	def _movieFiles(self, title, year, imdb, tmdb, metadata = None, link = None):
 		try:
-			name = re.sub('([^\s\w]|_)+', '', title)
-			nameLegal = self._legalPath(name)
+			name = re.sub('\s\s+', ' ', re.sub('([^\s\w]|_)+', ' ', title))
+			nameLegal = self._legalPath('%s (%s) %s' % (name, year, tools.System.name()))
 			title = tools.Converter.quoteTo(title)
 			generic = link == None
 			data = None
@@ -312,20 +324,20 @@ class Library(object):
 				link = '%s?action=scrape&title=%s&year=%s&imdb=%s&tmdb=%s' % (sys.argv[0], title, year, imdb, tmdb)
 			else:
 				data = link
-				link = '%s?action=libraryResolve&title=%s&year=%s&metadata=%s' % (sys.argv[0], title, year, tools.Converter.quoteTo(tools.Converter.jsonTo(metadata)))
+				link = '%s?action=libraryResolve&title=%s&year=%s' % (sys.argv[0], title, year)
 			link = self._parameterize(link)
 
 			path = self._path(self.mLocation, name, year)
 			self._createDirectory(path)
 
-			pathSrtm = tools.File.joinPath(path, nameLegal + '.strm')
+			pathSrtm = tools.File.joinPath(path, nameLegal + Library.ExtensionStrm)
 			self._writeFile(pathSrtm, link)
 
 			pathNfo = tools.File.joinPath(path, 'movie.nfo')
 			self._writeFile(pathNfo, self._infoLink({'imdb': imdb, 'tmdb': tmdb}))
 
 			if not generic:
-				patGaia = tools.File.joinPath(path, nameLegal + '.' + tools.System.name().lower())
+				patGaia = tools.File.joinPath(path, nameLegal + Library.ExtensionMeta)
 				self._writeFile(patGaia, data)
 		except:
 			tools.Logger.error()
@@ -336,6 +348,8 @@ class Library(object):
 
 	def _televisionAddSingle(self, title, year, season, episode, imdb, tvdb, metadata, multiple = False, link = None):
 		count = 0
+		locationKodi = self.mLocation
+		locationResolved = tools.File.translate(locationKodi)
 
 		if self._ready() and not multiple:
 			interface.Dialog.notification(title = 33244, message = 35177, icon = interface.Dialog.IconInformation, time = 100000000)
@@ -358,8 +372,9 @@ class Library(object):
 				library = library['result']['tvshows']
 				library = [i['title'].encode('utf-8') for i in library if str(i['imdbnumber']) in id or (i['title'].encode('utf-8') == items[0]['tvshowtitle'] and str(i['year']) == items[0]['year'])][0]
 
-				library = tools.System.executeJson(method = 'VideoLibrary.GetEpisodes', parameters = {'filter' : {'and' : [{'field' : 'tvshow', 'operator' : 'is', 'value' : library}]}, 'properties' : ['season', 'episode']})
+				library = tools.System.executeJson(method = 'VideoLibrary.GetEpisodes', parameters = {'filter' : {'and' : [{'field' : 'tvshow', 'operator' : 'is', 'value' : library}]}, 'properties' : ['season', 'episode', 'file']})
 				library = library['result']['episodes']
+				library = [i for i in library if (i['file'].startswith(locationKodi) or i['file'].startswith(locationResolved)) and (i['file'].endswith(Library.ExtensionStrm) or i['file'].endswith(Library.ExtensionMeta))]
 				library = ['S%02dE%02d' % (int(i['season']), int(i['episode'])) for i in library]
 
 				items = [i for i in items if not 'S%02dE%02d' % (int(i['season']), int(i['episode'])) in library]
@@ -368,28 +383,31 @@ class Library(object):
 
 		dateCurrent = int((datetime.datetime.utcnow() - datetime.timedelta(hours = 6)).strftime('%Y%m%d'))
 
-		for i in items:
-			try:
-				if tools.System.aborted(): return sys.exit()
+		if len(items) == 0:
+			count = -1
+		else:
+			for i in items:
+				try:
+					if tools.System.aborted(): return sys.exit()
 
-				if self.mPrecheck:
-					if i['episode'] == '1':
-						self.mBlock = True
-						streams = self._checkSources(i['title'], i['year'], i['imdb'], i['tvdb'], i['season'], i['episode'], i['tvshowtitle'], i['premiered'])
-						if streams: self.mBlock = False
-					if self.mBlock: raise Exception()
+					if self.mPrecheck:
+						if i['episode'] == '1':
+							self.mBlock = True
+							streams = self._checkSources(i['title'], i['year'], i['imdb'], i['tvdb'], i['season'], i['episode'], i['tvshowtitle'], i['premiered'])
+							if streams: self.mBlock = False
+						if self.mBlock: raise Exception()
 
-				try: premiered = i['premiered']
-				except: premiered = None
-				if not premiered or premiered == '' or premiered =='0': premiered = None
+					try: premiered = i['premiered']
+					except: premiered = None
+					if not premiered or premiered == '' or premiered =='0': premiered = None
 
-				if (premiered and int(re.sub('[^0-9]', '', str(premiered))) > dateCurrent) or (not premiered and not self.mUnaired):
-					continue
+					if (premiered and int(re.sub('[^0-9]', '', str(premiered))) > dateCurrent) or (not premiered and not self.mUnaired):
+						continue
 
-				self._televisionFiles(item = i, metadata = metadata, link = link)
-				count += 1
-			except:
-				pass
+					self._televisionFiles(item = i, metadata = metadata, link = link)
+					count += 1
+				except:
+					pass
 
 		return count
 
@@ -448,16 +466,20 @@ class Library(object):
 			for i in itemsEpisodes:
 				try:
 					if tools.System.aborted(): return sys.exit()
-					count += self._televisionAddSingle(title = i['tvshowtitle'] if 'tvshowtitle' in i else i['title'], year = i['year'], season = i['season'], episode = i['episode'], imdb = i['imdb'], tvdb = i['tvdb'], metadata = i, multiple = True)
+					value = self._televisionAddSingle(title = i['tvshowtitle'] if 'tvshowtitle' in i else i['title'], year = i['year'], season = i['season'], episode = i['episode'], imdb = i['imdb'], tvdb = i['tvdb'], metadata = i, multiple = True)
+					if value > 0: count += value
 				except: pass
 
 		return count
 
 	def _televisionResolve(self, title, year, season, episode):
 		try:
-			name = re.sub('([^\s\w]|_)+', '', title)
-			nameLegal = self._legalPath('%s S%02dE%02d' % (name, int(season), int(episode))) + '.' + tools.System.name().lower()
+			name = re.sub('\s\s+', ' ', re.sub('([^\s\w]|_)+', ' ', title))
+			nameLegal = self._legalPath('%s S%02dE%02d %s' % (name, int(season), int(episode), tools.System.name())) + Library.ExtensionMeta
 			path = tools.File.joinPath(self._path(self.mLocation, name, year, season), nameLegal)
+			if not tools.File.exists(path): # To accomodate the old file name format that did not contain Gaia.
+				nameLegal = self._legalPath('%s S%02dE%02d' % (name, int(season), int(episode))) + '.' + tools.System.name().lower()
+				path = tools.File.joinPath(self._path(self.mLocation, name, year, season), nameLegal)
 			return self._readFile(path)
 		except: return None
 
@@ -471,8 +493,8 @@ class Library(object):
 			episode = int(episode)
 
 			generic = link == None
-			name = re.sub('([^\s\w]|_)+', '', showtitle)
-			nameLegal = self._legalPath('%s S%02dE%02d' % (name, season, episode))
+			name = re.sub('\s\s+', ' ', re.sub('([^\s\w]|_)+', ' ', showtitle))
+			nameLegal = self._legalPath('%s S%02dE%02d %s' % (name, season, episode, tools.System.name()))
 			title = tools.Converter.quoteTo(title)
 			showtitle = tools.Converter.quoteTo(showtitle)
 			premiered = tools.Converter.quoteTo(premiered)
@@ -485,7 +507,7 @@ class Library(object):
 				else: link = '%s?action=scrape&title=%s&year=%s&imdb=%s&tvdb=%s&season=%s&episode=%s&tvshowtitle=%s&premiered=%s' % (sys.argv[0], title, year, imdb, tvdb, season, episode, showtitle, premiered)
 			else:
 				data = link
-				link = '%s?action=libraryResolve&title=%s&year=%s&season=%d&episode=%d&metadata=%s' % (sys.argv[0], showtitle, year, season, episode, tools.Converter.quoteTo(tools.Converter.jsonTo(metadata)))
+				link = '%s?action=libraryResolve&title=%s&year=%s&season=%d&episode=%d' % (sys.argv[0], showtitle, year, season, episode)
 			link = self._parameterize(link)
 
 			path = self._path(self.mLocation, name, year)
@@ -495,12 +517,12 @@ class Library(object):
 			self._writeFile(pathNfo, self._infoLink(item))
 
 			path = self._path(self.mLocation, name, year, season)
-			pathSrtm = tools.File.joinPath(path, nameLegal + '.strm')
+			pathSrtm = tools.File.joinPath(path, nameLegal + Library.ExtensionStrm)
 			self._createDirectory(path)
 			self._writeFile(pathSrtm, link)
 
 			if not generic:
-				patGaia = tools.File.joinPath(path, nameLegal + '.' + tools.System.name().lower())
+				patGaia = tools.File.joinPath(path, nameLegal + Library.ExtensionMeta)
 				self._writeFile(patGaia, data)
 		except:
 			tools.Logger.error()
@@ -524,12 +546,12 @@ class Library(object):
 							tools.System.windowPropertySet(Library.UpdateFlag, '1')
 							interval = Library.UpdateInterval / Library.UpdateCheck
 							while True:
-								library.update(wait = True)
+								library.update(type = tools.Media.TypeShow, wait = True)
 								for i in range(interval):
 									time.sleep(Library.UpdateCheck)
 									if tools.System.aborted(): sys.exit()
 					else:
-						library.update()
+						library.update(type = tools.Media.TypeShow)
 
 	##############################################################################
 	# UPDATE
@@ -542,13 +564,12 @@ class Library(object):
 		if wait: thread.join()
 
 	@classmethod
-	def update(self, notifications = None, force = False, wait = True): # Must wait, otherwise the script finishes before the thread.
-		library = Library(type = tools.Media.TypeShow)
-		thread = threading.Thread(target = library._update, args = (notifications, force))
+	def update(self, notifications = None, force = False, type = None, wait = True): # Must wait, otherwise the script finishes before the thread.
+		thread = threading.Thread(target = Library(type = type)._update, args = (type, notifications, force))
 		thread.start()
 		if wait: thread.join()
 
-	def _update(self, notifications = None, force = None):
+	def _update(self, type = None, notifications = None, force = None):
 		try:
 			self._createDirectory(self._location(tools.Media.TypeMovie))
 			self._createDirectory(self._location(tools.Media.TypeShow))
@@ -557,6 +578,14 @@ class Library(object):
 		except:
 			pass
 
+		if tools.Media.typeMovie(type): self._updateMovies(notifications = notifications, force = force)
+		if type == None or tools.Media.typeTelevision(type): self._updateShows(notifications = notifications, force = force)
+
+	def _updateMovies(self, notifications = None, force = None):
+		interface.Loader.hide()
+		self._libraryUpdate()
+
+	def _updateShows(self, notifications = None, force = None):
 		if notifications == None:
 			notifications = tools.Settings.getInteger('library.updates.shows.notifications')
 			notificationDuration = 10000000000 if notifications == 2 else 3000
@@ -571,7 +600,7 @@ class Library(object):
 				try: season += [tools.File.joinPath(s, i) for i in tools.File.listDirectory(s)[0]]
 				except: pass
 			for s in season:
-				try: episode.append([tools.File.joinPath(s, i) for i in tools.File.listDirectory(s)[1] if i.endswith('.strm')][-1])
+				try: episode.append([tools.File.joinPath(s, i) for i in tools.File.listDirectory(s)[1] if i.endswith(Library.ExtensionStrm)][-1])
 				except: pass
 
 			for file in episode:
@@ -690,6 +719,13 @@ class Library(object):
 			self._libraryUpdate()
 
 	##############################################################################
+	# CLEAN
+	##############################################################################
+
+	def clean(self):
+		tools.System.execute('CleanLibrary(video)')
+
+	##############################################################################
 	# RESOLVE
 	##############################################################################
 
@@ -715,6 +751,7 @@ class Library(object):
 		isAddon = link and link.startswith(tools.System.PluginPrefix)
 		isLink = link and network.Networker.linkIs(link)
 		isStream = isLink and (not imdb == None or not tmdb == None or not tvdb == None)
+		isSingle = link == None or isAddon or isStream
 
 		if precheck == None:
 			if isAddon or isStream: self.mPrecheck = False
@@ -722,10 +759,10 @@ class Library(object):
 			self.mPrecheck = precheck
 
 		if self.mTypeMovie:
-			if link == None or isAddon or isStream: count = self._movieAddSingle(link = link, title = title, year = year, imdb = imdb, tmdb = tmdb, metadata = metadata)
+			if isSingle: count = self._movieAddSingle(link = link, title = title, year = year, imdb = imdb, tmdb = tmdb, metadata = metadata)
 			else: count = self._movieAddMultiple(link = link)
 		elif self.mTypeTelevision:
-			if link == None or isAddon or isStream: count = self._televisionAddSingle(link = link, title = title, year = year, season = season, episode = episode, imdb = imdb, tvdb = tvdb, metadata = metadata)
+			if isSingle: count = self._televisionAddSingle(link = link, title = title, year = year, season = season, episode = episode, imdb = imdb, tvdb = tvdb, metadata = metadata)
 			else: count = self._televisionAddMultiple(link = link)
 
 		if count >= 0:
@@ -734,3 +771,6 @@ class Library(object):
 				else: interface.Dialog.notification(title = 33244, message = 35196, icon = interface.Dialog.IconError)
 			if self.mUpdate and not self._libraryBusy() and count > 0:
 				self._libraryUpdate()
+		else:
+			if self.mDialog:
+				interface.Dialog.notification(title = 33244, message = 35673, icon = interface.Dialog.IconError)

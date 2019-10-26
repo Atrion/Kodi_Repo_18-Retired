@@ -1,5 +1,29 @@
+0.9.53
+- Options to disable/enable language/country/codec tags
+- Remove IconWall from AEL
+- Fix for busy spinner visibility
+
+0.9.52
+- Fix for busy spinner on home screen
+- Clock to music vis
+- Fix for always on osd info to not show when seeking
+- Allow AEL views.
+- Fix for browse/play in info dialog
+
+0.9.51
+- Add fanart gallery fullscreen viewer
+- Add Icon wall to programs
+- Fix TMDbHelper info in OSD
+- Fix for too long studio/language tags
+- Fix for too long filepath
+- Fixed movement option for widgets
+- Add banner widget type
+
 0.9.50
 - Fix for small landscape and small square widget text
+- Fix for old v6 of next aired
+- Fix for alphabet strip wrap-around
+- Add new TMDb Helper function for select list of queried items
 
 0.9.49
 - Fix OSD covering subtitles when adjusting offset

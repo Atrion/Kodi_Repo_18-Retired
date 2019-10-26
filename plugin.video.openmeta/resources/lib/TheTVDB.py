@@ -218,7 +218,11 @@ class Tvdb:
 
 	def _parseXML(self, content):
 		content = content.rstrip('\r')
-		return ElementTree.fromstring(content)
+		try:
+			return ElementTree.fromstring(content)
+		except ParseError:
+			xbmc.log("An error occured when parsing data from TVDB.", level=xbmc.LOGERROR)
+			return
 
 	def _cleanData(self, data):
 		data = data.replace(u'&amp;', u'&')

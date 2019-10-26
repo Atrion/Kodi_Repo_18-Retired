@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.video.openmeta" name="OpenMeta" version="1.4.5" provider-name="A4K">
+<addon id="plugin.video.openmeta" name="OpenMeta" version="1.4.9" provider-name="A4K">
 	<requires>
 		<import addon="xbmc.python" version="2.25.0"/>
 		<import addon="metadata.tvdb.com" version="3.0.14"/>
@@ -39,6 +39,10 @@
 		<website></website>
 		<source></source>
 		<news>
+		1.4.9 - Fix art in TV menus
+		1.4.8 - Fix crash from empty "first_aired" string"
+		1.4.7 - Fix crash when we can't contact TVDB
+		1.4.6 - Fix crashes from non-existent keys
 		1.4.5 - Added default play action, options for movies are; Play/OpenInfo and options for episodes are; Play/OpenInfo(TV Show info)/OpenInfo(Episode info).
 		1.4.4 - Fix clearlogo for movies
 		1.4.3 - Fix typo in season fanart request.
