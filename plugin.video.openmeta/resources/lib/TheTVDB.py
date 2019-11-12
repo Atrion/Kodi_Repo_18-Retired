@@ -1,9 +1,12 @@
 import os, io, time, urllib, zipfile, requests_cache
 from xml.etree import ElementTree
 from resources.lib import text
-from resources.lib.xswift2 import plugin
+from resources.lib.xswift2 import xbmc, plugin
 
 ext_key = plugin.get_setting('tvdb_api', str)
+
+def create_tvdb(language=xbmc.getLanguage(xbmc.ISO_639_1,)):
+	return Tvdb(language=language)
 
 if len(ext_key) == 16:
 	API_key = ext_key
@@ -116,10 +119,16 @@ class Episode(dict):
 		return self.get_air_time() <= time.time()
 
 class Tvdb:
-	def __init__(self):
+	def __init__(self, language='en'):
+		languages = ['da', 'fi', 'nl', 'de', 'it', 'es', 'fr', 'pl', 'hu',
+					'el', 'tr', 'ru', 'he', 'ja', 'pt', 'zh', 'cs', 'sl',
+					'hr', 'ko', 'sv', 'no']
 		config = {}
 		config['apikey'] = API_key
-		config['language'] = 'en'
+		if language in languages:
+			config['language'] = language
+		else:
+			config['language'] = 'en'
 		config['url_search'] = u'https://thetvdb.com/api/GetSeries.php?seriesname=%%s&language=%%s' % config
 		config['url_search_by_imdb'] = u'https://thetvdb.com/api/GetSeriesByRemoteID.php?imdbid=%%s&language=%%s' % config
 		config['url_sid_full'] = u'https://thetvdb.com/api/%(apikey)s/series/%%s/all/%%s.zip' %  config

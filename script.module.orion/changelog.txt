@@ -1,4 +1,12 @@
 
+[B]3.5.0 (2019.11.10)[/B]
+- Improved integration menu.
+- Improved settings wizard.
+- Added online backup feature.
+- Fixed settings and backup bugs.
+- Added Marauder integration.
+- Added Asguard integration.
+
 [B]3.4.1 (2019.09.15)[/B]
 - Added message for initialization errors.
 

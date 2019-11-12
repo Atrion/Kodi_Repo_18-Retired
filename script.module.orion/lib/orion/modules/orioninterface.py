@@ -308,10 +308,12 @@ class OrionInterface:
 		else: option = None
 		if option == None: result = xbmcgui.Dialog().input(self._dialogTitle(title), default, type = type)
 		else: result = xbmcgui.Dialog().input(self._dialogTitle(title), default, type = type, option = option)
-		if type == OrionInterface.InputNumeric: result = float(result)
+		if type == OrionInterface.InputNumeric:
+			try: result = float(result)
+			except: result = None
 		if verify:
 			if OrionTools.isArray(verify):
-				if result >= verify[0] and result <= verify[1]:
+				if not result is None and result >= verify[0] and result <= verify[1]:
 					return result
 				else:
 					self.dialogNotification(title = 32255, message = OrionTools.translate(33037) % verify, icon = OrionInterface.IconInformation)

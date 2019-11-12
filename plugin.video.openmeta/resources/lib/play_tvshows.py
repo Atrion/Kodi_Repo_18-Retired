@@ -11,6 +11,7 @@ DCS = {2: 'twenty', 3: 'thirty', 4: 'fourty', 5: 'fifty', 6: 'sixty'}
 
 def play_episode(id, season, episode, usedefault):
 	from resources.lib.TheTVDB import TVDB
+	from resources.lib.TheTVDB import create_tvdb
 	id = int(id)
 	season = int(season)
 	episode = int(episode)
@@ -22,8 +23,8 @@ def play_episode(id, season, episode, usedefault):
 	show = TVDB[id]
 	show_info = meta_info.get_tvshow_metadata_tvdb(show, banners=False)
 	play_plugin = meta_players.ADDON_SELECTOR.id
-	PLAYERS = meta_players.get_players('tvshows')
-	players = [p for p in PLAYERS if p.id == play_plugin] or PLAYERS
+	players = meta_players.get_players('tvshows', filters={'network': show.get('network')})
+	players = [p for p in players if p.id == play_plugin] or players
 	if not players or len(players) == 0:
 		xbmc.executebuiltin('Action(Info)')
 		play_base.action_cancel()
@@ -36,7 +37,7 @@ def play_episode(id, season, episode, usedefault):
 	trakt_ids = play_base.get_trakt_ids(id_type='tvdb', id=id, type='show')
 	params = {}
 	for lang in meta_players.get_needed_langs(players):
-		tvdb_data = show
+		tvdb_data = create_tvdb(lang)[id]
 		if tvdb_data['seriesname'] is None:
 			continue
 		episode_parameters = get_episode_parameters(tvdb_data, season, episode)
@@ -120,7 +121,7 @@ def tmdb_play_episode(id, season, episode):
 	episodes = preason['episodes']
 	items = []
 	play_plugin = meta_players.ADDON_SELECTOR.id
-	players = meta_players.get_players('tvshows')
+	players = meta_players.get_players('tvshows', filters={'network': show.get('network')})
 	players = [p for p in players if p.id == play_plugin] or players
 	if not players:
 		return xbmc.executebuiltin('Action(Info)')
@@ -214,7 +215,7 @@ def trakt_play_episode(id, season, episode):
 		show_fanart = ''
 	items = []
 	play_plugin = meta_players.ADDON_SELECTOR.id
-	players = meta_players.get_players('tvshows')
+	players = meta_players.get_players('tvshows', filters={'network': show.get('network')})
 	players = [p for p in players if p.id == play_plugin] or players
 	if not players:
 		return xbmc.executebuiltin('Action(Info)')
@@ -317,7 +318,7 @@ def tvmaze_play_episode(id, season, episode, title=None):
 		show_fanart = ''
 	items = []
 	play_plugin = meta_players.ADDON_SELECTOR.id
-	players = meta_players.get_players('tvshows')
+	players = meta_players.get_players('tvshows', filters={'network': show.get('network')})
 	players = [p for p in players if p.id == play_plugin] or players
 	if not players:
 		return xbmc.executebuiltin('Action(Info)')

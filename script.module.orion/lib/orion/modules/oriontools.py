@@ -386,31 +386,38 @@ class OrionTools:
 
 	@classmethod
 	def addonId(self, id = None):
-		return self.addon(id = id).getAddonInfo('id')
+		try: return self.addon(id = id).getAddonInfo('id')
+		except: return None
 
 	@classmethod
 	def addonName(self, id = None):
-		return self.addon(id = id).getAddonInfo('name')
+		try: return self.addon(id = id).getAddonInfo('name')
+		except: return None
 
 	@classmethod
 	def addonAuthor(self, id = None):
-		return self.addon(id = id).getAddonInfo('author')
+		try: return self.addon(id = id).getAddonInfo('author')
+		except: return None
 
 	@classmethod
 	def addonVersion(self, id = None):
-		return self.addon(id = id).getAddonInfo('version')
+		try: return self.addon(id = id).getAddonInfo('version')
+		except: return None
 
 	@classmethod
 	def addonProfile(self, id = None):
-		return self.pathResolve(self.addon(id = id).getAddonInfo('profile').decode('utf-8'))
+		try: return self.pathResolve(self.addon(id = id).getAddonInfo('profile').decode('utf-8'))
+		except: return None
 
 	@classmethod
 	def addonDescription(self, id = None):
-		return self.addon(id = id).getAddonInfo('description')
+		try: return self.addon(id = id).getAddonInfo('description')
+		except: return None
 
 	@classmethod
 	def addonDisclaimer(self, id = None):
-		return self.addon(id = id).getAddonInfo('disclaimer')
+		try: return self.addon(id = id).getAddonInfo('disclaimer')
+		except: return None
 
 	@classmethod
 	def addonPath(self, id = None):
@@ -631,12 +638,15 @@ class OrionTools:
 			return int(time.mktime(fixed.timetuple()))
 
 	@classmethod
-	def timeFormat(self, time = None, format = FormatDateTime, default = None):
-		if time is None:
-			if default is None: time = self.timestamp()
+	def timeFormat(self, date = None, format = FormatDateTime, local = False, default = None):
+		if date is None:
+			if default is None: date = self.timestamp()
 			else: return default
-		time = datetime.datetime.utcfromtimestamp(time)
-		return time.strftime(format)
+		date = datetime.datetime.utcfromtimestamp(date)
+		if local:
+			if time.localtime().tm_isdst: date = date - datetime.timedelta(seconds = time.altzone)
+			else: date = date - datetime.timedelta(seconds = time.timezone)
+		return date.strftime(format)
 
 	@classmethod
 	def timeDays(self, timeFrom = None, timeTo = None, format = False):
@@ -784,3 +794,51 @@ class OrionTools:
 	@classmethod
 	def languageNames(self):
 		return OrionTools.LanguageNames
+
+	##############################################################################
+	# BUGS
+	##############################################################################
+
+	# orionremove
+	@classmethod
+	def bugs(self):
+		# Takes some time to retrieve.
+		while 'busy' in self.kodiInfo('System.OSVersionInfo').lower():
+			self.sleep(0.1)
+
+		empty = ''
+		line = '#' * 59
+		text = [empty, line, ' ORION BUG REPORT', line, empty]
+
+		# System
+		processor = self.kodiInfo('System.CpuUsage')
+		try:
+			usage = re.findall(':\s*(.*?)%', processor)
+			average = sum(float(i) for i in usage) / len(usage)
+			processor = str(int(100 - average)) + '% free of ' + str(len(usage)) + ' cores'
+		except: pass
+		text.extend([
+			'  SYSTEM',
+			'    Operating System: ' + self.kodiInfo('System.OSVersionInfo'),
+			'    Processor: ' + processor,
+			'    Memory: ' + self._bugsSize('System.Memory(free)') + ' free of ' + self._bugsSize('System.Memory(total)'),
+			'    Disk: ' + self._bugsSize('System.FreeSpace') + ' free of ' + self._bugsSize('System.TotalSpace'),
+		])
+
+		text.extend([empty, line, empty])
+		[self.log('#' + i, name = False) for i in text]
+
+	@classmethod
+	def _bugsSize(self, type):
+		size = self.kodiInfo(type)
+		data = size.lower()
+		if 'mb' in data:
+			try: size = ('%0.1f' % (float(re.search('\d*', data).group(0)) / 1024.0)) + ' GB'
+			except: pass
+		elif 'gb' in data:
+			try: size = ('%0.1f' % float(re.search('\d*', data).group(0))) + ' GB'
+			except: pass
+		elif 'tb' in data:
+			try: size = ('%0.1f' % float(re.search('\d*', data).group(0))) + ' TB'
+			except: pass
+		return size

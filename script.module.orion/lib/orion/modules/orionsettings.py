@@ -36,7 +36,8 @@ from orion.modules.oriondatabase import *
 OrionSettingsLock = threading.Lock()
 OrionSettingsCache = None
 OrionSettingsSilent = False
-OrionSettingsBackup = False
+OrionSettingsBackupLocal = False
+OrionSettingsBackupOnline = False
 
 class OrionSettings:
 
@@ -678,6 +679,104 @@ class OrionSettings:
 	##############################################################################
 
 	@classmethod
+	def _backupExportOnline(self):
+		settings = {}
+		try:
+			path = OrionTools.pathJoin(OrionTools.addonPath(), 'resources', 'settings.xml')
+			if OrionTools.fileExists(path):
+				# NB: First get the database values. Do not retrieve non-database values with the database parameter.
+				ids = self._database().selectValues('SELECT id FROM %s;' % OrionSettings.DatabaseSettings)
+				for id in ids:
+					settings[id] = self.get(id, database = True)
+
+				data = OrionTools.fileRead(path)
+				pattern = re.compile('id\s*=\s*"(.*?)"')
+				ids = [id for id in re.findall(pattern, data)]
+				for id in ids:
+					if not id in settings:
+						settings[id] = self.get(id)
+
+				settings = {key : value for key, value in settings.iteritems() if not key.startswith(('help', 'internal', 'account'))}
+		except:
+			OrionTools.error()
+		return settings
+
+	@classmethod
+	def _backupImportOnline(self, settings):
+		try:
+			if settings:
+				for key, value in settings.iteritems():
+					self.set(key, value, commit = False)
+				self._commit()
+				return True
+		except:
+			OrionTools.error()
+		return False
+
+	@classmethod
+	def backupExportOnline(self):
+		from orion.modules.orionapi import OrionApi
+		from orion.modules.orionuser import OrionUser
+		OrionInterface.loaderShow()
+		data = self._backupExportOnline()
+		success = OrionApi().addonUpdate(data)
+		OrionInterface.loaderHide()
+		if success:
+			self.set('internal.backup', OrionTools.hash(OrionTools.jsonTo(data)))
+			OrionInterface.dialogNotification(title = 32170, message = 33013, icon = OrionInterface.IconSuccess)
+			return True
+		else:
+			OrionInterface.dialogNotification(title = 32170, message = 33015, icon = OrionInterface.IconError)
+			return False
+
+	@classmethod
+	def backupImportOnline(self, refresh = True):
+		from orion.modules.orionapi import OrionApi
+		from orion.modules.orionuser import OrionUser
+		OrionInterface.loaderShow()
+		api = OrionApi()
+		if api.addonRetrieve():
+			if self._backupImportOnline(api.data()):
+				# Get updated user status
+				if refresh:
+					OrionUser.instance().update()
+					self.cacheClear()
+				OrionInterface.loaderHide()
+				OrionInterface.dialogNotification(title = 32170, message = 33014, icon = OrionInterface.IconSuccess)
+				return True
+			else:
+				OrionInterface.loaderHide()
+				OrionInterface.dialogNotification(title = 32170, message = 33016, icon = OrionInterface.IconError)
+				return False
+		else:
+			OrionInterface.loaderHide()
+			OrionInterface.dialogNotification(title = 32170, message = 33043, icon = OrionInterface.IconError)
+			return False
+
+	@classmethod
+	def backupExportAutomaticOnline(self):
+		if self._backupSetting(online = True):
+			from orion.modules.orionapi import OrionApi
+			data = self._backupExportOnline()
+			current = OrionTools.hash(OrionTools.jsonTo(data))
+			previous = self.getString('internal.backup')
+			if not current == previous:
+				if OrionApi().addonUpdate(data):
+					self.set('internal.backup', current)
+					return True
+		return False
+
+	@classmethod
+	def backupImportAutomaticOnline(self):
+		global OrionSettingsBackupOnline
+		if not OrionSettingsBackupOnline and self._backupSetting(online = True):
+			from orion.modules.orionapi import OrionApi
+			OrionSettingsBackupOnline = True
+			api = OrionApi()
+			return api.addonRetrieve() and self._backupImportOnline(api.data())
+		return False
+
+	@classmethod
 	def _backupPath(self, clear = False):
 		path = OrionTools.pathResolve('special://temp/')
 		path = OrionTools.pathJoin(path, OrionTools.addonName().lower(), 'backup')
@@ -688,47 +787,57 @@ class OrionSettings:
 	@classmethod
 	def _backupName(self, extension = ExtensionManual):
 		# Windows does not support colons in file names.
-		return OrionTools.addonName() + ' ' + OrionTools.translate(32170) + ' ' + OrionTools.timeFormat(format = '%Y-%m-%d %H.%M.%S') + '%s.' + extension
+		return OrionTools.addonName() + ' ' + OrionTools.translate(32170) + ' ' + OrionTools.timeFormat(format = '%Y-%m-%d %H.%M.%S', local = True) + '%s.' + extension
+
+	@classmethod
+	def _backupSetting(self, local = False, online = False):
+		try: setting = int(OrionTools.addon().getSetting(id = 'general.settings.backup'))
+		except: setting = 0
+		if local and setting in [1, 3]: return True
+		elif online and setting in [1, 2]: return True
+		else: return False
 
 	@classmethod
 	def _backupAutomaticValid(self):
-		return OrionTools.toBoolean(OrionTools.addon().getSetting(id = 'internal.backup'))
+		return OrionTools.toBoolean(OrionTools.addon().getSetting(id = 'account.valid'))
 
 	@classmethod
 	def _backupAutomatic(self, force = False):
-		if not self._backupAutomaticValid() or OrionTools.toBoolean(OrionTools.addon().getSetting(id = 'general.settings.backup')):
-			if not self._backupAutomaticImport(force = force):
-				self._backupAutomaticExport(force = force)
+		success = False
+		valid = self._backupAutomaticValid()
+		local = self._backupSetting(local = True)
+		online = self._backupSetting(online = True)
+		if local or online:
+			if valid:
+				# Do not update the online backup here, since this will create too many requests to the server. Update from the service instead.
+				if local: success = self._backupAutomaticExport(force = force)
+			else:
+				if local: success = self._backupAutomaticImport() and self._backupAutomaticValid()
+				if not success and online: success = self.backupImportAutomaticOnline()
+				if success:
+					from orion.modules.orionuser import OrionUser
+					OrionUser.instance().update()
+					self.cacheClear()
+		return success
 
 	@classmethod
 	def _backupAutomaticExport(self, force = False):
-		global OrionSettingsBackup
-		self._lock()
-		OrionTools.addon().setSetting(id = 'internal.backup', value = OrionTools.toBoolean(True, string = True))
-		self._unlock()
-		if force or not OrionSettingsBackup:
-			OrionSettingsBackup = True
+		global OrionSettingsBackupLocal
+		if force or not OrionSettingsBackupLocal:
+			OrionSettingsBackupLocal = True
 			directory = OrionTools.addonProfile()
 			fileFrom = OrionTools.pathJoin(directory, 'settings.xml')
-			if 'internal.backup' in OrionTools.fileRead(fileFrom):
+			if 'account.valid' in OrionTools.fileRead(fileFrom):
 				fileTo = OrionTools.pathJoin(directory, 'settings.' + OrionSettings.ExtensionAutomatic)
 				return OrionTools.fileCopy(fileFrom, fileTo, overwrite = True)
 		return False
 
 	@classmethod
-	def _backupAutomaticImport(self, force = False):
-		if self._backupAutomaticValid():
-			# Why return force?
-			# When returning force, the backup is never overwritten with new values.
-			# If simply returning False causes problems, this has to be investigated again.
-
-			#return force # Must return force
-			return False
-		else:
-			directory = OrionTools.addonProfile()
-			fileTo = OrionTools.pathJoin(directory, 'settings.xml')
-			fileFrom = OrionTools.pathJoin(directory, 'settings.' + OrionSettings.ExtensionAutomatic)
-			return OrionTools.fileCopy(fileFrom, fileTo, overwrite = True)
+	def _backupAutomaticImport(self):
+		directory = OrionTools.addonProfile()
+		fileTo = OrionTools.pathJoin(directory, 'settings.xml')
+		fileFrom = OrionTools.pathJoin(directory, 'settings.' + OrionSettings.ExtensionAutomatic)
+		return OrionTools.fileCopy(fileFrom, fileTo, overwrite = True)
 
 	@classmethod
 	def backupCheck(self, path):
@@ -1011,7 +1120,7 @@ class OrionSettings:
 			OrionUser.anonymous()
 		else:
 			while True:
-				if OrionNavigator.settingsAccountLogin(settings = False):
+				if OrionNavigator.settingsAccountLogin(settings = False, refresh = False):
 					break
 		OrionInterface.containerRefresh()
 
@@ -1021,6 +1130,7 @@ class OrionSettings:
 		choice = OrionInterface.dialogInput(title = 32254, type = OrionInterface.InputNumeric, verify = (1, 30))
 		limit = OrionUser.instance().subscriptionPackageLimitStreams() / float(choice)
 		limit = int(OrionTools.roundDown(limit, nearest = 10 if limit >= 100 else 5 if limit >= 50 else None))
+		limit = min(5000, max(5, limit))
 		self.set('filters.limit.count', limit)
 		self.set('filters.limit.count.movie', limit)
 		self.set('filters.limit.count.show', limit)
@@ -1060,14 +1170,9 @@ class OrionSettings:
 		restart = False
 		choice = OrionInterface.dialogOption(title = title, message = 35011, labelConfirm = skip, labelDeny = next)
 		if not choice:
-			format = '%s: %s'
-			formatNative = OrionInterface.font(32259, color = OrionInterface.ColorGood)
-			formatIntegrated = OrionInterface.font(32256, color = OrionInterface.ColorMedium)
-			formatNotIntegrated = OrionInterface.font(32257, color = OrionInterface.ColorPoor)
-			formatNotInstalled = OrionInterface.font(32258, color = OrionInterface.ColorBad)
 			while True:
 				addons = OrionIntegration.addons(sort = True) # Refresh to recheck integration.
-				items = [format % (OrionInterface.font(i['name'], bold = True), formatNotInstalled if not i['enabled'] else formatNative if i['native'] else formatIntegrated if i['integrated'] else formatNotIntegrated) for i in addons]
+				items = [i['format'] for i in addons]
 				choice = OrionInterface.dialogOptions(title = 32174, items = items)
 				if choice < 0: break
 				if addons[choice]['native']:

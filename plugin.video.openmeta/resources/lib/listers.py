@@ -1,4 +1,4 @@
-import re, copy, threading
+import re, copy, time, threading
 import xbmc, xbmcgui, xbmcaddon
 from resources.lib import text
 from resources.lib.rpc import RPC
@@ -6,10 +6,18 @@ from resources.lib.xswift2 import plugin
 
 IGNORE_CHARS = ('.', '%20')
 
+def wait_for_dialog(dialog_id, timeout=None, interval=500):
+	start = time.time()
+	while not xbmc.getCondVisibility('Window.IsActive(%s)' % dialog_id):
+		if xbmc.Monitor().abortRequested() or (timeout and time.time() - start >= timeout):
+			return False
+		xbmc.sleep(interval)
+	return True
+
 def list_dir(path):
 	path = text.urlencode_path(path)
 	try:
-		response = RPC.files.get_directory(media='files', directory=path, properties=['season','episode'])
+		response = RPC.Files.GetDirectory(media='files', directory=path, properties=['season','episode'])
 	except:
 		plugin.log.error(path)
 		raise
@@ -28,7 +36,7 @@ def list_dir(path):
 
 def regex_escape(string):
 	for c in '\\.$^{[(|)*+?':
-		string = string.replace(c, '\\'+c)
+		string = string.replace(c, '\\' + c)
 	return string
 
 @plugin.cached(TTL=5, cache='browser')
@@ -43,7 +51,6 @@ class KeyboardMonitor(threading.Thread):
 		self.owner_thread = None
 		self.lock = threading.Lock()
 		self.access_lock = threading.RLock()
-		self.hide_keyboard = True
         
 	def stop(self):
 		self.active = False
@@ -65,12 +72,21 @@ class KeyboardMonitor(threading.Thread):
 			if self.owner_thread is threading.current_thread():
 				self.release()
 
-	def prep_search_str(self, text):
-		t_text = text.to_unicode(text)
+	def prep_search_str(self, string):
+		t_text = text.to_unicode(string)
 		for chr in t_text:
 			if ord(chr) >= 1488 and ord(chr) <= 1514:
-				return text.to_utf8(text[::-1])
-		return text.to_utf8(text)
+				return text.to_utf8(string[::-1])
+		return text.to_utf8(string)
+
+	def run(self):
+		while self.active and not xbmc.Monitor().abortRequested():
+			if wait_for_dialog('virtualkeyboard', timeout=5, interval=100):
+				if self.search_term is not None:
+					xbmc.executebuiltin('Dialog.Close(virtualkeyboard, true)')
+					text = self.prep_search_str(self.search_term)
+					RPC.Input.SendText(text=text, done=True)
+					self.release()
 
 class Lister:
 	def __init__(self, preserve_viewid=None, stop_flag=None):

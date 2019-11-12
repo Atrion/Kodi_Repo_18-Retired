@@ -81,6 +81,7 @@ class OrionApi:
 	ModeUser = 'user'
 	ModeNotification = 'notification'
 	ModeServer = 'server'
+	ModeAddon = 'addon'
 	ModeFlare = 'flare'
 
 	ActionUpdate = 'update'
@@ -97,6 +98,8 @@ class OrionApi:
 
 	TypeMovie = 'movie'
 	TypeShow = 'show'
+
+	AddonKodi = 'kodi'
 
 	StreamTorrent = 'torrent'
 	StreamUsenet = 'usenet'
@@ -360,6 +363,16 @@ class OrionApi:
 	def userAnonymous(self):
 		x = [OrionTools.randomInteger(1,9) for i in range(3)]
 		return self._request(mode = OrionApi.ModeUser, action = OrionApi.ActionAnonymous, parameters = {OrionApi.ParameterKey : str(str(x[0])+str(x[1])+str(x[2])+str(x[0]+x[1]*x[2]))[::-1]})
+
+	##############################################################################
+	# ADDON
+	##############################################################################
+
+	def addonRetrieve(self, silent = True):
+		return self._request(mode = OrionApi.ModeAddon, action = OrionApi.ActionRetrieve, parameters = {OrionApi.ParameterType : OrionApi.AddonKodi}, silent = silent)
+
+	def addonUpdate(self, data, silent = True):
+		return self._request(mode = OrionApi.ModeAddon, action = OrionApi.ActionUpdate, parameters = {OrionApi.ParameterType : OrionApi.AddonKodi, OrionApi.ParameterData : data}, silent = silent)
 
 	##############################################################################
 	# STREAM

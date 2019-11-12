@@ -234,6 +234,18 @@ class OrionUser:
 						OrionInterface.dialogNotification(title = 32035, message = message, icon = OrionInterface.IconWarning, time = 10000)
 
 	##############################################################################
+	# ADDON
+	##############################################################################
+
+	def addonKodi(self, default = False):
+		try: return self.mData['addon']['kodi']
+		except: return default
+
+	def addonWako(self, default = False):
+		try: return self.mData['addon']['wako']
+		except: return default
+
+	##############################################################################
 	# REQUESTS
 	##############################################################################
 

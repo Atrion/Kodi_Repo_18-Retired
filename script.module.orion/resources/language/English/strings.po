@@ -1065,6 +1065,34 @@ msgctxt "#32263"
 msgid "Integration Unnecessary"
 msgstr ""
 
+msgctxt "#32264"
+msgid "Local Import"
+msgstr ""
+
+msgctxt "#32265"
+msgid "Local Export"
+msgstr ""
+
+msgctxt "#32266"
+msgid "Online Import"
+msgstr ""
+
+msgctxt "#32267"
+msgid "Online Export"
+msgstr ""
+
+msgctxt "#32268"
+msgid "Local"
+msgstr ""
+
+msgctxt "#32269"
+msgid "Online"
+msgstr ""
+
+msgctxt "#32270"
+msgid "Both"
+msgstr ""
+
 ##############################################################################
 # MESSAGES
 ##############################################################################
@@ -1114,7 +1142,7 @@ msgid "Account Successfully Authenticated"
 msgstr ""
 
 msgctxt "#33012"
-msgid "Do you want to import an existing backup, or do you want export your current settings?"
+msgid "You have an existing settings backup on Orion. Do you want to import these settings?"
 msgstr ""
 
 msgctxt "#33013"
@@ -1223,6 +1251,34 @@ msgstr ""
 
 msgctxt "#33038"
 msgid "Orion could not be initialized due to disk write permissions. Please restart your device and ensure that Kodi has the necessary permissions to write to disk. If all else fails, please contact us."
+msgstr ""
+
+msgctxt "#33039"
+msgid "Import from local file"
+msgstr ""
+
+msgctxt "#33040"
+msgid "Export to local file"
+msgstr ""
+
+msgctxt "#33041"
+msgid "Import from Orion server"
+msgstr ""
+
+msgctxt "#33042"
+msgid "Export to Orion server"
+msgstr ""
+
+msgctxt "#33043"
+msgid "No Previous Settings Backup Found"
+msgstr ""
+
+msgctxt "#33044"
+msgid "Reset the internal cache"
+msgstr ""
+
+msgctxt "#33045"
+msgid "Reset the account, filters and settings"
 msgstr ""
 
 ##############################################################################
@@ -1418,7 +1474,7 @@ msgid "Include streams with an unknown file size."
 msgstr ""
 
 msgctxt "#34048"
-msgid "Automatically backup the addon settings and restore them if they become corrupt."
+msgid "Automatically backup the addon settings and restore them if they become corrupt. Backups can be made to a local file, submitted online to the Orion server, or both."
 msgstr ""
 
 msgctxt "#34049"

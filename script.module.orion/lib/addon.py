@@ -221,6 +221,12 @@ elif action == 'integrationBoomMovies':
 elif action == 'integrationContinuum':
 	OrionIntegration.executeContinuum()
 
+elif action == 'integrationMarauder':
+	OrionIntegration.executeMarauder()
+
+elif action == 'integrationAsguard':
+	OrionIntegration.executeAsguard()
+
 elif action == 'integrationOpenScrapers':
 	OrionIntegration.executeOpenScrapers()
 
