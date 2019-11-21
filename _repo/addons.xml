@@ -2677,7 +2677,7 @@ Zároveň má nastavenia upravujúce výšku stĺpcov spektra, ich rýchlosť a 
 
 <addon id="metadata.tvshows.themoviedb.org"
        name="The Movie Database"
-       version="3.1.3"
+       version="3.1.4"
        provider-name="Team Kodi">
   <requires>
     <import addon="xbmc.metadata" version="2.1.0"/>
@@ -2915,7 +2915,7 @@ Zároveň má nastavenia upravujúce výšku stĺpcov spektra, ich rýchlosť a 
 	</extension>
 </addon>
 
-<addon id="plugin.video.youtube" name="YouTube" version="6.5.1" provider-name="anxdpanic, bromix">
+<addon id="plugin.video.youtube" name="YouTube" version="6.5.2" provider-name="anxdpanic, bromix">
     <requires>
         <import addon="xbmc.python" version="2.20.0"/>
         <import addon="script.module.six" version="1.11.0"/>
@@ -2929,14 +2929,15 @@ Zároveň má nastavenia upravujúce výšku stĺpcov spektra, ich rýchlosť a 
     <extension point="xbmc.python.module" library="resources/lib/"/>
     <extension point="xbmc.addon.metadata">
         <news>
-6.5.1
-[add] get_live to youtube_requests module to retrieve live stream info for a channel
-[add] Adaptive (MP4) and Adaptive (WEBM) to MPEG-DASH - Video quality
-[fix] live stream playback
-[fix] unable to seek when using mpeg-dash
-[fix] mpeg-dash video quality selection
-[fix] sqlite requests breaking when another add-on/module uses sqlite3.register_converter(..)
-[fix] signal endofdirectory in case of a provider navigation exception |contrib: enen92|
+6.5.2
+[fix] playback (No streams found)
+[fix] missing metadata
+[fix] ended live streams not using mpeg-dash when enabled
+[fix] subscriptions not showing latest videos
+[upd] simplify youtube_resolver regex |contrib: Twilight0|
+[lang] de_de strings |contrib: TehTux|
+[lang] pl_pl strings |contrib: drrak|
+[lang] nl_nl strings |contrib: Markman-B|
         </news>
         <assets>
             <icon>icon.png</icon>
@@ -3500,22 +3501,19 @@ genres for TMDb[CR]1.0.8 - Some small fixes for enditems[CR]1.0.7 - Trakt suppor
 
 <addon id="script.module.urllib3"
        name="urllib3"
-       version="1.25.3"
-       provider-name="shazow">
+       version="1.25.6"
+       provider-name="Andrey Petrov">
   <requires>
     <import addon="xbmc.python" version="2.25.0"/>
   </requires>
   <extension point="xbmc.python.module"
              library="lib" />
   <extension point="xbmc.addon.metadata">
-    <summary lang="en_GB">urllib3 is a powerful, sanity-friendly HTTP client for Python</summary>
+    <summary lang="en_GB">HTTP library with thread-safe connection pooling, file post, and more.</summary>
     <description lang="en_GB">Packed for KODI from https://pypi.org/project/urllib3/</description>
-    <platform>all</platform>
-    <language></language>
     <license>MIT</license>
-    <forum></forum>
     <website>https://urllib3.readthedocs.io/en/latest/</website>
-    <source>https://github.com/Freso/script.module.urllib3</source>
+    <source>https://github.com/urllib3/urllib3</source>
     <email>freso.dk AT gmail.com</email>
     <assets>
       <icon>resources/icon.png</icon>
