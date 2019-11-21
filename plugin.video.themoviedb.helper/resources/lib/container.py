@@ -6,25 +6,28 @@ import xbmcaddon
 import xbmcplugin
 from resources.lib.tmdb import TMDb
 from resources.lib.omdb import OMDb
+from resources.lib.traktapi import traktAPI
 from resources.lib.kodilibrary import KodiLibrary
 from resources.lib.listitem import ListItem
-from resources.lib.globals import LANGUAGES, BASEDIR, TYPE_CONVERSION, TMDB_LISTS, TMDB_CATEGORIES, APPEND_TO_RESPONSE
+from resources.lib.globals import LANGUAGES, BASEDIR, TYPE_CONVERSION, TMDB_LISTS, TMDB_CATEGORIES, APPEND_TO_RESPONSE, TRAKT_LISTS, TRAKT_LISTLISTS
 try:
     from urllib.parse import parse_qsl  # Py3
 except ImportError:
     from urlparse import parse_qsl  # Py2
 _handle = int(sys.argv[1])
 _addon = xbmcaddon.Addon()
+_addonpath = xbmcaddon.Addon().getAddonInfo('path')
 _addonname = 'plugin.video.themoviedb.helper'
 _prefixname = 'TMDbHelper.'
 _dialog = xbmcgui.Dialog()
 _languagesetting = _addon.getSettingInt('language')
 _language = LANGUAGES[_languagesetting]
+_mpaa_prefix = _addon.getSetting('mpaa_prefix')
 _cache_long = _addon.getSettingInt('cache_details_days')
 _cache_short = _addon.getSettingInt('cache_list_days')
 _tmdb_apikey = _addon.getSetting('tmdb_apikey')
 _tmdb = TMDb(api_key=_tmdb_apikey, language=_language, cache_long=_cache_long, cache_short=_cache_short,
-             append_to_response=APPEND_TO_RESPONSE, addon_name=_addonname)
+             append_to_response=APPEND_TO_RESPONSE, addon_name=_addonname, mpaa_prefix=_mpaa_prefix)
 _omdb_apikey = _addon.getSetting('omdb_apikey')
 _omdb = OMDb(api_key=_omdb_apikey, cache_long=_cache_long, cache_short=_cache_short, addon_name=_addonname) if _omdb_apikey else None
 _kodimoviedb = KodiLibrary(dbtype='movie')
@@ -61,10 +64,11 @@ class Container(object):
     def list_basedir(self):
         self.start_container()
         for category_info in BASEDIR:
-            category = TMDB_LISTS.get(category_info, {})
+            category = TMDB_LISTS.get(category_info, {}) if category_info in TMDB_LISTS else TRAKT_LISTS.get(category_info, {})
+            icon = '{0}/resources/trakt.png'.format(_addonpath) if category_info in TRAKT_LISTS else None
             for tmdb_type in category.get('types', []):
                 label = category.get('name', '').format(TYPE_CONVERSION.get(tmdb_type, {}).get('plural', ''))
-                listitem = ListItem(label=label)
+                listitem = ListItem(label=label, icon=icon, thumb=icon, poster=icon)
                 listitem.create_listitem(_handle, info=category_info, type=tmdb_type)
         self.finish_container()
 
@@ -85,15 +89,20 @@ class Container(object):
                 added_items.append(add_item)
 
                 # URL ENCODING
-                item['url'] = item.get('url') if item.get('url') else {'info': url_info}
-                item['url']['type'] = nexttype if nexttype else self.params.get('type')
+                item['url'] = item.get('url') or {'info': url_info}
+                item['url']['type'] = nexttype or self.params.get('type')
                 if url_tmdb and item.get('tmdb_id'):
                     item['url']['tmdb_id'] = item.get('tmdb_id')
 
-                # SPECIAL URL ENCODING FOR TEXT AND IMAGE VIEWERS
+                # SPECIAL URL ENCONDING FOR MIXED TYPES
+                item['url']['type'] = item.pop('mixed_type', None) or item.get('url', {}).get('type')
+
+                # SPECIAL URL ENCODING FOR PLAYABLE ITEMS
                 if item['url'].get('info') == 'imageviewer':
+                    item['is_folder'] = False
                     item['url'] = {'info': 'imageviewer', 'image': item.get('icon')}
                 elif item['url'].get('info') == 'textviewer':
+                    item['is_folder'] = False
                     item['url'] = {'info': 'textviewer', 'header': item.get('label'), 'text': item.get('infolabels', {}).get('plot')}
 
                 # SPECIAL TREATMENT OF SEASONS AND EPISODES
@@ -160,9 +169,11 @@ class Container(object):
     def list_tmdb(self, *args, **kwargs):
         if self.params.get('type'):
             category = TMDB_LISTS.get(self.params.get('info', ''), {})
+            url_ext = dict(parse_qsl(TMDB_LISTS.get(self.params.get('info'), {}).get('url_ext', '').format(**self.params)))
             path = category.get('path', '').format(**self.params)
             kwparams = utils.make_kwparams(self.params)
             kwparams = utils.merge_two_dicts(kwparams, kwargs)
+            kwparams = utils.merge_two_dicts(kwparams, url_ext)
             kwparams.setdefault('key', category.get('key', 'results'))
             url_info = TMDB_LISTS.get(self.params.get('info'), {}).get('url_info', 'details')
             itemlist = _tmdb.get_list(path, *args, **kwparams)
@@ -188,13 +199,18 @@ class Container(object):
         # SET DETAILED ITEM AS FIRST ITEM AND BUILD RELEVANT CATEGORIES
         if itemdetails:
             itemlist = []
+            if self.params.get('type') in ['tv']:
+                itemdetails['url'] = {'info': 'seasons'}
             itemlist.append(itemdetails)
             for category in TMDB_CATEGORIES:
-                if self.params.get('type') in TMDB_LISTS.get(category, {}).get('types'):
+                categorylist = TMDB_LISTS.get(category) or TRAKT_LISTS.get(category) or {}
+                if self.params.get('type') in categorylist.get('types'):
                     categoryitem = itemdetails.copy()
-                    categoryitem['label'] = TMDB_LISTS.get(category, {}).get('name')
+                    categoryitem['label'] = categorylist.get('name')
                     categoryitem['url'] = categoryitem.get('url', {}).copy()
                     categoryitem['url']['info'] = category
+                    if categorylist.get('url_key') and categoryitem.get(categorylist.get('url_key')):
+                        categoryitem['url'][categorylist.get('url_key')] = categoryitem.get(categorylist.get('url_key'))
                     itemlist.append(categoryitem)
             self.plugincategory = itemdetails.get('label')
             self.containercontent = TYPE_CONVERSION.get(self.params.get('type'), {}).get('container', '')
@@ -211,6 +227,60 @@ class Container(object):
             self.params['query'] = _dialog.input('Enter Search Query', type=xbmcgui.INPUT_ALPHANUM)
         if self.params.get('query'):
             self.list_tmdb(query=self.params.get('query'), year=self.params.get('year'))
+
+    def list_trakt(self):
+        if self.params.get('type'):
+            _traktapi = traktAPI()
+            self.params['user_slug'] = self.params.get('user_slug') or _traktapi.get_usernameslug()
+            category = TRAKT_LISTS.get(self.params.get('info', ''), {})
+            url_info = category.get('url_info', 'details')
+            params = self.params.copy()
+            if self.params.get('type') == 'both':
+                itemtype = ''
+                keylist = ['movie', 'show']
+            else:
+                itemtype = self.params.get('type', '')
+                trakt_type = 'show' if itemtype == 'tv' else 'movie'
+                params['type'] = trakt_type + 's'
+                keylist = [trakt_type]
+            path = category.get('path', '').format(**params)
+            trakt_list = _traktapi.get_itemlist(path, keylist=keylist, page=self.params.get('page', 1), limit=10)
+            itemlist = []
+            for i in trakt_list:
+                item = None
+                if i[0] == 'imdb':
+                    item = _tmdb.get_externalid_item(i[2], i[1], 'imdb_id')
+                elif i[0] == 'tvdb':
+                    item = _tmdb.get_externalid_item(i[2], i[1], 'tvdb_id')
+                elif i[0] == 'next_page':
+                    item = {'label': 'Next Page', 'url': self.params.copy()}
+                    item['url']['page'] = i[1]
+                if item:
+                    item['mixed_type'] = i[2]
+                    itemlist.append(item)
+            if itemlist:
+                self.plugincategory = category.get('name', '').format(TYPE_CONVERSION.get(itemtype, {}).get('plural', ''))
+                self.containercontent = TYPE_CONVERSION.get(itemtype, {}).get('container', 'movies')  # If no type set to movies for mixed
+                self.list_items(itemlist, dbtype=TYPE_CONVERSION.get(itemtype, {}).get('dbtype'), nexttype=itemtype, url_info=url_info)
+
+    def list_traktuserlists(self):
+        _traktapi = traktAPI()
+        self.start_container()
+        self.params['user_slug'] = self.params.get('user_slug') or _traktapi.get_usernameslug()
+        path = TRAKT_LISTS.get(self.params.get('info'), {}).get('path', '').format(**self.params)
+        itemlist = _traktapi.get_listlist(path, 'list')
+        icon = '{0}/resources/trakt.png'.format(_addonpath)
+        for item in itemlist:
+            label = item.get('name')
+            label2 = item.get('user', {}).get('name')
+            infolabels = {}
+            infolabels['plot'] = item.get('description')
+            infolabels['rating'] = item.get('likes')
+            list_slug = item.get('ids', {}).get('slug')
+            user_slug = item.get('user', {}).get('ids', {}).get('slug')
+            listitem = ListItem(label=label, label2=label2, icon=icon, thumb=icon, poster=icon, infolabels=infolabels)
+            listitem.create_listitem(_handle, info='trakt_userlist', user_slug=user_slug, list_slug=list_slug, type=self.params.get('type'))
+        self.finish_container()
 
     def translate_discover(self):
         lookup_company = 'company'
@@ -259,6 +329,10 @@ class Container(object):
             self.textviewer()
         elif self.params.get('info') == 'imageviewer':
             self.imageviewer()
+        elif self.params.get('info') in TRAKT_LISTLISTS:
+            self.list_traktuserlists()
+        elif self.params.get('info') in TRAKT_LISTS:
+            self.list_trakt()
         elif self.params.get('info') in BASEDIR:
             self.list_tmdb()
         elif self.params.get('info') in TMDB_LISTS and TMDB_LISTS.get(self.params.get('info'), {}).get('path'):

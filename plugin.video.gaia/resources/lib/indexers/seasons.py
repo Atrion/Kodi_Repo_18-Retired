@@ -258,7 +258,8 @@ class seasons:
 			data = urllib2.urlopen(url, timeout=30).read()
 
 			zip = zipfile.ZipFile(StringIO.StringIO(data))
-			result = zip.read('%s.xml' % 'en')
+			try: result = zip.read('en.xml')
+			except: result = zip.read('en.zip.xml') # For new TVDB API.
 			artwork = zip.read('banners.xml')
 			zip.close()
 
@@ -272,7 +273,8 @@ class seasons:
 				data = urllib2.urlopen(url, timeout=30).read()
 
 				zip = zipfile.ZipFile(StringIO.StringIO(data))
-				result = zip.read('%s.xml' % 'en')
+				try: result = zip.read('en.xml')
+				except: result = zip.read('en.zip.xml') # For new TVDB API.
 				artwork = zip.read('banners.xml')
 				zip.close()
 
@@ -281,7 +283,8 @@ class seasons:
 				data = urllib2.urlopen(url, timeout=30).read()
 
 				zip = zipfile.ZipFile(StringIO.StringIO(data))
-				result2 = zip.read('%s.xml' % lang)
+				try: result2 = zip.read('%s.xml' % lang)
+				except: result2 = zip.read('%s.zip.xml' % lang) # For new TVDB API.
 				zip.close()
 			else:
 				result2 = result
@@ -620,7 +623,8 @@ class seasons:
 			url = self.tvdb_info_link % (tvdb, 'en')
 			data = urllib2.urlopen(url, timeout=30).read()
 			zip = zipfile.ZipFile(StringIO.StringIO(data))
-			result = zip.read('%s.xml' % 'en')
+			try: result = zip.read('en.xml')
+			except: result = zip.read('en.zip.xml') # For new TVDB API.
 			zip.close()
 
 			dupe = client.parseDOM(result, 'SeriesName')[0]
@@ -631,7 +635,8 @@ class seasons:
 				url = self.tvdb_info_link % (tvdb, 'en')
 				data = urllib2.urlopen(url, timeout=30).read()
 				zip = zipfile.ZipFile(StringIO.StringIO(data))
-				result = zip.read('%s.xml' % 'en')
+				try: result = zip.read('en.xml')
+				except: result = zip.read('en.zip.xml') # For new TVDB API.
 				zip.close()
 
 			result = result.split('<Episode>')

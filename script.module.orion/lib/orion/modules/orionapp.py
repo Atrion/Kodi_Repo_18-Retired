@@ -45,6 +45,9 @@ class OrionApp:
 		if update and not key == None or not id == None:
 			self.refresh()
 
+	def __lt__(self, other):
+         return self.name() < other.name()
+
 	##############################################################################
 	# INSTANCE
 	##############################################################################
@@ -70,7 +73,7 @@ class OrionApp:
 		return OrionAppInstance
 
 	@classmethod
-	def instances(self, update = False, wait = False):
+	def instances(self, update = False, wait = False, orion = True, sort = False):
 		apps = []
 		try:
 			if update:
@@ -81,6 +84,8 @@ class OrionApp:
 			if not current == None and len(current) > 0:
 				for data in current:
 					apps.append(OrionApp(data = data))
+			if not orion: apps = [app for app in apps if not app.name() == OrionTools.addonName()]
+			if sort: apps.sort()
 		except:
 			OrionTool.serror()
 		return apps

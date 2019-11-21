@@ -56,13 +56,15 @@ class OrionIntegration:
 	AddonDeathStreams = 'Death Streams'
 	AddonBoomMovies = 'Boom Movies'
 	AddonContinuum = 'Continuum'
+	AddonMarauder = 'Marauder'
+	AddonAsguard = 'Asguard'
 	AddonOpenScrapers = 'Open Scrapers'
 	AddonLambdaScrapers = 'Lambda Scrapers'
 	AddonUniversalScrapers = 'Universal Scrapers'
 	AddonNanScrapers = 'NaN Scrapers'
 	AddonElementum = 'Elementum'
 	AddonQuasar = 'Quasar'
-	Addons = [AddonGaia, AddonSeren, AddonIncursion, AddonPlacenta, AddonCovenant, AddonMagicality, AddonTheOath, AddonYoda, AddonBodie, AddonNymeria, AddonVenom, AddonScrubs, AddonMedusa, AddonMercury, AddonDeceit, AddonFen, AddonGenesis, AddonExodus, AddonExodusRedux, AddonNeptuneRising, AddonDeathStreams, AddonBoomMovies, AddonContinuum, AddonOpenScrapers, AddonLambdaScrapers, AddonUniversalScrapers, AddonNanScrapers, AddonElementum, AddonQuasar]
+	Addons = [AddonGaia, AddonSeren, AddonIncursion, AddonPlacenta, AddonCovenant, AddonMagicality, AddonTheOath, AddonYoda, AddonBodie, AddonNymeria, AddonVenom, AddonScrubs, AddonMedusa, AddonMercury, AddonDeceit, AddonFen, AddonGenesis, AddonExodus, AddonExodusRedux, AddonNeptuneRising, AddonDeathStreams, AddonBoomMovies, AddonContinuum, AddonMarauder, AddonAsguard, AddonOpenScrapers, AddonLambdaScrapers, AddonUniversalScrapers, AddonNanScrapers, AddonElementum, AddonQuasar]
 
 	LanguageXml = 'xml'
 	LanguagePython = 'python'
@@ -117,6 +119,13 @@ class OrionIntegration:
 	def _content(self, file):
 		return OrionTools.fileRead(self._path(file)).strip()
 
+	def _version(self, idPlugin, idModule = None):
+		try:
+			version = OrionTools.addonVersion(idPlugin)
+			if idModule: version += '-' + OrionTools.addonVersion(idModule)
+			return version
+		except: return None
+
 	##############################################################################
 	# BACKUP
 	##############################################################################
@@ -166,13 +175,16 @@ class OrionIntegration:
 			elif addon == OrionIntegration.AddonDeathStreams: integration._deathStreamsInitialize()
 			elif addon == OrionIntegration.AddonBoomMovies: integration._boomMoviesInitialize()
 			elif addon == OrionIntegration.AddonContinuum: integration._continuumInitialize()
+			elif addon == OrionIntegration.AddonMarauder: integration._marauderInitialize()
+			elif addon == OrionIntegration.AddonAsguard: integration._asguardInitialize()
 			elif addon == OrionIntegration.AddonOpenScrapers: integration._openScrapersInitialize()
 			elif addon == OrionIntegration.AddonLambdaScrapers: integration._lambdaScrapersInitialize()
 			elif addon == OrionIntegration.AddonUniversalScrapers: integration._universalScrapersInitialize()
 			elif addon == OrionIntegration.AddonNanScrapers: integration._nanScrapersInitialize()
 			elif addon == OrionIntegration.AddonElementum: integration._elementumInitialize()
 			elif addon == OrionIntegration.AddonQuasar: integration._quasarInitialize()
-		except: pass
+		except:
+			OrionTools.error()
 		return integration
 
 	##############################################################################
@@ -199,6 +211,10 @@ class OrionIntegration:
 	@classmethod
 	def addons(self, sort = False):
 		result = []
+		formatNative = OrionInterface.font(32259, color = OrionInterface.ColorGood)
+		formatIntegrated = OrionInterface.font(32256, color = OrionInterface.ColorMedium)
+		formatNotIntegrated = OrionInterface.font(32257, color = OrionInterface.ColorPoor)
+		formatNotInstalled = OrionInterface.font(32258, color = OrionInterface.ColorBad)
 		for addon in OrionIntegration.Addons:
 			try:
 				integration = self.initialize(addon)
@@ -220,7 +236,9 @@ class OrionIntegration:
 				enabled = OrionTools.addonEnabled(idAddon)
 				integrated = OrionSettings.getIntegration(integration.id)
 				integrated = native or not integrated == '' or (enabled and scrapersId and OrionSettings.getIntegration(scrapersId))
-				result.append({'id' : integration.id, 'name' : addon, 'addon' : idAddon, 'enabled' : enabled, 'integrated' : integrated, 'native' : native, 'restart' : restart, 'scrapers' : scrapers})
+				action = 'integration' + addon.title().replace(' ', '')
+				format = '%s: %s' % (OrionInterface.font(addon, bold = True), formatNotInstalled if not enabled else formatNative if native else formatIntegrated if integrated else formatNotIntegrated)
+				result.append({'id' : integration.id, 'name' : addon, 'addon' : idAddon, 'enabled' : enabled, 'integrated' : integrated, 'native' : native, 'restart' : restart, 'scrapers' : scrapers, 'action' : action, 'format' : format})
 			except:
 				OrionTools.error()
 		if sort: result = sorted(result, key = lambda i: i['name'])
@@ -302,6 +320,8 @@ class OrionIntegration:
 		elif addon == OrionIntegration.AddonDeathStreams: result = self._deathStreamsIntegrate()
 		elif addon == OrionIntegration.AddonBoomMovies: result = self._boomMoviesIntegrate()
 		elif addon == OrionIntegration.AddonContinuum: result = self._continuumIntegrate()
+		elif addon == OrionIntegration.AddonMarauder: result = True
+		elif addon == OrionIntegration.AddonAsguard: result = True
 		elif addon == OrionIntegration.AddonScrubs: result = self._scrubsIntegrate()
 		elif addon == OrionIntegration.AddonFen: result = self._fenIntegrate()
 		elif addon == OrionIntegration.AddonGenesis: result = self._genesisIntegrate()
@@ -379,11 +399,19 @@ class OrionIntegration:
 		items.append(OrionInterface.fontBold(32181) + ': ' + OrionTools.translate(32182))
 		choice = OrionInterface.dialogOptions(title = 32174, items = items)
 		if integrate:
-			if choice == 0: return self.integrate(addon)
-			elif choice == 1: return self.clean(addon)
-			elif choice == 2: return self.launch(addon)
+			if choice == 0:
+				result = self.integrate(addon)
+				OrionInterface.containerRefresh()
+				return result
+			elif choice == 1:
+				result = self.clean(addon)
+				OrionInterface.containerRefresh()
+				return result
+			elif choice == 2:
+				return self.launch(addon)
 		else:
-			if choice == 0: return self.launch(addon)
+			if choice == 0:
+				return self.launch(addon)
 
 	@classmethod
 	def executeGaia(self):
@@ -478,6 +506,14 @@ class OrionIntegration:
 		return self.execute(OrionIntegration.AddonContinuum)
 
 	@classmethod
+	def executeMarauder(self):
+		return self.execute(OrionIntegration.AddonMarauder)
+
+	@classmethod
+	def executeAsguard(self):
+		return self.execute(OrionIntegration.AddonAsguard)
+
+	@classmethod
 	def executeOpenScrapers(self):
 		return self.execute(OrionIntegration.AddonOpenScrapers)
 
@@ -509,7 +545,7 @@ class OrionIntegration:
 		self.name = OrionIntegration.AddonGaia
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.gaia'
-		self.version = OrionTools.addonVersion(self.idPlugin)
+		self.version = self._version(self.idPlugin)
 		self.native = True
 		self.files = []
 		self.deletes = []
@@ -522,7 +558,7 @@ class OrionIntegration:
 		self.name = OrionIntegration.AddonSeren
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.seren'
-		self.version = OrionTools.addonVersion(self.idPlugin)
+		self.version = self._version(self.idPlugin)
 		self.reintegrate = False
 		self.restart = False
 		self.link = OrionSettings.getString('internal.providers', raw = True)
@@ -546,7 +582,7 @@ class OrionIntegration:
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.incursion'
 		self.idModule = 'script.module.incursion'
-		self.version = OrionTools.addonVersion(self.idPlugin) + '-' + OrionTools.addonVersion(self.idModule)
+		self.version = self._version(self.idPlugin, self.idModule)
 
 		self.pathPlugin = OrionTools.addonPath(self.idPlugin)
 		self.pathModule = OrionTools.addonPath(self.idModule)
@@ -601,7 +637,7 @@ class OrionIntegration:
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.placenta'
 		self.idModule = 'script.module.placenta'
-		self.version = OrionTools.addonVersion(self.idPlugin) + '-' + OrionTools.addonVersion(self.idModule)
+		self.version = self._version(self.idPlugin, self.idModule)
 
 		self.pathPlugin = OrionTools.addonPath(self.idPlugin)
 		self.pathModule = OrionTools.addonPath(self.idModule)
@@ -656,7 +692,7 @@ class OrionIntegration:
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.covenant'
 		self.idModule = 'script.module.covenant'
-		self.version = OrionTools.addonVersion(self.idPlugin) + '-' + OrionTools.addonVersion(self.idModule)
+		self.version = self._version(self.idPlugin, self.idModule)
 
 		self.pathPlugin = OrionTools.addonPath(self.idPlugin)
 		self.pathModule = OrionTools.addonPath(self.idModule)
@@ -711,7 +747,7 @@ class OrionIntegration:
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.magicality'
 		self.idModule = 'script.module.magicality'
-		self.version = OrionTools.addonVersion(self.idPlugin) + '-' + OrionTools.addonVersion(self.idModule)
+		self.version = self._version(self.idPlugin, self.idModule)
 
 		self.pathPlugin = OrionTools.addonPath(self.idPlugin)
 		self.pathModule = OrionTools.addonPath(self.idModule)
@@ -765,7 +801,7 @@ class OrionIntegration:
 		self.name = OrionIntegration.AddonTheOath
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.theoath'
-		self.version = OrionTools.addonVersion(self.idPlugin)
+		self.version = self._version(self.idPlugin)
 		self.native = True
 		self.files = []
 		self.deletes = []
@@ -779,7 +815,7 @@ class OrionIntegration:
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.yoda'
 		self.idModule = 'script.module.yoda'
-		self.version = OrionTools.addonVersion(self.idPlugin) + '-' + OrionTools.addonVersion(self.idModule)
+		self.version = self._version(self.idPlugin, self.idModule)
 
 		self.pathPlugin = OrionTools.addonPath(self.idPlugin)
 		self.pathModule = OrionTools.addonPath(self.idModule)
@@ -833,7 +869,7 @@ class OrionIntegration:
 		self.name = OrionIntegration.AddonBodie
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.bodiekodi'
-		self.version = OrionTools.addonVersion(self.idPlugin)
+		self.version = self._version(self.idPlugin)
 		self.scrapers = OrionIntegration.AddonLambdaScrapers
 		self.files = []
 		self.deletes = []
@@ -846,7 +882,7 @@ class OrionIntegration:
 		self.name = OrionIntegration.AddonNymeria
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.nymeria'
-		self.version = OrionTools.addonVersion(self.idPlugin)
+		self.version = self._version(self.idPlugin)
 		self.scrapers = OrionIntegration.AddonUniversalScrapers
 		self.files = []
 		self.deletes = []
@@ -859,7 +895,7 @@ class OrionIntegration:
 		self.name = OrionIntegration.AddonVenom
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.venom'
-		self.version = OrionTools.addonVersion(self.idPlugin)
+		self.version = self._version(self.idPlugin)
 		self.scrapers = OrionIntegration.AddonOpenScrapers
 		self.files = []
 		self.deletes = []
@@ -873,7 +909,7 @@ class OrionIntegration:
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.scrubsv2'
 		self.idModule = 'script.module.scrubsv2'
-		self.version = OrionTools.addonVersion(self.idPlugin) + '-' + OrionTools.addonVersion(self.idModule)
+		self.version = self._version(self.idPlugin, self.idModule)
 
 		self.pathPlugin = OrionTools.addonPath(self.idPlugin)
 		self.pathModule = OrionTools.addonPath(self.idModule)
@@ -927,7 +963,7 @@ class OrionIntegration:
 		self.name = OrionIntegration.AddonMedusa
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.Medusa'
-		self.version = OrionTools.addonVersion(self.idPlugin)
+		self.version = self._version(self.idPlugin)
 		self.scrapers = OrionIntegration.AddonUniversalScrapers
 		self.files = []
 		self.deletes = []
@@ -940,7 +976,7 @@ class OrionIntegration:
 		self.name = OrionIntegration.AddonMercury
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.Mercury'
-		self.version = OrionTools.addonVersion(self.idPlugin)
+		self.version = self._version(self.idPlugin)
 		self.scrapers = OrionIntegration.AddonUniversalScrapers
 		self.files = []
 		self.deletes = []
@@ -953,7 +989,7 @@ class OrionIntegration:
 		self.name = OrionIntegration.AddonDeceit
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.deceit'
-		self.version = OrionTools.addonVersion(self.idPlugin)
+		self.version = self._version(self.idPlugin)
 		self.scrapers = OrionIntegration.AddonUniversalScrapers
 		self.files = []
 		self.deletes = []
@@ -967,7 +1003,7 @@ class OrionIntegration:
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.fen'
 		self.idModule = 'script.module.tikiscrapers'
-		self.version = OrionTools.addonVersion(self.idPlugin) + '-' + OrionTools.addonVersion(self.idModule)
+		self.version = self._version(self.idPlugin, self.idModule)
 
 		self.pathPlugin = OrionTools.addonPath(self.idPlugin)
 		self.pathModule = OrionTools.addonPath(self.idModule)
@@ -1022,7 +1058,7 @@ class OrionIntegration:
 		self.name = OrionIntegration.AddonGenesis
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.genesis'
-		self.version = OrionTools.addonVersion(self.idPlugin)
+		self.version = self._version(self.idPlugin)
 
 		self.pathPlugin = OrionTools.addonPath(self.idPlugin)
 
@@ -1076,7 +1112,7 @@ class OrionIntegration:
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.exodus'
 		self.idModule = 'script.module.exoscrapers'
-		self.version = OrionTools.addonVersion(self.idPlugin) + '-' + OrionTools.addonVersion(self.idModule)
+		self.version = self._version(self.idPlugin, self.idModule)
 
 		self.pathPlugin = OrionTools.addonPath(self.idPlugin)
 		self.pathModule = OrionTools.addonPath(self.idModule)
@@ -1136,7 +1172,7 @@ class OrionIntegration:
 		self.name = OrionIntegration.AddonExodusRedux
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.exodusredux'
-		self.version = OrionTools.addonVersion(self.idPlugin)
+		self.version = self._version(self.idPlugin)
 		self.scrapers = OrionIntegration.AddonOpenScrapers
 		self.files = []
 		self.deletes = []
@@ -1149,7 +1185,7 @@ class OrionIntegration:
 		self.name = OrionIntegration.AddonNeptuneRising
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.neptune'
-		self.version = OrionTools.addonVersion(self.idPlugin)
+		self.version = self._version(self.idPlugin)
 		self.scrapers = OrionIntegration.AddonUniversalScrapers
 		self.files = []
 		self.deletes = []
@@ -1162,7 +1198,7 @@ class OrionIntegration:
 		self.name = OrionIntegration.AddonDeathStreams
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.blamo'
-		self.version = OrionTools.addonVersion(self.idPlugin)
+		self.version = self._version(self.idPlugin)
 
 		self.pathPlugin = OrionTools.addonPath(self.idPlugin)
 
@@ -1196,7 +1232,7 @@ class OrionIntegration:
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.BoomMovies'
 		self.idModule = 'script.module.BoomMovies'
-		self.version = OrionTools.addonVersion(self.idPlugin) + '-' + OrionTools.addonVersion(self.idModule)
+		self.version = self._version(self.idPlugin, self.idModule)
 
 		self.pathPlugin = OrionTools.addonPath(self.idPlugin)
 		self.pathModule = OrionTools.addonPath(self.idModule)
@@ -1251,7 +1287,7 @@ class OrionIntegration:
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.cmovies'
 		self.idModule = 'script.module.cmovies'
-		self.version = OrionTools.addonVersion(self.idPlugin) + '-' + OrionTools.addonVersion(self.idModule)
+		self.version = self._version(self.idPlugin, self.idModule)
 
 		self.pathPlugin = OrionTools.addonPath(self.idPlugin)
 		self.pathModule = OrionTools.addonPath(self.idModule)
@@ -1298,6 +1334,32 @@ class OrionIntegration:
 		return self._integrateSuccess()
 
 	##############################################################################
+	# MARAUDER
+	##############################################################################
+
+	def _marauderInitialize(self):
+		self.name = OrionIntegration.AddonMarauder
+		self.id = self.id(self.name)
+		self.idPlugin = 'plugin.video.marauder'
+		self.version = self._version(self.idPlugin)
+		self.native = True
+		self.files = []
+		self.deletes = []
+
+	##############################################################################
+	# ASGUARD
+	##############################################################################
+
+	def _asguardInitialize(self):
+		self.name = OrionIntegration.AddonAsguard
+		self.id = self.id(self.name)
+		self.idPlugin = 'plugin.video.asguard'
+		self.version = self._version(self.idPlugin)
+		self.native = True
+		self.files = []
+		self.deletes = []
+
+	##############################################################################
 	# OPEN SCRAPERS
 	##############################################################################
 
@@ -1305,7 +1367,7 @@ class OrionIntegration:
 		self.name = OrionIntegration.AddonOpenScrapers
 		self.id = self.id(self.name)
 		self.idPlugin = 'script.module.openscrapers'
-		self.version = OrionTools.addonVersion(self.idPlugin)
+		self.version = self._version(self.idPlugin)
 		self.versionNumber = int(self.version.replace('.', ''))
 
 		self.pathPlugin = OrionTools.addonPath(self.idPlugin)
@@ -1361,7 +1423,7 @@ class OrionIntegration:
 		self.name = OrionIntegration.AddonLambdaScrapers
 		self.id = self.id(self.name)
 		self.idPlugin = 'script.module.lambdascrapers'
-		self.version = OrionTools.addonVersion(self.idPlugin)
+		self.version = self._version(self.idPlugin)
 		self.versionNumber = int(self.version.replace('.', ''))
 
 		self.pathPlugin = OrionTools.addonPath(self.idPlugin)
@@ -1452,7 +1514,7 @@ class OrionIntegration:
 		self.name = OrionIntegration.AddonUniversalScrapers
 		self.id = self.id(self.name)
 		self.idPlugin = 'script.module.universalscrapers'
-		self.version = OrionTools.addonVersion(self.idPlugin)
+		self.version = self._version(self.idPlugin)
 
 		self.pathPlugin = OrionTools.addonPath(self.idPlugin)
 
@@ -1499,7 +1561,7 @@ class OrionIntegration:
 		self.name = OrionIntegration.AddonNanScrapers
 		self.id = self.id(self.name)
 		self.idPlugin = 'script.module.nanscrapers'
-		self.version = OrionTools.addonVersion(self.idPlugin)
+		self.version = self._version(self.idPlugin)
 
 		self.pathPlugin = OrionTools.addonPath(self.idPlugin)
 
@@ -1547,8 +1609,7 @@ class OrionIntegration:
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.elementum'
 		self.idModule = 'script.elementum.burst'
-
-		self.version = OrionTools.addonVersion(self.idPlugin) + '-' + OrionTools.addonVersion(self.idModule)
+		self.version = self._version(self.idPlugin, self.idModule)
 
 		self.pathPlugin = OrionTools.addonPath(self.idPlugin)
 		self.pathModule = OrionTools.addonPath(self.idModule)
@@ -1617,8 +1678,7 @@ class OrionIntegration:
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.quasar'
 		self.idModule = 'script.quasar.burst'
-
-		self.version = OrionTools.addonVersion(self.idPlugin) + '-' + OrionTools.addonVersion(self.idModule)
+		self.version = self._version(self.idPlugin, self.idModule)
 
 		self.pathPlugin = OrionTools.addonPath(self.idPlugin)
 		self.pathModule = OrionTools.addonPath(self.idModule)

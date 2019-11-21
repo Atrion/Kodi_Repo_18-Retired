@@ -602,7 +602,8 @@ class episodes:
 				data = urllib2.urlopen(url, timeout=10).read()
 
 				zip = zipfile.ZipFile(StringIO.StringIO(data))
-				result = zip.read('%s.xml' % lang)
+				try: result = zip.read('%s.xml' % lang)
+				except: result = zip.read('%s.zip.xml' % lang) # For new TVDB API.
 				artwork = zip.read('banners.xml')
 				zip.close()
 
@@ -822,7 +823,8 @@ class episodes:
 				data = urllib2.urlopen(url, timeout=10).read()
 
 				zip = zipfile.ZipFile(StringIO.StringIO(data))
-				result = zip.read('%s.xml' % lang)
+				try: result = zip.read('%s.xml' % lang)
+				except: result = zip.read('%s.zip.xml' % lang) # For new TVDB API.
 				artwork = zip.read('banners.xml')
 				zip.close()
 

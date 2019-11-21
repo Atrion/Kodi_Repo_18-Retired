@@ -1,4 +1,5 @@
-# -*- coding: utf-8 -*-
+# -*- coding: UTF-8 -*-
+# Created by Tempest
 
 #  ..#######.########.#######.##....#..######..######.########....###...########.#######.########..######.
 #  .##.....#.##.....#.##......###...#.##....#.##....#.##.....#...##.##..##.....#.##......##.....#.##....##
@@ -9,6 +10,7 @@
 #  ..#######.##.......#######.##....#..######..######.##.....#.##.....#.##.......#######.##.....#..######.
 
 '''
+    OpenScrapers Project
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
@@ -27,7 +29,6 @@ import re
 import urllib
 import urlparse
 
-from openscrapers.modules import cfscrape
 from openscrapers.modules import cleantitle
 from openscrapers.modules import client
 from openscrapers.modules import debrid
@@ -35,136 +36,135 @@ from openscrapers.modules import source_utils
 
 
 class source:
-    def __init__(self):
-        self.priority = 1
-        self.language = ['en']
-        self.domains = ['mvrls.com']
-        self.base_link = 'http://mvrls.com'
-        self.search_link = '/search/%s/feed/rss2/'
-        self.scraper = cfscrape.create_scraper()
+	def __init__(self):
+		self.priority = 1
+		self.language = ['en']
+		self.domains = ['mvrls.com']
+		self.base_link = 'http://mvrls.com'
+		self.search_link = '/search/%s/feed/rss2/'
 
-    def movie(self, imdb, title, localtitle, aliases, year):
-        try:
-            url = {'imdb': imdb, 'title': title, 'year': year}
-            url = urllib.urlencode(url)
-            return url
-        except:
-            return
+	# self.search_link = '/?s=%s' # should really switch to site search since rss feed often returns incorect query results vs. site
 
-    def tvshow(self, imdb, tvdb, tvshowtitle, localtvshowtitle, aliases, year):
-        try:
-            url = {'imdb': imdb, 'tvdb': tvdb, 'tvshowtitle': tvshowtitle, 'year': year}
-            url = urllib.urlencode(url)
-            return url
-        except:
-            return
+	def movie(self, imdb, title, localtitle, aliases, year):
+		try:
+			url = {'imdb': imdb, 'title': title, 'year': year}
+			url = urllib.urlencode(url)
+			return url
+		except:
+			return
 
-    def episode(self, url, imdb, tvdb, title, premiered, season, episode):
-        try:
-            if url is None:
-                return
+	def tvshow(self, imdb, tvdb, tvshowtitle, localtvshowtitle, aliases, year):
+		try:
+			url = {'imdb': imdb, 'tvdb': tvdb, 'tvshowtitle': tvshowtitle, 'year': year}
+			url = urllib.urlencode(url)
+			return url
+		except:
+			return
 
-            url = urlparse.parse_qs(url)
-            url = dict([(i, url[i][0]) if url[i] else (i, '') for i in url])
-            url['title'], url['premiered'], url['season'], url['episode'] = title, premiered, season, episode
-            url = urllib.urlencode(url)
-            return url
-        except:
-            return
+	def episode(self, url, imdb, tvdb, title, premiered, season, episode):
+		try:
+			if url is None:
+				return
+			url = urlparse.parse_qs(url)
+			url = dict([(i, url[i][0]) if url[i] else (i, '') for i in url])
+			url['title'], url['premiered'], url['season'], url['episode'] = title, premiered, season, episode
+			url = urllib.urlencode(url)
+			return url
+		except:
+			return
 
-    def sources(self, url, hostDict, hostprDict):
-        try:
-            sources = []
+	def sources(self, url, hostDict, hostprDict):
+		try:
+			sources = []
 
-            if url is None: return sources
-            if debrid.status() == False: raise Exception()
+			if url is None:
+				return sources
 
-            data = urlparse.parse_qs(url)
-            data = dict([(i, data[i][0]) if data[i] else (i, '') for i in data])
+			if debrid.status() is False:
+				return sources
 
-            title = data['tvshowtitle'] if 'tvshowtitle' in data else data['title']
+			hostDict = hostprDict + hostDict
 
-            hdlr = 'S%02dE%02d' % (int(data['season']), int(data['episode'])) if 'tvshowtitle' in data else data['year']
+			data = urlparse.parse_qs(url)
+			data = dict([(i, data[i][0]) if data[i] else (i, '') for i in data])
 
-            query = '%s S%02dE%02d' % (
-                data['tvshowtitle'], int(data['season']),
-                int(data['episode'])) if 'tvshowtitle' in data else '%s %s' % (
-                data['title'], data['year'])
-            query = re.sub('(\\\|/| -|:|;|\*|\?|"|\'|<|>|\|)', ' ', query)
+			title = data['tvshowtitle'] if 'tvshowtitle' in data else data['title']
+			hdlr = 'S%02dE%02d' % (int(data['season']), int(data['episode'])) if 'tvshowtitle' in data else data['year']
 
-            url = self.search_link % urllib.quote_plus(query)
-            url = urlparse.urljoin(self.base_link, url)
+			query = '%s %s' % (title, hdlr)
+			query = re.sub('(\\\|/| -|:|;|\*|\?|"|\'|<|>|\|)', '', query)
 
-            html = self.scraper.get(url).content
-            posts = client.parseDOM(html, 'item')
+			url = self.search_link % urllib.quote_plus(query)
+			url = urlparse.urljoin(self.base_link, url)
+			# log_utils.log('url = %s' % url, log_utils.LOGDEBUG)
 
-            hostDict = hostprDict + hostDict
+			html = client.request(url)
+			posts = client.parseDOM(html, 'item')
 
-            items = []
+			items = []
+			for post in posts:
+				try:
+					t = client.parseDOM(post, 'title')[0]
+					u = client.parseDOM(post, 'enclosure', ret='url')
+					# ---rss feed does not contain size info-another reason why switching to site search be better
+					s = re.search('((?:\d+\.\d+|\d+\,\d+|\d+)\s*(?:GB|GiB|MB|MiB))', post)
+					s = s.groups()[0] if s else '0'
+					items += [(t, i, s) for i in u]
+				except:
+					pass
 
-            for post in posts:
-                try:
-                    t = client.parseDOM(post, 'title')[0]
-                    u = client.parseDOM(post, 'enclosure', ret='url')
-                    s = re.search('((?:\d+\.\d+|\d+\,\d+|\d+)\s*(?:GB|GiB|MB|MiB))', post)
-                    s = s.groups()[0] if s else '0'
-                    items += [(t, i, s) for i in u]
-                except:
-                    pass
+			for item in items:
+				try:
+					url = item[1]
+					if any(x in url for x in ['.rar', '.zip', '.iso', '.part']):
+						continue
 
-            for item in items:
-                try:
+					url = client.replaceHTMLCodes(url)
+					url = url.encode('utf-8')
 
-                    url = item[1]
-                    if any(x in url for x in ['.rar', '.zip', '.iso', '.part']): raise Exception()
-                    url = client.replaceHTMLCodes(url)
-                    url = url.encode('utf-8')
+					valid, host = source_utils.is_host_valid(url, hostDict)
+					if not valid:
+						continue
 
-                    valid, host = source_utils.is_host_valid(url, hostDict)
-                    if not valid:
-                        raise Exception()
+					host = client.replaceHTMLCodes(host)
+					host = host.encode('utf-8')
 
-                    host = client.replaceHTMLCodes(host)
-                    host = host.encode('utf-8')
+					name = item[0]
+					name = client.replaceHTMLCodes(name)
 
-                    name = item[0]
-                    name = client.replaceHTMLCodes(name)
+					# some shows like "Power" have year and hdlr in name
+					t = name.split(hdlr)[0].replace(data['year'], '').replace('(', '').replace(')', '')
 
-                    t = re.sub('(\.|\(|\[|\s)(\d{4}|S\d*E\d*|S\d*|3D)(\.|\)|\]|\s|)(.+|)', '', name, flags=re.I)
+					if cleantitle.get(t) != cleantitle.get(title):
+						continue
 
-                    if not cleantitle.get(t) == cleantitle.get(title):
-                        raise Exception()
+					if hdlr not in name:
+						continue
 
-                    y = re.findall('[\.|\(|\[|\s](\d{4}|S\d*E\d*|S\d*)[\.|\)|\]|\s]', name)[-1].upper()
+					quality, info = source_utils.get_release_quality(name, url)
 
-                    if not y == hdlr:
-                        raise Exception()
+					try:
+						size = re.findall('((?:\d+\.\d+|\d+\,\d+|\d+)\s*(?:GB|GiB|MB|MiB))', item[2])[-1]
+						div = 1 if size.endswith(('GB', 'GiB')) else 1024
+						size = float(re.sub('[^0-9|/.|/,]', '', size)) / div
+						size = '%.2f GB' % size
+						info.append(size)
+					except:
+						pass
 
-                    quality, info = source_utils.get_release_quality(name, url)
+					info = ' | '.join(info)
 
-                    try:
-                        size = re.findall('((?:\d+\.\d+|\d+\,\d+|\d+)\s*(?:GB|GiB|MB|MiB))', item[2])[-1]
-                        div = 1 if size.endswith(('GB', 'GiB')) else 1024
-                        size = float(re.sub('[^0-9|/.|/,]', '', size)) / div
-                        size = '%.2f GB' % size
-                        info.append(size)
-                    except:
-                        pass
+					sources.append({'source': host, 'quality': quality, 'language': 'en', 'url': url,
+					                'info': info, 'direct': False, 'debridonly': True})
 
-                    info = ' | '.join(info)
+				except:
+					source_utils.scraper_error('MVRLS')
+					pass
 
-                    sources.append({'source': host, 'quality': quality, 'language': 'en', 'url': url, 'info': info,
-                                    'direct': False, 'debridonly': True})
-                except:
-                    pass
+			return sources
+		except:
+			source_utils.scraper_error('MVRLS')
+			return sources
 
-            check = [i for i in sources if not i['quality'] == 'CAM']
-            if check:
-                sources = check
-
-            return sources
-        except:
-            return sources
-
-    def resolve(self, url):
-        return url
+	def resolve(self, url):
+		return url

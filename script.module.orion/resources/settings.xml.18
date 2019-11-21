@@ -2,8 +2,9 @@
 <settings>
 	<category label = "[B]$ADDON[script.module.orion 32009][/B]">
 
-		<setting id="internal.backup" type="bool" default="false" visible="false" />
 		<setting id="internal.initial" type="bool" default="false" visible="false" />
+		<setting id="internal.integration" type="number" default="0" visible="false" />
+		<setting id="internal.backup" type="text" default="" visible="false" />
 
 		<setting id="internal.link" type="text" default="https://orionoid.com" visible="false" />
 		<setting id="internal.providers" type="text" default="https://providers.orionoid.com" visible="false" />
@@ -53,7 +54,7 @@
 		<setting type="sep" />
 		<setting id="general.settings.cache" label="32194" type="bool" default="true" />
 			<setting id="help.general.settings.cache" type="action" default="[B][COLOR FF47CAE9]$ADDON[script.module.orion 32066][/COLOR][/B]" label="  [B][COLOR FF47CAE9]•[/COLOR][/B] [LIGHT]$ADDON[script.module.orion 34053]  [/LIGHT]" visible="eq(-29,true)" />
-		<setting id="general.settings.backup" label="32185" type="bool" default="true" />
+		<setting id="general.settings.backup" label="32185" type="enum" lvalues="32057|32270|32269|32268" default="1" />
 			<setting id="help.general.settings.backup" type="action" default="[B][COLOR FF47CAE9]$ADDON[script.module.orion 32066][/COLOR][/B]" label="  [B][COLOR FF47CAE9]•[/COLOR][/B] [LIGHT]$ADDON[script.module.orion 34048]  [/LIGHT]" visible="eq(-31,true)" />
 
 		<setting type="lsep" label="[UPPERCASE][B]$ADDON[script.module.orion 32186][/B][/UPPERCASE]" />

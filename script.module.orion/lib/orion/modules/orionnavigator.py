@@ -67,7 +67,7 @@ class OrionNavigator:
 
 	# context = [{'label', 'action', 'parameters'}]
 	# Optional 'command' parameter to specify a custom command instead of construction one from action and parameters.
-	def buildAdd(self, label, action = None, parameters = None, context = [], folder = False, icon = None, theme = OrionInterface.ThemeDefault):
+	def buildAdd(self, label, action = None, parameters = None, context = [], folder = False, icon = None, theme = OrionInterface.ThemeDefault, default = None):
 		link = OrionTools.executePlugin(action = action, parameters = parameters, run = False)
 		item = xbmcgui.ListItem(label = OrionTools.translate(label))
 
@@ -85,6 +85,8 @@ class OrionNavigator:
 			item.addContextMenuItems(contextMenu)
 
 		icon = OrionInterface.iconPath(icon, theme = theme)
+		if default and not OrionTools.fileExists(icon): icon = OrionInterface.iconPath(default, theme = OrionInterface.ThemeDefault)
+
 		item.setArt({'icon': icon, 'thumb': icon})
 		if OrionSettings.getBoolean('general.interface.background'): item.setProperty('Fanart_Image', OrionTools.pathJoin(OrionTools.addonPath(), 'fanart.jpg'))
 		xbmcplugin.addDirectoryItem(handle = self.mHandle, url = link, listitem = item, isFolder = folder)
@@ -102,7 +104,7 @@ class OrionNavigator:
 		menu = OrionNavigator()
 		user = OrionUser.instance()
 		if user.subscriptionPackageFree(): menu.buildAdd(label = 32044, action = 'dialogPremium', folder = False, icon = 'premium')
-		if user.valid(): menu.buildAdd(label = 32017, action = 'dialogUser', folder = False, icon = 'account')
+		if user.valid(): menu.buildAdd(label = 32017, action = 'menuAccount', folder = True, icon = 'account')
 		else: menu.buildAdd(label = 32248, action = 'dialogFree', folder = False, icon = 'free')
 		menu.buildAdd(label = 32002, action = 'menuApps', folder = True, icon = 'app')
 		menu.buildAdd(label = 32004, action = 'menuTools', folder = True, icon = 'tools')
@@ -112,13 +114,21 @@ class OrionNavigator:
 		OrionSettings.set('internal.initial', True)
 
 	@classmethod
+	def menuAccount(self):
+		menu = OrionNavigator()
+		user = OrionUser.instance()
+		if user.valid(): menu.buildAdd(label = 32010, action = 'dialogUser', folder = False, icon = 'details')
+		menu.buildAdd(label = 32271, action = 'dialogVoucher', folder = False, icon = 'voucher')
+		menu.buildFinish()
+
+	@classmethod
 	def menuApps(self):
 		OrionInterface.loaderShow()
-		apps = OrionApp.instances(update = True, wait = True)
+		apps = OrionApp.instances(update = True, wait = True, orion = False, sort = True)
 		menu = OrionNavigator()
 		menu.buildAdd(label = 32174, action = 'menuIntegration', folder = True, icon = 'integration')
 		for app in apps:
-			menu.buildAdd(label = app.name(), action = 'dialogApp', parameters = {'id' : app.id()}, icon = 'app')
+			menu.buildAdd(label = app.name(), action = 'dialogApp', parameters = {'id' : app.id()}, icon = OrionIntegration.id(app.name()), theme = OrionInterface.ThemeApps, default = 'app')
 		menu.buildFinish()
 		OrionInterface.loaderHide()
 
@@ -137,17 +147,23 @@ class OrionNavigator:
 
 	@classmethod
 	def menuIntegration(self):
-		if OrionInterface.dialogOption(title = 32174, message = 33028):
+		# Only show warning message once a day, just so that refreshing the container does not cause another popup.
+		current = OrionTools.timestamp()
+		time = current - OrionSettings.getInteger('internal.integration')
+		if time < 86400 or OrionInterface.dialogOption(title = 32174, message = 33028):
+			OrionSettings.set('internal.integration', current)
 			menu = OrionNavigator()
-			addons = sorted(OrionIntegration.Addons)
+			addons = OrionIntegration.addons(sort = True)
 			for addon in addons:
-				menu.buildAdd(label = addon, action = 'integration' + addon.title().replace(' ', ''), folder = False, icon = OrionIntegration.id(addon), theme = OrionInterface.ThemeApps)
+				menu.buildAdd(label = addon['format'], action = addon['action'], folder = False, icon = addon['id'], theme = OrionInterface.ThemeApps)
 			menu.buildFinish()
 
 	@classmethod
 	def menuClean(self):
 		OrionInterface.loaderShow()
-		choice = OrionInterface.dialogOptions(title = 32006, items = [32047, 32005])
+		items = [[32047, 33044], [32005, 33045]]
+		items = [OrionInterface.fontBold(OrionTools.translate(item[0]) + ': ') + OrionTools.translate(item[1]) for item in items]
+		choice = OrionInterface.dialogOptions(title = 32006, items = items)
 		if choice == 0:
 			OrionTools.cleanCache()
 			OrionInterface.dialogNotification(title = 32006, message = 33005, icon = OrionInterface.IconSuccess)
@@ -201,6 +217,26 @@ class OrionNavigator:
 		if success: user.dialog()
 
 	@classmethod
+	def dialogVoucher(self):
+		choice = OrionInterface.dialogOption(title = 32271, message = 33046, labelConfirm = 32250, labelDeny = 32251)
+		if choice:
+			if OrionUser.instance().subscriptionPackageAnonymous():
+				choice = OrionInterface.dialogOption(title = 32271, message = 33047, labelConfirm = 32250, labelDeny = 32251)
+			if choice:
+				token = OrionInterface.dialogInput(title = 32272)
+				OrionInterface.loaderShow()
+				api = OrionApi()
+				api.couponRedeem(token = token)
+				if api.statusSuccess():
+					user = OrionUser.instance()
+					user.update()
+					message = OrionTools.translate(33048) % (OrionInterface.fontBold(user.subscriptionPackageName()), OrionInterface.fontBold(OrionTools.timeDays(timeTo = user.subscriptionTimeExpiration(), format = True)))
+				else:
+					message = api.message()
+				OrionInterface.loaderHide()
+				OrionInterface.dialogConfirm(title = 32271, message = message)
+
+	@classmethod
 	def dialogServer(self):
 		server = OrionServer.instance()
 		OrionInterface.loaderShow()
@@ -210,10 +246,13 @@ class OrionNavigator:
 
 	@classmethod
 	def dialogBackup(self):
-		if OrionInterface.dialogOption(title = 32170, message = 33012, labelConfirm = 32171, labelDeny = 32172):
-			return OrionSettings.backupImport()
-		else:
-			return OrionSettings.backupExport()
+		items = [[32264, 33039], [32265, 33040], [32266, 33041], [32267, 33042]]
+		items = [OrionInterface.fontBold(OrionTools.translate(item[0]) + ': ') + OrionTools.translate(item[1]) for item in items]
+		choice = OrionInterface.dialogOptions(title = 32170, items = items)
+		if choice == 0: OrionSettings.backupImport()
+		elif choice == 1: OrionSettings.backupExport()
+		elif choice == 2: OrionSettings.backupImportOnline()
+		elif choice == 3: OrionSettings.backupExportOnline()
 
 	@classmethod
 	def dialogNotification(self):
@@ -225,7 +264,7 @@ class OrionNavigator:
 		elif len(notifications) == 1:
 			notifications[0].dialog()
 		else:
-			items = [OrionInterface.fontBold('[' + OrionTools.timeFormat(time = i.timeAdded(), format = OrionTools.FormatDate) + '] ') + i.contentTitle() for i in notifications]
+			items = [OrionInterface.fontBold('[' + OrionTools.timeFormat(i.timeAdded(), format = OrionTools.FormatDate) + '] ') + i.contentTitle() for i in notifications]
 			choice = OrionInterface.dialogOptions(title = 32157, items = items)
 			if choice >= 0: notifications[choice].dialog(wait = True)
 
@@ -250,7 +289,7 @@ class OrionNavigator:
 	##############################################################################
 
 	@classmethod
-	def settingsAccountLogin(self, key = None, settings = True):
+	def settingsAccountLogin(self, key = None, settings = True, refresh = True):
 		if key == None: key = self.settingsAccountKey(loader = True, hide = False)
 		else: OrionInterface.loaderShow()
 
@@ -260,16 +299,19 @@ class OrionNavigator:
 			if self.settingsAccountRefresh(launch = False, notification = True):
 				OrionIntegration.check()
 
-			# Reduce the limits for free users.
-			if user.subscriptionPackageFree():
-				OrionSettings.setFiltersLimitCount(OrionUser.LinksAnonymous)
-				OrionSettings.setFiltersLimitRetry(0)
+				# Reduce the limits for free users.
+				if user.subscriptionPackageFree():
+					OrionSettings.setFiltersLimitCount(OrionUser.LinksAnonymous)
+					OrionSettings.setFiltersLimitRetry(0)
+
+				if user.addonKodi() and OrionInterface.dialogOption(title = 32170, message = 33012):
+					OrionSettings.backupImportOnline(refresh = False)
 		else:
 			user.settingsKeySet('') # Remove key and disable account.
 			user.update(disable = True)
 
 		if settings: OrionSettings.launch(category = OrionSettings.CategoryAccount)
-		OrionInterface.containerRefresh()
+		if refresh: OrionInterface.containerRefresh()
 		OrionInterface.loaderHide()
 		return user.valid(True)
 

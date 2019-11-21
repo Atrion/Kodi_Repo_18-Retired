@@ -38,6 +38,7 @@ def action_playmedia(item):
 	xbmc.executebuiltin('PlayMedia("%s")' % item)
 
 def get_video_link(players, params):
+	lister = Lister()
 	for lang, lang_params in params.items():
 		for key, value in lang_params.items():
 			if isinstance(value, basestring):
@@ -52,7 +53,7 @@ def get_video_link(players, params):
 			if index == -1:
 				return None
 			players = [players[index]]
-		resolve_f = lambda p: resolve_player(p, Lister(), params)
+		resolve_f = lambda p: resolve_player(p, lister, params)
 		result = resolve_f(players[0])
 		if result:
 			title, links = result
@@ -65,7 +66,7 @@ def get_video_link(players, params):
 		else:
 			plugin.ok('Error', 'Video not found')
 	finally:
-		Lister().stop()
+		lister.stop()
 	return selection
 
 def on_play_video(players, params, trakt_ids=None):
@@ -88,11 +89,11 @@ def on_play_video(players, params, trakt_ids=None):
 def resolve_player(player, lister, params):
 	results = []
 	for command_group in player.commands:  
-		if xbmc.Monitor().abortRequested() or not Lister().is_active():
+		if xbmc.Monitor().abortRequested() or not lister.is_active():
 			return
 		command_group_results = []
 		for command in command_group:
-			if xbmc.Monitor().abortRequested() or not Lister().is_active():
+			if xbmc.Monitor().abortRequested() or not lister.is_active():
 				return
 			lang = command.get('language', 'en')
 			if not lang in params:
@@ -118,12 +119,12 @@ def resolve_player(player, lister, params):
 					})
 			else:
 				steps = [text.to_unicode(step) for step in command['steps']]
-				files, dirs = Lister().get(link, steps, parameters)
+				files, dirs = lister.get(link, steps, parameters)
 				if files:
 					command_group_results += [
 						{
 							'label': f['label'],
-							'path': (f['path']),
+							'path': player.postprocess(f['path']),
 							'action': command.get('action', 'PLAY')
 						} for f in files]
 			if command_group_results:

@@ -1,4 +1,6 @@
-# -*- coding: utf-8 -*-
+# -*- coding: UTF-8 -*-
+# -Cleaned and Checked on 11-23-2018 by JewBMX in Scrubs.
+# Only browser checks for active domains.
 
 #  ..#######.########.#######.##....#..######..######.########....###...########.#######.########..######.
 #  .##.....#.##.....#.##......###...#.##....#.##....#.##.....#...##.##..##.....#.##......##.....#.##....##
@@ -9,8 +11,7 @@
 #  ..#######.##.......#######.##....#..######..######.##.....#.##.....#.##.......#######.##.....#..######.
 
 '''
-    Covenant Add-on
-
+    OpenScrapers Project
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
@@ -35,74 +36,75 @@ from openscrapers.modules import source_utils
 
 
 class source:
-    def __init__(self):
-        self.priority = 1
-        self.language = ['gr']
-        self.domains = ['xrysoi.se']
-        self.base_link = 'http://xrysoi.se/'
-        self.search_link = 'search/%s/feed/rss2/'
+	def __init__(self):
+		self.priority = 1
+		self.language = ['gr']
+		self.domains = ['xrysoi.net', 'xrysoi.se', 'xrysoi.online']
+		self.base_link = 'https://xrysoi.net/'
+		self.search_link = 'search/%s/feed/rss2/'
 
-    def movie(self, imdb, title, localtitle, aliases, year):
-        try:
-            url = {'imdb': imdb, 'title': title, 'aliases': aliases, 'year': year}
-            url = urllib.urlencode(url)
-            return url
-        except:
-            return
+	def movie(self, imdb, title, localtitle, aliases, year):
+		try:
+			url = {'imdb': imdb, 'title': title, 'aliases': aliases, 'year': year}
+			url = urllib.urlencode(url)
+			return url
+		except:
+			return
 
-    def sources(self, url, hostDict, hostprDict):
-        sources = []
-        try:
-            sources = []
+	def sources(self, url, hostDict, hostprDict):
+		sources = []
+		try:
+			sources = []
 
-            if url == None: return sources
+			if url is None:
+				return sources
 
-            data = urlparse.parse_qs(url)
-            data = dict([(i, data[i][0]) if data[i] else (i, '') for i in data])
+			data = urlparse.parse_qs(url)
+			data = dict([(i, data[i][0]) if data[i] else (i, '') for i in data])
 
-            title = data['title']
-            year = data['year']
-            query = '%s %s' % (data['title'], data['year'])
-            query = re.sub('(\\\|/| -|:|;|\*|\?|"|\'|<|>|\|)', ' ', query)
+			title = data['title']
 
-            url = self.search_link % urllib.quote_plus(query)
-            url = urlparse.urljoin(self.base_link, url)
+			year = data['year']
 
-            r = client.request(url)
-            posts = client.parseDOM(r, 'item')
+			query = '%s %s' % (data['title'], data['year'])
+			query = re.sub('(\\\|/| -|:|;|\*|\?|"|\'|<|>|\|)', ' ', query)
 
-            for post in posts:
-                try:
-                    name = client.parseDOM(post, 'title')
+			url = self.search_link % urllib.quote_plus(query)
+			url = urlparse.urljoin(self.base_link, url)
 
-                    links = client.parseDOM(post, 'a', ret='href')
+			r = client.request(url)
+			posts = client.parseDOM(r, 'item')
 
-                    t = re.sub('(\.|\(|\[|\s|)(\d{4})(\.|\)|\]|\s|)(.+|)', '', name[0])
-                    if not cleantitle.get(t) == cleantitle.get(title): raise Exception()
+			for post in posts:
+				try:
+					name = client.parseDOM(post, 'title')
+					links = client.parseDOM(post, 'a', ret='href')
 
-                    y = re.findall('\(\s*(\d{4})\s*\)', name[0])[0]
-                    if not y == year: raise Exception()
+					t = re.sub('(\.|\(|\[|\s|)(\d{4})(\.|\)|\]|\s|)(.+|)', '', name[0])
 
-                    for url in links:
-                        if any(x in url for x in ['.online', 'xrysoi.se', 'filmer', '.bp', '.blogger']): continue
+					if cleantitle.get(t) != cleantitle.get(title):
+						raise Exception()
 
-                        url = client.replaceHTMLCodes(url)
-                        url = url.encode('utf-8')
-                        valid, host = source_utils.is_host_valid(url, hostDict)
-                        if 'hdvid' in host: valid = True
-                        if not valid: continue
-                        quality = 'SD'
-                        info = 'SUB'
+					y = re.findall('\(\s*(\d{4})\s*\)', name[0])[0]
+					if y != year:
+						raise Exception()
 
-                        sources.append({'source': host, 'quality': quality, 'language': 'gr', 'url': url, 'info': info,
-                                        'direct': False, 'debridonly': False})
+					for url in links:
+						if any(x in url for x in ['.online', 'xrysoi.se', 'filmer', '.bp', '.blogger']): continue
+						url = client.replaceHTMLCodes(url)
+						url = url.encode('utf-8')
+						valid, host = source_utils.is_host_valid(url, hostDict)
+						if 'hdvid' in host: valid = True
+						if not valid: continue
+						quality = 'SD'
+						info = 'SUB'
+						sources.append({'source': host, 'quality': quality, 'language': 'gr', 'url': url, 'info': info,
+						                'direct': False, 'debridonly': False})
+				except:
+					pass
+			return sources
+		except:
+			return sources
 
-                except:
-                    pass
-
-            return sources
-        except:
-            return sources
-
-    def resolve(self, url):
-        return url
+	def resolve(self, url):
+		return url

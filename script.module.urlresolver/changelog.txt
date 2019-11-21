@@ -1,3 +1,64 @@
+[B]Version 5.0.44 (November 17, 2019)[/B]
+- Code Base Changes:
+    - input improvement
+- Resolvers Added:
+    - cloudb
+    - videomega
+- Resolvers Fixed/Updated:
+    - clipwatching
+    - mixdrop
+    - jetload
+    - onlystream
+    - gofile
+    - apiurl
+    - fembed
+    - jetload
+    - yandex
+    - vidoza
+    - cloudvideo
+- Resolvers Removed
+    - none
+- Languages Added/Updated
+    - none
+
+[B]Version 5.0.43 (November 10, 2019)[/B]
+- Code Base Changes:
+    - none
+- Resolvers Added:
+    - mixdrop
+- Resolvers Fixed/Updated:
+    - clipwatching
+    - fembed
+    - gounlimited
+    - vidup
+- Resolvers Removed
+    - none
+- Languages Added/Updated
+    - none
+
+[B]Version 5.0.42 (November 1, 2019)[/B]
+- Code Base Changes:
+    - hmf improvement
+- Resolvers Added:
+    - uqload
+    - videobin
+    - idup.to
+- Resolvers Fixed/Updated:
+    - onlystream
+    - thevid
+    - gofile
+    - fembed
+    - uqload
+    - videoapne
+    - vidorg
+    - speedwatch
+- Resolvers Removed
+    - rapidvideocom
+    - openload
+    - streamango
+- Languages Added/Updated
+    - norwegian
+
 [B]Version 5.0.41 (October 17, 2019)[/B]
 - Code Base Changes:
     - hmf fix

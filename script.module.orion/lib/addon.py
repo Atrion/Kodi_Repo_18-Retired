@@ -44,6 +44,9 @@ id = parameters.get('id')
 if action == None or action == 'menuMain':
     OrionNavigator.menuMain()
 
+elif action == 'menuAccount':
+    OrionNavigator.menuAccount()
+
 elif action == 'menuApps':
     OrionNavigator.menuApps()
 
@@ -71,6 +74,9 @@ elif action == 'dialogApp':
 
 elif action == 'dialogUser':
     OrionNavigator.dialogUser()
+
+elif action == 'dialogVoucher':
+    OrionNavigator.dialogVoucher()
 
 elif action == 'dialogServer':
     OrionNavigator.dialogServer()
@@ -220,6 +226,12 @@ elif action == 'integrationBoomMovies':
 
 elif action == 'integrationContinuum':
 	OrionIntegration.executeContinuum()
+
+elif action == 'integrationMarauder':
+	OrionIntegration.executeMarauder()
+
+elif action == 'integrationAsguard':
+	OrionIntegration.executeAsguard()
 
 elif action == 'integrationOpenScrapers':
 	OrionIntegration.executeOpenScrapers()

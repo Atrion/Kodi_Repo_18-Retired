@@ -1816,6 +1816,12 @@ class System(object):
 				from resources.lib.modules import metacache
 				metacache.clear()
 
+			# gaiaremove
+			if versionOld < 559 and versionNew >= 560:
+				# New TVDB API.
+				from resources.lib.extensions import cache
+				cache.Cache().clear(confirm = False)
+
 			# Backup - Import
 			Backup.automaticImport()
 

@@ -195,7 +195,7 @@
   </extension>
 </addon>
 
-<addon id="skin.arctic.zephyr.2" name="Arctic Zephyr 2" provider-name="jurialmunkey" version="0.9.53-alpha3">
+<addon id="skin.arctic.zephyr.2" name="Arctic Zephyr 2" provider-name="jurialmunkey" version="0.9.54-alpha6">
     <requires>
         <import addon="xbmc.gui" version="5.14.0" />
         <import addon="script.skinshortcuts" version="0.4.0" />
@@ -540,7 +540,7 @@
 
 <addon id="metadata.tvdb.com"
        name="The TVDB"
-       version="3.0.16"
+       version="3.2.0"
        provider-name="Team Kodi">
   <requires>
     <import addon="xbmc.metadata" version="2.1.0"/>
@@ -1219,7 +1219,7 @@ Fixed Background Scraping Display style
     </extension>
 </addon>
 
-<addon id="script.module.urlresolver" name="URLResolver" version="5.0.41" provider-name="tvaddons">
+<addon id="script.module.urlresolver" name="URLResolver" version="5.0.44" provider-name="tvaddons">
     <requires>
         <import addon="xbmc.python" version="2.1.0" />
         <import addon="plugin.video.youtube" optional="true" />
@@ -1665,7 +1665,7 @@ Added Trakt Manager
     </extension>
 </addon>
 
-    <addon id="repository.Atrion18B" name="[COLOR darkgreen]Atrion's Repo for Kodi 18.x Backup[/COLOR]" version="0.2.7" provider-name="Atrion Darnay">
+    <addon id="repository.Atrion18B" name="[COLOR darkgreen]Atrion's Repo for Kodi 18.x Backup[/COLOR]" version="0.2.9" provider-name="Atrion Darnay">
         <requires>
             <import addon="xbmc.addon" version="12.0.0"/>
         </requires>
@@ -1973,7 +1973,7 @@ Zároveň má nastavenia upravujúce výšku stĺpcov spektra, ich rýchlosť a 
   </extension>
 </addon>
 
-<addon id="script.module.resolveurl" name="ResolveURL" version="5.0.34" provider-name="jsergio">
+<addon id="script.module.resolveurl" name="ResolveURL" version="5.0.36" provider-name="jsergio">
     <requires>
         <import addon="xbmc.python" version="2.1.0" />
         <import addon="plugin.video.youtube" optional="true" />
@@ -2131,7 +2131,7 @@ Zároveň má nastavenia upravujúce výšku stĺpcov spektra, ich rýchlosť a 
   </extension>
 </addon>
 
-<addon id="plugin.video.openmeta" name="OpenMeta" version="1.4.9" provider-name="A4K">
+<addon id="plugin.video.openmeta" name="OpenMeta" version="1.4.11" provider-name="A4K">
 	<requires>
 		<import addon="xbmc.python" version="2.25.0"/>
 		<import addon="metadata.tvdb.com" version="3.0.14"/>
@@ -2171,22 +2171,25 @@ Zároveň má nastavenia upravujúce výšku stĺpcov spektra, ich rýchlosť a 
 		<website></website>
 		<source></source>
 		<news>
-		1.4.9 - Fix art in TV menus
-		1.4.8 - Fix crash from empty "first_aired" string"
-		1.4.7 - Fix crash when we can't contact TVDB
-		1.4.6 - Fix crashes from non-existent keys
-		1.4.5 - Added default play action, options for movies are; Play/OpenInfo and options for episodes are; Play/OpenInfo(TV Show info)/OpenInfo(Episode info).
-		1.4.4 - Fix clearlogo for movies
-		1.4.3 - Fix typo in season fanart request.
-		1.4.2 - Add fanart caching
-		1.4.1 - Fix season artwork
-		1.4.0 - Add unwatched counts for shows/seasons.
-		1.3.2 - Fix "Upcoming Episodes" and "Next Episodes".
-		1.3.1 - Fixed "Next Page" bug with widgets.</news>
+		1.4.11 - TVDB API fix, thanks to @ruinernin and @bg-22 (among others)!
+				 BUG: Some artwork may not load for certain items, due to ongoing API instability.
+		1.4.10 - Added language option for player-files (TV)
+		1.4.9  - Fix art in TV menus
+		1.4.8  - Fix crash from empty "first_aired" string"
+		1.4.7  - Fix crash when we can't contact TVDB
+		1.4.6  - Fix crashes from non-existent keys
+		1.4.5  - Added default play action, options for movies are; Play/OpenInfo and options for episodes are; Play/OpenInfo(TV Show info)/OpenInfo(Episode info).
+		1.4.4  - Fix clearlogo for movies
+		1.4.3  - Fix typo in season fanart request.
+		1.4.2  - Add fanart caching
+		1.4.1  - Fix season artwork
+		1.4.0  - Add unwatched counts for shows/seasons.
+		1.3.2  - Fix "Upcoming Episodes" and "Next Episodes".
+		1.3.1  - Fixed "Next Page" bug with widgets.</news>
 	</extension>
 </addon>
 
-    <addon id="repository.Atrion18" name="[COLOR darkgreen]Atrion's Repo for Kodi 18.x[/COLOR]" version="0.2.7" provider-name="Atrion Darnay">
+    <addon id="repository.Atrion18" name="[COLOR darkgreen]Atrion's Repo for Kodi 18.x[/COLOR]" version="0.2.9" provider-name="Atrion Darnay">
         <requires>
             <import addon="xbmc.addon" version="12.0.0"/>
         </requires>
@@ -2532,7 +2535,7 @@ Zároveň má nastavenia upravujúce výšku stĺpcov spektra, ich rýchlosť a 
     </extension>
 </addon>
 
-<addon id="script.module.orion" version="3.4.1" name="Orion" provider-name="Orion">
+<addon id="script.module.orion" version="3.5.2" name="Orion" provider-name="Orion">
 	<requires>
 		<import addon="xbmc.python" version="2.1.0"/>
 		<import addon="repository.orion" version="1.0.0" optional="true" />
@@ -3138,19 +3141,19 @@ v5.2.14 (2017-01-23)
 
 <addon id="script.module.trakt"
        name="trakt.py"
-       version="3.0.0"
-       provider-name="Fuzeman, Razzeee">
+       version="3.1.0"
+       provider-name="Dean Gardiner">
   <requires>
     <import addon="xbmc.python" version="2.14.0"/>
     <import addon="script.module.requests" version="2.12.4"/>
-    <import addon="script.module.six" version="1.9.0"/>
-    <import addon="script.module.arrow" version="0.6.0"/>
+    <import addon="script.module.six" version="1.10.0"/>
+    <import addon="script.module.arrow" version="0.10.0"/>
   </requires>
   <extension point="xbmc.python.module"
              library="lib" />
   <extension point="xbmc.addon.metadata">
-    <summary lang="en_GB">Python interface for the trakt.tv API</summary>
-    <description lang="en_GB">Packed for Kodi from https://github.com/fuzeman/trakt.py</description>
+    <summary lang="en">Python interface for the trakt.tv API</summary>
+    <description lang="en">Packed for Kodi from https://github.com/fuzeman/trakt.py</description>
     <platform>all</platform>
     <language></language>
     <license>MIT</license>
@@ -3198,11 +3201,12 @@ v5.2.14 (2017-01-23)
 </addon>
 
 <addon id="plugin.video.themoviedb.helper"
-version="1.0.5"
+version="1.0.11"
 name="TheMovieDb Helper"
 provider-name="jurialmunkey">
 <requires>
   <import addon="xbmc.python" version="2.26.0"/>
+  <import addon="script.module.trakt" version="2.12.0"/>
   <import addon="script.module.simplecache" version="1.0.11" />
   <import addon="script.module.requests" version="2.9.1"/>
 </requires>
@@ -3211,9 +3215,9 @@ provider-name="jurialmunkey">
 </extension>
 <extension point="xbmc.python.script" library="script.py" />
 <extension point="xbmc.addon.metadata">
-  <summary lang="en_GB">TheMovieDb Helper</summary>
-  <description lang="en_GB">TheMovieDb Helper provides skinners a number of ways to access TheMovieDb API</description>
-  <disclaimer lang="en_GB">Provided by TheMovieDb. Please make sure you have your own API key.</disclaimer>
+  <summary lang="en_GB">TheMovieDb Helper - Now With Trakt Support!</summary>
+  <description lang="en_GB">TheMovieDb Helper provides details about movies, tvshows and actors from TMDb. Users can access a variety of lists from TMDb and Trakt.</description>
+  <disclaimer lang="en_GB">Provided by TheMovieDb and Trakt.</disclaimer>
   <license>GPL-3.0</license>
   <assets>
     <icon>icon.png</icon>
@@ -3221,11 +3225,13 @@ provider-name="jurialmunkey">
     <screenshot>resources/screenshot-01.jpg</screenshot>
     <screenshot>resources/screenshot-02.jpg</screenshot>
   </assets>
-  <news>1.0.5 - Fix for python text encoding/decoding issues in both PY2 and PY3</news>
+  <news>1.0.11 - Add pagination to trakt lists[CR]1.0.10 - Add some
+additional lists from Trakt[CR]1.0.9 - Add
+genres for TMDb[CR]1.0.8 - Some small fixes for enditems[CR]1.0.7 - Trakt support[CR]1.0.6 - Fixes MPAA Rating Prefix[CR]1.0.5 - Fixes python text encoding/decoding issues</news>
 </extension>
 </addon>
 
-<addon id="plugin.video.gaia" version="5.5.9" name="Gaia" provider-name="Gaia">
+<addon id="plugin.video.gaia" version="5.6.0" name="Gaia" provider-name="Gaia">
 	<requires>
 		<import addon="xbmc.python" version="2.19.0" />
 
@@ -3305,7 +3311,7 @@ provider-name="jurialmunkey">
 	</extension>
 </addon>
 
-<addon id="script.module.openscrapers" name="OpenScrapers Module" version="0.0.1.97" provider-name="Addons4Kodi">
+<addon id="script.module.openscrapers" name="OpenScrapers Module" version="0.0.1.99" provider-name="Addons4Kodi">
     <requires>
         <import addon="xbmc.python" version="2.25.0" />
         <import addon="script.module.beautifulsoup4"/>
@@ -3325,7 +3331,7 @@ provider-name="jurialmunkey">
         <icon>icon.png</icon>
         <fanart></fanart>
     </assets>
-    <news>v0.0.1.93 - Scraper cleanup and EOL fixes</news>
+    <news>v0.0.1.98 - Scraper updates and language additions</news>
     </extension>
 </addon>
 

@@ -1,9 +1,13 @@
+# vi: set noet ff=dos :
 import os, io, time, urllib, zipfile, requests_cache
 from xml.etree import ElementTree
 from resources.lib import text
-from resources.lib.xswift2 import plugin
+from resources.lib.xswift2 import xbmc, plugin
 
 ext_key = plugin.get_setting('tvdb_api', str)
+
+def create_tvdb(language=xbmc.getLanguage(xbmc.ISO_639_1,)):
+	return Tvdb(language=language)
 
 if len(ext_key) == 16:
 	API_key = ext_key
@@ -36,7 +40,7 @@ class Show(dict):
 		if key in self.data:
 			return dict.__getitem__(self.data, key)
 			message = '%s not found' % key
-		raise Exception('%s not found'  % key)
+		raise KeyError('%s not found'  % key)
 
 	def get_poster(self, language=None, default=None):
 		try:
@@ -116,10 +120,16 @@ class Episode(dict):
 		return self.get_air_time() <= time.time()
 
 class Tvdb:
-	def __init__(self):
+	def __init__(self, language='en'):
+		languages = ['da', 'fi', 'nl', 'de', 'it', 'es', 'fr', 'pl', 'hu',
+					'el', 'tr', 'ru', 'he', 'ja', 'pt', 'zh', 'cs', 'sl',
+					'hr', 'ko', 'sv', 'no']
 		config = {}
 		config['apikey'] = API_key
-		config['language'] = 'en'
+		if language in languages:
+			config['language'] = language
+		else:
+			config['language'] = 'en'
 		config['url_search'] = u'https://thetvdb.com/api/GetSeries.php?seriesname=%%s&language=%%s' % config
 		config['url_search_by_imdb'] = u'https://thetvdb.com/api/GetSeriesByRemoteID.php?imdbid=%%s&language=%%s' % config
 		config['url_sid_full'] = u'https://thetvdb.com/api/%(apikey)s/series/%%s/all/%%s.zip' %  config
@@ -141,7 +151,8 @@ class Tvdb:
 		seriesEt = self._parseXML(result)
 		allSeries = []
 		for series in seriesEt:
-			result = dict((k.tag.lower(), k.text) for k in series.getchildren())
+			result = {elem.tag.lower(): elem.text
+						for elem in series.getchildren() if elem.text}
 			result['id'] = int(result['id'])
 			if 'aliasnames' in result:
 				result['aliasnames'] = result['aliasnames'].split('|')
@@ -175,7 +186,13 @@ class Tvdb:
 		if full:
 			url = self.url_sid_full(sid, language)
 			response = self._loadZip(url)
-			fullDataEt = self._parseXML(response['%s.xml' % language])
+			for fname in ('%s.xml', '%s.zip.xml'):
+				xml_fname = fname % language
+				if xml_fname in response:
+					break
+			else:
+				raise KeyError("Show XML not found in zip from API")
+			fullDataEt = self._parseXML(response[xml_fname])
 			self._parseSeriesData(sid, fullDataEt)
 			self._parseEpisodesData(sid, fullDataEt)
 			bannersEt = self._parseXML(response['banners.xml'])
@@ -258,7 +275,7 @@ class Tvdb:
 						value = self.config['url_artwork_prefix'] % (value)
 					else:
 						value = self._cleanData(value)
-				self._setItem(sid, seas_no, ep_no, tag, value)
+					self._setItem(sid, seas_no, ep_no, tag, value)
 
 	def _parseSeriesData(self, sid, et):
 		for curInfo in et.findall('Series')[0]:
@@ -269,12 +286,12 @@ class Tvdb:
 					value = self.config['url_artwork_prefix'] % (value)
 				else:
 					value = self._cleanData(value)
-			self._setShowData(sid, tag, value)
-			if tag == 'firstaired':
-				try:
-					self._setShowData(sid, 'year', int(value.split('-')[0].strip()))
-				except:
-					pass
+				self._setShowData(sid, tag, value)
+				if tag == 'firstaired':
+					try:
+						self._setShowData(sid, 'year', int(value.split('-')[0].strip()))
+					except:
+						pass
 
 	def _parseBanners(self, sid, bannersEt):
 		banners = {}
