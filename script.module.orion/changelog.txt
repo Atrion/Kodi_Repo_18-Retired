@@ -1,4 +1,10 @@
 
+[B]3.5.4 (2019.11.25)[/B]
+- Fixed OpenScrapers integration.
+
+[B]3.5.3 (2019.11.22)[/B]
+- Fixed Fen integration.
+
 [B]3.5.2 (2019.11.12)[/B]
 - Fixed integration version.
 - Added support for redeeming vouchers.

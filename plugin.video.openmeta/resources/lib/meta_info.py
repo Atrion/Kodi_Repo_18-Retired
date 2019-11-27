@@ -229,7 +229,7 @@ def get_episode_metadata_tvdb(season_metadata, episode, banners=True):
 	info['votes'] = episode.get('ratingcount','')
 	info['mediatype'] = 'episode'
 	if banners:
-		info['poster'] = episode['filename']
+		info['poster'] = episode.get('filename', '')
 	return info
 
 def get_episode_metadata_tmdb(season_metadata, episode):

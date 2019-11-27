@@ -1035,7 +1035,7 @@ class OrionIntegration:
 			return self._integrateFailure('Fen addon metadata integration failure', self.pathAddon)
 
 		# __init__.py
-		data1 = self._comment(self._content('sources.py'), OrionIntegration.LanguagePython, '                    ')
+		data1 = self._comment(self._content('sources.py'), OrionIntegration.LanguagePython, '            ')
 		data2 = self._comment(self._content('sources.py'), OrionIntegration.LanguagePython, '            ')
 		if not OrionTools.fileInsert(self.pathSources, ['\.load_module\(module_name\)', 'def\s*scraperNames.*if is_pkg:\s*continue'], [data1, data2], [None, re.S]):
 			return self._integrateFailure('Fen sources integration failure', self.pathSources)
@@ -1396,7 +1396,7 @@ class OrionIntegration:
 			return self._integrateFailure('Open Scrapers settings integration failure', self.pathSettings)
 
 		# __init__.py
-		data = self._comment(self._content('sources.py'), OrionIntegration.LanguagePython, '                    ')
+		data = self._comment(self._content('sources.py'), OrionIntegration.LanguagePython, '\t\t\t\t\t')
 		if not OrionTools.fileInsert(self.pathSources, '\.load_module\(module_name\)', data):
 			return self._integrateFailure('Open Scrapers sources integration failure', self.pathSources)
 

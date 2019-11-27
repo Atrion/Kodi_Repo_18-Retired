@@ -61,6 +61,7 @@ def get_movie_parameters(movie):
 	parameters['released'] = movie['release_date']
 	parameters['id'] = movie['id']
 	parameters['imdb'] = movie['imdb_id']
+	parameters['realtitle'] = re.sub('\(\d{4}\)', '', movie['title']).strip()
 	parameters['title'] = text.escape(movie['title'])
 	parameters['striptitle'] = ' '.join(re.compile('[\W_]+').sub(' ', movie['title']).split())
 	parameters['urltitle'] = urllib.quote(text.to_utf8(parameters['title']))

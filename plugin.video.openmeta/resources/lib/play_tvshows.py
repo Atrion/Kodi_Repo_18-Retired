@@ -406,6 +406,7 @@ def get_episode_parameters(show, season, episode):
 		parameters['absolute_number'] = int(episode_obj.get('absolute_number'))
 	except:
 		parameters['absolute_number'] = count + episode
+	parameters['realname'] = re.sub('\(\d{4}\)', '', show['seriesname']).strip()
 	parameters['showname'] = text.escape(show['seriesname'])
 	parameters['clearname'] = text.escape(show['seriesname'])
 	parameters['stripname'] = ' '.join(re.compile('[\W_]+').sub(' ', show['seriesname']).split())

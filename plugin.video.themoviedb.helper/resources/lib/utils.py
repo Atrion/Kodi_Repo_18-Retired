@@ -100,6 +100,14 @@ def age_difference(birthday, deathday=''):
         return
 
 
+def convert_timestamp(time_str):
+    try:
+        time_obj = datetime.strptime(time_str[:19], '%Y-%m-%dT%H:%M:%S')
+        return time_obj
+    except Exception:
+        return
+
+
 def kodi_log(value, level=0):
     logvalue = u'{0}{1}'.format(_addonlogname, value) if sys.version_info.major == 3 else u'{0}{1}'.format(_addonlogname, value).encode('utf-8', 'ignore')
     if level == 1:
@@ -171,15 +179,6 @@ def iter_props(items, property, itemprops, **kwargs):
             if i.get(value):
                 itemprops['{0}.{1}.{2}'.format(property, x, key)] = i.get(value)
     return itemprops
-
-
-def listify_items(items):
-    if items and isinstance(items, dict):
-        itemlist = []
-        for k, i in items.items():
-            itemlist.append(i)
-        items = itemlist
-    return items or []
 
 
 def del_empty_keys(d):
