@@ -9,117 +9,144 @@
 #  ..#######.##.......#######.##....#..######..######.##.....#.##.....#.##.......#######.##.....#..######.
 
 '''
-    BitLord
+    OpenScrapers Project
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
 import re
+import urllib
+import urlparse
 
-import requests
+from openscrapers.modules import cleantitle
+from openscrapers.modules import client
+from openscrapers.modules import debrid
 from openscrapers.modules import source_utils
-from resolveurl.plugins.premiumize_me import PremiumizeMeResolver
 
 
 class source:
+	def __init__(self):
+		self.priority = 0
+		self.language = ['en']
+		self.domain = ['bitlordsearch.com']
+		self.base_link = 'http://www.bitlordsearch.com'
+		self.search_link = '/search?q=%s'
 
-    def __init__(self):
-        self.priority = 0
-        self.language = ['en']
-        self.domain = 'http://www.bitlordsearch.com'
-        self.api_key = PremiumizeMeResolver.get_setting('password')
-        self.search_link = 'http://www.bitlordsearch.com/get_list'
-        self.checkc = 'https://www.premiumize.me/api/torrent/checkhashes?apikey=%s&hashes[]=%s&apikey=%s'
-        self.pr_link = 'https://www.premiumize.me/api/transfer/directdl?apikey=%s&src=magnet:?xt=urn:btih:%s'
 
-    def movie(self, imdb, title, localtitle, aliases, year):
-        try:
-            url = {'title': title, 'year': year}
-            return url
-        except:
-            print("Unexpected error in BitLord Script: episode", sys.exc_info()[0])
-            exc_type, exc_obj, exc_tb = sys.exc_info()
-            print(exc_type, exc_tb.tb_lineno)
-            return url
+	def movie(self, imdb, title, localtitle, aliases, year):
+		try:
+			url = {'imdb': imdb, 'title': title, 'year': year}
+			url = urllib.urlencode(url)
+			return url
+		except:
+			return
 
-    def tvshow(self, imdb, tvdb, tvshowtitle, localtvshowtitle, aliases, year):
-        try:
-            url = tvshowtitle
-            return url
-        except:
-            print("Unexpected error in BitLord Script: TV", sys.exc_info()[0])
-            return url
-        return url
 
-    def episode(self, url, imdb, tvdb, title, premiered, season, episode):
-        try:
-            url = url
-            url = {'tvshowtitle': url, 'season': season, 'episode': episode, 'premiered': premiered}
-            return url
-        except:
-            print("Unexpected error in BitLord Script: episode", sys.exc_info()[0])
-            exc_type, exc_obj, exc_tb = sys.exc_info()
-            print(exc_type, exc_tb.tb_lineno)
-            return url
+	def tvshow(self, imdb, tvdb, tvshowtitle, localtvshowtitle, aliases, year):
+		try:
+			url = {'imdb': imdb, 'tvdb': tvdb, 'tvshowtitle': tvshowtitle, 'year': year}
+			url = urllib.urlencode(url)
+			return url
+		except:
+			return
 
-    def sources(self, url, hostDict, hostprDict):
-        sources = []
-        try:
-            with requests.Session() as s:
-                headers = {"Referer": self.domain, \
-                           "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8", \
-                           "Host": "www.BitLord.com",
-                           "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:59.0) Gecko/20100101 Firefox/59.0", \
-                           "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8", \
-                           "Accept-Encoding": "gzip, deflate, br", "Accept-Language": "en-US,en;q=0.5", \
-                           "Connection": "keep-alive", "DNT": "1"}
-                if 'episode' in url:
-                    iep = url['episode'].zfill(2)
-                    ise = url['season'].zfill(2)
-                    se = 's' + ise + 'e' + iep
-                    sel = url['tvshowtitle'].replace(' ', '.') + '.' + se
-                    cate = '4'
 
-                else:
-                    sel = url['title'].replace(' ', '.') + '.' + url['year']
-                    cate = '3'
+	def episode(self, url, imdb, tvdb, title, premiered, season, episode):
+		try:
+			if url is None:
+				return
+			url = urlparse.parse_qs(url)
+			url = dict([(i, url[i][0]) if url[i] else (i, '') for i in url])
+			url['title'], url['premiered'], url['season'], url['episode'] = title, premiered, season, episode
+			url = urllib.urlencode(url)
+			return url
+		except:
+			return
 
-                sel = sel.lower()
-                bdata = {'filters[adult]': 'false', 'filters[category]': cate, 'filters[field]': 'category',
-                         'filters[sort]': 'asc', \
-                         'filters[time]': '4', 'limit': '25', 'offset': '0', 'query': sel}
 
-                gs = s.post(self.search_link, data=bdata).text
+	def sources(self, url, hostDict, hostprDict):
+		sources = []
+		try:
+			if url is None:
+				return sources
 
-                gl = re.compile('me\W+(.*?)[\'"].*?tih:(.*?)\W', re.I).findall(gs)
-                for nam, haas in gl:
-                    print('FDGDFGDFGFD-----45345345', haas)
-                    checkca = s.get(self.checkc % (self.api_key, haas, self.api_key)).text
-                    quality = source_utils.check_sd_url(nam)
-                    if 'finished' in checkca:
-                        url = self.pr_link % (self.api_key, haas)
-                        sources.append({
-                            'source': 'cached',
-                            'quality': quality,
-                            'language': 'en',
-                            'url': url,
-                            'direct': False,
-                            'debridonly': False,
-                            'info': nam,
-                        })
-            return sources
-        except:
-            print("Unexpected error in BitLord Script: Sources", sys.exc_info()[0])
-            exc_type, exc_obj, exc_tb = sys.exc_info()
-            print(exc_type, exc_tb.tb_lineno)
-            return sources
+			if debrid.status() is False:
+				return sources
 
-    def resolve(self, url):
-        try:
-            getpl = requests.get(url).text
-            sl = re.compile('link.*?"(h.*?)["\'].\n.*?s.*?http', re.I).findall(getpl)[0]
-            url = sl.replace('\\', '')
-            return url
-        except:
-            print("Unexpected error in BitLord Script: episode", sys.exc_info()[0])
-            exc_type, exc_obj, exc_tb = sys.exc_info()
-            print(exc_type, exc_tb.tb_lineno)
-            return url
+			data = urlparse.parse_qs(url)
+			data = dict([(i, data[i][0]) if data[i] else (i, '') for i in data])
+
+			title = data['tvshowtitle'] if 'tvshowtitle' in data else data['title']
+			title = title.replace('&', 'and').replace('Special Victims Unit', 'SVU')
+
+			hdlr = 'S%02dE%02d' % (int(data['season']), int(data['episode'])) if 'tvshowtitle' in data else data['year']
+
+			query = '%s %s' % (title, hdlr)
+			query = re.sub('(\\\|/| -|:|;|\*|\?|"|\'|<|>|\|)', '', query)
+
+			url = self.search_link % urllib.quote_plus(query)
+			url = urlparse.urljoin(self.base_link, url)
+			# log_utils.log('url = %s' % url, log_utils.LOGDEBUG)
+
+			try:
+				r = client.request(url)
+				links = zip(client.parseDOM(r, 'a', attrs={'class': 'btn btn-default magnet-button stats-action banner-button'}, ret='href'), client.parseDOM(r, 'td', attrs={'class': 'size'}))
+
+				for link in links:
+					url = link[0].replace('&amp;', '&')
+					url = re.sub(r'(&tr=.+)&dn=', '&dn=', url) # some links on bitlord &tr= before &dn=
+					url = url.split('&tr=')[0]
+					if 'magnet' not in url:
+						continue
+
+					size = int(link[1])
+
+					if any(x in url.lower() for x in ['french', 'italian', 'spanish', 'truefrench', 'dublado', 'dubbed']):
+						continue
+
+					name = url.split('&dn=')[1]
+					t = name.split(hdlr)[0].replace(data['year'], '').replace('(', '').replace(')', '').replace('&', 'and')
+					if cleantitle.get(t) != cleantitle.get(title):
+						continue
+
+					if hdlr not in name:
+						continue
+
+					quality, info = source_utils.get_release_quality(name, url)
+
+					try:
+						if size < 5.12: raise Exception()
+						size = float(size) / 1024
+						size = '%.2f GB' % size
+						info.append(size)
+					except:
+						pass
+
+					info = ' | '.join(info)
+
+					sources.append({'source': 'torrent', 'quality': quality, 'language': 'en', 'url': url,
+												'info': info, 'direct': False, 'debridonly': True})
+
+				return sources
+
+			except:
+				source_utils.scraper_error('BITLORD')
+				return sources
+
+		except:
+			source_utils.scraper_error('BITLORD')
+			return sources
+
+
+	def resolve(self, url):
+		return url

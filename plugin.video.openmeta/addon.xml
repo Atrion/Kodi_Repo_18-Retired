@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.video.openmeta" name="OpenMeta" version="1.4.13" provider-name="A4K">
+<addon id="plugin.video.openmeta" name="OpenMeta" version="1.4.14" provider-name="A4K">
 	<requires>
 		<import addon="xbmc.python" version="2.25.0"/>
 		<import addon="metadata.tvdb.com" version="3.0.14"/>
@@ -39,6 +39,7 @@
 		<website></website>
 		<source></source>
 		<news>
+		1.4.14 - Fix bug with missing ID in TV menus
 		1.4.13 - Added realtitle (movies) and realname (tvshows) parameters for plexkodiconnect compatibility
 		1.4.12 - Handle non-existent 'filename' key in TVDB data.
 		1.4.11 - TVDB API fix, thanks to @ruinernin and @bg-22 (among others)!

@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<addon id="visualization.waveform" version="2.0.1.4" name="Waveform" provider-name="MrC">
+<addon id="visualization.waveform" version="3.1.1.1" name="Waveform" provider-name="MrC">
   <requires>
     <import addon="kodi.binary.global.main" version="1.0.14"/>
+    <import addon="kodi.binary.global.gui" version="5.12.0"/>
+    <import addon="kodi.binary.global.gui" version="5.12.0"/>
     <import addon="kodi.binary.instance.visualization" version="2.0.1"/>
   </requires>
-  <extension point="xbmc.player.musicviz" library_linux="visualization.waveform.so.2.0.1"/>
+  <extension point="xbmc.player.musicviz" library_linux="visualization.waveform.so.3.1.1"/>
   <extension point="xbmc.addon.metadata">
     <summary lang="af">Visualisering wat 2 golfvorm grafieke op die skerm vertoon</summary>
     <summary lang="ar">التصوير يظهر2 رسم بياني موجي على الشاشة</summary>
@@ -114,5 +116,14 @@
     <description lang="zh">Waveform 是一个简单的可视化效果，它在屏幕上显示两个波形图，分别与音乐左右声道的节拍相呼应。</description>
     <description lang="zh_TW">Waveform是一個簡單的可在屏幕上顯示2波形圖的視覺效果，左右聲道會跟著音樂節拍移動</description>
     <platform/>
+    <license>GPL-3.0</license>
+    <source>https://github.com/xbmc/visualization.waveform</source>
+    <assets>
+      <icon>resources/icon.png</icon>
+      <fanart>resources/fanart.png</fanart>
+      <screenshot>resources/screenshot-01.jpg</screenshot>
+      <screenshot>resources/fanart.png</screenshot>
+      <screenshot>resources/screenshot-02.jpg</screenshot>
+    </assets>
   </extension>
 </addon>

@@ -365,8 +365,14 @@ def list_tvshows(response):
 	results = response['results']
 	for tvdb_show, tmdb_show in executor.execute(tmdb_to_tvdb, results, workers=10):
 		if tvdb_show is not None:
-			info = build_tvshow_info(tvdb_show, tmdb_show)
-			items.append(make_tvshow_item(info))
+			try:
+				info = build_tvshow_info(tvdb_show, tmdb_show)
+			except Exception as e:
+				xbmc.log('Failed to parse show, tvdbID: {}'.format(tvdb_show.get('id')), xbmc.LOGERROR)
+				xbmc.log('Error: {}'.format(e), xbmc.LOGERROR)
+				continue
+			else:
+				items.append(make_tvshow_item(info))
 	if xbmc.Monitor().abortRequested():
 		return
 	if 'page' in response:

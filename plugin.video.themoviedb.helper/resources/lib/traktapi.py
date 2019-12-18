@@ -1,34 +1,53 @@
 from json import loads, dumps
 import resources.lib.utils as utils
 from resources.lib.requestapi import RequestAPI
+from resources.lib.listitem import ListItem
+import time
 import xbmc
 import xbmcgui
-import xbmcaddon
 import datetime
 
 
 class traktAPI(RequestAPI):
-    def __init__(self, force=False):
-        self.req_api_url = 'https://api.trakt.tv/'
-        self.req_api_key = ''
-        self.req_api_name = 'trakt'
-        self.req_wait_time = 0
-        self.cache_long = 1
-        self.cache_short = 0.003
-        self.access_token = ''
-        self.addon_name = 'plugin.video.themoviedb.helper'
+    def __init__(self, force=False, cache_short=None, cache_long=None, tmdb=None):
+        super(traktAPI, self).__init__(
+            cache_short=cache_short, cache_long=cache_long,
+            req_api_url='https://api.trakt.tv/', req_api_name='Trakt')
+        self.authorization = ''
+        self.sync = {}
+        self.last_activities = None
+        self.prev_activities = None
+        self.refreshcheck = 0
+        self.attempedlogin = False
+        self.dialog_noapikey_header = '{0} {1} {2}'.format(self.addon.getLocalizedString(32007), self.req_api_name, self.addon.getLocalizedString(32011))
+        self.dialog_noapikey_text = self.addon.getLocalizedString(32012)
         self.client_id = 'e6fde6173adf3c6af8fd1b0694b9b84d7c519cefc24482310e1de06c6abe5467'
         self.client_secret = '15119384341d9a61c751d8d515acbc0dd801001d4ebe85d3eef9885df80ee4d9'
         self.headers = {'trakt-api-version': '2', 'trakt-api-key': self.client_id, 'Content-Type': 'application/json'}
+        self.tmdb = tmdb
+        self.library = 'video'
+        self.utc_offset = -time.timezone // 3600
+        self.utc_offset += 1 if time.localtime().tm_isdst > 0 else 0
 
-        token = xbmcaddon.Addon().getSetting('trakt_token')
+        if force:
+            self.login()
+            return
+
+        self.authorize(login=False)
+
+    def authorize(self, login=True, force=False):
+        if self.authorization:
+            return self.authorization
+        token = self.addon.getSetting('trakt_token')
         token = loads(token) if token else None
-
-        if token and type(token) is dict and token.get('access_token') and not force:
+        if token and type(token) is dict and token.get('access_token'):
             self.authorization = token
             self.headers['Authorization'] = 'Bearer {0}'.format(self.authorization.get('access_token'))
-        else:
-            self.login()
+        elif login:
+            if not self.attempedlogin and xbmcgui.Dialog().yesno(self.dialog_noapikey_header, self.dialog_noapikey_text, '', '', 'Cancel', 'OK'):
+                self.login()
+            self.attempedlogin = True
+        return self.authorization
 
     def login(self):
         self.code = self.get_api_request('https://api.trakt.tv/oauth/device/code', postdata={'client_id': self.client_id})
@@ -45,6 +64,9 @@ class traktAPI(RequestAPI):
         self.poller()
 
     def refresh_token(self):
+        if not self.authorization or not self.authorization.get('refresh_token'):
+            self.login()
+            return
         postdata = {
             'refresh_token': self.authorization.get('refresh_token'),
             'client_id': self.client_id,
@@ -64,12 +86,13 @@ class traktAPI(RequestAPI):
             self.on_expired()
             return
         self.authorization = self.get_api_request('https://api.trakt.tv/oauth/device/token', postdata={'code': self.code.get('device_code'), 'client_id': self.client_id, 'client_secret': self.client_secret})
-        if not self.authorization:
-            xbmc.Monitor().waitForAbort(self.interval)
-            if xbmc.Monitor().abortRequested():
-                return
-            self.poller()
-        self.on_authenticated()
+        if self.authorization:
+            self.on_authenticated()
+            return
+        xbmc.Monitor().waitForAbort(self.interval)
+        if xbmc.Monitor().abortRequested():
+            return
+        self.poller()
 
     def on_aborted(self):
         """Triggered when device authentication was aborted"""
@@ -84,7 +107,7 @@ class traktAPI(RequestAPI):
     def on_authenticated(self, auth_dialog=True):
         """Triggered when device authentication has been completed"""
         utils.kodi_log('Trakt Authenticated Successfully!', 1)
-        xbmcaddon.Addon().setSettingString('trakt_token', dumps(self.authorization))
+        self.addon.setSettingString('trakt_token', dumps(self.authorization))
         self.headers['Authorization'] = 'Bearer {0}'.format(self.authorization.get('access_token'))
         if auth_dialog:
             self.auth_dialog.close()
@@ -100,66 +123,104 @@ class traktAPI(RequestAPI):
             self.auth_dialog.update(int(progress))
             return True
 
-    def get_response(self, *args, **kwargs):
-        refreshcheck = kwargs.pop('refreshcheck', False)
-        response = self.get_api_request(self.get_request_url(*args, **kwargs), headers=self.headers, dictify=False)
-        if response.status_code == 401:
+    def invalid_apikey(self):
+        if self.refreshcheck == 0:
             self.refresh_token()
-            if not refreshcheck:
-                kwargs['refreshcheck'] = True
-                self.get_response(*args, **kwargs)
+        self.refreshcheck += 1
+
+    def get_response(self, *args, **kwargs):
+        response = self.get_api_request(self.get_request_url(*args, **kwargs), headers=self.headers, dictify=False)
+        if self.refreshcheck == 1:
+            self.get_response(*args, **kwargs)
         return response
 
+    def get_response_json(self, *args, **kwargs):
+        response = self.get_response(*args, **kwargs)
+        return response.json() if response else {}
+
+    def get_request(self, *args, **kwargs):
+        return self.use_cache(self.get_response_json, *args, **kwargs)
+
     def get_itemlist(self, *args, **kwargs):
+        items = []
+
+        if not self.tmdb or (kwargs.pop('req_auth', False) and not self.authorize()):
+            return items
+
         keylist = kwargs.pop('keylist', ['dummy'])
         response = self.get_response(*args, **kwargs)
+
+        if not response:
+            return items
+
         itemlist = response.json()
+
         this_page = int(kwargs.get('page', 1))
         last_page = int(response.headers.get('X-Pagination-Page-Count', 0))
-        next_page = ('next_page', this_page + 1, None) if this_page < last_page else False
-        items = []
-        for i in itemlist:
-            for key in keylist:
-                item = None
-                myitem = i.get(key) or i
-                if myitem:
-                    tmdbtype = 'tv' if key == 'show' else 'movie'
-                    if myitem.get('ids', {}).get('imdb'):
-                        item = ('imdb', myitem.get('ids', {}).get('imdb'), tmdbtype)
-                    elif myitem.get('ids', {}).get('tvdb'):
-                        item = ('tvdb', myitem.get('ids', {}).get('tvdb'), tmdbtype)
-                    if item:
-                        items.append(item)
-        if next_page:
-            items.append(next_page)
-        return items
+        next_page = this_page + 1 if this_page < last_page else False
 
-    def get_listlist(self, request, key=None):
-        response = self.get_response(request, limit=250).json()
-        items = [i.get(key) or i for i in response if i.get(key) or i]
-        return items
-
-    def get_limitedlist(self, itemlist, itemtype, limit):
-        items = []
         n = 0
+        limit = kwargs.get('limit', 0)
+        for i in itemlist:
+            if limit and not n < limit:
+                break
+
+            for key in keylist:
+                if limit and not n < limit:
+                    break
+
+                myitem = i.get(key) or i
+
+                if not myitem:
+                    continue
+
+                tmdbtype = 'tv' if key == 'show' else 'movie'
+
+                item = None
+                if myitem.get('ids', {}).get('imdb'):
+                    item = self.tmdb.get_externalid_item(tmdbtype, myitem.get('ids', {}).get('imdb'), 'imdb_id')
+                elif myitem.get('ids', {}).get('tvdb'):
+                    item = self.tmdb.get_externalid_item(tmdbtype, myitem.get('ids', {}).get('tvdb'), 'tvdb_id')
+
+                if not item:
+                    continue
+
+                item['mixed_type'] = tmdbtype
+                items.append(ListItem(library=self.library, **item))
+                n += 1
+
+        if next_page:
+            items.append(ListItem(library=self.library, label='Next Page', nextpage=next_page))
+
+        return items
+
+    def get_limitedlist(self, itemlist, tmdbtype, limit, islistitem):
+        items = []
+        if not self.tmdb or not self.authorize():
+            return items
+
+        n = 0
+        itemtype = utils.type_convert(tmdbtype, 'trakt')
         for i in itemlist:
             if limit and n >= limit:
                 break
             item = (i.get(itemtype, {}).get('ids', {}).get('slug'), i.get(itemtype, {}).get('ids', {}).get('tmdb'))
+            if islistitem:
+                item = ListItem(library=self.library, **self.tmdb.get_detailed_item(tmdbtype, item[1]))
             if item not in items:
                 items.append(item)
                 n += 1
         return items
 
-    def get_mostwatched(self, userslug, itemtype, limit=None):
-        history = self.get_response('users', userslug, 'watched', itemtype + 's').json()
+    def get_mostwatched(self, userslug, tmdbtype, limit=None, islistitem=True):
+        history = self.get_response_json('users', userslug, 'watched', utils.type_convert(tmdbtype, 'trakt') + 's')
         history = sorted(history, key=lambda i: i['plays'], reverse=True)
-        return self.get_limitedlist(history, itemtype, limit)
+        return self.get_limitedlist(history, tmdbtype, limit, islistitem)
 
-    def get_recentlywatched(self, userslug, itemtype, limit=None):
+    def get_recentlywatched(self, userslug, tmdbtype, limit=None, islistitem=True):
         start_at = datetime.date.today() - datetime.timedelta(6 * 365 / 12)
-        history = self.get_response('users', userslug, 'history', itemtype + 's', page=1, limit=200, start_at=start_at.strftime("%Y-%m-%d")).json()
-        return self.get_limitedlist(history, itemtype, limit)
+        history = self.get_response_json('users', userslug, 'history', utils.type_convert(tmdbtype, 'trakt') + 's', page=1, limit=200, start_at=start_at.strftime("%Y-%m-%d"))
+        return self.get_limitedlist(history, tmdbtype, limit, islistitem)
 
     def get_inprogress(self, userslug, limit=None):
         """
@@ -167,24 +228,56 @@ class traktAPI(RequestAPI):
         Adds each unique show to list in order then checks if show has an upnext episode
         Returns list of tmdb_ids representing shows with upnext episodes in recently watched order
         """
-        recentshows = self.get_recentlywatched(userslug, 'show')
         items = []
+        if not self.tmdb or not self.authorize():
+            return items
+
         n = 0
-        for i in recentshows:
+        for i in self.get_recentlywatched(userslug, 'tv', islistitem=False):
             if limit and n >= limit:
                 break
             progress = self.get_upnext(i[0], True)
             if progress and progress.get('next_episode'):
-                items.append(i)
+                items.append(ListItem(library=self.library, **self.tmdb.get_detailed_item('tv', i[1])))
                 n += 1
         return items
 
+    def get_calendar(self, tmdbtype, user=True, start_date=None, days=None):
+        user = 'my' if user else 'all'
+        return self.get_response_json('calendars', user, tmdbtype, start_date, days)
+
+    def get_calendar_episodes(self, startdate=0, days=1, limit=25):
+        items = []
+
+        if not self.tmdb or not self.authorize():
+            return items
+
+        date = datetime.datetime.today() + datetime.timedelta(days=startdate)
+        response = traktAPI().get_calendar('shows', True, start_date=date.strftime('%Y-%m-%d'), days=days)
+
+        for i in response[-limit:]:
+            episode = i.get('episode', {}).get('number')
+            season = i.get('episode', {}).get('season')
+            tmdb_id = i.get('show', {}).get('ids', {}).get('tmdb')
+            item = ListItem(library=self.library, **self.tmdb.get_detailed_item(
+                itemtype='tv', tmdb_id=tmdb_id, season=season, episode=episode))
+            item.tmdb_id, item.season, item.episode = tmdb_id, season, episode
+            item.infolabels['title'] = item.label = i.get('episode', {}).get('title')
+            air_date = utils.convert_timestamp(i.get('first_aired', '')) + datetime.timedelta(hours=self.utc_offset)
+            item.infolabels['premiered'] = air_date.strftime('%Y-%m-%d')
+            item.infolabels['year'] = air_date.strftime('%Y')
+            item.infoproperties['air_time'] = air_date.strftime('%I:%M %p')
+            items.append(item)
+        return items
+
     def get_upnext(self, show_id, response_only=False):
+        items = []
+        if not self.authorize():
+            return items
         request = 'shows/{0}/progress/watched'.format(show_id)
-        response = self.get_response(request).json()
+        response = self.get_response_json(request)
         reset_at = utils.convert_timestamp(response.get('reset_at')) if response.get('reset_at') else None
         seasons = response.get('seasons', [])
-        items = []
         for season in seasons:
             s_num = season.get('number')
             for episode in season.get('episodes', []):
@@ -200,12 +293,65 @@ class traktAPI(RequestAPI):
                         return response
                     items.append(item)
         if not response_only:
-            return items
+            return items if items else [(1, 1)]
+
+    def get_upnext_episodes(self, tmdb_id=None, imdb_id=None, limit=10):
+        if not self.tmdb or not self.authorize() or not tmdb_id:
+            return []
+
+        if not imdb_id:
+            imdb_id = self.tmdb.get_item_externalid(itemtype='tv', tmdb_id=tmdb_id, external_id='imdb_id')
+
+        return [ListItem(library=self.library, **self.tmdb.get_detailed_item(
+            itemtype='tv', tmdb_id=tmdb_id, season=i[0], episode=i[1])) for i in self.get_upnext(imdb_id)[:limit]]
 
     def get_usernameslug(self):
-        item = self.get_response('users/settings').json()
+        if not self.authorize():
+            return
+        item = self.get_response_json('users/settings')
         return item.get('user', {}).get('ids', {}).get('slug')
 
-    def get_traktslug(self, item_type, id_type, id):
-        item = self.get_response('search', id_type, id, '?' + item_type).json()
+    def get_details(self, item_type, id_num, season=None, episode=None):
+        if not season or not episode:
+            return self.get_response_json(item_type + 's', id_num)
+        return self.get_response_json(item_type + 's', id_num, 'seasons', season, 'episodes', episode)
+
+    def get_traktslug(self, item_type, id_type, id_num):
+        item = self.get_response_json('search', id_type, id_num, '?' + item_type)
         return item[0].get(item_type, {}).get('ids', {}).get('slug')
+
+    def sync_activities(self, itemtype, listtype):
+        """ Checks if itemtype.listtype has been updated since last check """
+        if not self.authorize():
+            return
+        cache_name = '{0}.trakt.last_activities'.format(self.cache_name)
+        if not self.prev_activities:
+            self.prev_activities = self.get_cache(cache_name)
+        if not self.last_activities:
+            self.last_activities = self.set_cache(self.get_response_json('sync/last_activities'), cache_name=cache_name, cache_days=self.cache_long)
+        if not self.prev_activities or not self.last_activities:
+            return
+        if self.prev_activities.get(itemtype, {}).get(listtype) == self.last_activities.get(itemtype, {}).get(listtype):
+            return self.last_activities.get(itemtype, {}).get(listtype)
+
+    def sync_collection(self, itemtype, idtype=None, mode=None, items=None):
+        return self.get_sync('collection', 'collected_at', itemtype, idtype, mode, items)
+
+    def sync_watchlist(self, itemtype, idtype=None, mode=None, items=None):
+        return self.get_sync('watchlist', 'watchlisted_at', itemtype, idtype, mode, items)
+
+    def sync_history(self, itemtype, idtype=None, mode=None, items=None):
+        return self.get_sync('history', 'watched_at', itemtype, idtype, mode, items)
+
+    def get_sync(self, name, activity, itemtype, idtype=None, mode=None, items=None):
+        if not self.authorize():
+            return
+        if mode == 'add' or mode == 'remove':
+            name = name + '/remove' if mode == 'remove' else name
+            return self.get_api_request('{0}/sync/{1}'.format(self.req_api_url, name), headers=self.headers, postdata=dumps(items))
+        if not self.sync.get(name):
+            cache_refresh = False if self.sync_activities(itemtype + 's', activity) else True
+            self.sync[name] = self.get_request_lc('sync/', name, itemtype + 's', cache_refresh=cache_refresh)
+        if not self.sync.get(name):
+            return
+        return {i.get(itemtype, {}).get('ids', {}).get(idtype) for i in self.sync.get(name) if i.get(itemtype, {}).get('ids', {}).get(idtype)}

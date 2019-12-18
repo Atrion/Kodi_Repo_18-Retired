@@ -197,7 +197,7 @@
   </extension>
 </addon>
 
-<addon id="skin.arctic.zephyr.2" name="Arctic Zephyr 2" provider-name="jurialmunkey" version="0.9.54-alpha6">
+<addon id="skin.arctic.zephyr.2" name="Arctic Zephyr 2" provider-name="jurialmunkey" version="0.9.55-alpha1">
     <requires>
         <import addon="xbmc.gui" version="5.14.0" />
         <import addon="script.skinshortcuts" version="0.4.0" />
@@ -476,12 +476,12 @@
   </extension>
 </addon>
 
-<addon id="repository.marcelveldt" version="1.0.1" name="Marcelveldt's BETA repository" provider-name="marcelveldt">
+<addon id="repository.marcelveldt" version="1.0.2" name="Marcelveldt's BETA repository" provider-name="marcelveldt, finkleandeinhorn">
 
 	<extension point="xbmc.addon.repository" name="Marcelveldt's BETA repository">
-		<info compressed="false">https://raw.githubusercontent.com/marcelveldt/repository.marcelveldt/master/addons.xml</info>
-		<checksum>https://raw.githubusercontent.com/marcelveldt/repository.marcelveldt/master/addons.xml.md5</checksum>
-		<datadir zip="true">https://raw.githubusercontent.com/marcelveldt/repository.marcelveldt/master/</datadir>
+		<info compressed="false">https://raw.githubusercontent.com/kodi-community-addons/repository.marcelveldt/master/addons.xml</info>
+		<checksum>https://raw.githubusercontent.com/kodi-community-addons/repository.marcelveldt/master/addons.xml.md5</checksum>
+		<datadir zip="true">https://raw.githubusercontent.com/kodi-community-addons/repository.marcelveldt/master/</datadir>
 	</extension>
 	<extension point="xbmc.addon.metadata">
 		<summary lang="en">Kodi repository for beta/test versions of Marcelveldt's addons</summary>
@@ -522,20 +522,38 @@
     </extension>
 </addon>
 
-<addon id="script.module.unidecode" name="unidecode" version="0.4.16" provider-name="Tomaz Solc (Tomaz.solc@tablix.org)">
+<addon id="script.module.backports.functools_lru_cache"
+       name="backports.functools_lru_cache"
+       version="1.6.1"
+       provider-name="Jason R. Coombs">
+  <requires>
+    <import addon="xbmc.python" version="2.14.0"/>
+  </requires>
+  <extension point="xbmc.python.module"
+             library="lib" />
+  <extension point="xbmc.addon.metadata">
+    <summary lang="en">Backport of functools.lru_cache from Python 3.3</summary>
+    <description lang="en">Packed for Kodi from https://github.com/jaraco/backports.functools_lru_cache</description>
+    <platform>all</platform>
+    <license>MIT</license>
+    <website>https://github.com/jaraco/backports.functools_lru_cache</website>
+    <source>https://github.com/Razzeee/script.module.backports.functools_lru_cache</source>
+  </extension>
+</addon>
+
+<addon id="script.module.unidecode" name="unidecode" version="1.1.1" provider-name="Tomaz Solc (Tomaz.solc@tablix.org)">
 	<requires>
-		<import addon="xbmc.python" version="2.1.0"/>
+		<import addon="xbmc.python" version="2.14.0"/>
 	</requires>
 	<extension point="xbmc.python.module" library="lib" />
 	<extension point="xbmc.addon.metadata">
 		<platform>all</platform>
-		<language></language>
 		<summary lang="en">ASCII transliterations of Unicode text by Sean M. Burke and Tomaz Solc</summary>
 		<description lang="en">ASCII transliterations of Unicode text by Sean M. Burke and Tomaz Solc</description>
-		<disclaimer lang="en">Code taken from https://pypi.python.org/pypi/Unidecode</disclaimer>
-		<license>GNU General Public License v.2</license>
-		<website>https://pypi.python.org/pypi/Unidecode</website>
-		<source>https://pypi.python.org/pypi/Unidecode</source>
+		<disclaimer lang="en">Code taken from https://pypi.org/project/Unidecode</disclaimer>
+		<license>GPL-2.0-or-later</license>
+		<website>https://pypi.org/project/Unidecode</website>
+		<source>https://pypi.org/project/Unidecode</source>
 	</extension>
 </addon>
 
@@ -946,11 +964,11 @@ Fixed Background Scraping Display style
 
 <addon id="script.module.dateutil"
        name="python-dateutil"
-       version="2.8.0"
+       version="2.8.1"
        provider-name="Paul Ganssle, Gustavo Niemeyer">
   <requires>
     <import addon="xbmc.python" version="2.25.0"/>
-    <import addon="script.module.six" version="1.5"/>
+    <import addon="script.module.six" version="1.12.0"/>
   </requires>
   <extension point="xbmc.python.module"
              library="lib" />
@@ -1091,7 +1109,7 @@ Fixed Background Scraping Display style
 
 <addon id="script.module.addon.signals"
     name="Addon Signals"
-    version="0.0.4"
+    version="0.0.5"
     provider-name="Rick Phillips (ruuk)">
     <requires>
         <import addon="xbmc.python" version="2.14.0" />
@@ -1101,7 +1119,7 @@ Fixed Background Scraping Display style
         <summary lang="en">Inter-addon signalling</summary>
         <description lang="en">Provides signal/slot mechanism for inter-addon communication</description>
         <platform>all</platform>
-        <license>GNU GENERAL PUBLIC LICENSE Version 2.1, February 1999</license>
+        <license>LGPL-2.1-only</license>
         <source>https://github.com/ruuk/script.module.addon.signals</source>
     </extension>
 </addon>
@@ -1223,13 +1241,104 @@ Fixed Background Scraping Display style
     </extension>
 </addon>
 
-<addon id="script.module.urlresolver" name="URLResolver" version="5.0.44" provider-name="tvaddons">
+<addon id="plugin.video.seren" version="1.6.2" name="Seren" provider-name="Nixgates">
+	<requires>
+		<import addon="xbmc.python" version="2.25.0" />
+		<import addon="script.module.requests" version="2.19.1" />
+		<import addon="script.module.beautifulsoup4" version="4.5.3"/>
+		<import addon="plugin.video.youtube" version="6.2.0"/>
+		<import addon="script.module.addon.signals" version="0.0.1"/>
+		<import addon="script.module.dateutil" version="2.7.3"/>
+        <import addon="context.seren" version="1.0.3"/>
+<!--		<import addon="script.module.inputstreamhelper" version="0.3.3"/> #### Not yet big boy ####-->
+	</requires>
+	<extension point="xbmc.python.pluginsource" library="seren.py">
+		<provides>video</provides>
+	</extension>
+	<extension point="xbmc.service" library="service.py" />
+	<extension point="xbmc.addon.metadata">
+		<reuselanguageinvoker>false</reuselanguageinvoker> <!-- You can enable this if you want, expect some instability but much faster menu speeds -->
+		<summary lang="en">Seren - Modular Multi-source Addon</summary>
+		<description lang="en"> Seren is a modular provider based, cloud service streaming software that is tightly interwoven with Trakt. Seren provides the freedom to view media from a single menu system from service providers of the users choosing. Please Note: This addon requires the use of a compatible cloud service.
+		</description>
+		<platform>all</platform>
+		<license>GNU GENERAL PUBLIC LICENSE. Version 3, 29 June 2007</license>
+		<forum></forum>
+		<website>https://github.com/nixgates/plugin.video.seren</website>
+		<source>https://github.com/nixgates/plugin.video.seren</source>
+		<disclaimer lang="en">
+			Last updated: September 09, 2019.
+			The information contained within the Seren software (the "Service") is for general information purposes only.
+			The author assumes no responsibility for errors, omissions in the contents on the Service, nor does it assume responsibility for any material provided by any external services.
+			The use of the Service does not authorise the user to engage in any kind of illegal, criminal or tortious activity through the use of the software, including infringement of any third party intellectual property rights (including without limitation copyright, trade marks, patent, trade secrets and confidential information), fraud, child pornography, trafficking in obscene material, violation of applicable export restrictions, drug dealing, gambling, harassment, stalking, spamming, hacking, sending of viruses or other harmful files or illegal posting of computer passwords or computer code.
+			The user is responsible for all their activity in connection with the use of the Service and the author reserves the right to report any potentially criminal activity to appropriate law enforcement agencies.
+			The user must not transmit to or via the Service, any material that may infringe the intellectual property rights of any third party, or any defamatory, derogatory or offensive material or publication.
+			In no event shall the author of this software be liable for any special, direct, indirect, consequential, or incidental damages or any damages whatsoever, whether in an action of contract, negligence or other tort, arising out of or in connection with the use of the Service or the contents of the Service.
+			The author reserves the right to make additions, deletions, or modification to the contents on the Service at any time without prior notice.
+			The author of this software does not warrant that the software is free of viruses or other harmful components.
+			Seren may contain links to external websites that are not provided or maintained by or in any way affiliated with the author.
+			Please note that the author does not guarantee the accuracy, relevance, timeliness, or completeness of any information on these external websites.
+		</disclaimer>
+		<assets>
+			<icon>ico-fox-gold-final.png</icon>
+			<fanart>fanart-fox-gold-final.png</fanart>
+			<screenshot>resources/screenshots/screenshot-01.jpg</screenshot>
+			<screenshot>resources/screenshots/screenshot-02.jpg</screenshot>
+			<screenshot>resources/screenshots/screenshot-03.jpg</screenshot>
+		</assets>
+		<news>
+Changelog 1.6.2:
+Fixed trakt database rebuild issues
+
+Changelog 1.6.1:
+Fix playback for RD items in My Files
+Fix Trakt Sync Databsae not upgrading correctly
+Fixed Trakt lists missing items
+Settings dialog now closes during PM auth
+Fixed double database rebuilding
+Fixed AllDebrid movie resolving
+Fix list comprehension error in check_for_updates method in skin_manager module
+
+Changelog 1.6.0:
+Some Greek translations added
+Some German translations added
+Next Up menu now generated completely locally using DB query
+Added All-Debrid Support
+Premiumize now uses O-Auth (re-auth is required)
+Complete re-work of the standard playlist building (removes building playlist window for standard playback)
+Re-work of My Files module to reduce spaghetti
+Re-work of resolver module to reduce spaghetti
+New Custom Windows Still Watching/Play Next
+Added update support for Seren Themes
+Removed support for UpNext addon
+Lists are now synced to the trakt database
+More work on player.py module, better bookmark identification and playback marking
+Re-work Trakt Manager to be more context sensitive
+Added ability to paginate Trakt lists
+Added some more shortcuts to the search menu
+Show information is confirmed with IMDB prior to scrape
+Date and time in custom windows now displays in regional format
+Added fallbacks for shows meta gathering in Trakt DB
+Source filtering improvements to reduce meta loss
+Set a timeout for Fanart.tv calls (reduces slow downs at cost of artwork)
+Re-worked intial trakt sync and removed dialog box
+Complete overhaul of the bookmark system
+Fixed torrent semaphore not being released
+Playback parameters are now applied to further episodes
+Implement new listall endpoint for Premiumize cloud scraping (decreased scrape times)
+More minor bugfixes (honestly could not list them all)
+		</news>
+	</extension>
+</addon>
+
+<addon id="script.module.urlresolver" name="URLResolver" version="5.0.46" provider-name="tvaddons">
     <requires>
         <import addon="xbmc.python" version="2.1.0" />
         <import addon="plugin.video.youtube" optional="true" />
         <import addon="script.module.python.twitch" optional="true" />
         <import addon="script.module.cryptopy" version="1.2.6" optional="true" />
         <import addon="plugin.video.gdrive" optional="true" />
+        <import addon="plugin.program.indigo" />
     </requires>
     <extension point="xbmc.python.module" library="lib" />
     <extension point="xbmc.python.pluginsource" library="lib/default.py" />
@@ -1669,7 +1778,7 @@ Added Trakt Manager
     </extension>
 </addon>
 
-    <addon id="repository.Atrion18B" name="[COLOR darkgreen]Atrion's Repo for Kodi 18.x Backup[/COLOR]" version="0.3.0" provider-name="Atrion Darnay">
+    <addon id="repository.Atrion18B" name="[COLOR darkgreen]Atrion's Repo for Kodi 18.x Backup[/COLOR]" version="0.3.1" provider-name="Atrion Darnay">
         <requires>
             <import addon="xbmc.addon" version="12.0.0"/>
         </requires>
@@ -1747,13 +1856,14 @@ Added Trakt Manager
   </extension>
 </addon>
 
-<addon id="visualization.spectrum" version="2.0.4.4" name="Spectrum" provider-name="Team Kodi">
+<addon id="visualization.spectrum" version="3.0.2.1" name="Spectrum" provider-name="Team Kodi">
   <requires>
     <import addon="kodi.binary.global.main" version="1.0.14"/>
-    <import addon="kodi.binary.global.filesystem" version="1.0.2"/>
+    <import addon="kodi.binary.global.gui" version="5.12.0"/>
+    <import addon="kodi.binary.global.gui" version="5.12.0"/>
     <import addon="kodi.binary.instance.visualization" version="2.0.1"/>
   </requires>
-  <extension point="xbmc.player.musicviz" library_linux="visualization.spectrum.so.2.0.4"/>
+  <extension point="xbmc.player.musicviz" library_linux="visualization.spectrum.so.3.0.2"/>
   <extension point="xbmc.addon.metadata">
     <summary lang="af_ZA">Visualisering wys a roterende 3D Spektrum Analiseerder</summary>
     <summary lang="ar_SA">عارض يظهر طيف محلل دوري ثلاثي الأبعاد</summary>
@@ -1871,11 +1981,14 @@ Zároveň má nastavenia upravujúce výšku stĺpcov spektra, ich rýchlosť a 
     <description lang="zh_TW"> Spectrum 是使用  描繪顯示旋轉的3D頻譜分析視覺效果，頻譜格線隨著音樂節拍而像波浪起伏。
 它還可以調整頻譜長條的高度、速度以及呈現效果（實心、點狀、線框）。它是個很好的輕量級、低 CPU 使用率的視覺化效果。</description>
     <platform/>
+    <license>GPL-2.0</license>
+    <source>https://github.com/xbmc/visualization.spectrum</source>
     <assets>
       <icon>resources/icon.png</icon>
-      <screenshot>resources/screenshot-01.png</screenshot>
-      <screenshot>resources/screenshot-02.png</screenshot>
-      <screenshot>resources/screenshot-03.png</screenshot>
+      <fanart>resources/fanart.jpg</fanart>
+      <screenshot>resources/screenshot-01.jpg</screenshot>
+      <screenshot>resources/screenshot-02.jpg</screenshot>
+      <screenshot>resources/screenshot-03.jpg</screenshot>
     </assets>
   </extension>
 </addon>
@@ -2135,7 +2248,7 @@ Zároveň má nastavenia upravujúce výšku stĺpcov spektra, ich rýchlosť a 
   </extension>
 </addon>
 
-<addon id="plugin.video.openmeta" name="OpenMeta" version="1.4.13" provider-name="A4K">
+<addon id="plugin.video.openmeta" name="OpenMeta" version="1.4.14" provider-name="A4K">
 	<requires>
 		<import addon="xbmc.python" version="2.25.0"/>
 		<import addon="metadata.tvdb.com" version="3.0.14"/>
@@ -2175,6 +2288,7 @@ Zároveň má nastavenia upravujúce výšku stĺpcov spektra, ich rýchlosť a 
 		<website></website>
 		<source></source>
 		<news>
+		1.4.14 - Fix bug with missing ID in TV menus
 		1.4.13 - Added realtitle (movies) and realname (tvshows) parameters for plexkodiconnect compatibility
 		1.4.12 - Handle non-existent 'filename' key in TVDB data.
 		1.4.11 - TVDB API fix, thanks to @ruinernin and @bg-22 (among others)!
@@ -2195,7 +2309,7 @@ Zároveň má nastavenia upravujúce výšku stĺpcov spektra, ich rýchlosť a 
 	</extension>
 </addon>
 
-    <addon id="repository.Atrion18" name="[COLOR darkgreen]Atrion's Repo for Kodi 18.x[/COLOR]" version="0.3.0" provider-name="Atrion Darnay">
+    <addon id="repository.Atrion18" name="[COLOR darkgreen]Atrion's Repo for Kodi 18.x[/COLOR]" version="0.3.1" provider-name="Atrion Darnay">
         <requires>
             <import addon="xbmc.addon" version="12.0.0"/>
         </requires>
@@ -2294,7 +2408,7 @@ Zároveň má nastavenia upravujúce výšku stĺpcov spektra, ich rýchlosť a 
   </extension>
 </addon>
 
-<addon id="resource.images.studios.white" name="Studio Icons - White" version="0.0.22" provider-name="Team Kodi">
+<addon id="resource.images.studios.white" name="Studio Icons - White" version="0.0.24" provider-name="Team Kodi">
 	<extension point="kodi.resource.images" compile="true" type="studios" />
 	<requires>
 		<import addon="kodi.resource" version="1.0.0"/>
@@ -2333,12 +2447,14 @@ Zároveň má nastavenia upravujúce výšku stĺpcov spektra, ich rýchlosť a 
 	</extension>
 </addon>
 
-<addon id="visualization.waveform" version="2.0.1.4" name="Waveform" provider-name="MrC">
+<addon id="visualization.waveform" version="3.1.1.1" name="Waveform" provider-name="MrC">
   <requires>
     <import addon="kodi.binary.global.main" version="1.0.14"/>
+    <import addon="kodi.binary.global.gui" version="5.12.0"/>
+    <import addon="kodi.binary.global.gui" version="5.12.0"/>
     <import addon="kodi.binary.instance.visualization" version="2.0.1"/>
   </requires>
-  <extension point="xbmc.player.musicviz" library_linux="visualization.waveform.so.2.0.1"/>
+  <extension point="xbmc.player.musicviz" library_linux="visualization.waveform.so.3.1.1"/>
   <extension point="xbmc.addon.metadata">
     <summary lang="af">Visualisering wat 2 golfvorm grafieke op die skerm vertoon</summary>
     <summary lang="ar">التصوير يظهر2 رسم بياني موجي على الشاشة</summary>
@@ -2448,12 +2564,21 @@ Zároveň má nastavenia upravujúce výšku stĺpcov spektra, ich rýchlosť a 
     <description lang="zh">Waveform 是一个简单的可视化效果，它在屏幕上显示两个波形图，分别与音乐左右声道的节拍相呼应。</description>
     <description lang="zh_TW">Waveform是一個簡單的可在屏幕上顯示2波形圖的視覺效果，左右聲道會跟著音樂節拍移動</description>
     <platform/>
+    <license>GPL-3.0</license>
+    <source>https://github.com/xbmc/visualization.waveform</source>
+    <assets>
+      <icon>resources/icon.png</icon>
+      <fanart>resources/fanart.png</fanart>
+      <screenshot>resources/screenshot-01.jpg</screenshot>
+      <screenshot>resources/fanart.png</screenshot>
+      <screenshot>resources/screenshot-02.jpg</screenshot>
+    </assets>
   </extension>
 </addon>
 
 <addon id="script.module.six"
        name="six"
-       version="1.11.0"
+       version="1.13.0"
        provider-name="gutworth">
   <requires>
     <import addon="xbmc.python"
@@ -2462,12 +2587,12 @@ Zároveň má nastavenia upravujúce výšku stĺpcov spektra, ich rýchlosť a 
   <extension point="xbmc.python.module"
              library="lib" />
   <extension point="xbmc.addon.metadata">
-    <summary>Python 2 and 3 compatibility utilities.</summary>
-    <description>Six is a Python 2 and 3 compatibility library. It provides utility functions for smoothing over the differences between the Python versions with the goal of writing Python code that is compatible on both Python versions. See the documentation for more information on what is provided.</description>
+    <summary lang="en">Python 2 and 3 compatibility utilities.</summary>
+    <description lang="en">Six is a Python 2 and 3 compatibility library. It provides utility functions for smoothing over the differences between the Python versions with the goal of writing Python code that is compatible on both Python versions. See the documentation for more information on what is provided.</description>
     <platform>all</platform>
     <license>MIT</license>
-    <source>https://pypi.python.org/pypi/six</source>
-    <website>https://pypi.python.org/pypi/six</website>
+    <source>https://pypi.org/project/six/</source>
+    <website>https://pypi.org/project/six/</website>
   </extension>
 </addon>
 
@@ -2508,24 +2633,25 @@ Zároveň má nastavenia upravujúce výšku stĺpcov spektra, ich rýchlosť a 
 
 <addon id="script.module.arrow"
        name="arrow"
-       version="0.10.0"
+       version="0.15.5"
        provider-name="crsmithdev, Razzeee">
   <requires>
-    <import addon="xbmc.python" version="2.1.0"/>
-	<import addon="script.module.dateutil" version="2.4.2"/>
+    <import addon="xbmc.python" version="2.25.0"/>
+    <import addon="script.module.dateutil" version="2.8.1"/>
+    <import addon="script.module.backports.functools_lru_cache" version="1.5.0"/>
   </requires>
   <extension point="xbmc.python.module"
              library="lib" />
   <extension point="xbmc.addon.metadata">
-    <summary>Arrow: better dates and times for Python</summary>
-    <description>Packed for Kodi from https://github.com/crsmithdev/arrow</description>
+    <summary lang="en">Arrow: better dates and times for Python</summary>
+    <description lang="en">Packed for Kodi from https://github.com/crsmithdev/arrow</description>
     <platform>all</platform>
-    <language></language>
     <license>Apache2</license>
-    <forum></forum>
-    <website>http://crsmithdev.com/arrow/</website>
     <source>https://github.com/Razzeee/script.module.arrow</source>
     <email>beenje AT gmail.com</email>
+    <assets>
+      <icon>icon.png</icon>
+    </assets>
   </extension>
 </addon>
 
@@ -2623,13 +2749,13 @@ Zároveň má nastavenia upravujúce výšku stĺpcov spektra, ich rýchlosť a 
 	</extension>
 </addon>
 
-<addon id="vfs.sftp" version="1.0.1.2" name="SFTP support" provider-name="spiff">
+<addon id="vfs.sftp" version="1.0.3.1" name="SFTP support" provider-name="spiff">
   <requires>
     <import addon="kodi.binary.global.main" version="1.0.14"/>
     <import addon="kodi.binary.global.general" version="1.0.3"/>
     <import addon="kodi.binary.instance.vfs" version="2.0.0"/>
   </requires>
-  <extension point="kodi.vfs" protocols="sftp|ssh" files="true" directories="true" supportDialog="true" supportPath="true" supportUsername="true" supportPassword="true" supportPort="true" supportBrowsing="false" defaultPort="22" type="sftp" label="20260" zeroconf="_sftp-ssh._tcp" library_linux="vfs.sftp.so.1.0.1"/>
+  <extension point="kodi.vfs" protocols="sftp|ssh" files="true" directories="true" supportDialog="true" supportPath="true" supportUsername="true" supportPassword="true" supportPort="true" supportBrowsing="false" defaultPort="22" type="sftp" label="20260" zeroconf="_sftp-ssh._tcp" library_linux="vfs.sftp.so.1.0.3"/>
   <extension point="xbmc.addon.metadata">
     <summary lang="en">SFTP support</summary>
     <description lang="en">SFTP support</description>
@@ -2683,11 +2809,12 @@ Zároveň má nastavenia upravujúce výšku stĺpcov spektra, ich rýchlosť a 
 
 <addon id="metadata.tvshows.themoviedb.org"
        name="The Movie Database"
-       version="3.1.4"
+       version="3.4.0"
        provider-name="Team Kodi">
   <requires>
     <import addon="xbmc.metadata" version="2.1.0"/>
     <import addon="metadata.common.fanart.tv" version="3.1.0"/>
+    <import addon="metadata.common.imdb.com" version="2.9.2"/>
   </requires>
   <extension point="xbmc.metadata.scraper.tvshows"
              language="en"
@@ -3213,7 +3340,7 @@ v5.2.14 (2017-01-23)
 </addon>
 
 <addon id="plugin.video.themoviedb.helper"
-version="1.0.14"
+version="2.0.9"
 name="TheMovieDb Helper"
 provider-name="jurialmunkey">
 <requires>
@@ -3224,7 +3351,27 @@ provider-name="jurialmunkey">
 <extension point="xbmc.python.pluginsource" library="plugin.py">
   <provides>video</provides>
 </extension>
+<extension point="xbmc.service" start="login" library="service.py" />
 <extension point="xbmc.python.script" library="script.py" />
+<extension point="kodi.context.item">
+  <menu id="kodi.core.main">
+    <menu>
+      <label>TMDbHelper - Trakt Manager</label>
+      <item library="context-watchlist.py">
+        <label>Trakt - Watchlist Add/Remove</label>
+        <visible>!String.IsEmpty(ListItem.Property(tmdb_id)) + [String.IsEqual(ListItem.dbtype,episode) | String.IsEqual(ListItem.dbtype,movie) | String.IsEqual(ListItem.dbtype,tvshow)]</visible>
+      </item>
+      <item library="context-history.py">
+        <label>Trakt - Watched History Add/Remove</label>
+        <visible>!String.IsEmpty(ListItem.Property(tmdb_id)) + [String.IsEqual(ListItem.dbtype,episode) | String.IsEqual(ListItem.dbtype,movie) | String.IsEqual(ListItem.dbtype,tvshow)]</visible>
+      </item>
+      <item library="context-collection.py">
+        <label>Trakt - Collection Add/Remove</label>
+        <visible>!String.IsEmpty(ListItem.Property(tmdb_id)) + [String.IsEqual(ListItem.dbtype,episode) | String.IsEqual(ListItem.dbtype,movie) | String.IsEqual(ListItem.dbtype,tvshow)]</visible>
+      </item>
+    </menu>
+  </menu>
+</extension>
 <extension point="xbmc.addon.metadata">
   <summary lang="en_GB">TheMovieDb Helper - Now With Trakt Support!</summary>
   <description lang="en_GB">TheMovieDb Helper provides details about movies, tvshows and actors from TMDb. Users can access a variety of lists from TMDb and Trakt.</description>
@@ -3236,9 +3383,7 @@ provider-name="jurialmunkey">
     <screenshot>resources/screenshot-01.jpg</screenshot>
     <screenshot>resources/screenshot-02.jpg</screenshot>
   </assets>
-  <news>1.0.14 - Remove script.module.trakt dependency for python 3 compatibility[CR]1.0.13 - Add Trakt In-Progress Shows plus better Recently Watched[CR]1.0.12 - Code cleanup[CR]1.0.11 - Add pagination to trakt lists[CR]1.0.10 - Add some
-additional lists from Trakt[CR]1.0.9 - Add
-genres for TMDb[CR]1.0.8 - Some small fixes for enditems[CR]1.0.7 - Trakt support[CR]1.0.6 - Fixes MPAA Rating Prefix[CR]1.0.5 - Fixes python text encoding/decoding issues</news>
+  <news>2.0.9 - Add &amp;fanarttv=True param plus additional fanart tv options for widget[CR]2.0.8 - Add pagination for tmdb[CR]2.0.7 - Fix for multiple player files for one plugin[CR]2.0.6 - Add default player function thanks to drinfernoo[CR]2.0.4 - Add additional caching for fanart.tv[CR]2.0.3 - Add fanart.tv optional support (increase load times significantly)[CR]2.0.2 - Player URL downloader[CR]2.0.1 - Widget player params[CR]2.0.0 - Code refactor[CR]1.0.30/29 - Addition of new infoproperties[CR]1.0.28/27/26/25/24 - Optimisation updates to service monitor[CR]1.0.23 - Add service monitor[CR]1.0.22 - Trakt management functiosn must be enabled in settings to display in details list[CR]1.0.21 - External Players and Search for items not in library[CR]1.0.20 - Hotfix[CR]1.0.19 - Trakt management options[CR]1.0.18 - Add ISO Lang and del N/A keys[CR]1.0.17 - Play detailed items in Kodi DB[CR]1.0.16 - Split multi filter/exclude keys and tmdb_id lookups[CR]1.0.15 - Add comma thousands for omdb review numbers and add languages properties[CR]1.0.14 - Remove script.module.trakt dependency for python 3 compatibility[CR]1.0.13 - Add Trakt In-Progress Shows plus better Recently Watched[CR]1.0.12 - Code cleanup[CR]1.0.11 - Add pagination to trakt lists[CR]1.0.10 - Add some additional lists from Trakt[CR]1.0.9 - Add genres for TMDb[CR]1.0.8 - Some small fixes for enditems[CR]1.0.7 - Trakt support[CR]1.0.6 - Fixes MPAA Rating Prefix[CR]1.0.5 - Fixes python text encoding/decoding issues</news>
 </extension>
 </addon>
 
@@ -3322,7 +3467,7 @@ genres for TMDb[CR]1.0.8 - Some small fixes for enditems[CR]1.0.7 - Trakt suppor
 	</extension>
 </addon>
 
-<addon id="script.module.openscrapers" name="OpenScrapers Module" version="0.0.1.99" provider-name="Addons4Kodi">
+<addon id="script.module.openscrapers" name="OpenScrapers Module" version="0.0.1.99a" provider-name="Addons4Kodi">
     <requires>
         <import addon="xbmc.python" version="2.25.0" />
         <import addon="script.module.beautifulsoup4"/>
@@ -3497,6 +3642,26 @@ genres for TMDb[CR]1.0.8 - Some small fixes for enditems[CR]1.0.7 - Trakt suppor
 	</extension>
 </addon>
 
+<addon id="plugin.program.indigo" version="4.0.14" name="Indigo" provider-name="tvaddons">
+	<requires>
+		<import addon="xbmc.python" version="2.1.0"/>
+	</requires>
+    <extension point="xbmc.python.pluginsource" library="default.py">
+        <provides>video executable</provides>
+    </extension>
+    <extension point="xbmc.service" library="service.py" start="startup"/>
+    <extension point="xbmc.addon.metadata">
+        <summary lang="en">Indigo is your gateway to the world of unofficial Kodi addons!</summary>
+        <description lang="en">Indigo is your gateway to the world of unofficial Kodi addons! Please visit www.tvaddons.co for support.</description>
+        <disclaimer lang="en">Kodi is a registered trademark of the XBMC Foundation. We are not connected to or in any other way affiliated with Kodi, Team Kodi, or the XBMC Foundation. Furthermore, any software, addons, or products offered by us will receive no support in official Kodi channels, including the Kodi forums and various social networks.</disclaimer>
+        <language>en</language>
+        <platform>all</platform>
+        <forum>https://www.tvaddons.co/forums</forum>
+        <website>https://www.tvaddons.co</website>
+        <source>https://github.com/tvaddonsco/plugin.program.indigo</source>
+    </extension>
+</addon>
+
 <addon id="script.exodusredux.metadata" version="1.0.2" name="Exodus Redux Metadata" provider-name="I-A-C">
 	<requires>
 		<import addon="xbmc.python" version="2.19.0"/>
@@ -3531,23 +3696,35 @@ genres for TMDb[CR]1.0.8 - Some small fixes for enditems[CR]1.0.7 - Trakt suppor
   </extension>
 </addon>
 
-<addon id="visualization.shadertoy" version="1.1.10.3" name="Shadertoy" provider-name="Team Kodi">
+<addon id="visualization.shadertoy" version="1.2.3.1" name="Shadertoy" provider-name="Team Kodi">
   <requires>
     <import addon="kodi.binary.global.main" version="1.0.14"/>
+    <import addon="kodi.binary.global.gui" version="5.12.0"/>
     <import addon="kodi.binary.instance.visualization" version="2.0.1"/>
   </requires>
-  <extension point="xbmc.player.musicviz" library_linux="visualization.shadertoy.so.1.1.10"/>
+  <extension point="xbmc.player.musicviz" library_linux="visualization.shadertoy.so.1.2.3"/>
   <extension point="xbmc.addon.metadata">
     <summary lang="en">Visualisations from Shadertoy</summary>
-    <description lang="en">Visualisations from Shadertoy</description>
+    <description lang="en">This music visualization is based on Shadertoy based GPU programs.</description>
     <platform/>
+    <assets>
+      <icon>resources/icon.png</icon>
+      <fanart>resources/fanart.jpg</fanart>
+      <screenshot>resources/screenshot-01.jpg</screenshot>
+      <screenshot>resources/fanart.jpg</screenshot>
+      <screenshot>resources/screenshot-02.jpg</screenshot>
+      <screenshot>resources/screenshot-03.jpg</screenshot>
+      <screenshot>resources/screenshot-04.jpg</screenshot>
+      <screenshot>resources/screenshot-05.jpg</screenshot>
+      <screenshot>resources/screenshot-06.jpg</screenshot>
+    </assets>
   </extension>
 </addon>
 
 <addon id="script.module.metadatautils"
        name="Metadata and Artwork module"
-       version="1.0.19"
-       provider-name="marcelveldt">
+       version="1.0.20"
+       provider-name="marcelveldt, finkleandeinhorn">
     <requires>
         <import addon="xbmc.python" version="2.24.0"/>
         <import addon="script.module.requests" version="2.3.0"/>
@@ -3566,7 +3743,7 @@ genres for TMDb[CR]1.0.8 - Some small fixes for enditems[CR]1.0.7 - Trakt suppor
             This product uses the TMDb API but is not endorsed or certified by TMDb
         </description>
         <license>Apache 2.0</license>
-        <source>https://github.com/marcelveldt/script.module.metadatautils</source>
+        <source>https://www.github.com/kodi-community-addons/script.module.metadatautils</source>
         <platform>all</platform>
     </extension>
 </addon>

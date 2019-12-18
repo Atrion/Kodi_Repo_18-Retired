@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<addon id="visualization.spectrum" version="2.0.4.4" name="Spectrum" provider-name="Team Kodi">
+<addon id="visualization.spectrum" version="3.0.2.1" name="Spectrum" provider-name="Team Kodi">
   <requires>
     <import addon="kodi.binary.global.main" version="1.0.14"/>
-    <import addon="kodi.binary.global.filesystem" version="1.0.2"/>
+    <import addon="kodi.binary.global.gui" version="5.12.0"/>
+    <import addon="kodi.binary.global.gui" version="5.12.0"/>
     <import addon="kodi.binary.instance.visualization" version="2.0.1"/>
   </requires>
-  <extension point="xbmc.player.musicviz" library_linux="visualization.spectrum.so.2.0.4"/>
+  <extension point="xbmc.player.musicviz" library_linux="visualization.spectrum.so.3.0.2"/>
   <extension point="xbmc.addon.metadata">
     <summary lang="af_ZA">Visualisering wys a roterende 3D Spektrum Analiseerder</summary>
     <summary lang="ar_SA">عارض يظهر طيف محلل دوري ثلاثي الأبعاد</summary>
@@ -123,11 +124,14 @@ Zároveň má nastavenia upravujúce výšku stĺpcov spektra, ich rýchlosť a 
     <description lang="zh_TW"> Spectrum 是使用  描繪顯示旋轉的3D頻譜分析視覺效果，頻譜格線隨著音樂節拍而像波浪起伏。
 它還可以調整頻譜長條的高度、速度以及呈現效果（實心、點狀、線框）。它是個很好的輕量級、低 CPU 使用率的視覺化效果。</description>
     <platform/>
+    <license>GPL-2.0</license>
+    <source>https://github.com/xbmc/visualization.spectrum</source>
     <assets>
       <icon>resources/icon.png</icon>
-      <screenshot>resources/screenshot-01.png</screenshot>
-      <screenshot>resources/screenshot-02.png</screenshot>
-      <screenshot>resources/screenshot-03.png</screenshot>
+      <fanart>resources/fanart.jpg</fanart>
+      <screenshot>resources/screenshot-01.jpg</screenshot>
+      <screenshot>resources/screenshot-02.jpg</screenshot>
+      <screenshot>resources/screenshot-03.jpg</screenshot>
     </assets>
   </extension>
 </addon>
