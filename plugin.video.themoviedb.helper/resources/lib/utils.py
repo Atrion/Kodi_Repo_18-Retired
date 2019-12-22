@@ -160,6 +160,17 @@ def find_dict_in_list(list_of_dicts, key, value):
     return [list_index for list_index, dic in enumerate(list_of_dicts) if dic.get(key) == value]
 
 
+def get_dict_in_list(list_of_dicts, key, value, basekeys=[]):
+    for d in list_of_dicts:
+        if not isinstance(d, dict):
+            continue
+        base = d
+        for basekey in basekeys:
+            d = d.get(basekey, {}) if basekey else d
+        if d.get(key) == value:
+            return base
+
+
 def split_items(items, separator='/'):
     separator = ' {0} '.format(separator)
     if items and separator in items:
@@ -172,11 +183,13 @@ def iter_props(items, property, itemprops, **kwargs):
     func = kwargs.pop('func', None)
     for k, v in kwargs.items():
         x = 0
+        while x < 10 and itemprops.get('{0}.{1}.{2}'.format(property, x + 1, k)):
+            x += 1  # Find next empty prop
         for i in items:
             if x > 9:
                 break  # only add ten items
             if i.get(v):
-                x = x + 1
+                x += 1
                 itemprops['{0}.{1}.{2}'.format(property, x, k)] = i.get(v) if not func else func(i.get(v))
     return itemprops
 

@@ -57,6 +57,9 @@ class Script(Plugin):
     def unlock_path(self):
         self.home.clearProperty(self.prefixlock)
 
+    def exec_action(self):
+        xbmc.executebuiltin(self.params.get('exec_action', ''))
+
     def call_window(self):
         if self.params.get('call_id'):
             xbmc.executebuiltin('Dialog.Close(12003)')
@@ -69,9 +72,14 @@ class Script(Plugin):
             xbmc.executebuiltin('Container.Update({0})'.format(self.params.get('call_update')))
 
     def update_players(self):
+        players_url = self.addon.getSettingString('players_url')
+        players_url = xbmcgui.Dialog().input('Enter URL to download players', defaultt=players_url)
+        if not xbmcgui.Dialog().yesno('Download Players', 'Download players from URL?\n[B]{0}[/B]'.format(players_url)):
+            return
+        self.addon.setSettingString('players_url', players_url)
         downloader = Downloader(
             extract_to='special://profile/addon_data/plugin.video.themoviedb.helper/players',
-            download_url=self.addon.getSetting('players_url'))
+            download_url=players_url)
         downloader.get_extracted_zip()
 
     def set_defaultplayer(self):
@@ -92,8 +100,12 @@ class Script(Plugin):
         self.addon.setSetting('default_player_episodes', '')
 
     def add_path(self):
+        url = self.params.get('add_path', '')
+        url = url.replace('info=play', 'info=details')
+        url = url.replace('info=seasons', 'info=details')
+        url = '{0}&{1}'.format(url, 'extended=True') if 'extended=True' not in url else url
         self.position = self.position + 1
-        self.set_props(self.position, self.params.get('add_path'))
+        self.set_props(self.position, url)
         self.lock_path(self.params.get('prevent_del'))
         self.call_window()
 
@@ -136,7 +148,9 @@ class Script(Plugin):
 
     def router(self):
         if not self.params:
-            return
+            """ If no params assume user wants to run plugin """
+            # TODO: Maybe restart service here too?
+            self.params = {'call_path': 'plugin://plugin.video.themoviedb.helper/'}
         if self.params.get('authenticate_trakt'):
             traktAPI(force=True)
         elif self.params.get('update_players'):
@@ -145,6 +159,8 @@ class Script(Plugin):
             self.set_defaultplayer()
         elif self.params.get('clear_defaultplayers'):
             self.clear_defaultplayers()
+        elif self.params.get('exec_action'):
+            self.exec_action()
         elif self.params.get('add_path'):
             self.add_path()
         elif self.params.get('add_query') and self.params.get('type'):

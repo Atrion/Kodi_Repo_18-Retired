@@ -148,6 +148,9 @@ class TMDb(RequestAPI):
             infoproperties['creator'] = utils.concatinate_names(item.get('created_by'), 'name', '/')
         if item.get('genres'):
             infoproperties = utils.iter_props(item.get('genres'), 'Genre', infoproperties, name='name', tmdb_id='id')
+        if item.get('networks'):
+            infoproperties = utils.iter_props(item.get('networks'), 'Studio', infoproperties, name='name', tmdb_id='id')
+            infoproperties = utils.iter_props(item.get('networks'), 'Studio', infoproperties, icon='logo_path', func=self.get_imagepath)
         if item.get('production_companies'):
             infoproperties = utils.iter_props(item.get('production_companies'), 'Studio', infoproperties, name='name', tmdb_id='id')
             infoproperties = utils.iter_props(item.get('production_companies'), 'Studio', infoproperties, icon='logo_path', func=self.get_imagepath)
@@ -170,6 +173,16 @@ class TMDb(RequestAPI):
             infoproperties['set.poster'] = self.get_imagepath(item.get('belongs_to_collection').get('poster_path'))
             infoproperties['set.fanart'] = self.get_imagepath(item.get('belongs_to_collection').get('backdrop_path'))
         return infoproperties
+
+    def get_trailer(self, item):
+        infolabels = {}
+        videos = item.get('videos', {}).get('results') or []
+        for i in videos:
+            if i.get('type', '') != 'Trailer' or i.get('site', '') != 'YouTube' or not i.get('key'):
+                continue
+            infolabels['trailer'] = 'plugin://plugin.video.youtube/play/?video_id={0}'.format(i.get('key'))
+            break
+        return infolabels
 
     def get_cast(self, item):
         cast = []
@@ -238,8 +251,9 @@ class TMDb(RequestAPI):
         fanart = self.get_fanart(item)
         cast = self.get_cast(item)
         infolabels = self.get_infolabels(item)
-        infoproperties = self.get_infoproperties(item)
+        infolabels = utils.merge_two_dicts(infolabels, self.get_trailer(item))
         infolabels = utils.merge_two_dicts(infolabels, self.get_director_writer(item))
+        infoproperties = self.get_infoproperties(item)
         infoproperties = utils.merge_two_dicts(infoproperties, self.get_cast_properties(cast))
         infoproperties = utils.merge_two_dicts(infoproperties, self.get_crew_properties(item))
         return {

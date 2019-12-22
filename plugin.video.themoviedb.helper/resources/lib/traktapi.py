@@ -9,7 +9,7 @@ import datetime
 
 
 class traktAPI(RequestAPI):
-    def __init__(self, force=False, cache_short=None, cache_long=None, tmdb=None):
+    def __init__(self, force=False, cache_short=None, cache_long=None, tmdb=None, login=False):
         super(traktAPI, self).__init__(
             cache_short=cache_short, cache_long=cache_long,
             req_api_url='https://api.trakt.tv/', req_api_name='Trakt')
@@ -33,9 +33,9 @@ class traktAPI(RequestAPI):
             self.login()
             return
 
-        self.authorize(login=False)
+        self.authorize(login)
 
-    def authorize(self, login=True, force=False):
+    def authorize(self, login=False):
         if self.authorization:
             return self.authorization
         token = self.addon.getSetting('trakt_token')
@@ -305,8 +305,30 @@ class traktAPI(RequestAPI):
         return [ListItem(library=self.library, **self.tmdb.get_detailed_item(
             itemtype='tv', tmdb_id=tmdb_id, season=i[0], episode=i[1])) for i in self.get_upnext(imdb_id)[:limit]]
 
-    def get_usernameslug(self):
-        if not self.authorize():
+    def get_unwatched_progress(self, tmdb_id=None, imdb_id=None, check_sync=True):
+        if not self.tmdb or not self.authorize() or not tmdb_id:
+            return
+        if not imdb_id:
+            imdb_id = self.tmdb.get_item_externalid(itemtype='tv', tmdb_id=utils.try_parse_int(tmdb_id), external_id='imdb_id')
+        if not imdb_id:
+            return
+        cache_refresh = False if not check_sync or self.sync_activities('shows', 'watched_at') else True
+        return self.get_request_lc('shows', imdb_id, 'progress', 'watched', cache_refresh=cache_refresh)
+
+    def get_unwatched_count(self, tmdb_id=None, imdb_id=None, season=None, request=None, check_sync=True):
+        if not tmdb_id and not imdb_id and not request:
+            return -1
+
+        request = request or self.get_unwatched_progress(tmdb_id=tmdb_id, imdb_id=imdb_id, check_sync=check_sync)
+        request = utils.get_dict_in_list(request.get('seasons', []), 'number', utils.try_parse_int(season)) if season else request
+
+        if not request or not request.get('aired'):
+            return -1
+
+        return utils.try_parse_int(request.get('aired')) - utils.try_parse_int(request.get('completed', 0))
+
+    def get_usernameslug(self, login=False):
+        if not self.authorize(login):
             return
         item = self.get_response_json('users/settings')
         return item.get('user', {}).get('ids', {}).get('slug')
@@ -343,6 +365,9 @@ class traktAPI(RequestAPI):
     def sync_history(self, itemtype, idtype=None, mode=None, items=None):
         return self.get_sync('history', 'watched_at', itemtype, idtype, mode, items)
 
+    def get_watched(self, itemtype, idtype=None):
+        return self.get_sync('watched', 'watched_at', itemtype, idtype, None, None)
+
     def get_sync(self, name, activity, itemtype, idtype=None, mode=None, items=None):
         if not self.authorize():
             return
@@ -354,4 +379,6 @@ class traktAPI(RequestAPI):
             self.sync[name] = self.get_request_lc('sync/', name, itemtype + 's', cache_refresh=cache_refresh)
         if not self.sync.get(name):
             return
-        return {i.get(itemtype, {}).get('ids', {}).get(idtype) for i in self.sync.get(name) if i.get(itemtype, {}).get('ids', {}).get(idtype)}
+        if idtype:
+            return {i.get(itemtype, {}).get('ids', {}).get(idtype) for i in self.sync.get(name) if i.get(itemtype, {}).get('ids', {}).get(idtype)}
+        return self.sync.get(name)

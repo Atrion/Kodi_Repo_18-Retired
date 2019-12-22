@@ -11,10 +11,11 @@ except ImportError:
 
 class ListItem(object):
     def __init__(self, label=None, label2=None, dbtype=None, library=None, tmdb_id=None, imdb_id=None, dbid=None, tvdb_id=None,
-                 cast=None, infolabels=None, infoproperties=None, poster=None, thumb=None, icon=None, fanart=None, nextpage=None,
-                 clearlogo=None, clearart=None, banner=None, landscape=None, mixed_type=None, url=None, is_folder=True):
+                 cast=None, infolabels=None, infoproperties=None, poster=None, thumb=None, icon=None, fanart=None,
+                 nextpage=None, clearlogo=None, clearart=None, banner=None, landscape=None, mixed_type=None, url=None, is_folder=True):
         self.addon = xbmcaddon.Addon('plugin.video.themoviedb.helper')
         self.addonpath = self.addon.getAddonInfo('path')
+        self.select_action = self.addon.getSettingInt('select_action')
         self.label = label or 'N/A'
         self.label2 = label2 or ''
         self.library = library or ''  # <content target= video, music, pictures, none>
@@ -36,9 +37,9 @@ class ListItem(object):
 
     def set_url(self, **kwargs):
         url = kwargs.pop('url', 'plugin://plugin.video.themoviedb.helper/?')
-        return '{0}{1}'.format(url, urlencode(kwargs))
+        return u'{0}{1}'.format(url, urlencode(kwargs))
 
-    def get_url(self, url, url_tmdb_id=None, widget=None, fanarttv=None):
+    def get_url(self, url, url_tmdb_id=None, widget=None, fanarttv=None, nextpage=None, extended=None):
         self.url = self.url or url.copy()
         self.url['tmdb_id'] = self.tmdb_id = url_tmdb_id or self.tmdb_id
         if self.mixed_type:
@@ -52,11 +53,13 @@ class ListItem(object):
             self.url['episode'] = self.infolabels.get('episode')
         if fanarttv:
             self.url['fanarttv'] = fanarttv
+        if nextpage:
+            self.url['nextpage'] = nextpage
         if widget:
             self.url['widget'] = widget
-        if self.url.get('widget', '').capitalize() in ['True', 'Info'] and self.infolabels.get('mediatype') == 'tvshow':
+        if not extended and (self.url.get('widget', '').capitalize() == 'True' or self.select_action > 0) and self.infolabels.get('mediatype') == 'tvshow':
             self.url['info'] = 'seasons'
-        if self.url.get('widget', '').capitalize() in ['True', 'Info'] and self.infolabels.get('mediatype') in ['movie', 'episode']:
+        if not extended and (self.url.get('widget', '').capitalize() == 'True' or self.select_action > 0) and self.infolabels.get('mediatype') in ['movie', 'episode']:
             self.url['info'] = 'play'
         self.is_folder = False if self.url.get('info') in ['play', 'textviewer', 'imageviewer'] else True
 
@@ -80,6 +83,48 @@ class ListItem(object):
             self.banner = self.banner or artwork.get('banner')
             self.fanart = self.fanart or artwork.get('fanart')
 
+    def get_trakt_unwatched(self, trakt=None, request=None, check_sync=True):
+        if not trakt or request == -1:
+            return
+
+        season = self.infolabels.get('season') if self.infolabels.get('mediatype') == 'season' else None
+        count = trakt.get_unwatched_count(tmdb_id=utils.try_parse_int(self.tmdb_id), season=season, request=request, check_sync=check_sync)
+
+        if count == -1:
+            return
+
+        self.infoproperties['UnWatchedEpisodes'] = count
+
+        if count == 0:
+            self.infolabels['playcount'] = 1
+            self.infolabels['overlay'] = 5
+
+    def get_trakt_watched(self, trakt_watched=None):
+        if not trakt_watched:
+            return
+
+        key = 'movie' if self.infolabels.get('mediatype') == 'movie' else 'show'
+        item = utils.get_dict_in_list(trakt_watched, 'tmdb', utils.try_parse_int(self.tmdb_id), [key, 'ids'])
+        if not item:
+            return
+
+        if self.infolabels.get('mediatype') == 'episode':
+            found_ep = None
+            for s in item.get('seasons', []):
+                if s.get('number', -2) == utils.try_parse_int(self.infolabels.get('season', -1)):
+                    for ep in s.get('episodes', []):
+                        if ep.get('number', -2) == utils.try_parse_int(self.infolabels.get('episode', -1)):
+                            found_ep = item = ep
+                            break
+                    break
+            if not found_ep:
+                return
+
+        lastplayed = utils.convert_timestamp(item.get('last_watched_at'))
+        self.infolabels['lastplayed'] = lastplayed.strftime('%Y-%m-%d %H:%M:%S') if lastplayed else None
+        self.infolabels['playcount'] = item.get('plays', 0)
+        self.infolabels['overlay'] = 5 if item.get('plays') else 4
+
     def get_tmdb_details(self, tmdb=None):
         if not tmdb:
             return
@@ -96,6 +141,7 @@ class ListItem(object):
         if not details:
             return
 
+        self.cast = details.get('cast', [])
         self.infolabels = utils.merge_two_dicts(details.get('infolabels', {}), utils.del_empty_keys(self.infolabels))
         self.infoproperties = utils.merge_two_dicts(details.get('infoproperties', {}), utils.del_empty_keys(self.infoproperties))
 

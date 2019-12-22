@@ -93,6 +93,16 @@ BASEDIR_TMDB = [
         'types': ['movie', 'tv'],
         'icon': '{0}/resources/icons/tmdb/upcoming.png'},
     {
+        'info': 'trending_day',
+        'name': '{0} Trending Today',
+        'types': ['movie', 'tv', 'person'],
+        'icon': '{0}/resources/icons/tmdb/upcoming.png'},
+    {
+        'info': 'trending_week',
+        'name': '{0} Trending This Week',
+        'types': ['movie', 'tv', 'person'],
+        'icon': '{0}/resources/icons/tmdb/upcoming.png'},
+    {
         'info': 'now_playing',
         'name': 'In Theatres',
         'types': ['movie'],
@@ -151,7 +161,7 @@ BASEDIR_TRAKT = [
         'types': ['movie', 'tv']},
     {
         'info': 'trakt_becauseyouwatched',
-        'name': 'Based on a Recently Watched {0}',
+        'name': 'Based on Recently Watched {0}',
         'icon': '{0}/resources/icons/trakt/recommended.png',
         'types': ['movie', 'tv']},
     {
@@ -341,6 +351,16 @@ TMDB_LISTS = {
         'key': 'results',
         'url_info': 'details',
         'item_tmdbtype': '{type}'},
+    'trending_day': {
+        'path': 'trending/{type}/day',
+        'key': 'results',
+        'url_info': 'details',
+        'item_tmdbtype': '{type}'},
+    'trending_week': {
+        'path': 'trending/{type}/week',
+        'key': 'results',
+        'url_info': 'details',
+        'item_tmdbtype': '{type}'},
     'now_playing': {
         'path': '{type}/now_playing',
         'key': 'results',
@@ -477,7 +497,7 @@ TMDB_LISTS = {
         'url_tmdb_id': '{tmdb_id}',
         'item_tmdbtype': 'episode'}}
 
-APPEND_TO_RESPONSE = 'credits,images,release_dates,content_ratings,external_ids'
+APPEND_TO_RESPONSE = 'credits,images,release_dates,content_ratings,external_ids,videos'
 
 TRAKT_LISTS = {
     'trakt_watchlist': {
@@ -518,6 +538,7 @@ TRAKT_LISTS = {
         'item_tmdbtype': '{type}'},
     'trakt_mylists': {
         'path': 'users/{user_slug}/lists',
+        'req_auth': True,
         'item_tmdbtype': '{type}'},
     'trakt_inlists': {
         'path': 'movies/{imdb_id}/lists',
@@ -533,6 +554,8 @@ TRAKT_LISTS = {
     'trakt_premiering': {
         'path': 'calendars/all/{type}/premieres',
         'item_tmdbtype': '{type}'}}
+
+TRAKT_MANAGEMENT = ['collection_add', 'collection_remove', 'watchlist_add', 'watchlist_remove', 'history_add', 'history_remove']
 
 TRAKT_CALENDAR = [
     ('Last Fortnight', -14, 14), ('Last Week', -7, 7), ('Yesterday', -1, 1), ('Today', 0, 1), ('Tomorrow', 1, 1),
