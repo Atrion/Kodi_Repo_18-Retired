@@ -2,6 +2,7 @@ import xbmcgui
 import xbmcaddon
 import xbmcplugin
 import resources.lib.utils as utils
+from resources.lib.kodilibrary import KodiLibrary
 
 try:
     from urllib.parse import urlencode  # Py3
@@ -11,9 +12,9 @@ except ImportError:
 
 class ListItem(object):
     def __init__(self, label=None, label2=None, dbtype=None, library=None, tmdb_id=None, imdb_id=None, dbid=None, tvdb_id=None,
-                 cast=None, infolabels=None, infoproperties=None, poster=None, thumb=None, icon=None, fanart=None,
-                 nextpage=None, clearlogo=None, clearart=None, banner=None, landscape=None, mixed_type=None, url=None, is_folder=True):
-        self.addon = xbmcaddon.Addon('plugin.video.themoviedb.helper')
+                 cast=None, infolabels=None, infoproperties=None, poster=None, thumb=None, icon=None, fanart=None, nextpage=None,
+                 streamdetails=None, clearlogo=None, clearart=None, banner=None, landscape=None, mixed_type=None, url=None, is_folder=True):
+        self.addon = xbmcaddon.Addon()
         self.addonpath = self.addon.getAddonInfo('path')
         self.select_action = self.addon.getSettingInt('select_action')
         self.label = label or 'N/A'
@@ -26,6 +27,7 @@ class ListItem(object):
         self.clearlogo, self.clearart, self.banner, self.landscape = clearlogo, clearart, banner, landscape
         self.url = url or {}
         self.mixed_type = mixed_type or ''
+        self.streamdetails = streamdetails or {}
         self.icon = icon or '{0}/resources/poster.png'.format(self.addonpath)
         self.fanart = fanart or '{0}/fanart.jpg'.format(self.addonpath)
         self.cast = cast or []  # Cast list
@@ -57,11 +59,13 @@ class ListItem(object):
             self.url['nextpage'] = nextpage
         if widget:
             self.url['widget'] = widget
-        if not extended and (self.url.get('widget', '').capitalize() == 'True' or self.select_action > 0) and self.infolabels.get('mediatype') == 'tvshow':
-            self.url['info'] = 'seasons'
-        if not extended and (self.url.get('widget', '').capitalize() == 'True' or self.select_action > 0) and self.infolabels.get('mediatype') in ['movie', 'episode']:
-            self.url['info'] = 'play'
+        if not extended and (self.url.get('widget', '').capitalize() == 'True' or self.select_action):
+            if self.infolabels.get('mediatype') in ['movie', 'episode']:
+                self.url['info'] = 'play'
+            elif self.infolabels.get('mediatype') == 'tvshow':
+                self.url['info'] = 'seasons'
         self.is_folder = False if self.url.get('info') in ['play', 'textviewer', 'imageviewer'] else True
+        # self.infoproperties['isPlayable'] = 'True' if self.url.get('info') in ['play', 'textviewer', 'imageviewer'] else 'False'
 
     def get_extra_artwork(self, tmdb=None, fanarttv=None):
         if not fanarttv:
@@ -149,7 +153,31 @@ class ListItem(object):
         if omdb and self.imdb_id and self.infolabels.get('mediatype') == 'movie':
             self.infoproperties = utils.merge_two_dicts(self.infoproperties, omdb.get_ratings_awards(imdb_id=self.imdb_id, cache_only=True))
 
-    def get_details(self, dbtype=None, tmdb=None, omdb=None):
+    def get_kodi_details(self):
+        if not self.dbid:
+            return
+
+        details = {}
+        if self.infolabels.get('mediatype') == 'movie':
+            details = KodiLibrary().get_movie_details(self.dbid)
+        if self.infolabels.get('mediatype') == 'tvshow':
+            details = KodiLibrary().get_tvshow_details(self.dbid)
+        if self.infolabels.get('mediatype') == 'episode':
+            details = KodiLibrary().get_episode_details(self.dbid)
+
+        if not details:
+            return
+
+        self.icon = self.icon or details.get('icon', '')
+        self.thumb = self.thumb or details.get('thumb', '')
+        self.poster = self.poster or details.get('poster', '')
+        self.fanart = self.fanart or details.get('fanart', '')
+        self.cast = self.cast or details.get('cast', [])
+        self.infolabels = utils.merge_two_dicts(details.get('infolabels', {}), utils.del_empty_keys(self.infolabels))
+        self.infoproperties = utils.merge_two_dicts(details.get('infoproperties', {}), utils.del_empty_keys(self.infoproperties))
+        self.streamdetails = details.get('streamdetails', {})
+
+    def get_details(self, dbtype=None, tmdb=None, omdb=None, kodi=None):
         self.infolabels['mediatype'] = dbtype
 
         if self.dbid:
@@ -160,9 +188,13 @@ class ListItem(object):
 
         self.get_tmdb_details(tmdb=tmdb)
         self.get_omdb_details(omdb=omdb)
+        self.get_kodi_details() if self.addon.getSettingBool('local_db') or kodi else None
 
-    def create_listitem(self, handle=None, **kwargs):
-        listitem = xbmcgui.ListItem(label=self.label, label2=self.label2)
+        if self.infolabels.get('mediatype') == 'tvshow':
+            self.infoproperties['unwatchedepisodes'] = utils.try_parse_int(self.infolabels.get('episode')) - utils.try_parse_int(self.infoproperties.get('watchedepisodes'))
+
+    def set_listitem(self, path=None):
+        listitem = xbmcgui.ListItem(label=self.label, label2=self.label2, path=path)
         listitem.setLabel2(self.label2)
         listitem.setUniqueIDs({'imdb': self.imdb_id, 'tmdb': self.tmdb_id})
         listitem.setInfo(self.library, self.infolabels)
@@ -171,4 +203,17 @@ class ListItem(object):
             'thumb': self.thumb, 'icon': self.icon, 'poster': self.poster, 'fanart': self.fanart,
             'clearlogo': self.clearlogo, 'clearart': self.clearart, 'landscape': self.landscape, 'banner': self.banner})
         listitem.setCast(self.cast)
-        xbmcplugin.addDirectoryItem(handle, self.set_url(**kwargs), listitem, self.is_folder)
+
+        if self.streamdetails:
+            for k, v in self.streamdetails.items():
+                if not k or not v:
+                    continue
+                for i in v:
+                    if not i:
+                        continue
+                    listitem.addStreamInfo(k, i)
+
+        return listitem
+
+    def create_listitem(self, handle=None, **kwargs):
+        xbmcplugin.addDirectoryItem(handle, self.set_url(**kwargs), self.set_listitem(), self.is_folder)

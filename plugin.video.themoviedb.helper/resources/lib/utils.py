@@ -6,9 +6,10 @@ import xbmcaddon
 from datetime import datetime
 from copy import copy
 from contextlib import contextmanager
-from resources.lib.globals import TYPE_CONVERSION
+from resources.lib.constants import TYPE_CONVERSION
 _addonlogname = '[plugin.video.themoviedb.helper]\n'
-_addon = xbmcaddon.Addon('plugin.video.themoviedb.helper')
+_addon = xbmcaddon.Addon()
+_debuglogging = _addon.getSettingBool('debug_logging')
 
 
 @contextmanager
@@ -38,6 +39,20 @@ def try_parse_float(string):
         return float(string or 0)
     except Exception:
         return 0
+
+
+def try_decode_string(string, encoding='utf-8'):
+    """helper to decode strings for PY 2 """
+    if sys.version_info.major == 3:
+        return string
+    return string.decode(encoding)
+
+
+def try_encode_string(string, encoding='utf-8'):
+    """helper to encode strings for PY 2 """
+    if sys.version_info.major == 3:
+        return string
+    return string.encode(encoding)
 
 
 def rate_limiter(addon_name='plugin.video.themoviedb.helper', wait_time=None, api_name=None):
@@ -70,7 +85,19 @@ def rate_limiter(addon_name='plugin.video.themoviedb.helper', wait_time=None, ap
     xbmcgui.Window(10000).clearProperty(lock_id)
 
 
-def dialog_select_item(items=None, details=False):
+def get_property(name, setproperty=None, clearproperty=False, prefix=None, window_id=None):
+        window = xbmcgui.Window(window_id) if window_id else xbmcgui.Window(xbmcgui.getCurrentWindowId())
+        name = '{0}.{1}'.format(prefix, name) if prefix else name
+        if clearproperty:
+            window.clearProperty(name)
+            return
+        elif setproperty:
+            window.setProperty(name, setproperty)
+            return setproperty
+        return window.getProperty(name)
+
+
+def dialog_select_item(items=None, details=False, usedetails=True):
     item_list = split_items(items)
     item_index = 0
     if len(item_list) > 1:
@@ -81,7 +108,7 @@ def dialog_select_item(items=None, details=False):
                 dialog_item = xbmcgui.ListItem(details.get_title(item))
                 dialog_item.setArt({'icon': icon, 'thumb': icon})
                 detailed_item_list.append(dialog_item)
-            item_index = xbmcgui.Dialog().select(_addon.getLocalizedString(32006), detailed_item_list, preselect=0, useDetails=True)
+            item_index = xbmcgui.Dialog().select(_addon.getLocalizedString(32006), detailed_item_list, preselect=0, useDetails=usedetails)
         else:
             item_index = xbmcgui.Dialog().select(_addon.getLocalizedString(32006), item_list)
     if item_index > -1:
@@ -109,16 +136,24 @@ def age_difference(birthday, deathday=''):
 
 
 def convert_timestamp(time_str):
+    time_str = time_str[:19]
+    time_fmt = "%Y-%m-%dT%H:%M:%S"
     try:
-        time_obj = datetime.strptime(time_str[:19], '%Y-%m-%dT%H:%M:%S')
+        time_obj = datetime.strptime(time_str, time_fmt)
         return time_obj
-    except Exception:
+    except TypeError:
+        time_obj = datetime(*(time.strptime(time_str, time_fmt)[0:6]))
+        return time_obj
+    except Exception as exc:
+        kodi_log(exc, 1)
         return
 
 
 def kodi_log(value, level=0):
     logvalue = u'{0}{1}'.format(_addonlogname, value) if sys.version_info.major == 3 else u'{0}{1}'.format(_addonlogname, value).encode('utf-8', 'ignore')
-    if level == 1:
+    if level == 2 and _debuglogging:
+        xbmc.log(logvalue, level=xbmc.LOGNOTICE)
+    elif level == 1:
         xbmc.log(logvalue, level=xbmc.LOGNOTICE)
     else:
         xbmc.log(logvalue, level=xbmc.LOGDEBUG)
@@ -188,9 +223,10 @@ def iter_props(items, property, itemprops, **kwargs):
         for i in items:
             if x > 9:
                 break  # only add ten items
-            if i.get(v):
-                x += 1
-                itemprops['{0}.{1}.{2}'.format(property, x, k)] = i.get(v) if not func else func(i.get(v))
+            # if not i.get(v):
+            #     continue
+            x += 1
+            itemprops['{0}.{1}.{2}'.format(property, x, k)] = i.get(v) if not func else func(i.get(v))
     return itemprops
 
 

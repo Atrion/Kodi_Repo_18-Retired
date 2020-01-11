@@ -100,7 +100,7 @@ class OrionDatabase(object):
 
 	@classmethod
 	def instancesClear(self):
-		for instance in OrionDatabase.Instances.itervalues():
+		for instance in OrionTools.iteratorValues(OrionDatabase.Instances):
 			instance._close()
 		OrionDatabase.Instances = {}
 		OrionDatabase.Locks = {}

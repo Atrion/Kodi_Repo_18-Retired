@@ -52,9 +52,8 @@ class OrionInterface:
 	ThemeNotifications = 'notifications'
 
 	ColorPrimary = 'FF47CAE9'
-	ColorSecondary = 'FF37A8C4'
+	ColorSecondary = 'FF637385'
 	ColorTertiary = 'FF010B14'
-	ColorQuaternary = 'FF637385'
 	ColorGood = 'FF1E8449'
 	ColorMedium = 'FF668D2E'
 	ColorPoor = 'FFBA4A00'
@@ -65,6 +64,7 @@ class OrionInterface:
 	FontNewline = '[CR]'
 	FontSeparator = ' • '
 	FontDivider = ' - '
+	FontLine = '••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••'
 
 	InputAlphabetic = xbmcgui.INPUT_ALPHANUM # Standard keyboard
 	InputNumeric = xbmcgui.INPUT_NUMERIC # Format: #
@@ -79,8 +79,6 @@ class OrionInterface:
 	BrowseDirectoryRead = 0
 	BrowseDirectoryWrite = 3
 	BrowseDefault = BrowseFile
-
-	DialogPage = 10147
 
 	##############################################################################
 	# FONT
@@ -161,6 +159,14 @@ class OrionInterface:
 	def fontDivider(self):
 		return OrionInterface.FontDivider
 
+	@classmethod
+	def fontLine(self, color = True, bold = True, newline = True):
+		if color is True: color = OrionInterface.ColorSecondary
+		label = self.fontColor(OrionInterface.FontLine, color)
+		if bold: label = self.fontBold(label)
+		if newline: label = self.fontNewline() + self.fontNewline() + label + self.fontNewline() + self.fontNewline()
+		return label
+
 	##############################################################################
 	# CONTAINER
 	##############################################################################
@@ -209,7 +215,7 @@ class OrionInterface:
 
 	@classmethod
 	def _dialogTitle(self, extension = None, bold = True, titleless = False):
-		title = '' if titleless else OrionTools.addonName().encode('utf-8')
+		title = '' if titleless else OrionTools.unicodeEncode(OrionTools.addonName())
 		if not extension == None:
 			if not titleless: title += self.fontDivider()
 			title += OrionTools.translate(extension)
@@ -324,23 +330,8 @@ class OrionInterface:
 			return result
 
 	@classmethod
-	def dialogPage(self, message, title = None, wait = False):
-		OrionTools.execute('ActivateWindow(%d)' % OrionInterface.DialogPage)
-		OrionTools.sleep(0.5)
-		window = xbmcgui.Window(OrionInterface.DialogPage)
-		retry = 50
-		while retry > 0:
-			try:
-				time.sleep(0.01)
-				retry -= 1
-				window.getControl(1).setLabel(self._dialogTitle(title))
-				window.getControl(5).setText('[CR]' + message)
-				break
-			except: pass
-		if wait:
-			while self._dialogVisible(OrionInterface.DialogPage):
-				OrionTools.sleep(0.5)
-		return window
+	def dialogPage(self, message, title = None):
+		xbmcgui.Dialog().textviewer(self._dialogTitle(title), OrionTools.translate(message))
 
 	@classmethod
 	def dialogBrowse(self, type = BrowseDefault, default = None, multiple = False, mask = [], title = None):

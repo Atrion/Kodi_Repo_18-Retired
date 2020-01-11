@@ -107,7 +107,7 @@ class Orionoid:
 	@classmethod
 	def _provider(self, data):
 		provider = OrionInterface.fontColor(Orionoid.Name, OrionInterface.ColorPrimary)
-		try: provider += ' - ' + OrionInterface.fontColor(data['stream']['source'].capitalize(), OrionInterface.ColorQuaternary)
+		try: provider += ' - ' + OrionInterface.fontColor(data['stream']['source'].capitalize(), OrionInterface.ColorSecondary)
 		except: pass
 		return provider
 

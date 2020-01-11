@@ -173,7 +173,7 @@ class OrionContainer:
 			if api.statusSuccess():
 				identifiers = []
 				data = api.data()['identifiers']
-				for key, value in data.iteritems():
+				for key, value in OrionTools.iterator(data):
 					identifiers.append(OrionContainer(data = {key : value}, full = False))
 				results[index] = identifiers
 		except:
@@ -207,7 +207,7 @@ class OrionContainer:
 			if api.statusSuccess():
 				hashes = []
 				data = api.data()['hashes']
-				for key, value in data.iteritems():
+				for key, value in OrionTools.iterator(data):
 					hashes.append(OrionContainer(data = {key : value}, full = False))
 				results[index] = hashes
 		except:
@@ -241,7 +241,7 @@ class OrionContainer:
 			if api.statusSuccess():
 				identifiers = []
 				data = api.data()['segments']
-				for key, value in data.iteritems():
+				for key, value in OrionTools.iterator(data):
 					identifiers.append(OrionContainer(data = {key : value}, full = False))
 				results[index] = identifiers
 		except:

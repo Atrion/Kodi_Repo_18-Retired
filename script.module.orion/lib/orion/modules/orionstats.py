@@ -70,6 +70,14 @@ class OrionStats:
 		try: return self.mData['count']['streams']
 		except: return default
 
+	def countContainers(self, default = None):
+		try: return self.mData['count']['containers']
+		except: return default
+
+	def countHashes(self, default = None):
+		try: return self.mData['count']['hashes']
+		except: return default
+
 	def countMovies(self, default = None):
 		try: return self.mData['count']['movies']
 		except: return default

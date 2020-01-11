@@ -38,6 +38,7 @@ class OrionApi:
 
 	# Used by OrionSettings.
 	# Determines which API results to not show a notification for.
+	TypesEssential = ['userlogin', 'abuseregister']
 	TypesNonessential = ['exception', 'success', 'streammissing']
 	TypesBlock = ['streamvoteabuse', 'streamremoveabuse']
 
@@ -48,6 +49,7 @@ class OrionApi:
 	ParameterKey = 'key'
 	ParameterId = 'id'
 	ParameterEmail = 'email'
+	ParameterUser = 'user'
 	ParameterPassword = 'password'
 	ParameterLink = 'link'
 	ParameterLinks = 'links'
@@ -68,6 +70,9 @@ class OrionApi:
 	ParameterTime = 'time'
 	ParameterDirection = 'direction'
 	ParameterVersion = 'version'
+	ParameterCategory = 'category'
+	ParameterSubject = 'subject'
+	ParameterFiles = 'files'
 	ParameterAll = 'all'
 
 	StatusUnknown = 'unknown'
@@ -79,12 +84,14 @@ class OrionApi:
 	ModeContainer = 'container'
 	ModeApp = 'app'
 	ModeUser = 'user'
+	ModeTicket = 'ticket'
 	ModeNotification = 'notification'
 	ModeServer = 'server'
 	ModeAddon = 'addon'
 	ModeCoupon = 'coupon'
 	ModeFlare = 'flare'
 
+	ActionAdd = 'add'
 	ActionUpdate = 'update'
 	ActionRetrieve = 'retrieve'
 	ActionAnonymous = 'anonymous'
@@ -97,6 +104,8 @@ class OrionApi:
 	ActionVote = 'vote'
 	ActionTest = 'test'
 	ActionRedeem = 'redeem'
+	ActionVersion = 'version'
+	ActionStatus = 'status'
 
 	TypeMovie = 'movie'
 	TypeShow = 'show'
@@ -115,6 +124,10 @@ class OrionApi:
 
 	VoteUp = 'up'
 	VoteDown = 'down'
+
+	DataJson = 'json'
+	DataRaw = 'raw'
+	DataBoth = 'both'
 
 	##############################################################################
 	# CONSTRUCTOR
@@ -161,14 +174,14 @@ class OrionApi:
 	# REQUEST
 	##############################################################################
 
-	def _request(self, mode = None, action = None, parameters = {}, raw = False, silent = False):
+	def _request(self, mode = None, action = None, parameters = {}, data = DataJson, silent = False):
 		self.mStatus = None
 		self.mType = None
 		self.mDescription = None
 		self.mMessage = None
 		self.mData = None
 
-		data = None
+		result = None
 		networker = None
 
 		try:
@@ -187,8 +200,8 @@ class OrionApi:
 			if not OrionSettings.silent():
 				query = copy.deepcopy(parameters)
 				if query:
-					truncate = [OrionApi.ParameterId, OrionApi.ParameterKey, OrionApi.ParameterKeyApp, OrionApi.ParameterKeyUser, OrionApi.ParameterData, OrionApi.ParameterLink, OrionApi.ParameterLinks]
-					for key, value in query.iteritems():
+					truncate = [OrionApi.ParameterId, OrionApi.ParameterPassword, OrionApi.ParameterKey, OrionApi.ParameterKeyApp, OrionApi.ParameterKeyUser, OrionApi.ParameterData, OrionApi.ParameterLink, OrionApi.ParameterLinks, OrionApi.ParameterFiles]
+					for key, value in OrionTools.iterator(query):
 						if key in truncate: query[key] = '-- truncated --'
 				OrionTools.log('ORION API REQUEST: ' + OrionTools.jsonTo(query))
 
@@ -200,9 +213,12 @@ class OrionApi:
 				debug = not OrionSettings.silent()
 			)
 
-			data = networker.request()
-			if raw: return {'status' : networker.status(), 'headers' : networker.headers(), 'body' : data, 'response' : networker.response()}
-			json = OrionTools.jsonFrom(data)
+			result = networker.request()
+			if data == self.DataBoth:
+				if not OrionTools.jsonIs(result): return result
+			elif data == self.DataRaw:
+				return {'status' : networker.status(), 'headers' : networker.headers(), 'body' : result, 'response' : networker.response()}
+			json = OrionTools.jsonFrom(result)
 
 			result = json[OrionApi.ParameterResult]
 			if OrionApi.ParameterStatus in result: self.mStatus = result[OrionApi.ParameterStatus]
@@ -251,7 +267,7 @@ class OrionApi:
 				else:
 					if not OrionSettings.silent():
 						OrionTools.error('ORION API EXCEPTION')
-						OrionTools.log('ORION API DATA: ' + str(data))
+						OrionTools.log('ORION API DATA: ' + str(result))
 					if not silent and OrionSettings.silentAllow('exception'):
 						OrionInterface.dialogNotification(title = 32061, message = 33006, icon = OrionInterface.IconError)
 			except:
@@ -359,12 +375,38 @@ class OrionApi:
 	def userRetrieve(self):
 		return self._request(mode = OrionApi.ModeUser, action = OrionApi.ActionRetrieve)
 
-	def userLogin(self, email, password):
-		return self._request(mode = OrionApi.ModeUser, action = OrionApi.ActionLogin, parameters = {OrionApi.ParameterEmail : email, OrionApi.ParameterPassword : password})
+	def userLogin(self, user, password):
+		return self._request(mode = OrionApi.ModeUser, action = OrionApi.ActionLogin, parameters = {OrionApi.ParameterUser : user, OrionApi.ParameterPassword : password})
 
 	def userAnonymous(self):
 		x = [OrionTools.randomInteger(1,9) for i in range(3)]
-		return self._request(mode = OrionApi.ModeUser, action = OrionApi.ActionAnonymous, parameters = {OrionApi.ParameterKey : str(str(x[0])+str(x[1])+str(x[2])+str(x[0]+x[1]*x[2]))[::-1]})
+		return self._request(mode = OrionApi.ModeUser, action = OrionApi.ActionAnonymous, parameters = {OrionApi.ParameterKey : str(str(x[0])+str(x[1])+str(x[2])+str(x[0]+x[1]*x[2]))[::-1]}, silent = False)
+
+	##############################################################################
+	# TICKET
+	##############################################################################
+
+	def ticketRetrieve(self, id = None):
+		parameters = {}
+		if not id == None: parameters[OrionApi.ParameterId] = id
+		return self._request(mode = OrionApi.ModeTicket, action = OrionApi.ActionRetrieve, parameters = parameters)
+
+	def ticketAdd(self, category, subject, message, files = None):
+		parameters = {OrionApi.ParameterCategory : category, OrionApi.ParameterSubject : subject, OrionApi.ParameterMessage : message}
+		if not files == None: parameters[OrionApi.ParameterFiles] = files
+		return self._request(mode = OrionApi.ModeTicket, action = OrionApi.ActionAdd, parameters = parameters)
+
+	def ticketUpdate(self, id, message, files = None):
+		parameters = {OrionApi.ParameterId : id, OrionApi.ParameterMessage : message}
+		if not files == None: parameters[OrionApi.ParameterFiles] = files
+		return self._request(mode = OrionApi.ModeTicket, action = OrionApi.ActionUpdate, parameters = parameters)
+
+	def ticketClose(self, id):
+		from orion.modules.orionticket import OrionTicket
+		return self._request(mode = OrionApi.ModeTicket, action = OrionApi.ActionUpdate, parameters = {OrionApi.ParameterId : id, OrionApi.ParameterStatus : OrionTicket.StatusClosed})
+
+	def ticketStatus(self):
+		return self._request(mode = OrionApi.ModeTicket, action = OrionApi.ActionStatus)
 
 	##############################################################################
 	# COUPON
@@ -382,6 +424,9 @@ class OrionApi:
 
 	def addonUpdate(self, data, silent = True):
 		return self._request(mode = OrionApi.ModeAddon, action = OrionApi.ActionUpdate, parameters = {OrionApi.ParameterType : OrionApi.AddonKodi, OrionApi.ParameterData : data}, silent = silent)
+
+	def addonVersion(self, silent = True):
+		return self._request(mode = OrionApi.ModeAddon, action = OrionApi.ActionVersion, silent = silent)
 
 	##############################################################################
 	# STREAM
@@ -416,18 +461,18 @@ class OrionApi:
 		return self._request(mode = OrionApi.ModeContainer, action = OrionApi.ActionSegment, parameters = {OrionApi.ParameterLinks : links})
 
 	def containerDownload(self, id):
-		data = self._request(mode = OrionApi.ModeContainer, action = OrionApi.ActionDownload, parameters = {OrionApi.ParameterId : id}, raw = True)['body']
-		if OrionTools.jsonFrom(data) == None: return data # When JSON API error is returned.
-		else: return None
+		data = self._request(mode = OrionApi.ModeContainer, action = OrionApi.ActionDownload, parameters = {OrionApi.ParameterId : id}, data = self.DataBoth)
+		return None if OrionTools.isBoolean(data) else data
 
 	##############################################################################
 	# NOTIFICATION
 	##############################################################################
 
-	def notificationRetrieve(self, time = None):
+	def notificationRetrieve(self, time = None, count = None):
 		parameters = {}
 		parameters[OrionApi.ParameterVersion] = OrionTools.addonVersion()
 		if not time == None: parameters[OrionApi.ParameterTime] = time
+		if not count == None: parameters[OrionApi.ParameterCount] = count
 		return self._request(mode = OrionApi.ModeNotification, action = OrionApi.ActionRetrieve, parameters = parameters)
 
 	##############################################################################
@@ -447,4 +492,4 @@ class OrionApi:
 	##############################################################################
 
 	def flare(self, link):
-		return self._request(mode = OrionApi.ModeFlare, parameters = {OrionApi.ParameterLink : link}, raw = True)
+		return self._request(mode = OrionApi.ModeFlare, parameters = {OrionApi.ParameterLink : link}, data = self.DataRaw)

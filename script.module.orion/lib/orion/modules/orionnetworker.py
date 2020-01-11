@@ -26,7 +26,22 @@
 
 import ssl
 import random
-import urllib2
+
+try: from urllib.parse import urlencode
+except: from urllib import urlencode
+
+try: from urllib.request import urlopen
+except: from urllib2 import urlopen
+
+try: from urllib.request import Request
+except: from urllib2 import Request
+
+try: from urllib.error import HTTPError
+except: from urllib2 import HTTPError
+
+try: from urllib.error import URLError
+except: from urllib2 import URLError
+
 from orion.modules.oriontools import *
 from orion.modules.orionplatform import *
 
@@ -54,6 +69,7 @@ class OrionNetworker:
 		self.mParameters = parameters
 		self.mTimeout = timeout
 		self.mAgent = self.userAgent(agent)
+		self.mFrom = self.userFrom(agent)
 		self.mError = False
 		self.mJson = json
 		self.mErrorCode = None
@@ -83,6 +99,13 @@ class OrionNetworker:
 		elif type == OrionNetworker.AgentMobileRandom:
 			agents = ['Mozilla/5.0 (Linux; Android 6.0.1; SM-G920V Build/MMB29K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.98 Mobile Safari/537.36', 'Apple-iPhone/701.341', 'Mozilla/5.0 (Linux; U; Android 4.0.3; ko-kr; LG-L160L Build/IML74K) AppleWebkit/534.30 (KHTML, like Gecko) Version/4.0 Mobile Safari/534.30', 'Mozilla/5.0 (Linux; Android 7.0; Pixel C Build/NRD90M; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/52.0.2743.98 Safari/537.36']
 			return random.choice(agents)
+		else:
+			return None
+
+	@classmethod
+	def userFrom(self, type = AgentOrion):
+		if type == OrionNetworker.AgentOrion:
+			return OrionTools.hash(OrionTools.addonId(id = False))
 		else:
 			return None
 
@@ -142,29 +165,40 @@ class OrionNetworker:
 			jsonRequest = False
 			if self.mLink:
 				try:
-					if OrionTools.isDictionary(parameters):
-						for key, value in parameters.iteritems():
-							if OrionTools.isStructure(value):
-								jsonRequest = True
-								break
-					if jsonRequest: parameters = OrionTools.jsonTo(parameters)
-					elif not OrionTools.isString(parameters): parameters = urllib.urlencode(parameters, doseq = True)
+					if OrionTools.pythonOld():
+						if OrionTools.isDictionary(parameters):
+							for key, value in OrionTools.iterator(parameters):
+								if OrionTools.isStructure(value):
+									jsonRequest = True
+									break
+						if jsonRequest: parameters = OrionTools.jsonTo(parameters)
+						elif not OrionTools.isString(parameters): parameters = urlencode(parameters, doseq = True)
+					else:
+						if OrionTools.isDictionary(parameters):
+							jsonRequest = True
+							parameters = bytes(OrionTools.jsonTo(parameters), 'utf-8')
+						elif not OrionTools.isString(parameters):
+							parameters = urlencode(parameters, doseq = True)
 				except: pass
-				request = urllib2.Request(self.mLink, data = parameters)
 
-				if agent: self.mAgent = self.userAgent(agent)
+				request = Request(self.mLink, data = parameters)
+
+				if agent:
+					self.mAgent = self.userAgent(agent)
+					self.mFrom = self.userFrom(agent)
 				if self.mAgent: request.add_header('User-Agent', self.mAgent)
+				if self.mFrom: request.add_header('From', self.mFrom)
 				if jsonRequest: request.add_header('Content-Type', 'application/json')
 
 				try:
-					self.mResponse = urllib2.urlopen(request, timeout = timeout)
+					self.mResponse = urlopen(request, timeout = timeout)
 				except Exception as error:
 					# SPMC (Python < 2.7.8) does not support TLS. Try to do it wihout SSL/TLS, otherwise bad luck.
-					message = str(error).lower()
+					message = OrionTools.unicodeString(error).lower()
 					if 'ssl' in message or 'cert' in message:
 						if self.mDebug: OrionTools.error()
 						secureContext = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
-						self.mResponse = urllib2.urlopen(request, context = secureContext, timeout = timeout)
+						self.mResponse = urlopen(request, context = secureContext, timeout = timeout)
 					else:
 						raise error
 
@@ -176,14 +210,14 @@ class OrionNetworker:
 			self.mResponse.close()
 			if json: result = OrionTools.jsonFrom(result)
 			return result
-		except urllib2.HTTPError as error:
+		except HTTPError as error:
 			self.mError = True
 			self.mErrorCode = error.code
-			if self.mDebug: OrionTools.error('Network HTTP Error (' + str(self.mErrorCode) + '): ' + str(self.mLink))
-		except urllib2.URLError as error:
+			if self.mDebug: OrionTools.error('Network HTTP Error (' + OrionTools.unicodeString(self.mErrorCode) + '): ' + OrionTools.unicodeString(self.mLink))
+		except URLError as error:
 			self.mError = True
 			self.mErrorCode = error.args
-			if self.mDebug: OrionTools.error('Network URL Error (' + str(self.mErrorCode) + '): ' + str(self.mLink))
+			if self.mDebug: OrionTools.error('Network URL Error (' + OrionTools.unicodeString(self.mErrorCode) + '): ' + OrionTools.unicodeString(self.mLink))
 		except:
 			self.mError = True
 			self.mErrorCode = None

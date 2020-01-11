@@ -4,13 +4,14 @@ from resources.lib.requestapi import RequestAPI
 from resources.lib.listitem import ListItem
 import time
 import xbmc
+import random
 import xbmcgui
 import datetime
 
 
-class traktAPI(RequestAPI):
+class TraktAPI(RequestAPI):
     def __init__(self, force=False, cache_short=None, cache_long=None, tmdb=None, login=False):
-        super(traktAPI, self).__init__(
+        super(TraktAPI, self).__init__(
             cache_short=cache_short, cache_long=cache_long,
             req_api_url='https://api.trakt.tv/', req_api_name='Trakt')
         self.authorization = ''
@@ -147,7 +148,8 @@ class traktAPI(RequestAPI):
         if not self.tmdb or (kwargs.pop('req_auth', False) and not self.authorize()):
             return items
 
-        keylist = kwargs.pop('keylist', ['dummy'])
+        key_list = kwargs.pop('key_list', ['dummy'])
+        rnd_list = kwargs.pop('rnd_list', 0)
         response = self.get_response(*args, **kwargs)
 
         if not response:
@@ -157,7 +159,11 @@ class traktAPI(RequestAPI):
 
         this_page = int(kwargs.get('page', 1))
         last_page = int(response.headers.get('X-Pagination-Page-Count', 0))
-        next_page = this_page + 1 if this_page < last_page else False
+        next_page = this_page + 1 if this_page < last_page and not rnd_list else False
+
+        if rnd_list:
+            rnd_list = random.sample(range(len(itemlist) - 1), rnd_list)
+            itemlist = [itemlist[i] for i in rnd_list]
 
         n = 0
         limit = kwargs.get('limit', 0)
@@ -165,7 +171,7 @@ class traktAPI(RequestAPI):
             if limit and not n < limit:
                 break
 
-            for key in keylist:
+            for key in key_list:
                 if limit and not n < limit:
                     break
 
@@ -204,7 +210,10 @@ class traktAPI(RequestAPI):
         for i in itemlist:
             if limit and n >= limit:
                 break
-            item = (i.get(itemtype, {}).get('ids', {}).get('slug'), i.get(itemtype, {}).get('ids', {}).get('tmdb'))
+            item = (
+                i.get(itemtype, {}).get('ids', {}).get('slug'),
+                i.get(itemtype, {}).get('ids', {}).get('tmdb'),
+                i.get(itemtype, {}).get('title'))
             if islistitem:
                 item = ListItem(library=self.library, **self.tmdb.get_detailed_item(tmdbtype, item[1]))
             if item not in items:
@@ -212,19 +221,31 @@ class traktAPI(RequestAPI):
                 n += 1
         return items
 
+    def get_ratings(self, tmdbtype=None, imdb_id=None, trakt_id=None, trakt_slug=None, season=None, episode=None):
+        slug = trakt_slug or trakt_id or imdb_id
+        infoproperties = {}
+        if not slug or not tmdbtype:
+            return infoproperties
+        url = 'episodes/{0}/ratings'.format(episode) if episode else 'ratings'
+        url = 'seasons/{0}/{1}'.format(season, url) if season else 'ratings'
+        response = self.get_request_lc(utils.type_convert(tmdbtype, 'trakt') + 's', slug, url)
+        infoproperties['trakt_rating'] = '{:0.1f}'.format(response.get('rating')) if response.get('rating') else ''
+        infoproperties['trakt_votes'] = '{:0,.0f}'.format(response.get('votes')) if response.get('votes') else ''
+        return infoproperties
+
     def get_mostwatched(self, userslug, tmdbtype, limit=None, islistitem=True):
         history = self.get_response_json('users', userslug, 'watched', utils.type_convert(tmdbtype, 'trakt') + 's')
         history = sorted(history, key=lambda i: i['plays'], reverse=True)
         return self.get_limitedlist(history, tmdbtype, limit, islistitem)
 
-    def get_recentlywatched(self, userslug, tmdbtype, limit=None, islistitem=True):
-        start_at = datetime.date.today() - datetime.timedelta(6 * 365 / 12)
+    def get_recentlywatched(self, userslug, tmdbtype, limit=None, islistitem=True, months=6):
+        start_at = datetime.date.today() - datetime.timedelta(months * 365 / 12)
         history = self.get_response_json('users', userslug, 'history', utils.type_convert(tmdbtype, 'trakt') + 's', page=1, limit=200, start_at=start_at.strftime("%Y-%m-%d"))
         return self.get_limitedlist(history, tmdbtype, limit, islistitem)
 
-    def get_inprogress(self, userslug, limit=None):
+    def get_inprogress(self, userslug, limit=None, episodes=False):
         """
-        Looks at user's most recently watched 200 episodes in last 6 months
+        Looks at user's most recently watched 200 episodes in last 3 years
         Adds each unique show to list in order then checks if show has an upnext episode
         Returns list of tmdb_ids representing shows with upnext episodes in recently watched order
         """
@@ -233,12 +254,20 @@ class traktAPI(RequestAPI):
             return items
 
         n = 0
-        for i in self.get_recentlywatched(userslug, 'tv', islistitem=False):
+        utils.kodi_log('Getting In-Progress For Trakt User {0}'.format(userslug), 2)
+        for i in self.get_recentlywatched(userslug, 'tv', islistitem=False, months=36):
             if limit and n >= limit:
                 break
+            utils.kodi_log('In-Progress -- Searching Next Episode For:\n{0}'.format(i), 2)
             progress = self.get_upnext(i[0], True)
             if progress and progress.get('next_episode'):
-                items.append(ListItem(library=self.library, **self.tmdb.get_detailed_item('tv', i[1])))
+                utils.kodi_log('In-Progress -- Found Next Episode:\n{0}'.format(progress.get('next_episode')), 2)
+                season = progress.get('next_episode', {}).get('season') if episodes else None
+                episode = progress.get('next_episode', {}).get('number') if episodes else None
+                item = self.tmdb.get_detailed_item('tv', i[1], season=season, episode=episode)
+                item['tmdb_id'] = i[1]
+                utils.kodi_log('In-Progress -- Got Next Episode Details:\n{0}'.format(item), 2)
+                items.append(ListItem(library=self.library, **item))
                 n += 1
         return items
 
@@ -253,7 +282,10 @@ class traktAPI(RequestAPI):
             return items
 
         date = datetime.datetime.today() + datetime.timedelta(days=startdate)
-        response = traktAPI().get_calendar('shows', True, start_date=date.strftime('%Y-%m-%d'), days=days)
+        response = TraktAPI().get_calendar('shows', True, start_date=date.strftime('%Y-%m-%d'), days=days)
+
+        if not response:
+            return items
 
         for i in response[-limit:]:
             episode = i.get('episode', {}).get('number')

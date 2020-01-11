@@ -25,7 +25,6 @@
 ##############################################################################
 
 import re
-import zipfile
 import threading
 import xbmcaddon
 from orion.modules.oriontools import *
@@ -85,8 +84,8 @@ class OrionSettings:
 	##############################################################################
 
 	@classmethod
-	def launch(self, category = None, section = None):
-		OrionTools.execute('Addon.OpenSettings(%s)' % OrionTools.addonId())
+	def launch(self, category = None, section = None, addon = None):
+		OrionTools.execute('Addon.OpenSettings(%s)' % (OrionTools.addonId() if addon is None else addon))
 		if OrionTools.kodiVersionNew():
 			if not category == None: OrionTools.execute('SetFocus(%i)' % (int(category) - 100))
 		else:
@@ -135,8 +134,9 @@ class OrionSettings:
 
 	@classmethod
 	def silentAllow(self, type = None):
-		if self.silent(): return False
 		from orion.modules.orionapi import OrionApi
+		if type in OrionApi.TypesEssential: return True
+		if self.silent(): return False
 		if type in OrionApi.TypesBlock: return False
 		notifications = self.getGeneralNotificationsApi()
 		if notifications == OrionSettings.NotificationsDisabled: return False
@@ -152,7 +152,7 @@ class OrionSettings:
 		data = None
 		path = OrionTools.pathJoin(self.pathAddon())
 		with open(path, 'r') as file: data = file.read()
-		return data
+		return OrionTools.unicodeString(data)
 
 	@classmethod
 	def _database(self, path = None):
@@ -245,7 +245,7 @@ class OrionSettings:
 	##############################################################################
 
 	@classmethod
-	def set(self, id, value, commit = True, cached = False):
+	def set(self, id, value, commit = True, cached = False, backup = True):
 		if value is True or value is False:
 			value = OrionTools.toBoolean(value, string = True)
 		elif OrionTools.isStructure(value) or value is None:
@@ -259,7 +259,7 @@ class OrionSettings:
 		OrionTools.addon().setSetting(id = id, value = value)
 		if cached or self.cacheEnabled(): self.cacheSet(id = id, value = value)
 		self._unlock()
-		if commit: self._backupAutomatic(force = True)
+		if commit and backup: self._backupAutomatic(force = True)
 
 	##############################################################################
 	# GET
@@ -285,6 +285,7 @@ class OrionSettings:
 	@classmethod
 	def getRaw(self, id, parameter = ParameterDefault, data = None, obfuscate = False):
 		try:
+			id = OrionTools.unicodeString(id)
 			if data == None: data = self.data()
 			indexStart = data.find(id)
 			if indexStart < 0: return None
@@ -301,6 +302,7 @@ class OrionSettings:
 			if obfuscate: data = OrionTools.obfuscate(data)
 			return data
 		except:
+			OrionTools.error()
 			return None
 
 	@classmethod
@@ -372,6 +374,14 @@ class OrionSettings:
 		return self.getBoolean('general.notifications.news')
 
 	@classmethod
+	def getGeneralNotificationsUpdates(self):
+		return self.getBoolean('general.notifications.updates')
+
+	@classmethod
+	def getGeneralNotificationsTickets(self):
+		return self.getBoolean('general.notifications.tickets')
+
+	@classmethod
 	def getGeneralScrapingTimeout(self):
 		return self.getInteger('general.scraping.timeout')
 
@@ -405,10 +415,10 @@ class OrionSettings:
 	def getFiltersObject(self, attribute, type = None, include = False, exclude = False):
 		values = self.getObject(self._filtersAttribute(attribute, type))
 		try:
-			if include: values = [key for key, value in values.iteritems() if value['enabled']]
+			if include: values = [key for key, value in OrionTools.iterator(values) if value['enabled']]
 		except: pass
 		try:
-			if exclude: values = [key for key, value in values.iteritems() if not value['enabled']]
+			if exclude: values = [key for key, value in OrionTools.iterator(values) if not value['enabled']]
 		except: pass
 		return values if values else [] if (include or exclude) else {}
 
@@ -538,13 +548,13 @@ class OrionSettings:
 					items[attribute.lower()] = {'name' : attribute.upper(), 'enabled' : True}
 			settings = getattr(self, functionGet)(type = type)
 			if settings:
-				for key, value in items.iteritems():
+				for key, value in OrionTools.iterator(items):
 					if not key in settings:
 						settings[key] = value
 				items = settings
 		except:
 			items = values
-		if items: count = len([1 for key, value in items.iteritems() if value['enabled']])
+		if items: count = len([1 for key, value in OrionTools.iterator(items) if value['enabled']])
 		else: count = 0
 		self.set(self._filtersAttribute(setting, type), items, commit = commit)
 		self.set(self._filtersAttribute(setting + '.label', type), str(count) + ' ' + OrionTools.translate(32096), commit = commit)
@@ -552,7 +562,7 @@ class OrionSettings:
 	@classmethod
 	def _setFiltersLanguages(self, values, setting, functionStreams, functionGet, type = None, commit = True):
 		if not values: return
-		if values: count = len([1 for key, value in values.iteritems() if value['enabled']])
+		if values: count = len([1 for key, value in OrionTools.iterator(values) if value['enabled']])
 		else: count = 0
 		self.set(self._filtersAttribute(setting, type), values, commit = commit)
 		self.set(self._filtersAttribute(setting + '.label', type), str(count) + ' ' + OrionTools.translate(32096), commit = commit)
@@ -577,13 +587,13 @@ class OrionSettings:
 					items[attribute.lower()] = {'name' : attribute.upper(), 'type' : value.streamType(), 'enabled' : True}
 			settings = self.getFiltersStreamOrigin(type = type)
 			if settings:
-				for key, value in items.iteritems():
+				for key, value in OrionTools.iterator(items):
 					if not key in settings:
 						settings[key] = value
 				items = settings
 		except:
 			items = values
-		if items: count = len([1 for key, value in items.iteritems() if value['enabled']])
+		if items: count = len([1 for key, value in OrionTools.iterator(items) if value['enabled']])
 		else: count = 0
 		self.set(self._filtersAttribute('filters.stream.origin', type), items, commit = commit)
 		self.set(self._filtersAttribute('filters.stream.origin.label', type), str(count) + ' ' + OrionTools.translate(32096), commit = commit)
@@ -600,13 +610,13 @@ class OrionSettings:
 					items[attribute.lower()] = {'name' : attribute.upper(), 'type' : value.streamType(), 'enabled' : True}
 			settings = self.getFiltersStreamSource(type = type)
 			if settings:
-				for key, value in items.iteritems():
+				for key, value in OrionTools.iterator(items):
 					if not key in settings:
 						settings[key] = value
 				items = settings
 		except:
 			items = values
-		if items: count = len([1 for key, value in items.iteritems() if value['enabled']])
+		if items: count = len([1 for key, value in OrionTools.iterator(items) if value['enabled']])
 		else: count = 0
 		self.set(self._filtersAttribute('filters.stream.source', type), items, commit = commit)
 		self.set(self._filtersAttribute('filters.stream.source.label', type), str(count) + ' ' + OrionTools.translate(32096), commit = commit)
@@ -623,13 +633,13 @@ class OrionSettings:
 					items[attribute.lower()] = {'name' : attribute.upper(), 'enabled' : True}
 			settings = self.getFiltersStreamHoster(type = type)
 			if settings:
-				for key, value in items.iteritems():
+				for key, value in OrionTools.iterator(items):
 					if not key in settings:
 						settings[key] = value
 				items = settings
 		except:
 			items = values
-		if items: count = len([1 for key, value in items.iteritems() if value['enabled']])
+		if items: count = len([1 for key, value in OrionTools.iterator(items) if value['enabled']])
 		else: count = 0
 		self.set(self._filtersAttribute('filters.stream.hoster', type), items, commit = commit)
 		self.set(self._filtersAttribute('filters.stream.hoster.label', type), str(count) + ' ' + OrionTools.translate(32096), commit = commit)
@@ -696,7 +706,7 @@ class OrionSettings:
 					if not id in settings:
 						settings[id] = self.get(id)
 
-				settings = {key : value for key, value in settings.iteritems() if not key.startswith(('help', 'internal', 'account'))}
+				settings = {key : value for key, value in OrionTools.iterator(settings) if not key.startswith(('help', 'internal', 'account'))}
 		except:
 			OrionTools.error()
 		return settings
@@ -705,7 +715,7 @@ class OrionSettings:
 	def _backupImportOnline(self, settings):
 		try:
 			if settings:
-				for key, value in settings.iteritems():
+				for key, value in OrionTools.iterator(settings):
 					self.set(key, value, commit = False)
 				self._commit()
 				return True
@@ -778,8 +788,7 @@ class OrionSettings:
 
 	@classmethod
 	def _backupPath(self, clear = False):
-		path = OrionTools.pathResolve('special://temp/')
-		path = OrionTools.pathJoin(path, OrionTools.addonName().lower(), 'backup')
+		path = OrionTools.pathTemporary('backup')
 		OrionTools.directoryDelete(path)
 		OrionTools.directoryCreate(path)
 		return path
@@ -841,13 +850,18 @@ class OrionSettings:
 
 	@classmethod
 	def backupCheck(self, path):
-		try:
-			if OrionTools.fileExists(path):
-				file = zipfile.ZipFile(path, 'r')
-				file.close()
-				return True
-		except: pass
-		return False
+		return OrionTools.archiveCheck(path)
+
+	@classmethod
+	def backupFiles(self, path = None, extension = ExtensionManual):
+		directory = OrionTools.addonProfile()
+		files = OrionTools.directoryList(directory, files = True, directories = False)
+		names = []
+		settings = ['settings.xml', (OrionSettings.DatabaseSettings + OrionDatabase.Extension).lower()]
+		for i in range(len(files)):
+			if files[i].lower() in settings:
+				names.append(files[i])
+		return [OrionTools.pathJoin(directory, i) for i in names]
 
 	@classmethod
 	def backupImport(self, path = None, extension = ExtensionManual):
@@ -859,9 +873,7 @@ class OrionSettings:
 			directory = self._backupPath(clear = True)
 			directoryData = OrionTools.addonProfile()
 
-			file = zipfile.ZipFile(path, 'r')
-			file.extractall(directory)
-			file.close()
+			OrionTools.archiveExtract(path, directory)
 
 			directories, files = OrionTools.directoryList(directory)
 			counter = 0
@@ -905,40 +917,7 @@ class OrionSettings:
 				suffix = ' [%d]' % counter
 			path = path % suffix
 
-			directory = self._backupPath(clear = True)
-			directoryData = OrionTools.addonProfile()
-			directories, files = OrionTools.directoryList(directoryData)
-
-			content = []
-			settings = ['settings.xml', (OrionSettings.DatabaseSettings + OrionDatabase.Extension).lower()]
-			for i in range(len(files)):
-				if files[i].lower() in settings:
-					content.append(files[i])
-
-			tos = [OrionTools.pathJoin(directory, i) for i in content]
-			froms = [OrionTools.pathJoin(directoryData, i) for i in content]
-
-			for i in range(len(content)):
-				try: OrionTools.fileCopy(froms[i], tos[i], overwrite = True)
-				except: pass
-
-			# On some Android devices, the zipfile library creates corrupted archives.
-			# First try to create an archive with shutil, also because it creates smaller files than zipfile.
-			try:
-				import shutil
-				shutil.make_archive(path.strip('.' + extension), 'zip', directory)
-			except: pass
-
-			if not self.backupCheck(path):
-				OrionTools.log('Primary backup creation failed. Trying alternative approach.')
-				OrionTools.fileDelete(path)
-				file = zipfile.ZipFile(path, 'w')
-				for i in range(len(content)):
-					try: file.write(tos[i], content[i])
-					except: pass
-				file.close()
-
-			OrionTools.directoryDelete(path = directory, force = True)
+			OrionTools.archiveCreate(path, self.backupFiles())
 			if self.backupCheck(path):
 				OrionInterface.dialogNotification(title = 32170, message = 33013, icon = OrionInterface.IconSuccess)
 				return True

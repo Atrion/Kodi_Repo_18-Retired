@@ -1,4 +1,7 @@
 
+[B]4.0.0 (2019.12.30)[/B]
+- Major new version upgrade.
+
 [B]3.3.0 (2019.08.12)[/B]
 - Version increase for new repository.
 

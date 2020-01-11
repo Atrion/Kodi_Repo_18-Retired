@@ -137,8 +137,8 @@ class OrionItem:
 	def _accessEqual(self, access1, access2):
 		if not len(access1.keys()) == len(access2.keys()):
 			return False
-		for key1, value1 in access1.iteritems():
-			for key2, value2 in access2.iteritems():
+		for key1, value1 in OrionTools.iterator(access1):
+			for key2, value2 in OrionTools.iterator(access2):
 				if key1 == key2 and not value1 == value2:
 					return False
 		return True

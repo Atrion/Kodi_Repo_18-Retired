@@ -123,6 +123,10 @@ class TMDb(RequestAPI):
         infoproperties['known_for'] = item.get('known_for_department')
         infoproperties['role'] = item.get('character') or item.get('job') or item.get('department') or item.get('known_for_department')
         infoproperties['born'] = item.get('place_of_birth')
+        infoproperties['tmdb_rating'] = item.get('vote_average')
+        infoproperties['tmdb_votes'] = '{:0,.0f}'.format(item.get('vote_count')) if item.get('vote_count') else None
+        if item.get('gender'):
+            infoproperties['gender'] = self.addon.getLocalizedString(32070) if item.get('gender') == 2 else self.addon.getLocalizedString(32071)
         if item.get('last_episode_to_air'):
             i = item.get('last_episode_to_air', {})
             infoproperties['last_aired'] = i.get('air_date')
@@ -145,6 +149,7 @@ class TMDb(RequestAPI):
             infoproperties['next_aired.thumb'] = self.get_season_thumb(i)
         if item.get('created_by'):
             infoproperties = utils.iter_props(item.get('created_by'), 'Creator', infoproperties, name='name', tmdb_id='id')
+            infoproperties = utils.iter_props(item.get('created_by'), 'Creator', infoproperties, thumb='profile_path', func=self.get_imagepath)
             infoproperties['creator'] = utils.concatinate_names(item.get('created_by'), 'name', '/')
         if item.get('genres'):
             infoproperties = utils.iter_props(item.get('genres'), 'Genre', infoproperties, name='name', tmdb_id='id')
@@ -167,16 +172,61 @@ class TMDb(RequestAPI):
             infoproperties['budget'] = '${:0,.0f}'.format(item.get('budget'))
         if item.get('revenue'):
             infoproperties['revenue'] = '${:0,.0f}'.format(item.get('revenue'))
+        if item.get('movie_credits'):
+            infoproperties['numitems.tmdb.movies.cast'] = len(item.get('movie_credits', {}).get('cast', [])) or 0
+            infoproperties['numitems.tmdb.movies.crew'] = len(item.get('movie_credits', {}).get('crew', [])) or 0
+            infoproperties['numitems.tmdb.movies.total'] = utils.try_parse_int(infoproperties.get('numitems.tmdb.movies.cast')) + utils.try_parse_int(infoproperties.get('numitems.tmdb.movies.crew'))
+        if item.get('tv_credits'):
+            infoproperties['numitems.tmdb.tvshows.cast'] = len(item.get('tv_credits', {}).get('cast', [])) or 0
+            infoproperties['numitems.tmdb.tvshows.crew'] = len(item.get('tv_credits', {}).get('crew', [])) or 0
+            infoproperties['numitems.tmdb.tvshows.total'] = utils.try_parse_int(infoproperties.get('numitems.tmdb.tvshows.cast')) + utils.try_parse_int(infoproperties.get('numitems.tmdb.tvshows.crew'))
+        if item.get('movie_credits') or item.get('tv_credits'):
+            infoproperties['numitems.tmdb.cast'] = utils.try_parse_int(infoproperties.get('numitems.tmdb.movies.cast')) + utils.try_parse_int(infoproperties.get('numitems.tmdb.tvshows.cast'))
+            infoproperties['numitems.tmdb.crew'] = utils.try_parse_int(infoproperties.get('numitems.tmdb.movies.crew')) + utils.try_parse_int(infoproperties.get('numitems.tmdb.tvshows.crew'))
+            infoproperties['numitems.tmdb.total'] = utils.try_parse_int(infoproperties.get('numitems.tmdb.cast')) + utils.try_parse_int(infoproperties.get('numitems.tmdb.crew'))
         if item.get('belongs_to_collection'):
             infoproperties['set.tmdb_id'] = item.get('belongs_to_collection').get('id')
             infoproperties['set.name'] = item.get('belongs_to_collection').get('name')
             infoproperties['set.poster'] = self.get_imagepath(item.get('belongs_to_collection').get('poster_path'))
             infoproperties['set.fanart'] = self.get_imagepath(item.get('belongs_to_collection').get('backdrop_path'))
+        if item.get('parts'):
+            p = 0
+            year_l = 9999
+            year_h = 0
+            ratings = []
+            votes = 0
+            for i in item.get('parts', []):
+                p += 1
+                infoproperties['set.{}.title'.format(p)] = i.get('title', '')
+                infoproperties['set.{}.tmdb_id'.format(p)] = i.get('id', '')
+                infoproperties['set.{}.originaltitle'.format(p)] = i.get('original_title', '')
+                infoproperties['set.{}.plot'.format(p)] = i.get('overview', '')
+                infoproperties['set.{}.premiered'.format(p)] = i.get('release_date', '')
+                infoproperties['set.{}.year'.format(p)] = i.get('release_date', '')[:4]
+                infoproperties['set.{}.rating'.format(p)] = i.get('vote_average', '')
+                infoproperties['set.{}.votes'.format(p)] = i.get('vote_count', '')
+                infoproperties['set.{}.poster'.format(p)] = self.get_imagepath(i.get('poster_path', ''), True)
+                infoproperties['set.{}.fanart'.format(p)] = self.get_imagepath(i.get('backdrop_path', ''))
+                year_l = min(utils.try_parse_int(i.get('release_date', '')[:4]), year_l)
+                year_h = max(utils.try_parse_int(i.get('release_date', '')[:4]), year_h)
+                ratings.append(i.get('vote_average', '')) if i.get('vote_average') else None
+                votes += utils.try_parse_int(i.get('vote_count', 0))
+            year_l = year_l if year_l != 9999 else None
+            year_h = year_h if year_h else None
+            infoproperties['set.year.first'] = year_l or ''
+            infoproperties['set.year.last'] = year_h or ''
+            infoproperties['set.years'] = '{0} - {1}'.format(year_l, year_h) if year_l and year_h else ''
+            infoproperties['set.rating'] = infoproperties['tmdb_rating'] = '{:0,.1f}'.format(sum(ratings) / len(ratings)) if len(ratings) else ''
+            infoproperties['set.votes'] = infoproperties['tmdb_votes'] = '{:0,.0f}'.format(votes) if votes else ''
+            infoproperties['set.numitems'] = p or ''
         return infoproperties
 
     def get_trailer(self, item):
         infolabels = {}
-        videos = item.get('videos', {}).get('results') or []
+        if not isinstance(item, dict):
+            return infolabels
+        videos = item.get('videos') or {}
+        videos = videos.get('results') or []
         for i in videos:
             if i.get('type', '') != 'Trailer' or i.get('site', '') != 'YouTube' or not i.get('key'):
                 continue
@@ -194,7 +244,7 @@ class TMDb(RequestAPI):
                 cast_list = cast_list + item.get('credits').get('cast')
             if cast_list:
                 added_names = []
-                for i in sorted(cast_list, key=lambda k: k.get('order')):
+                for i in sorted(cast_list, key=lambda k: k.get('order', 0)):
                     if i.get('name') and not i.get('name') in added_names:
                         added_names.append(i.get('name'))  # Add name to temp list to prevent dupes
                         cast_member = {}
@@ -212,23 +262,55 @@ class TMDb(RequestAPI):
             p = 'Cast.{0}.'.format(x)
             infoproperties['{0}name'.format(p)] = cast_member.get('name')
             infoproperties['{0}role'.format(p)] = cast_member.get('role')
+            infoproperties['{0}character'.format(p)] = cast_member.get('role')
             infoproperties['{0}thumb'.format(p)] = cast_member.get('thumbnail')
             x = x + 1
+        return infoproperties
+
+    def set_crew_properties(self, infoproperties, item, pos, prop):
+        p = '{0}.{1}.'.format(prop, pos)
+        infoproperties['{0}name'.format(p)] = item.get('name')
+        infoproperties['{0}role'.format(p)] = item.get('job')
+        infoproperties['{0}job'.format(p)] = item.get('job')
+        infoproperties['{0}department'.format(p)] = item.get('department')
+        infoproperties['{0}thumb'.format(p)] = self.get_imagepath(item.get('profile_path'), poster=True) if item.get('profile_path') else ''
         return infoproperties
 
     def get_crew_properties(self, item):
         infoproperties = {}
         if item.get('credits'):
             crew_list = item.get('credits', {}).get('crew', [])
-            x = 1
+            x, x_director, x_producer, x_sound, x_art, x_camera, x_editor, x_screenplay, x_writer = 1, 1, 1, 1, 1, 1, 1, 1, 1
             for i in crew_list:
                 if i.get('name'):
-                    p = 'Crew.{0}.'.format(x)
-                    infoproperties['{0}name'.format(p)] = i.get('name')
-                    infoproperties['{0}job'.format(p)] = i.get('job')
-                    infoproperties['{0}department'.format(p)] = i.get('department')
-                    infoproperties['{0}thumb'.format(p)] = self.get_imagepath(i.get('profile_path'), poster=True) if i.get('profile_path') else ''
-                    x = x + 1
+                    infoproperties = self.set_crew_properties(infoproperties, i, x, 'Crew')
+                    x += 1
+                    if i.get('job') == 'Screenplay':
+                        infoproperties = self.set_crew_properties(infoproperties, i, x_screenplay, 'Screenplay')
+                        infoproperties = self.set_crew_properties(infoproperties, i, x_writer, 'Writer')
+                        x_screenplay += 1
+                        x_writer += 1
+                    elif i.get('department') == 'Directing':
+                        infoproperties = self.set_crew_properties(infoproperties, i, x_director, 'Director')
+                        x_director += 1
+                    elif i.get('department') == 'Writing':
+                        infoproperties = self.set_crew_properties(infoproperties, i, x_writer, 'Writer')
+                        x_writer += 1
+                    elif i.get('department') == 'Production':
+                        infoproperties = self.set_crew_properties(infoproperties, i, x_producer, 'Producer')
+                        x_producer += 1
+                    elif i.get('department') == 'Sound':
+                        infoproperties = self.set_crew_properties(infoproperties, i, x_sound, 'Sound_Department')
+                        x_sound += 1
+                    elif i.get('department') == 'Art':
+                        infoproperties = self.set_crew_properties(infoproperties, i, x_art, 'Art_Department')
+                        x_art += 1
+                    elif i.get('department') == 'Camera':
+                        infoproperties = self.set_crew_properties(infoproperties, i, x_camera, 'Photography')
+                        x_camera += 1
+                    elif i.get('department') == 'Editing':
+                        infoproperties = self.set_crew_properties(infoproperties, i, x_editor, 'Editor')
+                        x_editor += 1
         return infoproperties
 
     def get_director_writer(self, item):
@@ -297,7 +379,7 @@ class TMDb(RequestAPI):
 
     def get_detailed_item(self, itemtype, tmdb_id, season=None, episode=None, cache_only=False, cache_refresh=False):
         extra_request = None
-        cache_name = '{0}.TMDb.{1}.{2}'.format(self.cache_name, itemtype, tmdb_id)
+        cache_name = '{0}.TMDb.v2_2_10.{1}.{2}'.format(self.cache_name, itemtype, tmdb_id)
         cache_name = '{0}.Season{1}'.format(cache_name, season) if season else cache_name
         cache_name = '{0}.Episode{1}'.format(cache_name, episode) if season and episode else cache_name
         itemdict = self.get_cache(cache_name) if not cache_refresh else None
@@ -337,7 +419,7 @@ class TMDb(RequestAPI):
         request = self.get_request_lc(itemtype, tmdb_id, 'external_ids') or {}
         return request.get(external_id) if external_id else request
 
-    def get_tmdb_id(self, itemtype=None, imdb_id=None, query=None, year=None, selectdialog=False, longcache=False):
+    def get_tmdb_id(self, itemtype=None, imdb_id=None, tvdb_id=None, query=None, year=None, selectdialog=False, usedetails=True, longcache=False, returntuple=False):
         func = self.get_request_lc if longcache else self.get_request_sc
         if not itemtype:
             return
@@ -347,14 +429,20 @@ class TMDb(RequestAPI):
         elif imdb_id:
             request = func('find', imdb_id, language=self.req_language, external_source='imdb_id')
             request = request.get('{0}_results'.format(itemtype), [])
+        elif tvdb_id:
+            request = func('find', tvdb_id, language=self.req_language, external_source='tvdb_id')
+            request = request.get('{0}_results'.format(itemtype), [])
         elif query:
+            query = query.split(' (', 1)[0]  # Scrub added (Year) or other cruft in parentheses () added by Addons or TVDb
             request = func('search', itemtype, language=self.req_language, query=query, year=year)
             request = request.get('results', [])
         if not request:
             return
         itemindex = 0
         if selectdialog:
-            item = utils.dialog_select_item(items=request, details=self)
+            item = utils.dialog_select_item(items=request, details=self, usedetails=usedetails)
+            if returntuple:
+                return (self.get_title(item), item.get('id')) if item else None
             return item.get('id') if item else None
         return request[itemindex].get('id')
 

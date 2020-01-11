@@ -132,10 +132,12 @@ class OrionServer:
 		stats = self.stats()
 		if stats:
 			if not stats.countStreams() == None:
-				items.append({'title' : 32086, 'items' : [{'title' : 32027, 'value' : str(OrionTools.thousands(stats.countStreams()))}]})
+				items.append({'title' : 32283, 'items' : [
+					{'title' : 32086, 'value' : str(OrionTools.thousands(stats.countStreams()))},
+					{'title' : 32230, 'value' : str(OrionTools.thousands(stats.countContainers()))},
+					{'title' : 32198, 'value' : str(OrionTools.thousands(stats.countHashes()))},
+				]})
 			if not stats.usage() == None:
 				items.append({'title' : 32162, 'items' : [{'title' : 32163, 'value' : str(OrionTools.round(stats.usage() * 100, 0)) + '%'}]})
-
-		OrionTools.log(str(items))
 
 		OrionInterface.dialogInformation(title = 32156, items = items)

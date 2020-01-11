@@ -2,11 +2,12 @@ import xbmc
 import xbmcgui
 import xbmcaddon
 import resources.lib.utils as utils
-from resources.lib.globals import LANGUAGES, APPEND_TO_RESPONSE, TMDB_LISTS
+from resources.lib.constants import LANGUAGES, APPEND_TO_RESPONSE, TMDB_LISTS
 from resources.lib.kodilibrary import KodiLibrary
 from resources.lib.tmdb import TMDb
 from resources.lib.omdb import OMDb
 from resources.lib.fanarttv import FanartTV
+from resources.lib.traktapi import TraktAPI
 
 
 class Plugin(object):
@@ -45,12 +46,19 @@ class Plugin(object):
     def imageviewer(self, image):
         xbmc.executebuiltin('ShowPicture({0})'.format(image))
 
-    def get_tmdb_id(self, query=None, itemtype=None, imdb_id=None, year=None, **kwargs):
+    def get_kodi_person_stats(self, item):
+        if item.get('infolabels', {}).get('title'):
+            statistics = KodiLibrary().get_person_stats(item.get('infolabels', {}).get('title'))
+            if statistics:
+                item['infoproperties'] = utils.merge_two_dicts(item.get('infoproperties', {}), statistics)
+        return item
+
+    def get_tmdb_id(self, query=None, itemtype=None, imdb_id=None, tvdb_id=None, year=None, **kwargs):
         if kwargs.get('tmdb_id'):
             return kwargs.get('tmdb_id')
         query = utils.split_items(query)[0] if query else None
         itemtype = itemtype or TMDB_LISTS.get(kwargs.get('info'), {}).get('tmdb_check_id') or kwargs.get('type')
-        return self.tmdb.get_tmdb_id(itemtype=itemtype, imdb_id=imdb_id, query=query, year=year, longcache=True)
+        return self.tmdb.get_tmdb_id(itemtype=itemtype, imdb_id=imdb_id, tvdb_id=tvdb_id, query=query, year=year, longcache=True)
 
     def get_omdb_ratings(self, item, cache_only=False):
         if self.omdb and item.get('infolabels', {}).get('imdbnumber'):
@@ -59,13 +67,26 @@ class Plugin(object):
                 item['infoproperties'] = utils.merge_two_dicts(item.get('infoproperties', {}), ratings_awards)
         return item
 
-    def get_db_info(self, item, info=None, tmdbtype=None, dbid=None, imdb_id=None, originaltitle=None, title=None, year=None):
+    def get_trakt_ratings(self, item, tmdbtype=None, tmdb_id=None, season=None, episode=None):
+        imdb_id = self.tmdb.get_item_externalid(itemtype=tmdbtype, tmdb_id=tmdb_id, external_id='imdb_id')
+        if tmdbtype and imdb_id:
+            ratings = TraktAPI().get_ratings(tmdbtype=tmdbtype, imdb_id=imdb_id, season=season, episode=episode)
+            if ratings:
+                item['infoproperties'] = utils.merge_two_dicts(item.get('infoproperties', {}), ratings)
+        return item
+
+    def get_db_info(self, info=None, tmdbtype=None, imdb_id=None, originaltitle=None, title=None, year=None, tvshowtitle=None, season=None, episode=None):
+        dbid = None
         kodidatabase = None
         if tmdbtype == 'movie':
-            self.kodimoviedb = self.kodimoviedb or KodiLibrary(dbtype='movie')
-            kodidatabase = self.kodimoviedb
+            kodidatabase = self.kodimoviedb = self.kodimoviedb or KodiLibrary(dbtype='movie')
         if tmdbtype == 'tv':
-            self.koditvshowdb = self.koditvshowdb or KodiLibrary(dbtype='tvshow')
-            kodidatabase = self.koditvshowdb
+            kodidatabase = self.koditvshowdb = self.koditvshowdb or KodiLibrary(dbtype='tvshow')
         if kodidatabase and info:
-            return kodidatabase.get_info(info=info, dbid=dbid, imdb_id=imdb_id, originaltitle=originaltitle, title=title, year=year)
+            return kodidatabase.get_info(info=info, imdb_id=imdb_id, originaltitle=originaltitle, title=title, year=year)
+        if tmdbtype == 'episode':
+            kodidatabase = self.koditvshowdb = self.koditvshowdb or KodiLibrary(dbtype='tvshow')
+            dbid = kodidatabase.get_info(info='dbid', imdb_id=imdb_id, title=tvshowtitle, year=year)
+            kodidatabase = KodiLibrary(dbtype='episode', tvshowid=dbid)
+        if dbid and kodidatabase and season and episode:
+            return kodidatabase.get_info('dbid', season=season, episode=episode)

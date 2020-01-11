@@ -1,5 +1,13 @@
+0.9.57
+- Fix vertical scrollbar for Advanced Emulator Launcher views and remove duplicate clearlogo
+
+0.9.56
+- Add ROM Trailer View for Advanced Emulator Launcher
+
 0.9.55
 - Fix for new TMDbHelper
+- Fix for new ArtistSlideshow
+- Fix for playerprocessinfo
 
 0.9.54
 - Change position of studio/country etc tags to allow smart auto sizing

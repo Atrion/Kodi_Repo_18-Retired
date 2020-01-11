@@ -1101,6 +1101,146 @@ msgctxt "#32272"
 msgid "Enter Voucher Code"
 msgstr ""
 
+msgctxt "#32273"
+msgid "Login with [B]API Key[/B]"
+msgstr ""
+
+msgctxt "#32274"
+msgid "Login with [B]Email[/B] and [B]Password[/B]"
+msgstr ""
+
+msgctxt "#32275"
+msgid "Login with [B]Username[/B] and [B]Password[/B]"
+msgstr ""
+
+msgctxt "#32276"
+msgid "Username"
+msgstr ""
+
+msgctxt "#32277"
+msgid "Verified"
+msgstr ""
+
+msgctxt "#32278"
+msgid "Yes"
+msgstr ""
+
+msgctxt "#32279"
+msgid "No"
+msgstr ""
+
+msgctxt "#32280"
+msgid "Open the addon settings"
+msgstr ""
+
+msgctxt "#32281"
+msgid "Not Enabled"
+msgstr ""
+
+msgctxt "#32282"
+msgid "Addon Failure"
+msgstr ""
+
+msgctxt "#32283"
+msgid "Statistics"
+msgstr ""
+
+msgctxt "#32284"
+msgid "Support"
+msgstr ""
+
+msgctxt "#32285"
+msgid "Tickets"
+msgstr ""
+
+msgctxt "#32286"
+msgid "Ticket"
+msgstr ""
+
+msgctxt "#32287"
+msgid "New Ticket"
+msgstr ""
+
+msgctxt "#32288"
+msgid "You"
+msgstr ""
+
+msgctxt "#32289"
+msgid "Update Available"
+msgstr ""
+
+msgctxt "#32290"
+msgid "Update Notifications"
+msgstr ""
+
+msgctxt "#32291"
+msgid "Ticket Notifications"
+msgstr ""
+
+msgctxt "#32292"
+msgid "[B]View[/B] Ticket"
+msgstr ""
+
+msgctxt "#32293"
+msgid "[B]Reply[/B] To Ticket"
+msgstr ""
+
+msgctxt "#32294"
+msgid "[B]Close[/B] Ticket"
+msgstr ""
+
+msgctxt "#32295"
+msgid "Ticket Number"
+msgstr ""
+
+msgctxt "#32296"
+msgid "Ticket Category"
+msgstr ""
+
+msgctxt "#32297"
+msgid "Ticket Status"
+msgstr ""
+
+msgctxt "#32298"
+msgid "Attachment"
+msgstr ""
+
+msgctxt "#32299"
+msgid "Attachments"
+msgstr ""
+
+msgctxt "#32300"
+msgid "Ticket Message"
+msgstr ""
+
+msgctxt "#32301"
+msgid "Attach [B]Bug Report[/B]"
+msgstr ""
+
+msgctxt "#32302"
+msgid "Attach [B]Kodi File[/B]"
+msgstr ""
+
+msgctxt "#32303"
+msgid "Attach [B]Kodi Folder[/B]"
+msgstr ""
+
+msgctxt "#32304"
+msgid "Attach [B]Custom File[/B]"
+msgstr ""
+
+msgctxt "#32305"
+msgid "Attach [B]Custom Folder[/B]"
+msgstr ""
+
+msgctxt "#32306"
+msgid "[B]Submit[/B] Ticket"
+msgstr ""
+
+msgctxt "#32307"
+msgid "Attachment Removed"
+msgstr ""
+
 ##############################################################################
 # MESSAGES
 ##############################################################################
@@ -1138,11 +1278,11 @@ msgid "This setting is dynamically updated with new options from API searches. I
 msgstr ""
 
 msgctxt "#33009"
-msgid "No notifications are currently listed."
+msgid "No New Notifications"
 msgstr ""
 
 msgctxt "#33010"
-msgid "Do you want to login with your API key or your email address and password?"
+msgid "Addon Not Enabled"
 msgstr ""
 
 msgctxt "#33011"
@@ -1210,7 +1350,7 @@ msgid "Kodi has to be restarted for the integration to take effect. Do you want 
 msgstr ""
 
 msgctxt "#33027"
-msgid "Addon Not Installed Or Enabled"
+msgid "Addon Not Installed"
 msgstr ""
 
 msgctxt "#33028"
@@ -1301,6 +1441,78 @@ msgctxt "#33048"
 msgid "The voucher was successfully redeemed. Your account was recharged with the %s package for %s."
 msgstr ""
 
+msgctxt "#33049"
+msgid "New Orion Addon Version Available"
+msgstr ""
+
+msgctxt "#33050"
+msgid "Are you sure you want to resolve the issue and close the ticket?"
+msgstr ""
+
+msgctxt "#33051"
+msgid "The ticket is closed and posting a new message will reopen the ticket. Do you want to open the ticket again?"
+msgstr ""
+
+msgctxt "#33052"
+msgid "Please provide a brief description of your problem or suggestion."
+msgstr ""
+
+msgctxt "#33053"
+msgid "Ticket Successfully Closed"
+msgstr ""
+
+msgctxt "#33054"
+msgid "Reply Successfully Submitted"
+msgstr ""
+
+msgctxt "#33055"
+msgid "The bug report consists of your your [B]Kodi Log[/B] and [B]Orion Settings[/B] and can help the developers identify your problem."
+msgstr ""
+
+msgctxt "#33056"
+msgid "You have the Kodi debugging mode enabled which can unnecessarily increase the size of your log. Orion\'s bug report does not require the debugging mode to be enabled. It would be better to switch off the setting, restart Kodi, and resubmit a ticket."
+msgstr ""
+
+msgctxt "#33057"
+msgid "The attachment is %s large and exceeds the %s limit. Please select a smaller attachment."
+msgstr ""
+
+msgctxt "#33058"
+msgid "Failed To Generate Bug Report"
+msgstr ""
+
+msgctxt "#33059"
+msgid "Failed To Zip Files"
+msgstr ""
+
+msgctxt "#33060"
+msgid "Ticket Successfully Submitted"
+msgstr ""
+
+msgctxt "#33061"
+msgid "New Ticket Reply Received"
+msgstr ""
+
+msgctxt "#33062"
+msgid "You can create new support tickets, submit replies, or view existing tickets. Attach files and generate bug reports to help the developers identify your problem."
+msgstr ""
+
+msgctxt "#33063"
+msgid "The support team is currently handling a lot of queries and replies might be delayed. We apologize for the inconvenience."
+msgstr ""
+
+msgctxt "#33064"
+msgid "The support team is currently handling a lot of queries and tickets submitted before %s might have a delayed response. We apologize for the inconvenience."
+msgstr ""
+
+msgctxt "#33065"
+msgid "The support team is out of office and replies might be delayed. We apologize for the inconvenience."
+msgstr ""
+
+msgctxt "#33066"
+msgid "The support team is out of office until %s and replies might be delayed. We apologize for the inconvenience."
+msgstr ""
+
 ##############################################################################
 # HELP
 ##############################################################################
@@ -1314,7 +1526,7 @@ msgid "The icon theme used for the Orion menus."
 msgstr ""
 
 msgctxt "#34003"
-msgid "The notifications shown for the API status and errors. Show or hide all messages, or only display essential messages."
+msgid "Show notifications for API status and errors. Show or hide all messages, or only display essential messages."
 msgstr ""
 
 msgctxt "#34004"
@@ -1330,7 +1542,7 @@ msgid "The minimum number of streams that must be returned from Orion in order t
 msgstr ""
 
 msgctxt "#34007"
-msgid "Authenticate your Orion account using your API key or your email address and password. The API key can be found under the account section of registered users on the Orion website."
+msgid "Authenticate your Orion account using your API key, email address, or username. The API key can be found under the account section of registered users on the Orion website."
 msgstr ""
 
 msgctxt "#34008"
@@ -1370,7 +1582,7 @@ msgid "The source the stream comes from. Sources are dynamically added by API re
 msgstr ""
 
 msgctxt "#34017"
-msgid "The notifications for news and updates shown at startup."
+msgid "Show notifications for news updates and maintenance announcements."
 msgstr ""
 
 msgctxt "#34018"
@@ -1543,6 +1755,14 @@ msgstr ""
 
 msgctxt "#34060"
 msgid "The maximum number of streams to retrieve per requests. Set the limit to your package's daily limit divided by the number of movies or shows you watch per day."
+msgstr ""
+
+msgctxt "#34061"
+msgid "Show notifications when a new version of the addon is released."
+msgstr ""
+
+msgctxt "#34062"
+msgid "Show notifications when the support team replies to one of your tickets."
 msgstr ""
 
 ##############################################################################

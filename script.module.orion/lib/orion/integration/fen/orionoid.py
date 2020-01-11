@@ -87,7 +87,7 @@ class source:
 	def _settings(self):
 		settings = []
 		for i in range(1, 16):
-			setting = int(self.addonScrapers.getSetting('provider.orionoid.info.' + str(i)))
+			setting = int(self.addonScrapers.getSetting('provider.orion.info.' + str(i)))
 			if setting > 0: settings.append(setting)
 		return settings
 

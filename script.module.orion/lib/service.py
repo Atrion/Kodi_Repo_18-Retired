@@ -30,6 +30,7 @@ from orion.modules.orionuser import *
 from orion.modules.orionsettings import *
 from orion.modules.orionintegration import *
 from orion.modules.orionnotification import *
+from orion.modules.orionticket import *
 from orion.modules.oriondatabase import *
 
 monitor = xbmc.Monitor()
@@ -40,11 +41,13 @@ while not monitor.abortRequested():
 	user = OrionUser.instance()
 	if user.enabled() and (user.valid() or user.empty()):
 		OrionSettings.externalClean()
-		OrionIntegration.check()
+		OrionIntegration.check(silent = True)
 		user.update()
 		user.subscriptionCheck()
 		OrionSettings.backupExportAutomaticOnline()
+		OrionNotification.dialogVersion()
 		OrionNotification.dialogNew()
+		OrionTicket.dialogNew()
 	OrionDatabase.instancesClear() # Very important. Without this, Kodi will fail to update the addon if a new version comes out, due to active database connections causing failures.
 	orion = None # Clear to not keep it in memory while waiting.
 	user = None # Clear to not keep it in memory while waiting.

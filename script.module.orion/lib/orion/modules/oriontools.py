@@ -36,13 +36,21 @@ import datetime
 import random
 import hashlib
 import urllib
-import urlparse
 import traceback
 import webbrowser
 import subprocess
 import xbmc
 import xbmcaddon
 import xbmcvfs
+
+try: from urllib.parse import urlparse
+except: import urlparse
+
+try: from urllib.parse import urlencode
+except: from urllib import urlencode
+
+try: from urllib.parse import parse_qsl
+except: from urlparse import parse_qsl
 
 class OrionTools:
 
@@ -63,8 +71,21 @@ class OrionTools:
 	FormatDateTime = '%Y-%m-%d %H:%M:%S'
 	FormatDate = '%Y-%m-%d'
 	FormatTime = '%H:%M:%S'
+	FormatDateReadable = '%-d %B %Y'
 
 	PrefixPlugin = 'plugin://'
+
+	PythonVersion = None
+
+	# Higher numbers means bigger sub-version values.
+	# Eg: 1000 means valueues can be between 0 and 999.
+	VersionMain = 1000
+	VersionDev = 100 # Cannot divide by more than 100.
+
+	ArchiveExtension = 'zip'
+
+	SizeUnits = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
+	SizePlaces = [0, 1, 1, 2, 2, 3]
 
 	LanguageNames = ['Abkhaz', 'Afar', 'Afrikaans', 'Akan', 'Albanian', 'Amharic', 'Arabic', 'Aragonese', 'Armenian', 'Assamese', 'Avaric', 'Avestan', 'Aymara', 'Azerbaijani', 'Bambara', 'Bashkir', 'Basque', 'Belarusian', 'Bengali', 'Bihari', 'Bislama', 'Bokmal', 'Bosnian', 'Breton', 'Bulgarian', 'Burmese', 'Catalan', 'Chamorro', 'Chechen', 'Chichewa', 'Chinese', 'Chuvash', 'Cornish', 'Corsican', 'Cree', 'Croatian', 'Czech', 'Danish', 'Divehi', 'Dutch', 'Dzongkha', 'English', 'Esperanto', 'Estonian', 'Ewe', 'Faroese', 'Fijian', 'Finnish', 'French', 'Fula', 'Gaelic', 'Galician', 'Ganda', 'Georgian', 'German', 'Greek', 'Guarani', 'Gujarati', 'Haitian', 'Hausa', 'Hebrew', 'Herero', 'Hindi', 'Hiri Motu', 'Hungarian', 'Icelandic', 'Ido', 'Igbo', 'Indonesian', 'Interlingua', 'Interlingue', 'Inuktitut', 'Inupiaq', 'Irish', 'Italian', 'Japanese', 'Javanese', 'Kalaallisut', 'Kannada', 'Kanuri', 'Kashmiri', 'Kazakh', 'Khmer', 'Kikuyu', 'Kinyarwanda', 'Kirundi', 'Komi', 'Kongo', 'Korean', 'Kurdish', 'Kwanyama', 'Kyrgyz', 'Lao', 'Latin', 'Latvian', 'Limburgish', 'Lingala', 'Lithuanian', 'Luba-Katanga', 'Luxembourgish', 'Macedonian', 'Malagasy', 'Malay', 'Malayalam', 'Maltese', 'Manx', 'Maori', 'Marathi', 'Marshallese', 'Mongolian', 'Nauruan', 'Navajo', 'Ndonga', 'Nepali', 'Northern Ndebele', 'Northern Sami', 'Norwegian', 'Nuosu', 'Nynorsk', 'Occitan', 'Ojibwe', 'Oriya', 'Oromo', 'Ossetian', 'Pali', 'Pashto', 'Persian', 'Polish', 'Portuguese', 'Punjabi', 'Quechua', 'Romanian', 'Romansh', 'Russian', 'Samoan', 'Sango', 'Sanskrit', 'Sardinian', 'Serbian', 'Shona', 'Sindhi', 'Sinhalese', 'Slavonic', 'Slovak', 'Slovene', 'Somali', 'Southern Ndebele', 'Southern Sotho', 'Spanish', 'Sundanese', 'Swahili', 'Swati', 'Swedish', 'Tagalog', 'Tahitian', 'Tajik', 'Tamil', 'Tatar', 'Telugu', 'Thai', 'Tibetan', 'Tigrinya', 'Tonga', 'Tsonga', 'Tswana', 'Turkish', 'Turkmen', 'Twi', 'Ukrainian', 'Urdu', 'Uyghur', 'Uzbek', 'Venda', 'Vietnamese', 'Volapuk', 'Walloon', 'Welsh', 'Western Frisian', 'Wolof', 'Xhosa', 'Yiddish', 'Yoruba', 'Zhuang', 'Zulu']
 	LanguageCodes = ['ab', 'aa', 'af', 'ak', 'sq', 'am', 'ar', 'an', 'hy', 'as', 'av', 'ae', 'ay', 'az', 'bm', 'ba', 'eu', 'be', 'bn', 'bh', 'bi', 'nb', 'bs', 'br', 'bg', 'my', 'ca', 'ch', 'ce', 'ny', 'zh', 'cv', 'kw', 'co', 'cr', 'hr', 'cs', 'da', 'dv', 'nl', 'dz', 'en', 'eo', 'et', 'ee', 'fo', 'fj', 'fi', 'fr', 'ff', 'gd', 'gl', 'lg', 'ka', 'de', 'el', 'gn', 'gu', 'ht', 'ha', 'he', 'hz', 'hi', 'ho', 'hu', 'is', 'io', 'ig', 'id', 'ia', 'ie', 'iu', 'ik', 'ga', 'it', 'ja', 'jv', 'kl', 'kn', 'kr', 'ks', 'kk', 'km', 'ki', 'rw', 'rn', 'kv', 'kg', 'ko', 'ku', 'kj', 'ky', 'lo', 'la', 'lv', 'li', 'ln', 'lt', 'lu', 'lb', 'mk', 'mg', 'ms', 'ml', 'mt', 'gv', 'mi', 'mr', 'mh', 'mn', 'na', 'nv', 'ng', 'ne', 'nd', 'se', 'no', 'ii', 'nn', 'oc', 'oj', 'or', 'om', 'os', 'pi', 'ps', 'fa', 'pl', 'pt', 'pa', 'qu', 'ro', 'rm', 'ru', 'sm', 'sg', 'sa', 'sc', 'sr', 'sn', 'sd', 'si', 'cu', 'sk', 'sl', 'so', 'nr', 'st', 'es', 'su', 'sw', 'ss', 'sv', 'tl', 'ty', 'tg', 'ta', 'tt', 'te', 'th', 'bo', 'ti', 'to', 'ts', 'tn', 'tr', 'tk', 'tw', 'uk', 'ur', 'ug', 'uz', 've', 'vi', 'vo', 'wa', 'cy', 'fy', 'wo', 'xh', 'yi', 'yo', 'za', 'zu']
@@ -76,11 +97,11 @@ class OrionTools:
 	@classmethod
 	def log(self, message, message2 = None, message3 = None, message4 = None, message5 = None, name = True, parameters = None, level = LogDefault):
 		divider = ' '
-		message = str(message)
-		if message2: message += divider + str(message2)
-		if message3: message += divider + str(message3)
-		if message4: message += divider + str(message4)
-		if message5: message += divider + str(message5)
+		message = self.unicodeString(message)
+		if message2: message += divider + self.unicodeString(message2)
+		if message3: message += divider + self.unicodeString(message3)
+		if message4: message += divider + self.unicodeString(message4)
+		if message5: message += divider + self.unicodeString(message5)
 		if name:
 			nameValue = self.addonName().upper()
 			if not name == True:
@@ -91,7 +112,7 @@ class OrionTools:
 				if self.isString(parameters):
 					nameValue += parameters
 				else:
-					nameValue += ', '.join([str(parameter) for parameter in parameters])
+					nameValue += ', '.join([self.unicodeString(parameter) for parameter in parameters])
 				nameValue += ']'
 			nameValue += ': '
 			message = nameValue + message
@@ -100,17 +121,19 @@ class OrionTools:
 	@classmethod
 	def error(self, message = None, exception = True):
 		if exception:
-			type, value, traceback = sys.exc_info()
-			filename = traceback.tb_frame.f_code.co_filename
-			linenumber = traceback.tb_lineno
-			name = traceback.tb_frame.f_code.co_name
+			import traceback
+			type, value, traceobject = sys.exc_info()
+			filename = traceobject.tb_frame.f_code.co_filename
+			linenumber = traceobject.tb_lineno
+			name = traceobject.tb_frame.f_code.co_name
 			errortype = type.__name__
-			errormessage = value.message
+			try: errormessage = value.message
+			except: errormessage = traceback.format_exception(type, value, traceobject)
 			if message:
 				message += ' -> '
 			else:
 				message = ''
-			message += str(errortype) + ' -> ' + str(errormessage)
+			message += self.unicodeString(errortype) + ' -> ' + self.unicodeString(errormessage)
 			parameters = [filename, linenumber, name]
 		else:
 			parameters = None
@@ -126,18 +149,14 @@ class OrionTools:
 
 	@classmethod
 	def translate(self, id, utf8 = True, system = False):
-		if isinstance(id, (int, long)):
+		if self.isInteger(id):
 			# Needs ID when called from RunScript(vpn.py)
 			if system: result = xbmc.getLocalizedString(id)
 			else: result = self.addon().getLocalizedString(id)
 		else:
-			try: result = str(id)
+			try: result = self.unicodeString(id)
 			except: result = id
-		if utf8:
-			try:
-				if not '•' in result: result = self.unicode(string = result).encode('utf-8')
-			except:
-				result = self.unicode(string = result).encode('utf-8')
+		if utf8: result = self.unicodeEncode(self.unicode(string = result))
 		return result
 
 	##############################################################################
@@ -145,13 +164,44 @@ class OrionTools:
 	##############################################################################
 
 	@classmethod
+	def unicodeString(self, string):
+		if self.pythonOld():
+			return str(string)
+		else:
+			try:
+				if not self.isString(string): string = str(string)
+			except: pass
+			try: return str(string, 'utf-8')
+			except: return string
+
+	@classmethod
+	def unicodeEncode(self, string):
+		if self.pythonOld():
+			try: return string.encode('utf-8')
+			except: pass
+		else:
+			try: string = str(string, 'utf-8')
+			except: pass
+		return string
+
+	@classmethod
+	def unicodeDecode(self, string):
+		if self.pythonOld():
+			try: return string.decode('utf-8')
+			except: pass
+		return string
+
+	@classmethod
 	def unicode(self, string):
 		try:
 			if string == None: return string
-			return unidecode(string.decode('utf-8'))
+			return unidecode(self.unicodeDecode(string))
 		except:
-			try: return string.encode('ascii', 'ignore')
-			except: return string
+			try:
+				return self.unicodeDecode(string)
+			except:
+				try: return string.encode('ascii', 'ignore')
+				except: return string
 
 	##############################################################################
 	# RANDOM
@@ -160,6 +210,10 @@ class OrionTools:
 	@classmethod
 	def randomInteger(self, minimum = 1, maximum = 100):
 		return random.randint(minimum, maximum)
+
+	@classmethod
+	def randomHash(self):
+		return self.hash(self.unicodeString(self.randomInteger(1, 9999999999)) + self.unicodeString(self.timestamp()))
 
 	##############################################################################
 	# QUIT
@@ -170,12 +224,44 @@ class OrionTools:
 		sys.exit()
 
 	##############################################################################
+	# FILE
+	##############################################################################
+
+	@classmethod
+	def syntaxValid(self, code, identation = False):
+		import ast
+		valid = True
+		try:
+			ast.parse(code)
+		except SyntaxError as error:
+			if identation:
+				errors = ['indent', 'invalid syntax'] # "invalid syntax" errors can appear if indetation is not correct in a try-catch statetment.
+				error = str(error).lower()
+				if any(e in error for e in errors):
+					valid = False
+			else:
+				valid = False
+		except:
+			pass
+		return valid
+
+	@classmethod
+	def syntaxIndentation(self, code):
+		maximum = 64
+		indentation = re.search('\n*([ \t]*).*', code, re.IGNORECASE).group(1)
+		code = code.split('\n')
+		for i in range(maximum):
+			yield '\n'.join([c.replace(indentation, ' ' * i, 1) for c in code])
+			yield '\n'.join([c.replace(indentation, '\t' * i, 1) for c in code])
+
+	##############################################################################
 	# PATH
 	##############################################################################
 
 	@classmethod
 	def pathJoin(self, path, *paths):
-		return os.path.join(path, *paths)
+		if path is None: return os.path.join(*paths)
+		else: return os.path.join(path, *paths)
 
 	@classmethod
 	def pathAbsolute(self, path):
@@ -183,12 +269,41 @@ class OrionTools:
 
 	@classmethod
 	def pathResolve(self, path):
-		return xbmc.translatePath(path)
+		return self.unicodeEncode(xbmc.translatePath(path))
 
 	@classmethod
 	def pathHome(self): # OS user home directory
 		try: return os.path.expanduser('~')
 		except: return None
+
+	@classmethod
+	def pathKodi(self): # Kodi data directory
+		try: return self.pathResolve('special://home')
+		except: return None
+
+	@classmethod
+	def pathLog(self): # Kodi log file path
+		try:
+			path = self.pathResolve('special://logpath')
+			if not path.endswith('.log'): path = self.pathJoin(path, 'kodi.log')
+			return path
+		except: return None
+
+	@classmethod
+	def pathAddon(self, id = None): # Kodi addon directory
+		try:
+			path = self.pathJoin(self.pathKodi(), 'addons')
+			if id: path = self.pathJoin(path, id)
+			return path
+		except: return None
+
+	@classmethod
+	def pathTemporary(self, orion = True, create = False, directory = None):
+		path = self.pathResolve('special://temp')
+		if orion: path = self.pathJoin(path, self.addonName().lower())
+		if directory: path = self.pathJoin(path, directory)
+		if create: self.directoryCreate(path)
+		return path
 
 	##############################################################################
 	# FILE
@@ -197,7 +312,29 @@ class OrionTools:
 	@classmethod
 	def fileExists(self, path):
 		if self.linkIs(path): return os.path.exists(path)
-		else: return xbmcvfs.exists(path)
+		else: return bool(xbmcvfs.exists(path))
+
+	@classmethod
+	def fileName(self, path):
+		return os.path.basename(path)
+
+	@classmethod
+	def fileExtension(self, path):
+		return os.path.splitext(path)[1].replace('.', '')
+
+	@classmethod
+	def fileSize(self, path):
+		return xbmcvfs.File(path).size()
+
+	@classmethod
+	def fileSizeFormat(self, bytes, places = None):
+		i = 0
+		size = len(OrionTools.SizeUnits) - 1
+		while bytes >= 1024 and i < size:
+			bytes /= 1024.0
+			i += 1
+		places = OrionTools.SizePlaces[i] if places is None else places
+		return ('%.' + self.unicodeString(places) + 'f %s') % (bytes, OrionTools.SizeUnits[i])
 
 	@classmethod
 	def fileDelete(self, path):
@@ -254,10 +391,10 @@ class OrionTools:
 	def fileRead(self, path, binary = False):
 		try:
 			file = xbmcvfs.File(path)
-			result = file.read()
+			result = file.readBytes() if binary else file.read()
 			file.close()
-			if binary: return result
-			else: return result.decode('utf-8')
+			if binary: return bytes(result)
+			else: return self.unicodeDecode(result)
 		except:
 			self.error()
 			return None
@@ -265,7 +402,8 @@ class OrionTools:
 	@classmethod
 	def fileWrite(self, path, data, binary = False):
 		try:
-			if not binary: data = str(data.encode('utf-8'))
+			if binary: data = bytearray(data)
+			else: data = self.unicodeString(self.unicodeEncode(data))
 			file = xbmcvfs.File(path, 'w')
 			result = file.write(data)
 			file.close()
@@ -275,7 +413,7 @@ class OrionTools:
 			return False
 
 	@classmethod
-	def fileInsert(self, path, after, data, flags = None):
+	def fileInsert(self, path, after, data, flags = None, validate = False):
 		content = self.fileRead(path)
 		if not self.isArray(after): after = [after]
 		if not self.isArray(data): data = [data]
@@ -290,7 +428,15 @@ class OrionTools:
 			if index < 0: return False
 			split1 = content[:index]
 			split2 = content[index:]
-		 	content = split1 + dataValue + split2
+			content = split1 + dataValue + split2
+			if validate and not self.syntaxValid(code = content, identation = True):
+				valid = False
+				for dataIndentation in self.syntaxIndentation(dataValue):
+					content = split1 + dataIndentation + split2
+					if self.syntaxValid(code = content, identation = True):
+						valid = True
+						break
+				if not valid: return False
 		self.fileWrite(path, content)
 		return True
 
@@ -312,26 +458,45 @@ class OrionTools:
 
 	@classmethod
 	def directoryExists(self, path):
-		if not path.endswith('/') and not path.endswith('\\'): path += '/'
-		return xbmcvfs.exists(path)
+		path = self.directoryNameClean(path)
+		return bool(xbmcvfs.exists(path))
 
 	@classmethod
-	def directoryList(self, path, absolute = False):
-		directories, files = xbmcvfs.listdir(path)
+	def directoryList(self, path, absolute = False, files = True, directories = True, recursive = False):
+		itemsDirectories, itemFiles = xbmcvfs.listdir(path)
+		if recursive:
+			for directory in itemsDirectories:
+				subDirectories, subFiles = self.directoryList(path = self.pathJoin(path, directory), absolute = absolute, files = True, directories = True, recursive = True)
+				if subDirectories: itemsDirectories.extend(subDirectories)
+				if subFiles: itemFiles.extend(subFiles)
 		if absolute:
-			for i in range(len(files)):
-				files[i] = self.pathJoin(path, files[i])
-			for i in range(len(directories)):
-				directories[i] = self.pathJoin(path, directories[i])
-		return directories, files
+			if itemFiles:
+				for i in range(len(itemFiles)):
+					itemFiles[i] = self.pathJoin(path, itemFiles[i])
+			if itemsDirectories:
+				for i in range(len(itemsDirectories)):
+					itemsDirectories[i] = self.pathJoin(path, itemsDirectories[i])
+		if files and directories: return itemsDirectories, itemFiles
+		elif files: return itemFiles
+		elif directories: return itemsDirectories
+		else: return None
 
 	@classmethod
 	def directoryCreate(self, path):
 		return xbmcvfs.mkdirs(path)
 
 	@classmethod
+	def directorySeparator(self):
+		return os.path.sep
+
+	@classmethod
 	def directoryName(self, path):
 		return os.path.dirname(self.pathAbsolute(path))
+
+	@classmethod
+	def directoryNameClean(self, path):
+		if not path.endswith('/') and not path.endswith('\\'): path += self.directorySeparator()
+		return path
 
 	@classmethod
 	def directoryDelete(self, path, force = True):
@@ -368,19 +533,136 @@ class OrionTools:
 		except: return False
 
 	##############################################################################
+	# ARCHIVE
+	##############################################################################
+
+	@classmethod
+	def archiveName(self, path):
+		extension = '.' + OrionTools.ArchiveExtension
+		if not path.lower().endswith(extension): path += extenssion
+		return path
+
+	@classmethod
+	def archiveNameClean(self, path):
+		extension = '.' + OrionTools.ArchiveExtension
+		if path.lower().endswith(extension): path = path[:-len(extension)]
+		return path
+
+	@classmethod
+	def archiveCheck(self, path):
+		import zipfile
+		try:
+			if self.fileExists(path):
+				file = zipfile.ZipFile(path, 'r')
+				file.close()
+				return True
+		except: pass
+		return False
+
+	@classmethod
+	def _archivePrepare(self, files, names):
+		temp = self.pathJoin(self.pathTemporary(), 'archives')
+		path = None
+		while True:
+			path = self.pathJoin(temp, self.randomHash())
+			if not self.directoryExists(path): break
+		self.directoryCreate(path)
+		for i in range(len(files)):
+			if not self.fileCopy(files[i], self.pathJoin(path, names[i])):
+				self.log('Could not copy archive file: ' + self.unicodeString(file))
+		return path
+
+	@classmethod
+	def _archiveClean(self, path):
+		if path.startswith(self.pathTemporary()): return self.directoryDelete(path, force = True)
+		else: return False
+
+	# files: single file path, list of files paths, or directory path.
+	# parent: if archiving a directory, if false includes only the folder content, if true includes the folder and its content.
+	@classmethod
+	def archiveCreate(self, path, files, names = None, parent = False):
+		if self.isString(files):
+			if self.directoryExists(files):
+				directory = self.directoryNameClean(files)
+				parent = self.directoryNameClean(self.directoryName(directory)) if parent else directory
+				files = self.directoryList(path = directory, absolute = True, files = True, directories = False, recursive = True)
+				names = [file.replace(parent , '') for file in files]
+			else:
+				files = [files]
+				names = [self.fileName(files[0])]
+		elif not names:
+			names = [self.fileName(file) for file in files]
+
+		# On some Android devices, the zipfile library creates corrupted archives.
+		# First try to create an archive with shutil, also because it creates smaller files than zipfile.
+		try:
+			pathFiles = self._archivePrepare(files, names)
+			shutil.make_archive(self.archiveNameClean(path), 'zip', pathFiles)
+			self._archiveClean(pathFiles)
+		except: pass
+
+		if self.archiveCheck(path):
+			return True
+		else:
+			self.log('Primary archive creation failed. Trying alternative approach.')
+			import zipfile
+			file = zipfile.ZipFile(path, 'w')
+			if names:
+				for i in range(len(files)):
+					try: file.write(files[i], names[i])
+					except: pass
+			else:
+				for i in range(len(files)):
+					try: file.write(files[i])
+					except: pass
+			file.close()
+			return self.archiveCheck(path)
+
+	@classmethod
+	def archiveExtract(self, path, directory):
+		try:
+			import zipfile
+			self.directoryCreate(directory)
+			file = zipfile.ZipFile(path, 'r')
+			file.extractall(directory)
+			count = len(file.namelist())
+			file.close()
+			if count == 0: return True
+			directories, files = self.directoryList(directory)
+			return len(directories) > 0 or len(files) > 0
+		except:
+			return False
+
+	##############################################################################
 	# ADDON
 	##############################################################################
 
 	@classmethod
 	def addon(self, id = None):
-		if id == None: id = OrionTools.Id
-		return xbmcaddon.Addon(id)
+		if id is False: # Get calling addon.
+			return xbmcaddon.Addon()
+		else:
+			if id is None: id = OrionTools.Id
+			return xbmcaddon.Addon(id)
 
 	@classmethod
 	def addonEnabled(self, id = None):
 		try:
 			xbmcaddon.Addon(id).getAddonInfo('id')
 			return True
+		except:
+			return False
+
+	@classmethod
+	def addonInstalled(self, id = None):
+		# https://forum.kodi.tv/showthread.php?tid=347854
+		# https://github.com/xbmc/xbmc/pull/16707
+		try:
+			if id is None: id = self.addonId()
+			if self.kodiVersion(major = True) >= 19:
+				return xbmc.getCondVisibility('System.HasAddon(%s)' % id) == 1
+			else:
+				return self.directoryExists(self.pathAddon(id))
 		except:
 			return False
 
@@ -406,7 +688,7 @@ class OrionTools:
 
 	@classmethod
 	def addonProfile(self, id = None, default = None):
-		try: return self.pathResolve(self.addon(id = id).getAddonInfo('profile').decode('utf-8'))
+		try: return self.pathResolve(self.unicodeDecode(self.addon(id = id).getAddonInfo('profile')))
 		except: return default
 
 	@classmethod
@@ -424,7 +706,7 @@ class OrionTools:
 		try: addon = self.addon(id = id)
 		except: addon = None
 		if addon == None: return ''
-		else: return self.pathResolve(addon.getAddonInfo('path').decode('utf-8'))
+		else: return self.pathResolve(self.unicodeDecode(addon.getAddonInfo('path')))
 
 	@classmethod
 	def addonHandle(self):
@@ -433,12 +715,35 @@ class OrionTools:
 
 	@classmethod
 	def addonParameters(self):
-		try: return dict(urlparse.parse_qsl(sys.argv[2].replace('?','')))
+		try: return dict(parse_qsl(sys.argv[2].replace('?','')))
 		except: return {}
 
 	@classmethod
 	def addonLaunch(self, id = None):
 		return self.execute('RunAddon(%s)' % self.addonId(id))
+
+	##############################################################################
+	# VERSION
+	##############################################################################
+
+	# Convert a version string to a comparable float, including alpha and betea versions.
+	@classmethod
+	def versionValue(self, version):
+		result = 0
+		try:
+			matches = re.search('(\d+)\.(\d+)\.(\d+)(~alpha(\d+))?(~beta(\d+))?', version)
+			try: result += float(matches.group(1)) * (OrionTools.VersionMain * OrionTools.VersionMain) # Major
+			except: pass
+			try: result += float(matches.group(2)) * OrionTools.VersionMain # Minor
+			except: pass
+			try: result += float(matches.group(3)) # Patch
+			except: pass
+			try: result += float(matches.group(5)) / (OrionTools.VersionDev * OrionTools.VersionDev) # Alpha
+			except: pass
+			try: result += float(matches.group(7)) / OrionTools.VersionDev # Beta
+			except: pass
+		except: pass
+		return result
 
 	##############################################################################
 	# KODI
@@ -456,6 +761,11 @@ class OrionTools:
 	def kodiRestart(self):
 		# On both Linux and Windows, seems to close Kodi, but not start it up again.
 		self.execute('XBMC.RestartApp()')
+
+	@classmethod
+	def kodiDebugging(self):
+		result = self.executeJson(method = 'Settings.GetSettingValue', parameters = {'setting' : 'debug.showloginfo'})
+		return bool(result['result']['value'])
 
 	@classmethod
 	def kodiVersion(self, full = False, major = False):
@@ -491,8 +801,33 @@ class OrionTools:
 
 	@classmethod
 	def kodiVersion19(self):
-		try: return self.kodiVersion(major = True) >= 19
+		try: return self.kodiVersion(major = True) == 19
 		except: return False
+
+	##############################################################################
+	# PYTHON
+	##############################################################################
+
+	@classmethod
+	def pythonVersion(self):
+		if OrionTools.PythonVersion is None: OrionTools.PythonVersion = sys.version_info[0]
+		return OrionTools.PythonVersion
+
+	@classmethod
+	def python2(self):
+		return self.pythonVersion() == 2
+
+	@classmethod
+	def python3(self):
+		return self.pythonVersion() == 3
+
+	@classmethod
+	def pythonOld(self):
+		return self.python2()
+
+	@classmethod
+	def pythonNew(self):
+		return self.python3()
 
 	##############################################################################
 	# EXECUTE
@@ -507,7 +842,7 @@ class OrionTools:
 		command = 'RunScript(' + script
 		if parameters == None:
 			for parameter in parameters:
-				command += ',' + str(parameter)
+				command += ',' + self.unicodeString(parameter)
 		command += ')'
 		return self.execute(command)
 
@@ -515,12 +850,30 @@ class OrionTools:
 	def executePlugin(self, action = None, parameters = None, duplicates = False, run = True, execute = False, addon = None):
 		if parameters == None: parameters = {}
 		if not action == None: parameters['action'] = action
-		parameters = urllib.urlencode(parameters, doseq = duplicates)
+		for key, value in self.iterator(parameters):
+			if self.isStructure(value): parameters[key] = self.jsonTo(value)
+		parameters = urlencode(parameters, doseq = duplicates)
 		if addon == None: addon = self.addonId()
 		command = '%s%s?%s' % (OrionTools.PrefixPlugin, addon, parameters)
 		if run: command = 'RunPlugin(%s)' % command
 		if execute: return self.execute(command)
 		else: return command
+
+	@classmethod
+	def executeJson(self, query = None, method = None, parameters = None, version = '2.0', id = 1, addon = False, decode = True):
+		if query == None:
+			if parameters == None: parameters = {}
+			if addon == True: parameters['addonid'] = self.addonId()
+			elif addon: parameters['addonid'] = addon
+			query = {}
+			query['jsonrpc'] = version
+			query['id'] = id
+			query['method'] = method
+			query['params'] = parameters
+			query = self.jsonTo(query)
+		result = xbmc.executeJSONRPC(query)
+		if decode: result = self.jsonFrom(self.unicode(result))
+		return result
 
 	##############################################################################
 	# TO
@@ -548,12 +901,23 @@ class OrionTools:
 	##############################################################################
 
 	@classmethod
+	def isBoolean(self, value):
+		return isinstance(value, bool)
+
+	@classmethod
 	def isNumber(self, value):
-		return isinstance(value, (int, long, float))
+		try: return isinstance(value, (int, long, float))
+		except: return isinstance(value, (int, float))
+
+	@classmethod
+	def isInteger(self, value):
+		try: return isinstance(value, (int, long))
+		except: return isinstance(value, (int))
 
 	@classmethod
 	def isString(self, value):
-		return isinstance(value, basestring)
+		try: return isinstance(value, basestring)
+		except: return isinstance(value, (str, bytes))
 
 	@classmethod
 	def isTuple(self, value):
@@ -581,8 +945,11 @@ class OrionTools:
 
 	@classmethod
 	def hash(self, data):
-		try: data = str(data)
-		except: data = data.encode('utf-8') # Required for links with non-ASCII characters.
+		if self.pythonOld():
+			try: data = self.unicodeString(data)
+			except: data = self.unicodeEncode(data) # Required for links with non-ASCII characters.
+		else:
+			data = bytes(data, 'utf-8')
 		return hashlib.sha256(data).hexdigest().upper()
 
 	@classmethod
@@ -595,21 +962,46 @@ class OrionTools:
 
 	@classmethod
 	def base64From(self, data, iterations = 1):
-		data = str(data)
+		import base64
+		data = self.unicodeString(data)
+		if self.pythonNew(): data = bytes(data, 'utf-8')
 		for i in range(iterations):
-			data = data.decode('base64')
+			data = base64.b64decode(data)
 		return data
 
 	@classmethod
 	def base64To(self, data, iterations = 1):
-		data = str(data)
-		for i in range(iterations):
-			data = data.encode('base64').replace('\n', '')
+		import base64
+		data = self.unicodeString(data)
+		if self.pythonOld():
+			for i in range(iterations):
+				data = self.unicodeString(base64.b64encode(data))
+				data = data.replace('\n', '')
+		else:
+			for i in range(iterations):
+				try: data = bytes(data, 'utf-8')
+				except: pass # Already bytes object.
+				data = self.unicodeString(base64.b64encode(data))
+				data = data.replace('\n', '')
 		return data
 
 	##############################################################################
 	# JSON
 	##############################################################################
+
+	@classmethod
+	def jsonClean(self, data):
+		if self.pythonNew():
+			for key, value in data.items():
+				if self.isString(value):
+					data[key] = self.unicodeString(value)
+				elif self.isDictionary(value):
+					data[key] = self.jsonClean(value)
+				elif self.isList(value):
+					for i in range(len(value)):
+						value[i] = self.jsonClean(value[i])
+					data[key] = value
+		return data
 
 	@classmethod
 	def jsonFrom(self, data):
@@ -618,8 +1010,29 @@ class OrionTools:
 
 	@classmethod
 	def jsonTo(self, data):
-		try: return json.dumps(data)
+		try: return json.dumps(self.jsonClean(data))
 		except: return None
+
+	@classmethod
+	def jsonIs(self, data):
+		try:
+			json.loads(data)
+			return True
+		except: return False
+
+	##############################################################################
+	# ITERATOR
+	##############################################################################
+
+	@classmethod
+	def iterator(self, struct):
+		try: return struct.iteritems()
+		except: return struct.items()
+
+	@classmethod
+	def iteratorValues(self, struct):
+		try: return struct.itervalues()
+		except: return struct.values()
 
 	##############################################################################
 	# TIME
@@ -655,7 +1068,7 @@ class OrionTools:
 		days = timeTo - timeFrom
 		if days == None or days <= 0: return OrionTools.translate(32030)
 		else: days = self.round(days / 86400.0, 0)
-		if format: days = str(days) + ' ' + (self.translate(32221) if days == 1 else self.translate(32222))
+		if format: days = self.unicodeString(days) + ' ' + (self.translate(32221) if days == 1 else self.translate(32222))
 		return days
 
 	##############################################################################
@@ -799,34 +1212,105 @@ class OrionTools:
 	# BUGS
 	##############################################################################
 
-	# orionremove
 	@classmethod
-	def bugs(self):
-		# Takes some time to retrieve.
-		while 'busy' in self.kodiInfo('System.OSVersionInfo').lower():
-			self.sleep(0.1)
+	def bugs(self, path = None):
+		from orion.modules.orionsettings import OrionSettings
+		name = self.addonName() + ' Bug Report %s.%s' % (self.timeFormat(format = '%Y-%m-%d %H.%M.%S', local = True), OrionTools.ArchiveExtension)
+		path = self.pathJoin(self.pathTemporary() if path == None else path, name)
+		self.fileDelete(path)
+		self._bugsLog()
+		files = OrionSettings.backupFiles()
+		files.append(self.pathLog())
+		if self.archiveCreate(path, files): return path
+		else: return None
 
-		empty = ''
-		line = '#' * 59
-		text = [empty, line, ' ORION BUG REPORT', line, empty]
-
-		# System
-		processor = self.kodiInfo('System.CpuUsage')
+	@classmethod
+	def _bugsLog(self):
 		try:
-			usage = re.findall(':\s*(.*?)%', processor)
-			average = sum(float(i) for i in usage) / len(usage)
-			processor = str(int(100 - average)) + '% free of ' + str(len(usage)) + ' cores'
-		except: pass
-		text.extend([
-			'  SYSTEM',
-			'    Operating System: ' + self.kodiInfo('System.OSVersionInfo'),
-			'    Processor: ' + processor,
-			'    Memory: ' + self._bugsSize('System.Memory(free)') + ' free of ' + self._bugsSize('System.Memory(total)'),
-			'    Disk: ' + self._bugsSize('System.FreeSpace') + ' free of ' + self._bugsSize('System.TotalSpace'),
-		])
+			import platform
+			from orion.modules.orionuser import OrionUser
+			from orion.modules.orionplatform import OrionPlatform
+			from orion.modules.orionintegration import OrionIntegration
 
-		text.extend([empty, line, empty])
-		[self.log('#' + i, name = False) for i in text]
+			# Takes some time to retrieve.
+			requests = ['System.CpuUsage', 'System.Memory(free)', 'System.Memory(total)', 'System.FreeSpace', 'System.TotalSpace', 'System.BuildVersion', 'System.BuildDate', 'System.Uptime']
+			for request in requests:
+				counter = 0
+				while 'busy' in self.kodiInfo(request).lower():
+					counter += 1
+					if counter > 100: break
+					self.sleep(0.1)
+
+			empty = ''
+			line = '#' * 59
+			text = [empty, line, ' ORION BUG REPORT', line, empty]
+
+			# System
+			processor = self.kodiInfo('System.CpuUsage')
+			try:
+				usage = re.findall(':\s*(.*?)%', processor)
+				average = sum(float(i) for i in usage) / len(usage)
+				processor = self.unicodeString(int(100 - average)) + '% free of ' + self.unicodeString(len(usage)) + ' cores'
+			except: pass
+			text.extend([
+				'   SYSTEM',
+				'      Operating System: ' + OrionPlatform.label(),
+				'      Processor: ' + processor,
+				'      Memory: ' + self._bugsSize('System.Memory(free)') + ' free of ' + self._bugsSize('System.Memory(total)'),
+				'      Disk: ' + self._bugsSize('System.FreeSpace') + ' free of ' + self._bugsSize('System.TotalSpace'),
+			])
+
+			# Python
+			text.extend([
+				'',
+				'   PYTHON',
+				'      Version: ' + self.unicodeString(platform.python_version()),
+				'      Implementation: ' + self.unicodeString(platform.python_implementation()),
+				'      Architecture: ' + self.unicodeString(platform.architecture()[0]),
+			])
+
+			# Kodi
+			text.extend([
+				'',
+				'   KODI',
+				'      Build Version: ' + self.kodiInfo('System.BuildVersion'),
+				'      Build Date: ' + self.kodiInfo('System.BuildDate'),
+				'      Up Time: ' + self.kodiInfo('System.Uptime'),
+			])
+
+			# Orion
+			user = OrionUser.instance()
+			user.update()
+			userStreams = str(self.round(100 * user.requestsStreamsDailyUsed(0, True), 0)) + '% (' + str(user.requestsStreamsDailyUsed(0)) + ' of ' + str(user.requestsStreamsDailyLimit('Unlimited')) + ')'
+			userHashes = str(self.round(100 * user.requestsHashesDailyUsed(0, True), 0)) + '% (' + str(user.requestsHashesDailyUsed(0)) + ' of ' + str(user.requestsHashesDailyLimit('Unlimited')) + ')'
+			userContainers = str(self.round(100 * user.requestsContainersDailyUsed(0, True), 0)) + '% (' + str(user.requestsContainersDailyUsed(0)) + ' of ' + str(user.requestsContainersDailyLimit('Unlimited')) + ')'
+			text.extend([
+				'',
+				'   ORION',
+				'      Addon Version: ' + self.addonVersion(),
+				'      User ID: ' + self.unicodeString(user.id()),
+				'      Subscription Package: ' + self.unicodeString(user.subscriptionPackageName('')),
+				'      Subscription Started: ' + self.timeFormat(user.subscriptionTimeStarted(), format = self.FormatDateTime),
+				'      Subscription Expiration: ' + self.timeFormat(user.subscriptionTimeExpiration(), format = self.FormatDateTime, default = 'None'),
+				'      Stream Usage: ' + userStreams,
+				'      Hash Usage: ' + userHashes,
+				'      Container Usage: ' + userContainers,
+			])
+
+			# Integration
+			text.extend([
+				'',
+				'   INTEGRATION',
+			])
+			addons = OrionIntegration.addons()
+			for addon in addons:
+				if addon['integrated'] and addon['installed']:
+					text.append('      ' + self.unicodeString(addon['name']) + ': ' + self.unicodeString(addon['version']))
+
+			text.extend([empty, line, empty])
+			[self.log('#' + i, name = False) for i in text]
+		except:
+			self.error(message = 'Could not generate debug information')
 
 	@classmethod
 	def _bugsSize(self, type):

@@ -36,7 +36,7 @@ class OrionNotification:
 	# CONSTANTS
 	##############################################################################
 
-	Time = 7889238 # 3 Months
+	Time = 31536000 # 1 Year
 
 	##############################################################################
 	# CONSTRUCTOR
@@ -109,15 +109,22 @@ class OrionNotification:
 		return notifications
 
 	##############################################################################
+	# LABEL
+	##############################################################################
+
+	def label(self):
+		return OrionInterface.fontBold('[' + OrionTools.timeFormat(self.timeAdded(), format = OrionTools.FormatDate) + '] ') + self.contentTitle()
+
+	##############################################################################
 	# DIALOG
 	##############################################################################
 
-	def dialog(self, wait = False):
+	def dialog(self):
 		promotion = self.promotion()
 		message = ''
 		message += OrionInterface.font(OrionTools.addonName() + ' ' + OrionTools.translate(32157), bold = True, color = OrionInterface.ColorPrimary, uppercase = True)
 		message += OrionInterface.fontNewline()
-		message += OrionInterface.font(OrionTools.timeFormat(self.timeAdded(), format = OrionTools.FormatDate), bold = True)
+		message += OrionInterface.font(OrionTools.timeFormat(self.timeAdded(), format = OrionTools.FormatDateTime), bold = True)
 		message += OrionInterface.fontNewline() + OrionInterface.fontNewline()
 		message += OrionInterface.font(self.contentTitle(), bold = True, color = OrionInterface.ColorPrimary)
 		message += OrionInterface.fontNewline() + OrionInterface.fontNewline()
@@ -131,7 +138,7 @@ class OrionNotification:
 			message += OrionInterface.font(OrionTools.translate(32196) + ': ', color = OrionInterface.ColorPrimary) + OrionInterface.font(OrionTools.timeFormat(promotion.timeEnd(), format = OrionTools.FormatDate) if promotion.timeEnd() else 32199)
 			message += OrionInterface.fontNewline() + OrionInterface.fontNewline()
 		message += self.contentMessage('')
-		OrionInterface.dialogPage(title = 32157, message = message, wait = wait)
+		OrionInterface.dialogPage(title = 32157, message = message)
 
 	@classmethod
 	def dialogNew(self):
@@ -147,3 +154,15 @@ class OrionNotification:
 				OrionSettings.set('internal.api.notification', notification.id())
 				return True
 		return False
+
+	@classmethod
+	def dialogVersion(self):
+		try:
+			user = OrionUser.instance()
+			if user and user.enabled() and OrionSettings.getGeneralNotificationsUpdates():
+				api = OrionApi()
+				if api.addonVersion():
+					versionLatest = OrionTools.versionValue(api.data()[OrionTools.addonId()])
+					versionLocal = OrionTools.versionValue(OrionTools.addonVersion())
+					if versionLatest > versionLocal: OrionInterface.dialogNotification(title = 32289, message = 33049, icon = OrionInterface.IconInformation)
+		except: pass

@@ -36,11 +36,18 @@ class OrionUser:
 	# CONSTANTS
 	##############################################################################
 
+	StatusUnknown = 'unknown'
+	StatusRegistered = 'registered'
+	StatusActive = 'active'
+	StatusVerified = 'verified'
+	StatusSuspended = 'suspended'
+	StatusDeleted = 'deleted'
+
 	PackageAnonymous = 'anonymous'
 	PackageFree = 'free'
 
-	LinksAnonymous = 25
-	LinksFree = 50
+	LinksAnonymous = 50
+	LinksFree = 100
 
 	# Add 1 day because none-full days are not counted in the notification.
 	# Order is important.
@@ -98,6 +105,10 @@ class OrionUser:
 		if key == None or key == '': return default
 		else: return key
 
+	def username(self, default = None):
+		try: return self.mData['username']
+		except: return default
+
 	def email(self, default = None):
 		try: return self.mData['email']
 		except: return default
@@ -106,8 +117,12 @@ class OrionUser:
 		try: return self.mData['type']
 		except: return default
 
-	def status(self, default = None):
-		try: return self.mData['status']
+	def status(self, default = None, verified = False):
+		try: return OrionUser.StatusActive if (verified and self.verified()) else self.mData['status']
+		except: return default
+
+	def verified(self, default = False):
+		try: return self.mData['status'] == OrionUser.StatusVerified
 		except: return default
 
 	##############################################################################
@@ -350,28 +365,34 @@ class OrionUser:
 
 	def _settingsUpdate(self, valid):
 		self._settingsUserSet(self.mData)
-		OrionSettings.set('account.valid', valid)
-		OrionSettings.set('account.label.api', OrionTools.translate(32247) if (self.key('') == '' or not valid) else OrionTools.translate(32169))
-		OrionSettings.set('account.label.status', self.status().capitalize() if valid else OrionTools.translate(32033))
+		OrionSettings.set('account.valid', valid, backup = False)
+		OrionSettings.set('account.label.api', OrionTools.translate(32247) if (self.key('') == '' or not valid) else OrionTools.translate(32169), backup = False)
+		OrionSettings.set('account.label.status', self.status(verified = True).capitalize() if valid else OrionTools.translate(32033), backup = False)
 		if valid:
 			# NB: Strings must be cast with str(...), otherwise getting UnicodeDecodeError in Windows.
-			OrionSettings.set('account.label.email', self.email())
+			OrionSettings.set('account.label.verified', OrionTools.translate(32278) if self.verified() else OrionTools.translate(32279), backup = False)
+			OrionSettings.set('account.label.username', self.username(), backup = False)
+			OrionSettings.set('account.label.email', self.email(), backup = False)
 			packageName = self.subscriptionPackageName()
 			packageLimitStreams = self.subscriptionPackageLimitStreams(OrionTools.translate(32030))
 			packageLimitHashes = self.subscriptionPackageLimitHashes(OrionTools.translate(32030))
 			packageLimitContainers = self.subscriptionPackageLimitContainers(OrionTools.translate(32030))
-			OrionSettings.set('account.label.package', str(packageName))
-			OrionSettings.set('account.label.time', OrionTools.timeDays(timeTo = self.subscriptionTimeExpiration(0), format = True))
-			OrionSettings.set('account.label.limit.streams', str(OrionTools.round(100 * self.requestsStreamsDailyUsed(0, True), 0)) + '% (' + str(self.requestsStreamsDailyUsed(0)) + ' ' + OrionTools.translate(32032) + ' ' + str(self.requestsStreamsDailyLimit(OrionTools.translate(32030))) + ')')
-			OrionSettings.set('account.label.limit.hashes', str(OrionTools.round(100 * self.requestsHashesDailyUsed(0, True), 0)) + '% (' + str(self.requestsHashesDailyUsed(0)) + ' ' + OrionTools.translate(32032) + ' ' + str(self.requestsHashesDailyLimit(OrionTools.translate(32030))) + ')')
-			OrionSettings.set('account.label.limit.containers', str(OrionTools.round(100 * self.requestsContainersDailyUsed(0, True), 0)) + '% (' + str(self.requestsContainersDailyUsed(0)) + ' ' + OrionTools.translate(32032) + ' ' + str(self.requestsContainersDailyLimit(OrionTools.translate(32030))) + ')')
+			OrionSettings.set('account.label.package', str(packageName), backup = False)
+			OrionSettings.set('account.label.time', OrionTools.timeDays(timeTo = self.subscriptionTimeExpiration(0), format = True), backup = False)
+			OrionSettings.set('account.label.limit.streams', str(OrionTools.round(100 * self.requestsStreamsDailyUsed(0, True), 0)) + '% (' + str(self.requestsStreamsDailyUsed(0)) + ' ' + OrionTools.translate(32032) + ' ' + str(self.requestsStreamsDailyLimit(OrionTools.translate(32030))) + ')', backup = False)
+			OrionSettings.set('account.label.limit.hashes', str(OrionTools.round(100 * self.requestsHashesDailyUsed(0, True), 0)) + '% (' + str(self.requestsHashesDailyUsed(0)) + ' ' + OrionTools.translate(32032) + ' ' + str(self.requestsHashesDailyLimit(OrionTools.translate(32030))) + ')', backup = False)
+			OrionSettings.set('account.label.limit.containers', str(OrionTools.round(100 * self.requestsContainersDailyUsed(0, True), 0)) + '% (' + str(self.requestsContainersDailyUsed(0)) + ' ' + OrionTools.translate(32032) + ' ' + str(self.requestsContainersDailyLimit(OrionTools.translate(32030))) + ')', backup = False)
+			OrionSettings._backupAutomatic(force = True)
 		else:
-			OrionSettings.set('account.label.email', '')
-			OrionSettings.set('account.label.package', '')
-			OrionSettings.set('account.label.time', '')
-			OrionSettings.set('account.label.limit.streams', '')
-			OrionSettings.set('account.label.limit.hashes', '')
-			OrionSettings.set('account.label.limit.containers', '')
+			OrionSettings.set('account.label.verified', '', backup = False)
+			OrionSettings.set('account.label.username', '', backup = False)
+			OrionSettings.set('account.label.email', '', backup = False)
+			OrionSettings.set('account.label.package', '', backup = False)
+			OrionSettings.set('account.label.time', '', backup = False)
+			OrionSettings.set('account.label.limit.streams', '', backup = False)
+			OrionSettings.set('account.label.limit.hashes', '', backup = False)
+			OrionSettings.set('account.label.limit.containers', '', backup = False)
+			# OrionSettings._backupAutomatic(force = True) # Do not backup settings, otherwise creates infinite loop.
 
 	##############################################################################
 	# ANONYMOUS
@@ -395,9 +416,9 @@ class OrionUser:
 	##############################################################################
 
 	@classmethod
-	def login(self, email, password):
+	def login(self, user, password):
 		api = OrionApi()
-		if api.userLogin(email = email, password = OrionTools.hash(password)):
+		if api.userLogin(user = user, password = OrionTools.hash(password)):
 			data = api.data()
 			if data and 'key' in data and not data['key'] == None and not data['key'] == '':
 				return data['key']
@@ -441,7 +462,9 @@ class OrionUser:
 					'title' : 32019,
 					'items' :
 					[
-						{'title' : 32014, 'value' : self.status('').capitalize()},
+						{'title' : 32014, 'value' : self.status('', verified = True).capitalize()},
+						{'title' : 32277, 'value' : OrionTools.translate(32278) if self.verified() else OrionTools.translate(32279)},
+						{'title' : 32276, 'value' : self.username('')},
 						{'title' : 32020, 'value' : self.email('')},
 						{'title' : 32021, 'value' : OrionTools.timeFormat(self.timeAdded(), format = OrionTools.FormatDate)},
 					],

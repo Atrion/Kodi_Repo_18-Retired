@@ -1,4 +1,19 @@
 
+[B]4.0.0 (2019.12.30)[/B]
+- Porting to Python 3.
+- Fixed Fen integration.
+- Updated authentication process.
+- Fixed integration version number.
+- Added authentication menu.
+- Dynamic indentation during integration.
+- Added settings for integration addons.
+- Improved addon installation detection.
+- Better handling of raw API results.
+- Updated server dialog.
+- Added ticket support.
+- Version update notifications.
+- Many bug fixes and improvements.
+
 [B]3.5.4 (2019.11.25)[/B]
 - Fixed OpenScrapers integration.
 

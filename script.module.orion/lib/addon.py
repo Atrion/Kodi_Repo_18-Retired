@@ -50,6 +50,15 @@ elif action == 'menuAccount':
 elif action == 'menuApps':
     OrionNavigator.menuApps()
 
+elif action == 'menuSupport':
+    OrionNavigator.menuSupport()
+
+elif action == 'menuTickets':
+   OrionNavigator.menuTickets()
+
+elif action == 'menuNotifications':
+	OrionNavigator.menuNotifications()
+
 elif action == 'menuTools':
     OrionNavigator.menuTools()
 
@@ -78,6 +87,9 @@ elif action == 'dialogUser':
 elif action == 'dialogVoucher':
     OrionNavigator.dialogVoucher()
 
+elif action == 'dialogTicket':
+	OrionNavigator.dialogTicket(id = id, status = parameters.get('status'))
+
 elif action == 'dialogServer':
     OrionNavigator.dialogServer()
 
@@ -85,7 +97,7 @@ elif action == 'dialogBackup':
     OrionNavigator.dialogBackup()
 
 elif action == 'dialogNotification':
-    OrionNavigator.dialogNotification()
+	OrionNavigator.dialogNotification(data = OrionTools.jsonFrom(parameters.get('data')))
 
 elif action == 'dialogLink':
     OrionNavigator.dialogLink()
@@ -98,6 +110,9 @@ elif action == 'dialogFree':
 
 elif action == 'dialogSettings':
     OrionNavigator.dialogSettings(option = OrionTools.toBoolean(parameters.get('option')))
+
+elif action == 'dialogLogin':
+    OrionNavigator.dialogLogin()
 
 ##############################################################################
 # SETTINGS
@@ -232,6 +247,9 @@ elif action == 'integrationMarauder':
 
 elif action == 'integrationAsguard':
 	OrionIntegration.executeAsguard()
+
+elif action == 'integrationTheCrew':
+	OrionIntegration.executeTheCrew()
 
 elif action == 'integrationOpenScrapers':
 	OrionIntegration.executeOpenScrapers()

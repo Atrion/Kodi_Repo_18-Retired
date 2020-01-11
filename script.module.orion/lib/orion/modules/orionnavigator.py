@@ -31,6 +31,7 @@ from orion.modules.orionsettings import *
 from orion.modules.orioninterface import *
 from orion.modules.orionapp import *
 from orion.modules.orionuser import *
+from orion.modules.orionticket import *
 from orion.modules.orionstream import *
 from orion.modules.orionserver import *
 from orion.modules.orionintegration import *
@@ -105,7 +106,10 @@ class OrionNavigator:
 		user = OrionUser.instance()
 		if user.subscriptionPackageFree(): menu.buildAdd(label = 32044, action = 'dialogPremium', folder = False, icon = 'premium')
 		if user.valid(): menu.buildAdd(label = 32017, action = 'menuAccount', folder = True, icon = 'account')
-		else: menu.buildAdd(label = 32248, action = 'dialogFree', folder = False, icon = 'free')
+		else:
+			menu.buildAdd(label = 32248, action = 'dialogFree', folder = False, icon = 'free')
+			menu.buildAdd(label = 32253, action = 'dialogLogin', folder = False, icon = 'authenticate')
+		menu.buildAdd(label = 32284, action = 'menuSupport', folder = True, icon = 'support')
 		menu.buildAdd(label = 32002, action = 'menuApps', folder = True, icon = 'app')
 		menu.buildAdd(label = 32004, action = 'menuTools', folder = True, icon = 'tools')
 		menu.buildFinish()
@@ -133,11 +137,45 @@ class OrionNavigator:
 		OrionInterface.loaderHide()
 
 	@classmethod
+	def menuSupport(self):
+		menu = OrionNavigator()
+		menu.buildAdd(label = 32285, action = 'menuTickets', folder = True, icon = 'ticket')
+		menu.buildAdd(label = 32056, action = 'menuNotifications', folder = True, icon = 'notification')
+		menu.buildFinish()
+
+	@classmethod
+	def menuTickets(self):
+		if not OrionSettings.getBoolean('internal.tickets'):
+			OrionInterface.dialogConfirm(title = 32285, message = 33062)
+			OrionSettings.set('internal.tickets', True)
+		OrionInterface.loaderShow()
+		OrionTicket.dialogSupport()
+		tickets = OrionTicket.retrieveAll()
+		menu = OrionNavigator()
+		menu.buildAdd(label = 32287, action = 'dialogTicket', folder = False, icon = 'write')
+		for ticket in tickets:
+			menu.buildAdd(label = ticket.label(), action = 'dialogTicket', parameters = {'id' : ticket.id(), 'status' : ticket.status()}, icon = 'ticket')
+		menu.buildFinish()
+		OrionInterface.loaderHide()
+
+	@classmethod
+	def menuNotifications(self):
+		OrionInterface.loaderShow()
+		notifications = OrionNotification.update()
+		if len(notifications) == 0:
+			OrionInterface.dialogNotification(title = 32157, message = 33009, icon = OrionInterface.IconError)
+		else:
+			menu = OrionNavigator()
+			for notification in notifications:
+				menu.buildAdd(label = notification.label(), action = 'dialogNotification', parameters = {'data' : notification.data()}, icon = 'notification')
+			menu.buildFinish()
+		OrionInterface.loaderHide()
+
+	@classmethod
 	def menuTools(self):
 		menu = OrionNavigator()
 		menu.buildAdd(label = 32005, action = 'dialogSettings', parameters = {'option' : True}, folder = False, icon = 'settings')
 		menu.buildAdd(label = 32174, action = 'menuIntegration', folder = True, icon = 'integration')
-		menu.buildAdd(label = 32056, action = 'dialogNotification', folder = False, icon = 'notification')
 		menu.buildAdd(label = 32006, action = 'menuClean', folder = False, icon = 'clean')
 		menu.buildAdd(label = 32156, action = 'dialogServer', folder = False, icon = 'server')
 		menu.buildAdd(label = 32170, action = 'dialogBackup', folder = False, icon = 'backup')
@@ -237,6 +275,11 @@ class OrionNavigator:
 				OrionInterface.dialogConfirm(title = 32271, message = message)
 
 	@classmethod
+	def dialogTicket(self, id = None, status = None):
+		ticket = OrionTicket(id = id, status = status)
+		ticket.dialog()
+
+	@classmethod
 	def dialogServer(self):
 		server = OrionServer.instance()
 		OrionInterface.loaderShow()
@@ -255,18 +298,8 @@ class OrionNavigator:
 		elif choice == 3: OrionSettings.backupExportOnline()
 
 	@classmethod
-	def dialogNotification(self):
-		OrionInterface.loaderShow()
-		notifications = OrionNotification.update()
-		OrionInterface.loaderHide()
-		if len(notifications) == 0:
-			OrionInterface.dialogNotification(title = 32157, message = 33009, icon = OrionInterface.IconError)
-		elif len(notifications) == 1:
-			notifications[0].dialog()
-		else:
-			items = [OrionInterface.fontBold('[' + OrionTools.timeFormat(i.timeAdded(), format = OrionTools.FormatDate) + '] ') + i.contentTitle() for i in notifications]
-			choice = OrionInterface.dialogOptions(title = 32157, items = items)
-			if choice >= 0: notifications[choice].dialog(wait = True)
+	def dialogNotification(self, data):
+		OrionNotification(data = data).dialog()
 
 	@classmethod
 	def dialogLink(self, link = None):
@@ -284,6 +317,10 @@ class OrionNavigator:
 			OrionUser.anonymous()
 			OrionInterface.containerRefresh()
 
+	@classmethod
+	def dialogLogin(self):
+		return self.settingsAccountLogin(settings = False, refresh = True)
+
 	##############################################################################
 	# SETTINGS
 	##############################################################################
@@ -300,8 +337,11 @@ class OrionNavigator:
 				OrionIntegration.check()
 
 				# Reduce the limits for free users.
-				if user.subscriptionPackageFree():
+				if user.subscriptionPackageAnonymous():
 					OrionSettings.setFiltersLimitCount(OrionUser.LinksAnonymous)
+					OrionSettings.setFiltersLimitRetry(0)
+				elif user.subscriptionPackageFree():
+					OrionSettings.setFiltersLimitCount(OrionUser.LinksFree)
 					OrionSettings.setFiltersLimitRetry(0)
 
 				if user.addonKodi() and OrionInterface.dialogOption(title = 32170, message = 33012):
@@ -317,16 +357,18 @@ class OrionNavigator:
 
 	@classmethod
 	def settingsAccountKey(self, loader = True, hide = True):
-		user = OrionUser.instance()
-		if OrionInterface.dialogOption(title = 32034, message = 33010, labelConfirm = 32020, labelDeny = 32018):
-			email = self.settingsAccountInput(title = 32020)
+		instance = OrionUser.instance()
+		choice = OrionInterface.dialogOptions(title = 32034, items = [32273, 32274, 32275])
+		if choice == 0:
+			return self.settingsAccountInput(title = 32018, default = instance.key())
+		elif choice > 0:
+			user = self.settingsAccountInput(title = 32020 if choice == 1 else 32276)
 			password = self.settingsAccountInput(title = 32168)
 			if loader: OrionInterface.loaderShow()
-			result = user.login(email = email, password = password)
+			result = instance.login(user = user, password = password)
 			if loader and hide: OrionInterface.loaderHide()
 			return result
-		else:
-			return self.settingsAccountInput(title = 32018, default = user.key())
+		return None
 
 	@classmethod
 	def settingsAccountInput(self, title, default = ''):
@@ -358,7 +400,7 @@ class OrionNavigator:
 		while True:
 			ids = []
 			items = []
-			for key, value in values.iteritems():
+			for key, value in OrionTools.iterator(values):
 				ids.append(key)
 				items.append(value['name'] + (enabled if value['enabled'] else disabled))
 			items, ids = zip(*sorted(zip(items, ids))) # Sort alphabetically
@@ -391,7 +433,7 @@ class OrionNavigator:
 		while True:
 			ids = []
 			items = []
-			for key, value in values.iteritems():
+			for key, value in OrionTools.iterator(values):
 				ids.append(key)
 				items.append('[' + OrionInterface.fontUppercase(value['code']) + '] ' + value['name'] + (enabled if value['enabled'] else disabled)) # Do not use Python upper function, otherwise it results in [CR] which means a line break in Kodi.
 			items, ids = zip(*sorted(zip(items, ids))) # Sort alphabetically
@@ -426,7 +468,7 @@ class OrionNavigator:
 		while True:
 			ids = []
 			items = []
-			for key, value in values.iteritems():
+			for key, value in OrionTools.iterator(values):
 				ids.append(key)
 				items.append(value['name'].upper() + (enabled if value['enabled'] else disabled))
 			items, ids = zip(*sorted(zip(items, ids))) # Sort alphabetically
@@ -462,7 +504,7 @@ class OrionNavigator:
 		while True:
 			ids = []
 			items = []
-			for key, value in values.iteritems():
+			for key, value in OrionTools.iterator(values):
 				ids.append(key)
 				items.append('[' + types[value['type']] + '] ' + value['name'].upper() + (enabled if value['enabled'] else disabled))
 			items, ids = zip(*sorted(zip(items, ids))) # Sort alphabetically
@@ -497,7 +539,7 @@ class OrionNavigator:
 		while True:
 			ids = []
 			items = []
-			for key, value in values.iteritems():
+			for key, value in OrionTools.iterator(values):
 				ids.append(key)
 				items.append(value['name'].upper() + (enabled if value['enabled'] else disabled))
 			items, ids = zip(*sorted(zip(items, ids))) # Sort alphabetically

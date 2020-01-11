@@ -24,6 +24,7 @@
 # Class for integrating Orion into other addons.
 ##############################################################################
 
+import re
 from orion.modules.oriontools import *
 from orion.modules.orionsettings import *
 from orion.modules.orioninterface import *
@@ -58,13 +59,14 @@ class OrionIntegration:
 	AddonContinuum = 'Continuum'
 	AddonMarauder = 'Marauder'
 	AddonAsguard = 'Asguard'
+	AddonTheCrew = 'The Crew'
 	AddonOpenScrapers = 'Open Scrapers'
 	AddonLambdaScrapers = 'Lambda Scrapers'
 	AddonUniversalScrapers = 'Universal Scrapers'
 	AddonNanScrapers = 'NaN Scrapers'
 	AddonElementum = 'Elementum'
 	AddonQuasar = 'Quasar'
-	Addons = [AddonGaia, AddonSeren, AddonIncursion, AddonPlacenta, AddonCovenant, AddonMagicality, AddonTheOath, AddonYoda, AddonBodie, AddonNymeria, AddonVenom, AddonScrubs, AddonMedusa, AddonMercury, AddonDeceit, AddonFen, AddonGenesis, AddonExodus, AddonExodusRedux, AddonNeptuneRising, AddonDeathStreams, AddonBoomMovies, AddonContinuum, AddonMarauder, AddonAsguard, AddonOpenScrapers, AddonLambdaScrapers, AddonUniversalScrapers, AddonNanScrapers, AddonElementum, AddonQuasar]
+	Addons = [AddonGaia, AddonSeren, AddonIncursion, AddonPlacenta, AddonCovenant, AddonMagicality, AddonTheOath, AddonYoda, AddonBodie, AddonNymeria, AddonVenom, AddonScrubs, AddonMedusa, AddonMercury, AddonDeceit, AddonFen, AddonGenesis, AddonExodus, AddonExodusRedux, AddonNeptuneRising, AddonDeathStreams, AddonBoomMovies, AddonContinuum, AddonMarauder, AddonAsguard, AddonTheCrew, AddonOpenScrapers, AddonLambdaScrapers, AddonUniversalScrapers, AddonNanScrapers, AddonElementum, AddonQuasar]
 
 	LanguageXml = 'xml'
 	LanguagePython = 'python'
@@ -73,6 +75,13 @@ class OrionIntegration:
 	CommentXmlEnd = '<!-- [/ORION] -->'
 	CommentPythonStart = '# [ORION/]'
 	CommentPythonEnd = '# [/ORION]'
+
+	##############################################################################
+	# CONSTRUCTOR
+	##############################################################################
+
+	def __init__(self, silent = False):
+		self.mSilent = silent
 
 	##############################################################################
 	# GENERAL
@@ -149,8 +158,8 @@ class OrionIntegration:
 	##############################################################################
 
 	@classmethod
-	def initialize(self, addon):
-		integration = OrionIntegration()
+	def initialize(self, addon, silent = False):
+		integration = OrionIntegration(silent = silent)
 		try:
 			if addon == OrionIntegration.AddonGaia: integration._gaiaInitialize()
 			elif addon == OrionIntegration.AddonSeren: integration._serenInitialize()
@@ -177,6 +186,7 @@ class OrionIntegration:
 			elif addon == OrionIntegration.AddonContinuum: integration._continuumInitialize()
 			elif addon == OrionIntegration.AddonMarauder: integration._marauderInitialize()
 			elif addon == OrionIntegration.AddonAsguard: integration._asguardInitialize()
+			elif addon == OrionIntegration.AddonTheCrew: integration._theCrewInitialize()
 			elif addon == OrionIntegration.AddonOpenScrapers: integration._openScrapersInitialize()
 			elif addon == OrionIntegration.AddonLambdaScrapers: integration._lambdaScrapersInitialize()
 			elif addon == OrionIntegration.AddonUniversalScrapers: integration._universalScrapersInitialize()
@@ -192,10 +202,10 @@ class OrionIntegration:
 	##############################################################################
 
 	@classmethod
-	def check(self):
+	def check(self, silent = False):
 		for addon in OrionIntegration.Addons:
 			try:
-				integration = self.initialize(addon)
+				integration = self.initialize(addon, silent = silent)
 				setting = OrionSettings.getIntegration(integration.id)
 				try: native = integration.native
 				except: native = False
@@ -215,12 +225,15 @@ class OrionIntegration:
 		formatIntegrated = OrionInterface.font(32256, color = OrionInterface.ColorMedium)
 		formatNotIntegrated = OrionInterface.font(32257, color = OrionInterface.ColorPoor)
 		formatNotInstalled = OrionInterface.font(32258, color = OrionInterface.ColorBad)
+		formatNotEnabled = OrionInterface.font(32281, color = OrionInterface.ColorBad)
 		for addon in OrionIntegration.Addons:
 			try:
 				integration = self.initialize(addon)
 				idAddon = None
 				try: idAddon = integration.idPlugin
 				except: idAddon = integration.idModule
+				try: settings = integration.idSettings
+				except: settings = idAddon
 				try: version = OrionTools.addonVersion(idAddon)
 				except: version = None
 				try: native = integration.native
@@ -233,12 +246,13 @@ class OrionIntegration:
 				except:
 					scrapers = None
 					scrapersId = None
+				installed = OrionTools.addonInstalled(idAddon)
 				enabled = OrionTools.addonEnabled(idAddon)
 				integrated = OrionSettings.getIntegration(integration.id)
 				integrated = native or not integrated == '' or (enabled and scrapersId and OrionSettings.getIntegration(scrapersId))
 				action = 'integration' + addon.title().replace(' ', '')
-				format = '%s: %s' % (OrionInterface.font(addon, bold = True), formatNotInstalled if not enabled else formatNative if native else formatIntegrated if integrated else formatNotIntegrated)
-				result.append({'id' : integration.id, 'name' : addon, 'addon' : idAddon, 'enabled' : enabled, 'integrated' : integrated, 'native' : native, 'restart' : restart, 'scrapers' : scrapers, 'action' : action, 'format' : format})
+				format = '%s: %s' % (OrionInterface.font(addon, bold = True), formatNotInstalled if not installed else formatNotEnabled if not enabled else formatNative if native else formatIntegrated if integrated else formatNotIntegrated)
+				result.append({'id' : integration.id, 'name' : addon, 'addon' : idAddon, 'version' : version, 'settings' : settings, 'installed' : installed, 'enabled' : enabled, 'integrated' : integrated, 'native' : native, 'restart' : restart, 'scrapers' : scrapers, 'action' : action, 'format' : format})
 			except:
 				OrionTools.error()
 		if sort: result = sorted(result, key = lambda i: i['name'])
@@ -266,16 +280,17 @@ class OrionIntegration:
 	@classmethod
 	def clean(self, addon):
 		integration = self.initialize(addon)
-		if OrionTools.addonEnabled(integration.idPlugin):
-			if OrionInterface.dialogOption(title = 32174, message = OrionTools.translate(33021) % addon):
-				integration._clean()
-				integration._backupRestore()
-				integration._deintegrate(addon)
-				OrionSettings.setIntegration(integration.id, '')
-				OrionInterface.dialogNotification(title = 32177, message = 33019, icon = OrionInterface.IconSuccess)
-				return True
-		else:
+		if not OrionTools.addonInstalled(integration.idPlugin):
 			OrionInterface.dialogNotification(title = 32175, message = 33027, icon = OrionInterface.IconError)
+		elif not OrionTools.addonEnabled(integration.idPlugin):
+			OrionInterface.dialogNotification(title = 32175, message = 33010, icon = OrionInterface.IconError)
+		elif OrionInterface.dialogOption(title = 32174, message = OrionTools.translate(33021) % addon):
+			integration._backupRestore()
+			integration._clean()
+			integration._deintegrate(addon)
+			OrionSettings.setIntegration(integration.id, '')
+			OrionInterface.dialogNotification(title = 32177, message = 33019, icon = OrionInterface.IconSuccess)
+			return True
 		return False
 
 	##############################################################################
@@ -285,29 +300,31 @@ class OrionIntegration:
 	@classmethod
 	def integrate(self, addon, silent = False):
 		integration = self.initialize(addon)
-		if OrionTools.addonEnabled(integration.idPlugin):
-			if silent or OrionInterface.dialogOption(title = 32174, message = OrionTools.translate(33020) % (addon, addon)):
-				if integration._integrate(addon):
-					try: reintegrate = integration.reintegrate or silent
-					except: reintegrate = True
-					try: restart = integration.restart
-					except: restart = True
-					if reintegrate and not addon == OrionIntegration.AddonSeren and (silent or OrionInterface.dialogOption(title = 32174, message = OrionTools.translate(33022) % (addon, addon))):
-						OrionSettings.setIntegration(integration.id, integration.version)
-					else:
-						OrionSettings.setIntegration(integration.id, 0)
-					if not silent and restart:
-						message = (OrionTools.translate(33025) % addon) + OrionInterface.fontNewline() + OrionInterface.font(33026, bold = True)
-						if OrionInterface.dialogOption(title = 32174, message = message, labelConfirm = 32261, labelDeny = 32262):
-							OrionTools.kodiRestart()
-					return True
-		else:
+		if not OrionTools.addonInstalled(integration.idPlugin):
 			OrionInterface.dialogNotification(title = 32175, message = 33027, icon = OrionInterface.IconError)
+		elif not OrionTools.addonEnabled(integration.idPlugin):
+			OrionInterface.dialogNotification(title = 32175, message = 33010, icon = OrionInterface.IconError)
+		elif silent or OrionInterface.dialogOption(title = 32174, message = OrionTools.translate(33020) % (addon, addon)):
+			if integration._integrate(addon):
+				try: reintegrate = integration.reintegrate or silent
+				except: reintegrate = True
+				try: restart = integration.restart
+				except: restart = True
+				if reintegrate and not addon == OrionIntegration.AddonSeren and (silent or OrionInterface.dialogOption(title = 32174, message = OrionTools.translate(33022) % (addon, addon))):
+					OrionSettings.setIntegration(integration.id, integration.version)
+				else:
+					OrionSettings.setIntegration(integration.id, 0)
+				if not silent and restart:
+					message = (OrionTools.translate(33025) % addon) + OrionInterface.fontNewline() + OrionInterface.font(33026, bold = True)
+					if OrionInterface.dialogOption(title = 32174, message = message, labelConfirm = 32261, labelDeny = 32262):
+						OrionTools.kodiRestart()
+				return True
 		return False
 
 	def _integrate(self, addon):
-		self._backupCreate()
+		self._backupRestore()
 		self._clean()
+		self._backupCreate()
 		result = False
 		if addon == OrionIntegration.AddonGaia: result = True
 		elif addon == OrionIntegration.AddonSeren: result = self._serenIntegrate()
@@ -322,6 +339,7 @@ class OrionIntegration:
 		elif addon == OrionIntegration.AddonContinuum: result = self._continuumIntegrate()
 		elif addon == OrionIntegration.AddonMarauder: result = True
 		elif addon == OrionIntegration.AddonAsguard: result = True
+		elif addon == OrionIntegration.AddonTheCrew: result = True
 		elif addon == OrionIntegration.AddonScrubs: result = self._scrubsIntegrate()
 		elif addon == OrionIntegration.AddonFen: result = self._fenIntegrate()
 		elif addon == OrionIntegration.AddonGenesis: result = self._genesisIntegrate()
@@ -335,7 +353,7 @@ class OrionIntegration:
 		return result
 
 	def _integrateSuccess(self):
-		OrionInterface.dialogNotification(title = 32176, message = 33018, icon = OrionInterface.IconSuccess)
+		if not self.mSilent: OrionInterface.dialogNotification(title = 32176, message = 33018, icon = OrionInterface.IconSuccess)
 		return True
 
 	def _integrateFailure(self, message = None, path = None):
@@ -365,12 +383,36 @@ class OrionIntegration:
 	@classmethod
 	def launch(self, addon):
 		integration = self.initialize(addon)
-		if OrionTools.addonEnabled(integration.idPlugin):
+		if not OrionTools.addonInstalled(integration.idPlugin):
+			OrionInterface.dialogNotification(title = 32282, message = 33027, icon = OrionInterface.IconError)
+		elif not OrionTools.addonEnabled(integration.idPlugin):
+			OrionInterface.dialogNotification(title = 32282, message = 33010, icon = OrionInterface.IconError)
+		else:
 			OrionTools.addonLaunch(integration.idPlugin)
 			return True
+		return False
+
+	##############################################################################
+	# SETTINGS
+	##############################################################################
+
+	@classmethod
+	def settings(self, addon):
+		integration = self.initialize(addon)
+		try: addon = integration.idSettings
+		except:
+			try: addon = integration.idPlugin
+			except:
+				try: addon = integration.idModule
+				except: addon = None
+		if not addon or not OrionTools.addonInstalled(addon):
+			OrionInterface.dialogNotification(title = 32282, message = 33027, icon = OrionInterface.IconError)
+		elif not OrionTools.addonEnabled(addon):
+			OrionInterface.dialogNotification(title = 32282, message = 33010, icon = OrionInterface.IconError)
 		else:
-			OrionInterface.dialogNotification(title = 32175, message = 33027, icon = OrionInterface.IconError)
-			return False
+			OrionSettings.launch(addon = addon)
+			return True
+		return False
 
 	##############################################################################
 	# EXECUTE
@@ -397,7 +439,9 @@ class OrionIntegration:
 			items.append(OrionInterface.fontBold(32178) + ': ' + OrionTools.translate(32179))
 			items.append(OrionInterface.fontBold(32006) + ': ' + OrionTools.translate(32180))
 		items.append(OrionInterface.fontBold(32181) + ': ' + OrionTools.translate(32182))
+		items.append(OrionInterface.fontBold(32005) + ': ' + OrionTools.translate(32280))
 		choice = OrionInterface.dialogOptions(title = 32174, items = items)
+
 		if integrate:
 			if choice == 0:
 				result = self.integrate(addon)
@@ -409,9 +453,13 @@ class OrionIntegration:
 				return result
 			elif choice == 2:
 				return self.launch(addon)
+			elif choice == 3:
+				return self.settings(addon)
 		else:
 			if choice == 0:
 				return self.launch(addon)
+			elif choice == 1:
+				return self.settings(addon)
 
 	@classmethod
 	def executeGaia(self):
@@ -514,6 +562,10 @@ class OrionIntegration:
 		return self.execute(OrionIntegration.AddonAsguard)
 
 	@classmethod
+	def executeTheCrew(self):
+		return self.execute(OrionIntegration.AddonTheCrew)
+
+	@classmethod
 	def executeOpenScrapers(self):
 		return self.execute(OrionIntegration.AddonOpenScrapers)
 
@@ -545,6 +597,7 @@ class OrionIntegration:
 		self.name = OrionIntegration.AddonGaia
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.gaia'
+		self.idSettings = self.idPlugin
 		self.version = self._version(self.idPlugin)
 		self.native = True
 		self.files = []
@@ -558,6 +611,7 @@ class OrionIntegration:
 		self.name = OrionIntegration.AddonSeren
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.seren'
+		self.idSettings = self.idPlugin
 		self.version = self._version(self.idPlugin)
 		self.reintegrate = False
 		self.restart = False
@@ -582,6 +636,7 @@ class OrionIntegration:
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.incursion'
 		self.idModule = 'script.module.incursion'
+		self.idSettings = self.idPlugin
 		self.version = self._version(self.idPlugin, self.idModule)
 
 		self.pathPlugin = OrionTools.addonPath(self.idPlugin)
@@ -615,7 +670,7 @@ class OrionIntegration:
 
 		# __init__.py
 		data = self._comment(self._content('sources.py'), OrionIntegration.LanguagePython, '                    ')
-		if not OrionTools.fileInsert(self.pathSources, '\.load_module\(module_name\)', data):
+		if not OrionTools.fileInsert(self.pathSources, '\.load_module\(module_name\)', data, validate = True):
 			return self._integrateFailure('Incursion sources integration failure', self.pathSources)
 
 		# orionoid.py
@@ -637,6 +692,7 @@ class OrionIntegration:
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.placenta'
 		self.idModule = 'script.module.placenta'
+		self.idSettings = self.idPlugin
 		self.version = self._version(self.idPlugin, self.idModule)
 
 		self.pathPlugin = OrionTools.addonPath(self.idPlugin)
@@ -670,7 +726,7 @@ class OrionIntegration:
 
 		# __init__.py
 		data = self._comment(self._content('sources.py'), OrionIntegration.LanguagePython, '                    ')
-		if not OrionTools.fileInsert(self.pathSources, '\.load_module\(module_name\)', data):
+		if not OrionTools.fileInsert(self.pathSources, '\.load_module\(module_name\)', data, validate = True):
 			return self._integrateFailure('Placenta sources integration failure', self.pathSources)
 
 		# orionoid.py
@@ -692,6 +748,7 @@ class OrionIntegration:
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.covenant'
 		self.idModule = 'script.module.covenant'
+		self.idSettings = self.idPlugin
 		self.version = self._version(self.idPlugin, self.idModule)
 
 		self.pathPlugin = OrionTools.addonPath(self.idPlugin)
@@ -725,7 +782,7 @@ class OrionIntegration:
 
 		# __init__.py
 		data = self._comment(self._content('sources.py'), OrionIntegration.LanguagePython, '                    ')
-		if not OrionTools.fileInsert(self.pathSources, '\.load_module\(module_name\)', data):
+		if not OrionTools.fileInsert(self.pathSources, '\.load_module\(module_name\)', data, validate = True):
 			return self._integrateFailure('Covenant sources integration failure', self.pathSources)
 
 		# orionoid.py
@@ -747,6 +804,7 @@ class OrionIntegration:
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.magicality'
 		self.idModule = 'script.module.magicality'
+		self.idSettings = self.idPlugin
 		self.version = self._version(self.idPlugin, self.idModule)
 
 		self.pathPlugin = OrionTools.addonPath(self.idPlugin)
@@ -780,7 +838,7 @@ class OrionIntegration:
 
 		# __init__.py
 		data = self._comment(self._content('sources.py'), OrionIntegration.LanguagePython, '                    ')
-		if not OrionTools.fileInsert(self.pathSources, '\.load_module\(module_name\)', data):
+		if not OrionTools.fileInsert(self.pathSources, '\.load_module\(module_name\)', data, validate = True):
 			return self._integrateFailure('Magicality sources integration failure', self.pathSources)
 
 		# orionoid.py
@@ -801,6 +859,7 @@ class OrionIntegration:
 		self.name = OrionIntegration.AddonTheOath
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.theoath'
+		self.idSettings = self.idPlugin
 		self.version = self._version(self.idPlugin)
 		self.native = True
 		self.files = []
@@ -815,6 +874,7 @@ class OrionIntegration:
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.yoda'
 		self.idModule = 'script.module.yoda'
+		self.idSettings = self.idPlugin
 		self.version = self._version(self.idPlugin, self.idModule)
 
 		self.pathPlugin = OrionTools.addonPath(self.idPlugin)
@@ -848,7 +908,7 @@ class OrionIntegration:
 
 		# __init__.py
 		data = self._comment(self._content('sources.py'), OrionIntegration.LanguagePython, '                    ')
-		if not OrionTools.fileInsert(self.pathSources, '\.load_module\(module_name\)', data):
+		if not OrionTools.fileInsert(self.pathSources, '\.load_module\(module_name\)', data, validate = True):
 			return self._integrateFailure('Yoda sources integration failure', self.pathSources)
 
 		# orionoid.py
@@ -869,6 +929,7 @@ class OrionIntegration:
 		self.name = OrionIntegration.AddonBodie
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.bodiekodi'
+		self.idSettings = self.idPlugin
 		self.version = self._version(self.idPlugin)
 		self.scrapers = OrionIntegration.AddonLambdaScrapers
 		self.files = []
@@ -882,6 +943,7 @@ class OrionIntegration:
 		self.name = OrionIntegration.AddonNymeria
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.nymeria'
+		self.idSettings = self.idPlugin
 		self.version = self._version(self.idPlugin)
 		self.scrapers = OrionIntegration.AddonUniversalScrapers
 		self.files = []
@@ -895,6 +957,7 @@ class OrionIntegration:
 		self.name = OrionIntegration.AddonVenom
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.venom'
+		self.idSettings = self.idPlugin
 		self.version = self._version(self.idPlugin)
 		self.scrapers = OrionIntegration.AddonOpenScrapers
 		self.files = []
@@ -909,6 +972,7 @@ class OrionIntegration:
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.scrubsv2'
 		self.idModule = 'script.module.scrubsv2'
+		self.idSettings = self.idPlugin
 		self.version = self._version(self.idPlugin, self.idModule)
 
 		self.pathPlugin = OrionTools.addonPath(self.idPlugin)
@@ -942,7 +1006,7 @@ class OrionIntegration:
 
 		# __init__.py
 		data = self._comment(self._content('sources.py'), OrionIntegration.LanguagePython, '                    ')
-		if not OrionTools.fileInsert(self.pathSources, '\.load_module\(module_name\)', data):
+		if not OrionTools.fileInsert(self.pathSources, '\.load_module\(module_name\)', data, validate = True):
 			return self._integrateFailure('Scrubs sources integration failure', self.pathSources)
 
 		# orionoid.py
@@ -963,6 +1027,7 @@ class OrionIntegration:
 		self.name = OrionIntegration.AddonMedusa
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.Medusa'
+		self.idSettings = self.idPlugin
 		self.version = self._version(self.idPlugin)
 		self.scrapers = OrionIntegration.AddonUniversalScrapers
 		self.files = []
@@ -976,6 +1041,7 @@ class OrionIntegration:
 		self.name = OrionIntegration.AddonMercury
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.Mercury'
+		self.idSettings = self.idPlugin
 		self.version = self._version(self.idPlugin)
 		self.scrapers = OrionIntegration.AddonUniversalScrapers
 		self.files = []
@@ -989,6 +1055,7 @@ class OrionIntegration:
 		self.name = OrionIntegration.AddonDeceit
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.deceit'
+		self.idSettings = self.idPlugin
 		self.version = self._version(self.idPlugin)
 		self.scrapers = OrionIntegration.AddonUniversalScrapers
 		self.files = []
@@ -1003,6 +1070,7 @@ class OrionIntegration:
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.fen'
 		self.idModule = 'script.module.tikiscrapers'
+		self.idSettings = self.idModule
 		self.version = self._version(self.idPlugin, self.idModule)
 
 		self.pathPlugin = OrionTools.addonPath(self.idPlugin)
@@ -1035,9 +1103,9 @@ class OrionIntegration:
 			return self._integrateFailure('Fen addon metadata integration failure', self.pathAddon)
 
 		# __init__.py
-		data1 = self._comment(self._content('sources.py'), OrionIntegration.LanguagePython, '            ')
+		data1 = self._comment(self._content('sources.py'), OrionIntegration.LanguagePython, '                    ')
 		data2 = self._comment(self._content('sources.py'), OrionIntegration.LanguagePython, '            ')
-		if not OrionTools.fileInsert(self.pathSources, ['\.load_module\(module_name\)', 'def\s*scraperNames.*if is_pkg:\s*continue'], [data1, data2], [None, re.S]):
+		if not OrionTools.fileInsert(self.pathSources, ['\.load_module\(module_name\)', 'def\s*scraperNames.*if is_pkg:\s*continue'], [data1, data2], [None, re.S], validate = True):
 			return self._integrateFailure('Fen sources integration failure', self.pathSources)
 
 		# orionoid.py
@@ -1058,6 +1126,7 @@ class OrionIntegration:
 		self.name = OrionIntegration.AddonGenesis
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.genesis'
+		self.idSettings = self.idPlugin
 		self.version = self._version(self.idPlugin)
 
 		self.pathPlugin = OrionTools.addonPath(self.idPlugin)
@@ -1090,7 +1159,7 @@ class OrionIntegration:
 
 		# __init__.py
 		data = self._comment(self._content('sources.py'), OrionIntegration.LanguagePython, '                    ')
-		if not OrionTools.fileInsert(self.pathSources, '\.load_module\(module_name\)', data):
+		if not OrionTools.fileInsert(self.pathSources, '\.load_module\(module_name\)', data, validate = True):
 			return self._integrateFailure('Genesis sources integration failure', self.pathSources)
 
 		# orionoid.py
@@ -1112,6 +1181,7 @@ class OrionIntegration:
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.exodus'
 		self.idModule = 'script.module.exoscrapers'
+		self.idSettings = self.idModule
 		self.version = self._version(self.idPlugin, self.idModule)
 
 		self.pathPlugin = OrionTools.addonPath(self.idPlugin)
@@ -1146,12 +1216,12 @@ class OrionIntegration:
 
 		# __init__.py
 		data = self._comment(self._content('scrapers.py'), OrionIntegration.LanguagePython, '    ')
-		if not OrionTools.fileInsert(self.pathScrapers, 'return sourceDict', data):
+		if not OrionTools.fileInsert(self.pathScrapers, 'return sourceDict', data, validate = True):
 			return self._integrateFailure('Yoda scrapers integration failure', self.pathScrapers)
 
 		# __init__.py
 		data = self._comment(self._content('sources.py'), OrionIntegration.LanguagePython)
-		if not OrionTools.fileInsert(self.pathSources, 'all_providers\s*=\s*\[\]', data):
+		if not OrionTools.fileInsert(self.pathSources, 'all_providers\s*=\s*\[\]', data, validate = True):
 			return self._integrateFailure('Exodus sources integration failure', self.pathSources)
 
 		# orionoid.py
@@ -1172,6 +1242,7 @@ class OrionIntegration:
 		self.name = OrionIntegration.AddonExodusRedux
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.exodusredux'
+		self.idSettings = self.idPlugin
 		self.version = self._version(self.idPlugin)
 		self.scrapers = OrionIntegration.AddonOpenScrapers
 		self.files = []
@@ -1185,6 +1256,7 @@ class OrionIntegration:
 		self.name = OrionIntegration.AddonNeptuneRising
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.neptune'
+		self.idSettings = self.idPlugin
 		self.version = self._version(self.idPlugin)
 		self.scrapers = OrionIntegration.AddonUniversalScrapers
 		self.files = []
@@ -1198,6 +1270,7 @@ class OrionIntegration:
 		self.name = OrionIntegration.AddonDeathStreams
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.blamo'
+		self.idSettings = self.idPlugin
 		self.version = self._version(self.idPlugin)
 
 		self.pathPlugin = OrionTools.addonPath(self.idPlugin)
@@ -1232,6 +1305,7 @@ class OrionIntegration:
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.BoomMovies'
 		self.idModule = 'script.module.BoomMovies'
+		self.idSettings = self.idPlugin
 		self.version = self._version(self.idPlugin, self.idModule)
 
 		self.pathPlugin = OrionTools.addonPath(self.idPlugin)
@@ -1265,7 +1339,7 @@ class OrionIntegration:
 
 		# __init__.py
 		data = self._comment(self._content('sources.py'), OrionIntegration.LanguagePython, '                    ')
-		if not OrionTools.fileInsert(self.pathSources, '\.load_module\(module_name\)', data):
+		if not OrionTools.fileInsert(self.pathSources, '\.load_module\(module_name\)', data, validate = True):
 			return self._integrateFailure('BoomMovies sources integration failure', self.pathSources)
 
 		# orionoid.py
@@ -1287,6 +1361,7 @@ class OrionIntegration:
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.cmovies'
 		self.idModule = 'script.module.cmovies'
+		self.idSettings = self.idPlugin
 		self.version = self._version(self.idPlugin, self.idModule)
 
 		self.pathPlugin = OrionTools.addonPath(self.idPlugin)
@@ -1320,7 +1395,7 @@ class OrionIntegration:
 
 		# __init__.py
 		data = self._comment(self._content('sources.py'), OrionIntegration.LanguagePython, '                    ')
-		if not OrionTools.fileInsert(self.pathSources, '\.load_module\(module_name\)', data):
+		if not OrionTools.fileInsert(self.pathSources, '\.load_module\(module_name\)', data, validate = True):
 			return self._integrateFailure('Continuum sources integration failure', self.pathSources)
 
 		# orionoid.py
@@ -1341,6 +1416,7 @@ class OrionIntegration:
 		self.name = OrionIntegration.AddonMarauder
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.marauder'
+		self.idSettings = self.idPlugin
 		self.version = self._version(self.idPlugin)
 		self.native = True
 		self.files = []
@@ -1354,6 +1430,21 @@ class OrionIntegration:
 		self.name = OrionIntegration.AddonAsguard
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.asguard'
+		self.idSettings = self.idPlugin
+		self.version = self._version(self.idPlugin)
+		self.native = True
+		self.files = []
+		self.deletes = []
+
+	##############################################################################
+	# THECREW
+	##############################################################################
+
+	def _theCrewInitialize(self):
+		self.name = OrionIntegration.AddonTheCrew
+		self.id = self.id(self.name)
+		self.idPlugin = 'plugin.video.thecrew'
+		self.idSettings = self.idPlugin
 		self.version = self._version(self.idPlugin)
 		self.native = True
 		self.files = []
@@ -1367,8 +1458,9 @@ class OrionIntegration:
 		self.name = OrionIntegration.AddonOpenScrapers
 		self.id = self.id(self.name)
 		self.idPlugin = 'script.module.openscrapers'
+		self.idSettings = self.idPlugin
 		self.version = self._version(self.idPlugin)
-		self.versionNumber = int(self.version.replace('.', ''))
+		self.versionNumber = int(re.sub('[^0-9]', '', self.version)) if self.version else None
 
 		self.pathPlugin = OrionTools.addonPath(self.idPlugin)
 
@@ -1397,7 +1489,7 @@ class OrionIntegration:
 
 		# __init__.py
 		data = self._comment(self._content('sources.py'), OrionIntegration.LanguagePython, '\t\t\t\t\t')
-		if not OrionTools.fileInsert(self.pathSources, '\.load_module\(module_name\)', data):
+		if not OrionTools.fileInsert(self.pathSources, '\.load_module\(module_name\)', data, validate = True):
 			return self._integrateFailure('Open Scrapers sources integration failure', self.pathSources)
 
 		# addon.xml
@@ -1423,15 +1515,16 @@ class OrionIntegration:
 		self.name = OrionIntegration.AddonLambdaScrapers
 		self.id = self.id(self.name)
 		self.idPlugin = 'script.module.lambdascrapers'
+		self.idSettings = self.idPlugin
 		self.version = self._version(self.idPlugin)
-		self.versionNumber = int(self.version.replace('.', ''))
+		self.versionNumber = int(re.sub('[^0-9]', '', self.version)) if self.version else None
 
 		self.pathPlugin = OrionTools.addonPath(self.idPlugin)
 
 		self.pathSettings = OrionTools.pathJoin(self.pathPlugin, 'resources', 'settings.xml')
 		self.pathAddon = OrionTools.pathJoin(self.pathPlugin, 'addon.xml')
 
-		if self.versionNumber < 150: # version < 1.5.3
+		if self.versionNumber and self.versionNumber < 150: # version < 1.5.3
 			self.pathSources = OrionTools.pathJoin(self.pathPlugin, 'lib', 'lambdascrapers', 'sources_ALL', '__init__.py')
 			self.pathOrion = OrionTools.pathJoin(self.pathPlugin, 'lib', 'lambdascrapers', 'sources_ALL', 'orion')
 			self.pathOrionoid = OrionTools.pathJoin(self.pathOrion, 'orionoid.py')
@@ -1463,7 +1556,7 @@ class OrionIntegration:
 		if self.versionNumber < 150: # version < 1.5.3
 			# __init__.py
 			data = self._comment(self._content('sources.py'), OrionIntegration.LanguagePython, '                    ')
-			if not OrionTools.fileInsert(self.pathSources, '\.load_module\(module_name\)', data):
+			if not OrionTools.fileInsert(self.pathSources, '\.load_module\(module_name\)', data, validate = True):
 				return self._integrateFailure('Lambda Scrapers sources integration failure', self.pathSources)
 
 			# addon.xml
@@ -1488,7 +1581,7 @@ class OrionIntegration:
 
 			# __init__.py
 			data = self._comment(self._content('sources.py'), OrionIntegration.LanguagePython, '                    ')
-			if not OrionTools.fileInsert(self.pathSources, '\.load_module\(module_name\)', data):
+			if not OrionTools.fileInsert(self.pathSources, '\.load_module\(module_name\)', data, validate = True):
 				return self._integrateFailure('Lambda Scrapers sources integration failure', self.pathSources)
 
 			# addon.xml
@@ -1514,6 +1607,7 @@ class OrionIntegration:
 		self.name = OrionIntegration.AddonUniversalScrapers
 		self.id = self.id(self.name)
 		self.idPlugin = 'script.module.universalscrapers'
+		self.idSettings = self.idPlugin
 		self.version = self._version(self.idPlugin)
 
 		self.pathPlugin = OrionTools.addonPath(self.idPlugin)
@@ -1539,7 +1633,7 @@ class OrionIntegration:
 
 		# __init__.py
 		data = self._comment(self._content('module.py'), OrionIntegration.LanguagePython, '    ')
-		if not OrionTools.fileInsert(self.pathInit, 'relevant_scrapers\(\s*include_disabled\s*=\s*True\s*\),\s*key\s*=\s*lambda\s*x\s*:\s*x\.name\.lower\(\)\s*\)', data):
+		if not OrionTools.fileInsert(self.pathInit, 'relevant_scrapers\(\s*include_disabled\s*=\s*True\s*\),\s*key\s*=\s*lambda\s*x\s*:\s*x\.name\.lower\(\)\s*\)', data, validate = True):
 			return self._integrateFailure('Universal Scrapers module integration failure', self.pathInit)
 
 		# addon.xml
@@ -1561,6 +1655,7 @@ class OrionIntegration:
 		self.name = OrionIntegration.AddonNanScrapers
 		self.id = self.id(self.name)
 		self.idPlugin = 'script.module.nanscrapers'
+		self.idSettings = self.idPlugin
 		self.version = self._version(self.idPlugin)
 
 		self.pathPlugin = OrionTools.addonPath(self.idPlugin)
@@ -1586,7 +1681,7 @@ class OrionIntegration:
 
 		# __init__.py
 		data = self._comment(self._content('module.py'), OrionIntegration.LanguagePython, '    ')
-		if not OrionTools.fileInsert(self.pathInit, 'relevant_scrapers\(\s*include_disabled\s*=\s*True\s*\),\s*key\s*=\s*lambda\s*x\s*:\s*x\.name\.lower\(\)\s*\)', data):
+		if not OrionTools.fileInsert(self.pathInit, 'relevant_scrapers\(\s*include_disabled\s*=\s*True\s*\),\s*key\s*=\s*lambda\s*x\s*:\s*x\.name\.lower\(\)\s*\)', data, validate = True):
 			return self._integrateFailure('NaN Scrapers module integration failure', self.pathInit)
 
 		# addon.xml
@@ -1609,6 +1704,7 @@ class OrionIntegration:
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.elementum'
 		self.idModule = 'script.elementum.burst'
+		self.idSettings = self.idModule
 		self.version = self._version(self.idPlugin, self.idModule)
 
 		self.pathPlugin = OrionTools.addonPath(self.idPlugin)
@@ -1647,12 +1743,12 @@ class OrionIntegration:
 
 		# burst.py
 		data = self._comment(self._content('burst.py'), OrionIntegration.LanguagePython, '    ')
-		if not OrionTools.fileInsert(self.pathBurst, 'max_results\s*=\s*get_setting.*', data):
+		if not OrionTools.fileInsert(self.pathBurst, 'max_results\s*=\s*get_setting.*', data, validate = True):
 			return self._integrateFailure('Elementum burst integration failure', self.pathBurst)
 
 		# provider.py
 		data = self._comment(self._content('provider.py'), OrionIntegration.LanguagePython, '    ')
-		if not OrionTools.fileInsert(self.pathProvider, 'token_auth\s*=\s*False.*', data):
+		if not OrionTools.fileInsert(self.pathProvider, 'token_auth\s*=\s*False.*', data, validate = True):
 			return self._integrateFailure('Elementum provider integration failure', self.pathProvider)
 
 		# orionoid.py
@@ -1678,6 +1774,7 @@ class OrionIntegration:
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.quasar'
 		self.idModule = 'script.quasar.burst'
+		self.idSettings = self.idModule
 		self.version = self._version(self.idPlugin, self.idModule)
 
 		self.pathPlugin = OrionTools.addonPath(self.idPlugin)
@@ -1716,12 +1813,12 @@ class OrionIntegration:
 
 		# burst.py
 		data = self._comment(self._content('burst.py'), OrionIntegration.LanguagePython, '    ')
-		if not OrionTools.fileInsert(self.pathBurst, 'max_results\s*=\s*get_setting.*', data):
+		if not OrionTools.fileInsert(self.pathBurst, 'max_results\s*=\s*get_setting.*', data, validate = True):
 			return self._integrateFailure('Quasar burst integration failure', self.pathBurst)
 
 		# provider.py
 		data = self._comment(self._content('provider.py'), OrionIntegration.LanguagePython, '    ')
-		if not OrionTools.fileInsert(self.pathProvider, 'token_auth\s*=\s*False.*', data):
+		if not OrionTools.fileInsert(self.pathProvider, 'token_auth\s*=\s*False.*', data, validate = True):
 			return self._integrateFailure('Quasar provider integration failure', self.pathProvider)
 
 		# orionoid.py

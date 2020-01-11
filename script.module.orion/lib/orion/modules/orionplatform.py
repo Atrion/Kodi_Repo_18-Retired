@@ -76,6 +76,18 @@ class OrionPlatform:
 			OrionPlatformInstance = OrionPlatform()
 		return OrionPlatformInstance
 
+		platform.familyName()
+
+	##############################################################################
+	# LABEL
+	##############################################################################
+
+	@classmethod
+	def label(self):
+		instance = self.instance()
+		system = OrionTools.unicode(instance.mDistributionName) + ' ' + OrionTools.unicode(instance.mVersionShort) + ' (' + OrionTools.unicode(instance.mVersionFull) + ')'
+		return ' | '.join([OrionTools.unicode(instance.mFamilyName), OrionTools.unicode(instance.mSystemName), OrionTools.unicode(instance.mArchitecture), system])
+
 	##############################################################################
 	# FAMILY
 	##############################################################################
