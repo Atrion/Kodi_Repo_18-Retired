@@ -13,7 +13,8 @@ except ImportError:
 class ListItem(object):
     def __init__(self, label=None, label2=None, dbtype=None, library=None, tmdb_id=None, imdb_id=None, dbid=None, tvdb_id=None,
                  cast=None, infolabels=None, infoproperties=None, poster=None, thumb=None, icon=None, fanart=None, nextpage=None,
-                 streamdetails=None, clearlogo=None, clearart=None, banner=None, landscape=None, mixed_type=None, url=None, is_folder=True):
+                 streamdetails=None, clearlogo=None, clearart=None, banner=None, landscape=None, discart=None,
+                 mixed_type=None, url=None, is_folder=True):
         self.addon = xbmcaddon.Addon()
         self.addonpath = self.addon.getAddonInfo('path')
         self.select_action = self.addon.getSettingInt('select_action')
@@ -24,7 +25,7 @@ class ListItem(object):
         self.imdb_id = imdb_id or ''  # IMDb ID for item
         self.tvdb_id = tvdb_id or ''  # IMDb ID for item
         self.poster, self.thumb = poster, thumb
-        self.clearlogo, self.clearart, self.banner, self.landscape = clearlogo, clearart, banner, landscape
+        self.clearlogo, self.clearart, self.banner, self.landscape, self.discart = clearlogo, clearart, banner, landscape, discart
         self.url = url or {}
         self.mixed_type = mixed_type or ''
         self.streamdetails = streamdetails or {}
@@ -43,7 +44,7 @@ class ListItem(object):
 
     def get_url(self, url, url_tmdb_id=None, widget=None, fanarttv=None, nextpage=None, extended=None):
         self.url = self.url or url.copy()
-        self.url['tmdb_id'] = self.tmdb_id = url_tmdb_id or self.tmdb_id
+        self.url['tmdb_id'] = self.tmdb_id = url_tmdb_id or self.tmdb_id or self.url.get('tmdb_id')
         if self.mixed_type:
             self.url['type'] = self.mixed_type
             self.infolabels['mediatype'] = utils.type_convert(self.mixed_type, 'dbtype')
@@ -81,6 +82,7 @@ class ListItem(object):
             artwork = fanarttv.get_movie_allart_lc(self.tmdb_id)
 
         if artwork:
+            self.discart = self.discart or artwork.get('discart')
             self.clearart = self.clearart or artwork.get('clearart')
             self.clearlogo = self.clearlogo or artwork.get('clearlogo')
             self.landscape = self.landscape or artwork.get('landscape')
@@ -146,8 +148,8 @@ class ListItem(object):
             return
 
         self.cast = details.get('cast', [])
-        self.infolabels = utils.merge_two_dicts(details.get('infolabels', {}), utils.del_empty_keys(self.infolabels))
-        self.infoproperties = utils.merge_two_dicts(details.get('infoproperties', {}), utils.del_empty_keys(self.infoproperties))
+        self.infolabels = utils.merge_two_dicts(details.get('infolabels', {}), self.infolabels)
+        self.infoproperties = utils.merge_two_dicts(details.get('infoproperties', {}), self.infoproperties)
 
     def get_omdb_details(self, omdb=None):
         if omdb and self.imdb_id and self.infolabels.get('mediatype') == 'movie':
@@ -172,9 +174,13 @@ class ListItem(object):
         self.thumb = self.thumb or details.get('thumb', '')
         self.poster = self.poster or details.get('poster', '')
         self.fanart = self.fanart or details.get('fanart', '')
+        self.landscape = self.landscape or details.get('landscape', '')
+        self.clearart = self.clearart or details.get('clearart', '')
+        self.clearlogo = self.clearlogo or details.get('clearlogo', '')
+        self.discart = self.discart or details.get('discart', '')
         self.cast = self.cast or details.get('cast', [])
-        self.infolabels = utils.merge_two_dicts(details.get('infolabels', {}), utils.del_empty_keys(self.infolabels))
-        self.infoproperties = utils.merge_two_dicts(details.get('infoproperties', {}), utils.del_empty_keys(self.infoproperties))
+        self.infolabels = utils.merge_two_dicts(details.get('infolabels', {}), self.infolabels)
+        self.infoproperties = utils.merge_two_dicts(details.get('infoproperties', {}), self.infoproperties)
         self.streamdetails = details.get('streamdetails', {})
 
     def get_details(self, dbtype=None, tmdb=None, omdb=None, kodi=None):
@@ -200,7 +206,7 @@ class ListItem(object):
         listitem.setInfo(self.library, self.infolabels)
         listitem.setProperties(self.infoproperties)
         listitem.setArt({
-            'thumb': self.thumb, 'icon': self.icon, 'poster': self.poster, 'fanart': self.fanart,
+            'thumb': self.thumb, 'icon': self.icon, 'poster': self.poster, 'fanart': self.fanart, 'discart': self.discart,
             'clearlogo': self.clearlogo, 'clearart': self.clearart, 'landscape': self.landscape, 'banner': self.banner})
         listitem.setCast(self.cast)
 

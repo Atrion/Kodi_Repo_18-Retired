@@ -182,11 +182,19 @@ class Container(Plugin):
             if self.details_tv:
                 season_num = i.infolabels.get('season')
                 i.cast = self.details_tv.get('cast', []) + i.cast
-                i.infolabels = utils.merge_two_dicts(self.details_tv.get('infolabels', {}), utils.del_empty_keys(i.infolabels))
-                i.infoproperties = utils.merge_two_dicts(self.details_tv.get('infoproperties', {}), utils.del_empty_keys(i.infoproperties))
+                i.infolabels = utils.merge_two_dicts(self.details_tv.get('infolabels', {}), i.infolabels)
+                i.infoproperties = utils.merge_two_dicts(self.details_tv.get('infoproperties', {}), i.infoproperties)
                 i.poster = i.poster or self.details_tv.get('poster')
                 i.fanart = i.fanart if i.fanart and i.fanart != '{0}/fanart.jpg'.format(self.addonpath) else self.details_tv.get('fanart')
                 i.infolabels['season'] = season_num
+
+            if i.infolabels.get('premiered'):
+                if self.params.get('info') in ['details', 'seasons', 'trakt_calendar', 'trakt_myairing', 'trakt_anticipated']:
+                    pass  # Don't format label for plugin methods specifically about the future or details/seasons
+                elif datetime.datetime.strptime(i.infolabels.get('premiered'), '%Y-%m-%d') > datetime.datetime.now():
+                    i.label = '[COLOR=ffcc0000][I]{}[/I][/COLOR]'.format(i.label)
+                    if self.addon.getSettingBool('hide_unaired'):
+                        continue  # Don't add if option enabled to hide
 
             i.dbid = self.get_db_info(
                 info='dbid', tmdbtype=self.item_tmdbtype, imdb_id=i.imdb_id,
@@ -316,7 +324,7 @@ class Container(Plugin):
         label = self.params.get('label')
         tmdbtype = self.params.get('type')
         inputtype = xbmcgui.INPUT_ALPHANUM
-        if any(i in method for i in ['year', 'vote_', '_runtime']):
+        if any(i in method for i in ['year', 'vote_', '_runtime', '_networks']):
             header = 'Enter '
             inputtype = xbmcgui.INPUT_NUMERIC
         elif '_date' in method:
@@ -347,7 +355,7 @@ class Container(Plugin):
             self.set_userdiscover_separator_property()
         elif '_genres' in method:
             self.set_userdiscover_genre_property()
-        elif 'with_runtime' not in method and any(i in method for i in ['with_', 'without_']):
+        elif 'with_runtime' not in method and 'with_networks' not in method and any(i in method for i in ['with_', 'without_']):
             self.add_userdiscover_method_property(header, tmdbtype, usedetails, old_label=old_label, old_value=old_value)
         else:
             self.new_property_label = self.new_property_value = xbmcgui.Dialog().input(
@@ -495,6 +503,14 @@ class Container(Plugin):
             listitem.url = self.set_url_params(url)
             listitem.create_listitem(self.handle, **listitem.url) if not self.params.get('random') else self.randomlist.append(listitem)
         self.finish_container()
+
+    def list_traktcollection(self):
+        items = []
+        if self.params.get('type') in ['movie', 'tv']:
+            items = TraktAPI(tmdb=self.tmdb, login=True).get_collection(
+                self.params.get('type'), utils.try_parse_int(self.params.get('page', 1)))
+        self.item_tmdbtype = self.params.get('type')
+        self.list_items(items, url=self.params)
 
     def list_trakt(self):
         if not self.params.get('type'):
@@ -814,6 +830,8 @@ class Container(Plugin):
             self.list_traktupnext()
         elif self.params.get('info') == 'trakt_calendar':
             self.list_traktcalendar()
+        elif self.params.get('info') == 'trakt_collection':
+            self.list_traktcollection()
         elif self.params.get('info') in constants.TRAKT_USERLISTS:
             self.list_traktuserlists()
         elif self.params.get('info') in constants.TRAKT_LISTS:

@@ -1,9 +1,10 @@
-import sys
 import xbmc
 import xbmcgui
 from resources.lib.plugin import Plugin
 import resources.lib.utils as utils
-_setmain = {'label', 'icon', 'poster', 'thumb', 'fanart', 'tmdb_id', 'imdb_id'}
+_setmain = {
+    'label', 'icon', 'poster', 'thumb', 'fanart', 'discart', 'clearart', 'clearlogo', 'landscape', 'banner',
+    'tmdb_id', 'imdb_id'}
 _setinfo = {
     'title', 'originaltitle', 'tvshowtitle', 'plot', 'rating', 'votes', 'premiered', 'year', 'imdbnumber', 'tagline',
     'status', 'episode', 'season', 'genre', 'set', 'studio', 'country', 'MPAA', 'director', 'writer', 'trailer'}
@@ -55,7 +56,8 @@ class ServiceMonitor(Plugin):
 
             # media window is opened or widgetcontainer set - start listitem monitoring!
             elif xbmc.getCondVisibility(
-                    "Window.IsMedia | !String.IsEmpty(Window(Home).Property(TMDbHelper.WidgetContainer)) | Window.IsVisible(movieinformation)"):
+                    "Window.IsMedia | Window.IsVisible(MyPVRChannels.xml) | Window.IsVisible(MyPVRGuide.xml) | Window.IsVisible(DialogPVRInfo.xml) | "
+                    "!String.IsEmpty(Window(Home).Property(TMDbHelper.WidgetContainer)) | Window.IsVisible(movieinformation)"):
                 self.get_listitem()
                 self.kodimonitor.waitForAbort(0.15)
 
@@ -114,10 +116,11 @@ class ServiceMonitor(Plugin):
 
             tmdb_id = self.get_tmdb_id(tmdbtype, self.imdb_id, self.query, self.year)
             details = self.tmdb.get_detailed_item(tmdbtype, tmdb_id, season=self.season, episode=self.episode)
-            details = self.get_omdb_ratings(details) if self.dbtype == 'movies' else details
+            details = self.get_kodi_person_stats(details) if tmdbtype == 'person' else details
+            details = self.get_omdb_ratings(details) if tmdbtype == 'movie' else details
+            details = self.get_fanarttv_artwork(details, tmdbtype)
             details = self.get_trakt_ratings(
-                details, tmdbtype=tmdbtype, tmdb_id=tmdb_id, season=self.season,
-                episode=self.episode) if self.dbtype in ['movies', 'tvshows', 'seasons', 'episodes'] else details
+                details, tmdbtype, tmdb_id, self.season, self.episode) if tmdbtype in ['movie', 'tv'] else details
 
             if not details:
                 self.clear_properties()
@@ -221,10 +224,13 @@ class ServiceMonitor(Plugin):
     def get_container(self):
         widgetid = utils.try_parse_int(self.home.getProperty('TMDbHelper.WidgetContainer'))
         self.container = 'Container({0}).'.format(widgetid) if widgetid else 'Container.'
-        self.containeritem = '{0}ListItem.'.format(self.container) if not xbmc.getCondVisibility("Window.IsVisible(movieinformation)") else 'ListItem.'
+        self.containeritem = '{0}ListItem.'.format(self.container) if not xbmc.getCondVisibility("Window.IsVisible(DialogPVRInfo.xml) | Window.IsVisible(movieinformation)") else 'ListItem.'
 
     def get_dbtype(self):
         dbtype = xbmc.getInfoLabel('{0}DBTYPE'.format(self.containeritem))
+        dbtype = 'actor' if dbtype == 'video' and 'type=person' in xbmc.getInfoLabel('{0}FolderPath'.format(self.containeritem)) else dbtype
+        if xbmc.getCondVisibility("Window.IsVisible(DialogPVRInfo.xml) | Window.IsVisible(MyPVRChannels.xml) | Window.IsVisible(MyPVRGuide.xml)"):
+            dbtype = 'tvshow'
         return '{0}s'.format(dbtype) if dbtype else xbmc.getInfoLabel('Container.Content()') or ''
 
     def get_infolabel(self, infolabel):

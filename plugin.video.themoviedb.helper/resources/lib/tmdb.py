@@ -120,7 +120,6 @@ class TMDb(RequestAPI):
         infoproperties['character'] = item.get('character')
         infoproperties['department'] = item.get('department')
         infoproperties['job'] = item.get('job')
-        infoproperties['known_for'] = item.get('known_for_department')
         infoproperties['role'] = item.get('character') or item.get('job') or item.get('department') or item.get('known_for_department')
         infoproperties['born'] = item.get('place_of_birth')
         infoproperties['tmdb_rating'] = item.get('vote_average')
@@ -335,9 +334,11 @@ class TMDb(RequestAPI):
         infolabels = self.get_infolabels(item)
         infolabels = utils.merge_two_dicts(infolabels, self.get_trailer(item))
         infolabels = utils.merge_two_dicts(infolabels, self.get_director_writer(item))
+        infolabels = utils.del_empty_keys(infolabels, ['N/A', '0.0', '0'])
         infoproperties = self.get_infoproperties(item)
         infoproperties = utils.merge_two_dicts(infoproperties, self.get_cast_properties(cast))
         infoproperties = utils.merge_two_dicts(infoproperties, self.get_crew_properties(item))
+        infoproperties = utils.del_empty_keys(infoproperties, ['N/A', '0.0', '0'])
         return {
             'label': label, 'icon': icon, 'poster': poster, 'thumb': thumb, 'fanart': fanart,
             'cast': cast, 'infolabels': infolabels, 'infoproperties': infoproperties,
@@ -378,8 +379,10 @@ class TMDb(RequestAPI):
             return False
 
     def get_detailed_item(self, itemtype, tmdb_id, season=None, episode=None, cache_only=False, cache_refresh=False):
+        if not itemtype or not tmdb_id:
+            return {}
         extra_request = None
-        cache_name = '{0}.TMDb.v2_2_10.{1}.{2}'.format(self.cache_name, itemtype, tmdb_id)
+        cache_name = '{0}.TMDb.v2_2_18.{1}.{2}'.format(self.cache_name, itemtype, tmdb_id)
         cache_name = '{0}.Season{1}'.format(cache_name, season) if season else cache_name
         cache_name = '{0}.Episode{1}'.format(cache_name, episode) if season and episode else cache_name
         itemdict = self.get_cache(cache_name) if not cache_refresh else None
@@ -402,6 +405,8 @@ class TMDb(RequestAPI):
         """
         Lookup an item using an external id such as IMDb or TVDb
         """
+        if not itemtype or not external_id or not external_source:
+            return {}
         cache_name = '{0}.find.{1}.{2}'.format(self.cache_name, external_source, external_id)
         itemdict = self.get_cache(cache_name)
         if not itemdict:
@@ -416,6 +421,8 @@ class TMDb(RequestAPI):
         """
         Lookup external ids for an item using tmdb_id
         """
+        if not itemtype or not tmdb_id:
+            return {}
         request = self.get_request_lc(itemtype, tmdb_id, 'external_ids') or {}
         return request.get(external_id) if external_id else request
 

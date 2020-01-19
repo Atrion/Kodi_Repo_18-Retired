@@ -131,7 +131,8 @@ class source:
 			url = 'magnet:?xt=urn:btih:%s&dn=%s' % (_hash.upper(), urllib.quote_plus(name))
 
 			if any(x in url.lower() for x in ['french', 'italian', 'spanish', 'truefrench', 'dublado', 'dubbed']):
-					continue
+				# raise Exception()
+				return
 
 			t = name.split(self.hdlr)[0].replace(self.year, '').replace('(', '').replace(')', '').replace('&', 'and')
 			t = name.split(self.hdlr)[0]
@@ -139,7 +140,8 @@ class source:
 				return
 
 			if self.hdlr not in name:
-				raise Exception()
+				# raise Exception()
+				return
 
 			quality, info = source_utils.get_release_quality(name, name)
 
@@ -147,7 +149,7 @@ class source:
 				div = 1000 ** 3
 				size = float(size) / div
 				size = '%.2f GB' % size
-				info.append(size)
+				info.insert(0, size)
 			except:
 				pass
 

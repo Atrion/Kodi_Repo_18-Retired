@@ -233,10 +233,16 @@ class TraktAPI(RequestAPI):
         infoproperties['trakt_votes'] = '{:0,.0f}'.format(response.get('votes')) if response.get('votes') else ''
         return infoproperties
 
-    def get_mostwatched(self, userslug, tmdbtype, limit=None, islistitem=True):
-        history = self.get_response_json('users', userslug, 'watched', utils.type_convert(tmdbtype, 'trakt') + 's')
+    def get_mostwatched(self, userslug, tmdbtype, limit=None, islistitem=True, onlyshows=False):
+        extended = 'noseasons' if onlyshows else None
+        history = self.get_response_json('users', userslug, 'watched', utils.type_convert(tmdbtype, 'trakt') + 's', extended=extended)
         history = sorted(history, key=lambda i: i['plays'], reverse=True)
         return self.get_limitedlist(history, tmdbtype, limit, islistitem)
+
+    def get_recentlywatched_shows(self, userslug, limit=None, islistitem=True):
+        history = self.get_response_json('users', userslug, 'watched', 'shows', extended='noseasons')
+        history = sorted(history, key=lambda i: i['last_watched_at'], reverse=True)
+        return self.get_limitedlist(history, 'tv', limit, islistitem)
 
     def get_recentlywatched(self, userslug, tmdbtype, limit=None, islistitem=True, months=6):
         start_at = datetime.date.today() - datetime.timedelta(months * 365 / 12)
@@ -245,7 +251,8 @@ class TraktAPI(RequestAPI):
 
     def get_inprogress(self, userslug, limit=None, episodes=False):
         """
-        Looks at user's most recently watched 200 episodes in last 3 years
+        UPDATED: Now looks at all shows sorted by recently watched
+        OLD VERSION: Looked at user's most recently watched 200 episodes in last 3 years
         Adds each unique show to list in order then checks if show has an upnext episode
         Returns list of tmdb_ids representing shows with upnext episodes in recently watched order
         """
@@ -255,7 +262,8 @@ class TraktAPI(RequestAPI):
 
         n = 0
         utils.kodi_log('Getting In-Progress For Trakt User {0}'.format(userslug), 2)
-        for i in self.get_recentlywatched(userslug, 'tv', islistitem=False, months=36):
+        # for i in self.get_recentlywatched(userslug, 'tv', islistitem=False, months=36):
+        for i in self.get_recentlywatched_shows(userslug, islistitem=False):
             if limit and n >= limit:
                 break
             utils.kodi_log('In-Progress -- Searching Next Episode For:\n{0}'.format(i), 2)
@@ -374,6 +382,24 @@ class TraktAPI(RequestAPI):
         item = self.get_response_json('search', id_type, id_num, '?' + item_type)
         return item[0].get(item_type, {}).get('ids', {}).get('slug')
 
+    def get_collection(self, tmdbtype, page=1, limit=20):
+        items = []
+        if not self.tmdb or not self.authorize():
+            return items
+        collection = self.sync_collection(utils.type_convert(tmdbtype, 'trakt'))
+        collection = sorted(collection, key=lambda i: i[utils.type_convert(tmdbtype, 'trakt')]['title'], reverse=False)
+        start_at = limit * (page - 1)
+        end_at = start_at + limit
+        for i in collection[start_at:end_at]:
+            i = i.get(utils.type_convert(tmdbtype, 'trakt'))
+            i_tmdb = i.get('ids', {}).get('tmdb', '')
+            item = ListItem(library=self.library, **self.tmdb.get_detailed_item(tmdbtype, i_tmdb))
+            if item and item.label != 'N/A':
+                items.append(item)
+        if items and collection[end_at:]:  # If there's more items add the next page item
+            items.append(ListItem(library=self.library, label='Next Page', nextpage=page + 1))
+        return items
+
     def sync_activities(self, itemtype, listtype):
         """ Checks if itemtype.listtype has been updated since last check """
         if not self.authorize():
@@ -402,7 +428,7 @@ class TraktAPI(RequestAPI):
 
     def get_sync(self, name, activity, itemtype, idtype=None, mode=None, items=None):
         if not self.authorize():
-            return
+            return {}
         if mode == 'add' or mode == 'remove':
             name = name + '/remove' if mode == 'remove' else name
             return self.get_api_request('{0}/sync/{1}'.format(self.req_api_url, name), headers=self.headers, postdata=dumps(items))
@@ -410,7 +436,7 @@ class TraktAPI(RequestAPI):
             cache_refresh = False if self.sync_activities(itemtype + 's', activity) else True
             self.sync[name] = self.get_request_lc('sync/', name, itemtype + 's', cache_refresh=cache_refresh)
         if not self.sync.get(name):
-            return
+            return {}
         if idtype:
             return {i.get(itemtype, {}).get('ids', {}).get(idtype) for i in self.sync.get(name) if i.get(itemtype, {}).get('ids', {}).get(idtype)}
         return self.sync.get(name)
