@@ -103,7 +103,6 @@ class source:
 			try:
 				r = client.request(url)
 				links = re.findall('<a href=(/torrent/.+?)>', r, re.DOTALL)
-				# log_utils.log('links = %s' % str(links), log_utils.LOGDEBUG)
 
 				threads = []
 				for link in links:
@@ -112,11 +111,11 @@ class source:
 				[i.join() for i in threads]
 				return self.sources
 			except:
-				source_utils.scraper_error('ETTV')
+				source_utils.scraper_error('TORLOCK')
 				return self.sources
 
 		except:
-			source_utils.scraper_error('ETTV')
+			source_utils.scraper_error('TORLOCK')
 			return self.sources
 
 
@@ -125,30 +124,28 @@ class source:
 			url = '%s%s' % (self.base_link, link)
 			result = client.request(url)
 			if 'magnet' not in result:
-				raise Exception()
+				return
 
 			url = 'magnet:%s' % (re.findall('a href="magnet:(.+?)"', result, re.DOTALL)[0])
 			url = urllib.unquote(url).decode('utf8').replace('&amp;', '&')
 			url = url.split('&tr=')[0]
-			# log_utils.log('url = %s' % url, log_utils.LOGDEBUG)
 
 			if url in str(self.sources):
-				raise Exception()
-
-			size_list = re.findall('<dt>SIZE</dt><dd>(.+?)<', result, re.DOTALL)
-
-			if any(x in url.lower() for x in ['french', 'italian', 'spanish', 'truefrench', 'dublado', 'dubbed']):
-				raise Exception()
+				return
 
 			name = url.split('&dn=')[1]
-			t = name.split(self.hdlr)[0].replace(self.year, '').replace('(', '').replace(')', '').replace('&', 'and').replace('+', ' ')
+			name = urllib.unquote_plus(name).replace(' ', '.')
+			if source_utils.remove_lang(name):
+				return
 
+			t = name.split(self.hdlr)[0].replace(self.year, '').replace('(', '').replace(')', '').replace('&', 'and').replace('.US.', '.').replace('.us.', '.')
 			if cleantitle.get(t) != cleantitle.get(self.title):
-				raise Exception()
+				return
 
 			if self.hdlr not in name:
-				raise Exception()
+				return
 
+			size_list = re.findall('<dt>SIZE</dt><dd>(.+?)<', result, re.DOTALL)
 			quality, info = source_utils.get_release_quality(name, url)
 
 			for match in size_list:
@@ -170,6 +167,7 @@ class source:
 												'info': info, 'direct': False, 'debridonly': True})
 
 		except:
+			source_utils.scraper_error('TORLOCK')
 			pass
 
 	def resolve(self, url):
