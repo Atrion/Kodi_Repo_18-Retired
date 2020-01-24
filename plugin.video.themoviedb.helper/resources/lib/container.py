@@ -188,13 +188,18 @@ class Container(Plugin):
                 i.fanart = i.fanart if i.fanart and i.fanart != '{0}/fanart.jpg'.format(self.addonpath) else self.details_tv.get('fanart')
                 i.infolabels['season'] = season_num
 
+            # Format label For Future Eps/Movies
             if i.infolabels.get('premiered'):
-                if self.params.get('info') in ['details', 'seasons', 'trakt_calendar', 'trakt_myairing', 'trakt_anticipated']:
-                    pass  # Don't format label for plugin methods specifically about the future or details/seasons
-                elif datetime.datetime.strptime(i.infolabels.get('premiered'), '%Y-%m-%d') > datetime.datetime.now():
-                    i.label = '[COLOR=ffcc0000][I]{}[/I][/COLOR]'.format(i.label)
-                    if self.addon.getSettingBool('hide_unaired'):
-                        continue  # Don't add if option enabled to hide
+                # Don't format label for plugin methods specifically about the future or details/seasons
+                if self.params.get('info') not in ['details', 'seasons', 'trakt_calendar', 'trakt_myairing', 'trakt_anticipated']:
+                    try:
+                        if datetime.datetime.strptime(i.infolabels.get('premiered'), '%Y-%m-%d') > datetime.datetime.now():
+                            i.label = '[COLOR=ffcc0000][I]{}[/I][/COLOR]'.format(i.label)
+                            # Don't add if option enabled to hide
+                            if self.addon.getSettingBool('hide_unaired'):
+                                continue
+                    except Exception as exc:
+                        utils.kodi_log('Error: {}'.format(exc), 1)
 
             i.dbid = self.get_db_info(
                 info='dbid', tmdbtype=self.item_tmdbtype, imdb_id=i.imdb_id,
@@ -510,7 +515,7 @@ class Container(Plugin):
             items = TraktAPI(tmdb=self.tmdb, login=True).get_collection(
                 self.params.get('type'), utils.try_parse_int(self.params.get('page', 1)))
         self.item_tmdbtype = self.params.get('type')
-        self.list_items(items, url=self.params)
+        self.list_items(items, url={'info': 'details', 'type': self.item_tmdbtype})
 
     def list_trakt(self):
         if not self.params.get('type'):
@@ -576,7 +581,10 @@ class Container(Plugin):
         self.list_tmdb()
 
     def list_getid(self):
-        self.params['tmdb_id'] = self.get_tmdb_id(**self.params)
+        params = self.params.copy()
+        if self.params.get('info') == 'play' and self.params.get('type') == 'episode':
+            params['type'] = 'tv'
+        self.params['tmdb_id'] = self.get_tmdb_id(**params)
 
     def list_play(self):
         if not self.params.get('type') or not self.params.get('tmdb_id'):
@@ -593,6 +601,11 @@ class Container(Plugin):
             self.list_tmdb(query=self.params.get('query'), year=self.params.get('year'))
 
     def list_items(self, items=None, url=None, url_tmdb_id=None):
+        """ 
+        Sort listitems and then display 
+        url= for listitem base folderpath url params
+        url_tmdb_id= for listitem tmdb_id used in url
+        """
         items = self.get_sortedlist(items)
 
         if not items:

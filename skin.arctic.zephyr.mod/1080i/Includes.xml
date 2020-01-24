@@ -1,10 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Foundation -->
 <includes>
-
+    <include file="gto-widget.xml"/>
+    
     <include file="Defaults.xml" />
 	<include file="IncludesVideoLyrics.xml" />
 	<include file="Includes_Lyrics.xml" />
+    <include file="Includes_Lists.xml" />
+    <include file="Includes_DialogVideoInfo.xml" />
+    <include file="Includes_DialogMusicInfo.xml" />
+    <include file="Includes_DialogAddonInfo.xml" />
+    <include file="Includes_DialogPVRInfo.xml" />
+    <include file="Includes_MovieSets.xml" />
     
     <!-- Views -->
     <include file="View_50_List.xml" />
@@ -29,6 +36,7 @@
 	<include file="View_511_Double.xml" />
 	<include file="View_512_Double_Banner.xml" />
 	<include file="View_506_Slider.xml" />
+    <include file="View_514_Albums.xml" />
     
     
     <include file="Includes_Furniture.xml" />
@@ -61,6 +69,16 @@
         <texturenofocus>-</texturenofocus>
         <texturefocus>-</texturefocus>
     </include>
+    
+    <include name="HiddenListControl">
+		<top>-10</top>
+		<width>1</width>
+		<height>1</height>
+		<viewtype label="">list</viewtype>
+		<orientation>horizontal</orientation>
+		<itemlayout height="1" width="1"/>
+		<focusedlayout height="1" width="1"/>
+	</include>
 
     <include name="Dimensions_Fullscreen">
         <posx>0</posx>
@@ -262,15 +280,23 @@
 		<value>$INFO[ListItem.MPAA,flags/mpaa/,.png]</value>
 	</variable>
 	
-	
+	<variable name="StartupFanart">
+        <value condition="!String.IsEmpty(Skin.String(startupfanart.fallback))">$INFO[Skin.String(startupfanart.fallback)]</value>
+        <value>common/bg.jpg</value>
+    </variable>
+    
+    <variable name="StartupDiffuse">
+        <value condition="String.IsEmpty(Skin.String(startupfanart.fallback))">Background</value>
+        <value></value>
+    </variable>
 
     <variable name="GlobalFanart">
         <value condition="Window.IsActive(script-globalsearch-infodialog.xml) | Window.IsActive(script-globalsearch-main.xml)">$VAR[GlobalSearchArtInfo]</value>
         <value condition="[Window.IsVisible(script-script.extendedinfo-DialogVideoInfo.xml) + String.IsEmpty(Window(home).Property(ExtendedInfo_fanart))] | Window.IsVisible(script-script.extendedinfo-DialogInfo.xml) | Window.IsVisible(script-NextAired-TVGuide.xml) | Window.IsVisible(script-NextAired-TVGuide2.xml)">actorbg.jpg</value>
         <value condition="Window.IsVisible(script-script.extendedinfo-DialogVideoInfo.xml) + !String.IsEmpty(Window(home).Property(ExtendedInfo_fanart))">$INFO[Window(home).Property(ExtendedInfo_fanart)]</value>
         <value condition="Window.IsVisible(weather) + !String.IsEmpty(Skin.String(weather.fanart.path))">$INFO[Skin.String(weather.fanart.path)]$INFO[Window(Weather).Property(Current.FanartCode)]/</value>
-        <value condition="Window.IsVisible(home) + !String.IsEmpty(Skin.String(weather.fanart.path)) + String.Contains(Container(300).ListItem.Property(widget),Weather) + !Skin.HasSetting(home.dontshowfanart)">$INFO[Skin.String(weather.fanart.path)]$INFO[Window(Weather).Property(Current.FanartCode)]/</value>
-		
+        <value condition="Window.IsVisible(home) + !String.IsEmpty(Skin.String(weather.fanart.path)) + String.Contains(Container(300).ListItem.Property(widget),Weather) + !Skin.HasSetting(home.dontshowfanart) + String.Contains(Skin.String(weather.fanart.path),multi)">$INFO[Skin.String(weather.fanart.path)]$INFO[Window(Weather).Property(Current.FanartCode)]/</value>        
+        <value condition="Window.IsVisible(home) + !String.IsEmpty(Skin.String(weather.fanart.path)) + String.Contains(Container(300).ListItem.Property(widget),Weather) + !Skin.HasSetting(home.dontshowfanart) + !String.Contains(Skin.String(weather.fanart.path),multi)">$INFO[Skin.String(weather.fanart.path)]$INFO[Window(Weather).Property(Current.FanartCode),,.jpg]</value>
 		<value condition="!String.IsEmpty(Control.GetLabel(4399)) + Skin.HasSetting(EnableExtraFanart) + !Skin.HasSetting(global.hidefanart)">$INFO[Control.GetLabel(4399)]</value>
 		
         <value condition="Window.IsVisible(home) + !String.IsEmpty(Container(301).ListItem.Art(fanart)) + [!Skin.HasSetting(home.dontshowfanart) | Control.HasFocus(301)] + Control.IsVisible(301)">$INFO[Container(301).ListItem.Art(fanart)]</value>
@@ -451,7 +477,7 @@
 			<include condition="[!Window.IsVisible(home) | Skin.HasSetting(home.vertical)] + Window.IsVisible(Home.xml) + !Skin.HasSetting(BlurOnHome) + Skin.HasSetting(EnableBlur)">GlobalBackgroundFade</include>			
 			<include condition="[!Window.IsVisible(home) | Skin.HasSetting(home.vertical)] + !Window.IsVisible(Home.xml) + Skin.HasSetting(EnableBlur)">GlobalBackgroundFadeBlur</include>
 			<include condition="[!Window.IsVisible(home) | Skin.HasSetting(home.vertical)] + !Skin.HasSetting(EnableBlur)">GlobalBackgroundFade</include>
-            <visible>!Player.HasMedia | [!Skin.HasSetting(global.showvideo) + Player.HasVideo] | [!Skin.HasSetting(global.showvisualisation) + Player.HasAudio]</visible>
+            <visible>!Player.HasMedia | Window.IsVisible(MyVideoNav.xml) | [!Skin.HasSetting(global.showvideo) + Player.HasVideo] | [!Skin.HasSetting(global.showvisualisation) + Player.HasAudio]</visible>
             <visible>!Skin.HasSetting(global.hidefanart) | Window.IsVisible(home)</visible>
             <include>Dimensions_Fullscreen</include>
             <include>Animation.FadeFromHome</include>
@@ -467,7 +493,7 @@
 		<control type="multiimage" description="Fanart">
 			<visible>!Skin.HasSetting(EnableBlur)</visible>
 			<visible>Control.IsVisible(510) + !Window.IsVisible(DialogVideoInfo.xml) + !Window.IsVisible(Custom_MovieSets.xml)</visible>
-            <visible>!Player.HasMedia | [!Skin.HasSetting(global.showvideo) + Player.HasVideo] | [!Skin.HasSetting(global.showvisualisation) + Player.HasAudio]</visible>
+            <visible>!Player.HasMedia | Window.IsVisible(MyVideoNav.xml) | Window.IsVisible(MyVideoNav.xml) | [!Skin.HasSetting(global.showvideo) + Player.HasVideo] | [!Skin.HasSetting(global.showvisualisation) + Player.HasAudio]</visible>
             <visible>!Skin.HasSetting(global.hidefanart) | Window.IsVisible(home)</visible>
             <include>Dimensions_Fullscreen</include>
             <include>Animation.FadeFromHome</include>
@@ -482,7 +508,54 @@
         </control>
 
 		<control type="multiimage" description="Fanart">
-			<visible>Skin.HasSetting(EnableBlur)</visible>		
+			<visible>Skin.HasSetting(EnableBlur) + !Window.IsVisible(Home.xml)</visible>		
+			<visible>!Control.IsVisible(510) | Window.IsVisible(DialogVideoInfo.xml) | Window.IsVisible(Custom_MovieSets.xml)</visible>
+			<include condition="[!Window.IsVisible(home) | Skin.HasSetting(home.vertical)] + Window.IsVisible(Home.xml) + Skin.HasSetting(BlurOnHome) + Skin.HasSetting(EnableBlur)">GlobalBackgroundFadeBlur</include>
+			<include condition="[!Window.IsVisible(home) | Skin.HasSetting(home.vertical)] + Window.IsVisible(Home.xml) + !Skin.HasSetting(BlurOnHome) + Skin.HasSetting(EnableBlur)">GlobalBackgroundFade</include>			
+			<include condition="[!Window.IsVisible(home) | Skin.HasSetting(home.vertical)] + !Window.IsVisible(Home.xml) + Skin.HasSetting(EnableBlur)">GlobalBackgroundFadeBlur</include>
+			<include condition="[!Window.IsVisible(home) | Skin.HasSetting(home.vertical)] + !Skin.HasSetting(EnableBlur)">GlobalBackgroundFade</include>
+            <visible>!Player.HasMedia | Window.IsVisible(MyVideoNav.xml) | [!Skin.HasSetting(global.showvideo) + Player.HasVideo] | [!Skin.HasSetting(global.showvisualisation) + Player.HasAudio]</visible>
+            <visible>!Skin.HasSetting(global.hidefanart) | Window.IsVisible(home)</visible>
+            <include>Dimensions_Fullscreen</include>
+            <include>Animation.FadeFromHome</include>
+            <animation effect="fade" end="0" start="100" time="350" tween="cubic" easing="inout" condition="Window.IsVisible(home)">WindowClose</animation>
+            <animation effect="fade" end="20" start="100" time="0" condition="Integer.IsEqual(Skin.String(BackgroundBlur),20)">Conditional</animation>
+            <animation effect="fade" end="40" start="100" time="0" condition="Integer.IsEqual(Skin.String(BackgroundBlur),40)">Conditional</animation>
+            <animation effect="fade" end="60" start="100" time="0" condition="Integer.IsEqual(Skin.String(BackgroundBlur),60)">Conditional</animation>
+            <animation effect="fade" end="80" start="100" time="0" condition="Integer.IsEqual(Skin.String(BackgroundBlur),80)">Conditional</animation>
+            <fadetime>600</fadetime>
+            <timeperimage>12000</timeperimage>
+            <randomize>true</randomize>
+            <aspectratio>scale</aspectratio>
+            <imagepath background="true">$VAR[ImageBackG]</imagepath>
+            <animation effect="zoom" start="110" end="120" center="auto" time="10000" tween="sine" easing="inout" pulse="true" condition="Skin.HasSetting(Fanart.Animate)">Conditional</animation>
+            <animation effect="slide" start="-20,-20" end="20,20" time="6000" tween="sine" easing="inout" pulse="true" condition="Skin.HasSetting(Fanart.Animate)">Conditional</animation>
+        </control>
+        
+        <control type="multiimage" description="Fanart">
+			<visible>Skin.HasSetting(EnableBlur) + !Skin.HasSetting(BlurOnHome) + Window.IsVisible(Home.xml)</visible>		
+			<visible>!Control.IsVisible(510) | Window.IsVisible(DialogVideoInfo.xml) | Window.IsVisible(Custom_MovieSets.xml)</visible>
+			<include condition="[!Window.IsVisible(home) | Skin.HasSetting(home.vertical)] + Window.IsVisible(Home.xml) + Skin.HasSetting(BlurOnHome) + Skin.HasSetting(EnableBlur)">GlobalBackgroundFadeBlur</include>
+			<include condition="[!Window.IsVisible(home) | Skin.HasSetting(home.vertical)] + Window.IsVisible(Home.xml) + !Skin.HasSetting(BlurOnHome) + Skin.HasSetting(EnableBlur)">GlobalBackgroundFade</include>			
+			<include condition="[!Window.IsVisible(home) | Skin.HasSetting(home.vertical)] + !Window.IsVisible(Home.xml) + Skin.HasSetting(EnableBlur)">GlobalBackgroundFadeBlur</include>
+			<include condition="[!Window.IsVisible(home) | Skin.HasSetting(home.vertical)] + !Skin.HasSetting(EnableBlur)">GlobalBackgroundFade</include>
+            <visible>!Player.HasMedia | Window.IsVisible(MyVideoNav.xml) | Window.IsVisible(MyVideoNav.xml) | [!Skin.HasSetting(global.showvideo) + Player.HasVideo] | [!Skin.HasSetting(global.showvisualisation) + Player.HasAudio]</visible>
+            <visible>!Skin.HasSetting(global.hidefanart) | Window.IsVisible(home)</visible>
+            <include>Dimensions_Fullscreen</include>
+            <include>Animation.FadeFromHome</include>
+            <animation effect="fade" end="0" start="100" time="350" tween="cubic" easing="inout" condition="Window.IsVisible(home)">WindowClose</animation>
+
+            <fadetime>600</fadetime>
+            <timeperimage>12000</timeperimage>
+            <randomize>true</randomize>
+            <aspectratio>scale</aspectratio>
+            <imagepath background="true">$VAR[GlobalFanart]</imagepath>
+            <animation effect="zoom" start="110" end="120" center="auto" time="10000" tween="sine" easing="inout" pulse="true" condition="Skin.HasSetting(Fanart.Animate)">Conditional</animation>
+            <animation effect="slide" start="-20,-20" end="20,20" time="6000" tween="sine" easing="inout" pulse="true" condition="Skin.HasSetting(Fanart.Animate)">Conditional</animation>
+        </control>
+        
+        <control type="multiimage" description="Fanart">
+			<visible>Skin.HasSetting(EnableBlur) + Skin.HasSetting(BlurOnHome) + Window.IsVisible(Home.xml)</visible>		
 			<visible>!Control.IsVisible(510) | Window.IsVisible(DialogVideoInfo.xml) | Window.IsVisible(Custom_MovieSets.xml)</visible>
 			<include condition="[!Window.IsVisible(home) | Skin.HasSetting(home.vertical)] + Window.IsVisible(Home.xml) + Skin.HasSetting(BlurOnHome) + Skin.HasSetting(EnableBlur)">GlobalBackgroundFadeBlur</include>
 			<include condition="[!Window.IsVisible(home) | Skin.HasSetting(home.vertical)] + Window.IsVisible(Home.xml) + !Skin.HasSetting(BlurOnHome) + Skin.HasSetting(EnableBlur)">GlobalBackgroundFade</include>			
@@ -493,14 +566,19 @@
             <include>Dimensions_Fullscreen</include>
             <include>Animation.FadeFromHome</include>
             <animation effect="fade" end="0" start="100" time="350" tween="cubic" easing="inout" condition="Window.IsVisible(home)">WindowClose</animation>
+            <animation effect="fade" end="20" start="100" time="0" condition="Integer.IsEqual(Skin.String(BackgroundBlur),20)">Conditional</animation>
+            <animation effect="fade" end="40" start="100" time="0" condition="Integer.IsEqual(Skin.String(BackgroundBlur),40)">Conditional</animation>
+            <animation effect="fade" end="60" start="100" time="0" condition="Integer.IsEqual(Skin.String(BackgroundBlur),60)">Conditional</animation>
+            <animation effect="fade" end="80" start="100" time="0" condition="Integer.IsEqual(Skin.String(BackgroundBlur),80)">Conditional</animation>
             <fadetime>600</fadetime>
             <timeperimage>12000</timeperimage>
             <randomize>true</randomize>
             <aspectratio>scale</aspectratio>
-            <imagepath background="true">$VAR[ImageBackG]</imagepath>
+            <imagepath background="true">$INFO[Window(home).Property(ImageFilterFIVE)]</imagepath>
             <animation effect="zoom" start="110" end="120" center="auto" time="10000" tween="sine" easing="inout" pulse="true" condition="Skin.HasSetting(Fanart.Animate)">Conditional</animation>
             <animation effect="slide" start="-20,-20" end="20,20" time="6000" tween="sine" easing="inout" pulse="true" condition="Skin.HasSetting(Fanart.Animate)">Conditional</animation>
         </control>
+        
 		<control type="multiimage" description="Fanart">
 			<visible>Skin.HasSetting(EnableBlur)</visible>
 			<visible>Control.IsVisible(510) + !Window.IsVisible(DialogVideoInfo.xml) + !Window.IsVisible(Custom_MovieSets.xml)</visible>
@@ -509,6 +587,10 @@
             <include>Dimensions_Fullscreen</include>
             <include>Animation.FadeFromHome</include>
             <animation effect="fade" end="0" start="100" time="350" tween="cubic" easing="inout" condition="Window.IsVisible(home)">WindowClose</animation>
+            <animation effect="fade" end="20" start="100" time="0" condition="Integer.IsEqual(Skin.String(BackgroundBlur),20)">Conditional</animation>
+            <animation effect="fade" end="40" start="100" time="0" condition="Integer.IsEqual(Skin.String(BackgroundBlur),40)">Conditional</animation>
+            <animation effect="fade" end="60" start="100" time="0" condition="Integer.IsEqual(Skin.String(BackgroundBlur),60)">Conditional</animation>
+            <animation effect="fade" end="80" start="100" time="0" condition="Integer.IsEqual(Skin.String(BackgroundBlur),80)">Conditional</animation>
             <fadetime>600</fadetime>
             <timeperimage>12000</timeperimage>
             <randomize>true</randomize>
@@ -592,27 +674,6 @@
 			<include condition="!Skin.HasSetting(EnableBlur)">IncludeFloorFade</include>
         </control>
 
-		<!--
-		
-		<control type="image">
-			<visible>Control.IsVisible(501) + !Window.IsVisible(DialogVideoInfo.xml)</visible>
-			<top>0</top>
-			<left>0</left>
-			<aspectratio scalediffuse="false">scale</aspectratio>
-			<texture background="true">backg/trans.png</texture>
-		</control>
-		
-		<control type="image" description="Background">
-			
-			<visible>Window.IsVisible(DialogVideoInfo.xml)</visible>
-			<include>Dimensions_Fullscreen</include>
-			<include condition="!Skin.HasSetting(home.vertical)">Animation.FadeFromHome</include>
-			<texture colordiffuse="Background">common/bg.jpg</texture>
-			
-			<animation effect="fade" start="0" end="80" time="300">Visible</animation>
-			<animation effect="fade" start="75" end="0" time="200">Hidden</animation>
-		</control>
-		-->
     </include>
 
     <include name="GlobalBackgroundExtended">
@@ -622,6 +683,7 @@
             <texture colordiffuse="Background">common/bg.jpg</texture>
         </control>
         <control type="multiimage" description="Fanart">
+            <visible>!Skin.HasSetting(EnableBlur)</visible>
             <include>GlobalBackgroundFade</include>
             <visible>!Skin.HasSetting(global.hidefanart)</visible>
             <include>Dimensions_Fullscreen</include>
@@ -634,19 +696,44 @@
             <animation effect="zoom" start="110" end="120" center="auto" time="10000" tween="sine" easing="inout" pulse="true" condition="Skin.HasSetting(Fanart.Animate)">Conditional</animation>
             <animation effect="slide" start="-20,-20" end="20,20" time="6000" tween="sine" easing="inout" pulse="true" condition="Skin.HasSetting(Fanart.Animate)">Conditional</animation>
         </control>
+        <control type="multiimage" description="Fanart">
+            <visible>Skin.HasSetting(EnableBlur)</visible>
+			<visible>!Skin.HasSetting(global.hidefanart)</visible>
+            <include>Dimensions_Fullscreen</include>
+            <include condition="!Skin.HasSetting(home.vertical)">Animation.FadeFromHome</include>
+            <animation effect="fade" end="0" start="100" time="350" tween="cubic" easing="inout" condition="Window.IsVisible(home)">WindowClose</animation>
+            <animation effect="fade" end="20" start="100" time="0" condition="Integer.IsEqual(Skin.String(BackgroundBlur),20)">Conditional</animation>
+            <animation effect="fade" end="40" start="100" time="0" condition="Integer.IsEqual(Skin.String(BackgroundBlur),40)">Conditional</animation>
+            <animation effect="fade" end="60" start="100" time="0" condition="Integer.IsEqual(Skin.String(BackgroundBlur),60)">Conditional</animation>
+            <animation effect="fade" end="80" start="100" time="0" condition="Integer.IsEqual(Skin.String(BackgroundBlur),80)">Conditional</animation>
+            <fadetime>600</fadetime>
+            <timeperimage>12000</timeperimage>
+            <randomize>true</randomize>
+            <aspectratio>scale</aspectratio>
+            <imagepath background="true">$INFO[Window(home).Property(ImageFilterFIVE)]</imagepath>
+            <animation effect="zoom" start="110" end="120" center="auto" time="10000" tween="sine" easing="inout" pulse="true" condition="Skin.HasSetting(Fanart.Animate)">Conditional</animation>
+            <animation effect="slide" start="-20,-20" end="20,20" time="6000" tween="sine" easing="inout" pulse="true" condition="Skin.HasSetting(Fanart.Animate)">Conditional</animation>
+        </control>
         <control type="image" description="FanartOverlay">
             <include>Dimensions_Fullscreen</include>
             <include condition="!Skin.HasSetting(home.vertical)">Animation.FadeFromHome</include>
-            <texture colordiffuse="FloorFade">common/floor.png</texture>
+            <texture>common/floor.png</texture>
+			<include condition="Skin.HasSetting(EnableBlur)">IncludeFloorFadeBlur</include>
+			<include condition="!Skin.HasSetting(EnableBlur)">IncludeFloorFade</include>
         </control>
-        
+        <control type="image" description="Background">
+            <visible>Skin.HasSetting(EnableBlur)</visible>
+            <include condition="!Skin.HasSetting(home.vertical)">Animation.FadeFromHome</include>
+            <include>Dimensions_Fullscreen</include>
+            <texture colordiffuse="Background">common/bg.jpg</texture>
+            <animation effect="fade" end="35" start="100" time="0" condition="true">Conditional</animation>
+        </control>
     </include>
 	
 	
 	<include name="JumpBarHorizontal">
 		<control type="image">	
-			<visible>Control.HasFocus(60) | Control.HasFocus(1602) | Control.HasFocus(1600) | Control.HasFocus(1609) | Control.HasFocus(1603) | Control.HasFocus(1605) | Control.HasFocus(1606) | Control.HasFocus(1604) | Control.HasFocus(1607) | Control.HasFocus(1619) | Control.HasFocus(1620) | Control.HasFocus(1624) | Control.HasFocus(1625) | Control.HasFocus(1635) | Control.HasFocus(1627)</visible>	
-			<visible>Container.Content(movies) | Container.Content(tvshows) | Container.Content(actors) | Container.Content(addons)</visible>
+			<visible>Control.HasFocus(60) | Control.HasFocus(1602) | Control.HasFocus(1600) | Control.HasFocus(1609) | Control.HasFocus(1603) | Control.HasFocus(1605) | Control.HasFocus(1606) | Control.HasFocus(1604) | Control.HasFocus(1607) | Control.HasFocus(1619) | Control.HasFocus(1620) | Control.HasFocus(1624) | Control.HasFocus(1625) | Control.HasFocus(1635) | Control.HasFocus(1634) | Control.HasFocus(1627) | Control.HasFocus(1679)</visible>
 			<left>1869</left>
 			<top>514</top>
 			<width>16</width>
@@ -657,7 +744,6 @@
 		
 		<control type="image">	
 			<visible>Control.HasFocus(1615) | Control.HasFocus(1639) | Control.HasFocus(1623)</visible>	
-			<visible>Container.Content(movies) | Container.Content(tvshows) | Container.Content(actors) | Container.Content(addons)</visible>
 			<left>950</left>
 			<top>876</top>
 			<width>16</width>
@@ -665,106 +751,344 @@
 			<texture colordiffuse="Dark1" flipx="false">common/arrow-small.png</texture>
 			<include>Animation.DelayFadeIn3</include>
 		</control>
-		
-	
+			
 		<control type="group">
-		
-		<animation effect="slide" start="80,0" end="0,0" reversible="false" time="600" tween="quadratic" condition="ControlGroup(290000).HasFocus()">Conditional</animation>
-		<animation effect="slide" start="0,0" end="100,0" reversible="false" time="2500" tween="quadratic" condition="!ControlGroup(290000).HasFocus()">Hidden</animation>		
-		
-		
-		<visible allowhiddenfocus="true">[ControlGroup(290000).HasFocus() + Container.Content(movies)] | [ControlGroup(290000).HasFocus() + Container.Content(tvshows)] | [ControlGroup(290000).HasFocus() + Container.Content(actors)] | [ControlGroup(290000).HasFocus() + Container.Content(addons)]</visible>
-		    <control type="image">				
-				<left>1879</left>
-				<top>214</top>
-				<width>230</width>
-				<height>645</height>
-				<texture colordiffuse="Box2" background="true">common/box3.png</texture>
-			</control>
-			<control type="image">			
-				<left>1880</left>
-				<top>215</top>
-				<width>230</width>
-				<height>643</height>
-				<texture colordiffuse="FloorFade" background="true">common/eins.png</texture>			
-			</control>			
-			<control type="grouplist" id="290000">
-				<visible allowhiddenfocus="true">ControlGroup(290000).HasFocus()</visible>
-				<include>Animation.FadeOutDelay</include>
-				<left>1870</left>
-				<top>135</top>
-				<width>220</width>
-				<height>800</height>
-				<onup>290000</onup>
-				<ondown>290000</ondown>
-				<itemgap>10</itemgap>
-				<onleft>$VAR[ClickToJump]</onleft>
-				<onright>50</onright>
-				<onright>SetFocus(1869)</onright>
-				<orientation>vertical</orientation>
-				<align>center</align>
-				<control type="button" id="290001">
-					<include>JumpTo</include>
-					<label>ABC</label>
-					<onclick>Action(JumpSMS2)</onclick>
-					<onclick>SetFocus(50)</onclick>
-				</control>
-				<control type="button" id="290002">
-					<include>JumpTo</include>
-					<label>DEF</label>
-					<onclick>Action(JumpSMS3)</onclick>
-					<onclick>SetFocus(50)</onclick>
-				</control>
-				<control type="button" id="290003">
-					<include>JumpTo</include>
-					<label>GHI</label>
-					<onclick>Action(JumpSMS4)</onclick>
-					<onclick>SetFocus(50)</onclick>
-				</control>
-				<control type="button" id="290004">
-					<include>JumpTo</include>
-					<label>JKL</label>
-					<onclick>Action(JumpSMS5)</onclick>
-					<onclick>SetFocus(50)</onclick>
-				</control>
-				<control type="button" id="290005">
-					<include>JumpTo</include>
-					<label>MNO</label>
-					<onclick>Action(JumpSMS6)</onclick>
-					<onclick>SetFocus(50)</onclick>
-				</control>
-				<control type="button" id="290006">
-					<include>JumpTo</include>
-					<label>PQRS</label>
-					<onclick>Action(JumpSMS7)</onclick>
-					<onclick>SetFocus(50)</onclick>
-				</control>
-				<control type="button" id="290007">
-					<include>JumpTo</include>
-					<label>TUV</label>
-					<onclick>Action(JumpSMS8)</onclick>
-					<onclick>SetFocus(50)</onclick>
-				</control>
-				<control type="button" id="290008">
-					<include>JumpTo</include>
-					<label>WXYZ</label>
-					<onclick>Action(JumpSMS9)</onclick>
-					<onclick>SetFocus(50)</onclick>
-				</control>
-			</control>			
+            <animation effect="slide" start="80,0" end="0,0" reversible="false" time="600" tween="quadratic" condition="ControlGroup(290000).HasFocus()">Conditional</animation>
+            <animation effect="slide" start="0,0" end="100,0" reversible="false" time="2500" tween="quadratic" condition="!ControlGroup(290000).HasFocus()">Hidden</animation>		
+            <visible allowhiddenfocus="true">ControlGroup(290000).HasFocus()</visible>
+            <control type="image">				
+                <left>1879</left>
+                <top>214</top>
+                <width>230</width>
+                <height>645</height>
+                <texture colordiffuse="Box2" border="5" background="true">common/box3.png</texture>
+            </control>
+            <control type="image">			
+                <left>1880</left>
+                <top>215</top>
+                <width>230</width>
+                <height>643</height>
+                <texture colordiffuse="FloorFade" background="true">common/white.png</texture>	
+                <animation effect="fade" start="100" end="50" time="0" condition="true">Conditional</animation>		
+            </control>	
+            
+            <control type="grouplist" id="290000">
+                <visible allowhiddenfocus="true">ControlGroup(290000).HasFocus()</visible>
+                <include>Animation.FadeOutDelay</include>
+                <left>1890</left>
+                <top>135</top>
+                <width>220</width>
+                <height>800</height>
+                <onup>290000</onup>
+                <ondown>290000</ondown>
+                <itemgap>9</itemgap>
+                <onleft>$VAR[ClickToJump]</onleft>
+                <onright>$VAR[ClickToJump]</onright>
+                <orientation>vertical</orientation>
+                <align>center</align>
+                <control type="list" id="290001">
+                    <include content="JumpList">
+                        <param name="controlid" value="290001" />
+                    </include>
+                    <content>
+                        <item id="0">
+                            <label>#</label>
+                            <onclick>$VAR[ClickToJump]</onclick>
+                            <onclick>JumpSMS9</onclick>
+                            <onclick>JumpSMS2</onclick>
+                            <onclick>JumpSMS2</onclick>
+                            <onclick>JumpSMS2</onclick>
+                            <onclick>JumpSMS2</onclick>
+                        </item>
+                        <item id="1">
+                            <label>A</label>
+                            <onclick>$VAR[ClickToJump]</onclick>
+                            <onclick>JumpSMS9</onclick>
+                            <onclick>JumpSMS2</onclick>
+                        </item>
+                        <item id="2">
+                            <label>B</label>
+                            <onclick>$VAR[ClickToJump]</onclick>
+                            <onclick>JumpSMS9</onclick>
+                            <onclick>JumpSMS2</onclick>
+                            <onclick>JumpSMS2</onclick>
+                        </item>   
+				    </content>
+                </control>
+                <control type="list" id="290002">
+                    <include content="JumpList">
+                        <param name="controlid" value="290002" />
+                    </include>
+                    <content>
+                        <item id="0">
+                            <label>C</label>
+                            <onclick>$VAR[ClickToJump]</onclick>
+                            <onclick>JumpSMS9</onclick>
+                            <onclick>JumpSMS2</onclick>
+                            <onclick>JumpSMS2</onclick>
+                            <onclick>JumpSMS2</onclick>
+                        </item>
+                        <item id="1">
+                            <label>D</label>
+                            <onclick>$VAR[ClickToJump]</onclick>
+                            <onclick>JumpSMS9</onclick>
+                            <onclick>JumpSMS3</onclick>
+                        </item>
+                        <item id="2">
+                            <label>E</label>
+                            <onclick>$VAR[ClickToJump]</onclick>
+                            <onclick>JumpSMS9</onclick>
+                            <onclick>JumpSMS3</onclick>
+                            <onclick>JumpSMS3</onclick>
+                        </item> 
+				    </content>
+                </control>
+                <control type="list" id="290003">
+                    <include content="JumpList">
+                        <param name="controlid" value="290003" />
+                    </include>
+                    <content>
+                        <item id="0">
+                            <label>F</label>
+                            <onclick>$VAR[ClickToJump]</onclick>
+                            <onclick>JumpSMS9</onclick>
+                            <onclick>JumpSMS3</onclick>
+                            <onclick>JumpSMS3</onclick>
+                            <onclick>JumpSMS3</onclick>
+                        </item>
+                        <item id="1">
+                            <label>G</label>
+                            <onclick>$VAR[ClickToJump]</onclick>
+                            <onclick>JumpSMS9</onclick>
+                            <onclick>JumpSMS4</onclick>
+                        </item>
+                        <item id="2">
+                            <label>H</label>
+                            <onclick>$VAR[ClickToJump]</onclick>
+                            <onclick>JumpSMS9</onclick>
+                            <onclick>JumpSMS4</onclick>
+                            <onclick>JumpSMS4</onclick>
+                        </item>    
+				    </content>
+                </control>
+                <control type="list" id="290004">
+                    <include content="JumpList">
+                        <param name="controlid" value="290004" />
+                    </include>
+                    <content>
+                        <item id="0">
+                            <label>I</label>
+                            <onclick>$VAR[ClickToJump]</onclick>
+                            <onclick>JumpSMS9</onclick>
+                            <onclick>JumpSMS4</onclick>
+                            <onclick>JumpSMS4</onclick>
+                            <onclick>JumpSMS4</onclick>
+                        </item>
+                        <item id="1">
+                            <label>J</label>
+                            <onclick>$VAR[ClickToJump]</onclick>
+                            <onclick>JumpSMS9</onclick>
+                            <onclick>JumpSMS5</onclick>
+                        </item>
+                        <item id="2">
+                            <label>K</label>
+                            <onclick>$VAR[ClickToJump]</onclick>
+                            <onclick>JumpSMS9</onclick>
+                            <onclick>JumpSMS5</onclick>
+                            <onclick>JumpSMS5</onclick>
+                        </item>  
+				    </content>
+                </control>
+                <control type="list" id="290005">
+                    <include content="JumpList">
+                        <param name="controlid" value="290005" />
+                    </include>
+                    <content>
+                        <item id="0">
+                            <label>L</label>
+                            <onclick>$VAR[ClickToJump]</onclick>
+                            <onclick>JumpSMS9</onclick>
+                            <onclick>JumpSMS5</onclick>
+                            <onclick>JumpSMS5</onclick>
+                            <onclick>JumpSMS5</onclick>
+                        </item>
+                        <item id="1">
+                            <label>M</label>
+                            <onclick>$VAR[ClickToJump]</onclick>
+                            <onclick>JumpSMS9</onclick>
+                            <onclick>JumpSMS6</onclick>
+                        </item>
+                        <item id="2">
+                            <label>N</label>
+                            <onclick>$VAR[ClickToJump]</onclick>
+                            <onclick>JumpSMS9</onclick>
+                            <onclick>JumpSMS6</onclick>
+                            <onclick>JumpSMS6</onclick>
+                        </item>  
+				    </content>
+                </control> 
+                <control type="list" id="290006">
+                    <include content="JumpList">
+                        <param name="controlid" value="290006" /> 
+                    </include>
+                    <content>
+                        <item id="0">
+                            <label>O</label>
+                            <onclick>$VAR[ClickToJump]</onclick>
+                            <onclick>JumpSMS9</onclick>
+                            <onclick>JumpSMS6</onclick>
+                            <onclick>JumpSMS6</onclick>
+                            <onclick>JumpSMS6</onclick>
+                        </item>
+                        <item id="1">
+                            <label>P</label>
+                            <onclick>$VAR[ClickToJump]</onclick>
+                            <onclick>JumpSMS9</onclick>
+                            <onclick>JumpSMS7</onclick>
+                        </item>
+                        <item id="2">
+                            <label>Q</label>
+                            <onclick>$VAR[ClickToJump]</onclick>
+                            <onclick>JumpSMS9</onclick>
+                            <onclick>JumpSMS7</onclick>
+                            <onclick>JumpSMS7</onclick>
+                        </item>   
+				    </content>
+                </control> 
+                <control type="list" id="290007">
+                    <include content="JumpList">
+                        <param name="controlid" value="290007" />
+                    </include>
+                    <content>
+                        <item id="0">
+                            <label>R</label>
+                            <onclick>$VAR[ClickToJump]</onclick>
+                            <onclick>JumpSMS9</onclick>
+                            <onclick>JumpSMS7</onclick>
+                            <onclick>JumpSMS7</onclick>
+                            <onclick>JumpSMS7</onclick>
+                        </item>
+                        <item id="1">
+                            <label>S</label>
+                            <onclick>$VAR[ClickToJump]</onclick>
+                            <onclick>JumpSMS9</onclick>
+                            <onclick>JumpSMS7</onclick>
+                            <onclick>JumpSMS7</onclick>
+                            <onclick>JumpSMS7</onclick>
+                            <onclick>JumpSMS7</onclick>
+                        </item>
+                        <item id="2">
+                            <label>T</label>
+                            <onclick>$VAR[ClickToJump]</onclick>
+                            <onclick>JumpSMS9</onclick>
+                            <onclick>JumpSMS8</onclick>
+                        </item>  
+				    </content>
+                </control> 
+                <control type="list" id="290008">
+                    <include content="JumpList">
+                        <param name="controlid" value="290008" /> 
+                    </include>
+                    <content>
+                        <item id="0">
+                            <label>U</label>
+                            <onclick>$VAR[ClickToJump]</onclick>
+                            <onclick>JumpSMS9</onclick>
+                            <onclick>JumpSMS8</onclick>
+                            <onclick>JumpSMS8</onclick>
+                        </item>
+                        <item id="1">
+                            <label>V</label>
+                            <onclick>$VAR[ClickToJump]</onclick>
+                            <onclick>JumpSMS9</onclick>
+                            <onclick>JumpSMS8</onclick>
+                            <onclick>JumpSMS8</onclick>
+                            <onclick>JumpSMS8</onclick>
+                        </item>
+                        <item id="2">
+                            <label>W</label>
+                            <onclick>$VAR[ClickToJump]</onclick>
+                            <onclick>JumpSMS7</onclick>
+                            <onclick>JumpSMS9</onclick>
+                        </item> 
+				    </content>
+                </control> 
+                <control type="list" id="290009">
+                    <include content="JumpList">
+                        <param name="controlid" value="290009" /> 
+                    </include>
+                    <content>
+                        <item id="0">
+                            <label>X</label>
+                            <onclick>$VAR[ClickToJump]</onclick>
+                            <onclick>JumpSMS7</onclick>
+                            <onclick>JumpSMS9</onclick>
+                            <onclick>JumpSMS9</onclick>
+                        </item>
+                        <item id="1">
+                            <label>Y</label>
+                            <onclick>$VAR[ClickToJump]</onclick>
+                            <onclick>JumpSMS7</onclick>
+                            <onclick>JumpSMS9</onclick>
+                            <onclick>JumpSMS9</onclick>
+                            <onclick>JumpSMS9</onclick>
+                        </item>
+                        <item id="2">
+                            <label>Z</label>
+                            <onclick>$VAR[ClickToJump]</onclick>
+                            <onclick>JumpSMS7</onclick>
+                            <onclick>JumpSMS9</onclick>
+                            <onclick>JumpSMS9</onclick>
+                            <onclick>JumpSMS9</onclick>
+                            <onclick>JumpSMS9</onclick>
+                        </item>
+				    </content>
+                </control>   
+            </control>    
 		</control>
 	</include>
-	<include name="JumpTo">
-		<left>0</left>
-		<top>0</top>
-		<width>150</width>
-		<height>70</height>		
-		<font>Small333</font>
-		<focusedcolor>$VAR[ColorHighlight]</focusedcolor>
-		<align>center</align>
-		<texturefocus>-</texturefocus>
-		<onclick>$VAR[ClickToJump]</onclick>
-	</include>
+    
+    <include name="JumpList">
+        <param name="left" value="$PARAM[left]" default="15" />
+        <definition>
+        <height>59</height>
+        <width>170</width>
+        <orientation>horizontal</orientation>
+        <onright>50</onright>
+        <onleft>50</onleft>
+        <itemlayout height="70" width="23">
+            <control type="label">
+                <width>100%</width>
+                <align>center</align>
+                <left>$PARAM[left]</left>
+                <label>$INFO[ListItem.Label]</label>
+                <font>Small333</font>
+                <textcolor>Black70</textcolor>
+            </control>
+        </itemlayout>
+        <focusedlayout height="70" width="23">
+            <control type="label">
+                <visible>Control.HasFocus($PARAM[controlid])</visible>
+                <width>100%</width>
+                <align>center</align>
+                <left>$PARAM[left]</left>
+                <label>$INFO[ListItem.Label]</label>
+                <font>Small333</font>
+                <textcolor>$VAR[ColorHighlight]</textcolor>
+            </control>
+            <control type="label">
+                <visible>!Control.HasFocus($PARAM[controlid])</visible>
+                <width>100%</width>
+                <align>center</align>
+                <left>$PARAM[left]</left>
+                <label>$INFO[ListItem.Label]</label>
+                <font>Small333</font>
+                <textcolor>Black70</textcolor>
+            </control>
+        </focusedlayout> 
+        </definition>  
+    </include>
+    
 	<variable name="ClickToJump">
 		<value condition="Control.IsVisible(501)">SetFocus(501)</value>
 		<value condition="Control.IsVisible(507)">SetFocus(507)</value>	
@@ -781,15 +1105,18 @@
 		<value condition="Control.IsVisible(500)">SetFocus(500)</value>
 		<value condition="Control.IsVisible(55)">SetFocus(55)</value>
 		<value condition="Control.IsVisible(555)">SetFocus(555)</value>
+        <value condition="Control.IsVisible(550)">SetFocus(550)</value>
 		<value condition="Control.IsVisible(509)">SetFocus(509)</value>
 		<value condition="Control.IsVisible(511)">SetFocus(511)</value>
 		<value condition="Control.IsVisible(512)">SetFocus(512)</value>
 		<value condition="Control.IsVisible(513)">SetFocus(513)</value>
+        <value condition="Control.IsVisible(514)">SetFocus(514)</value>
 	</variable>
 	
 	<include name="ScrollTextWidget">
 		<autoscroll delay="2000" time="2500" repeat="10000">true</autoscroll>
 	</include>
+    
 	<include name="NoScrollTextWidget">
 		<scroll>false</scroll>
 		<autoscroll>false</autoscroll>
@@ -799,168 +1126,7 @@
 		<value condition="!String.IsEmpty(Container(9502).ListItem.DBID)">plugin://service.library.data.provider?type=movie&amp;dbid=$INFO[Container(9502).ListItem.DBID]</value>
 		<value></value>
 	</variable>
-	
-	<include name="FullscreenArtwork">
-		<control type="fixedlist" id="9151">
-			<top>0</top>
-			<visible allowhiddenfocus="true">Control.HasFocus(9603) | Control.HasFocus(9151)</visible>
-			<include>Animation.FadeIn</include>
-			<include>Dimensions_Fullscreen</include>
-			<onright>9151</onright>
-			<onleft>9151</onleft>
-			<ondown>9000</ondown>
-			<onback>9603</onback>
-			<onup>9000</onup>
-			<autoscroll time="5000">Control.HasFocus(9603)</autoscroll>
-            <scrolltime tween="quadratic">300</scrolltime>
-			<preloaditems>2</preloaditems>				
-			<viewtype label="37518">fixedlist</viewtype>
-			<orientation>horizontal</orientation>
-			<itemlayout width="1920" height="1080">
-				<control type="image">
-					<left>0</left>
-					<top>0</top>
-					<include>Animation.ViHi</include>
-					<include>Dimensions_Fullscreen</include>
-					<texture>$INFO[ListItem.Label]</texture>
-				</control>
-			</itemlayout>
-			<focusedlayout width="1920" height="1080">
-				<control type="image">
-					<left>0</left>
-					<top>0</top>				
-					<include>Animation.ViHi</include>
-					<include>Dimensions_Fullscreen</include>
-					<texture>$INFO[ListItem.Label]</texture>
-				</control>
-			</focusedlayout>
-			<content>
-				<item id="0">
-					<label>$INFO[ListItem.Art(fanart)]</label>
-					<visible>!String.IsEmpty(ListItem.Art(fanart))</visible>
-				</item>
-				<item id="1">
-					<label>$INFO[ListItem.Art(fanart1)]</label>
-					<visible>!String.IsEmpty(ListItem.Art(fanart1))</visible>
-				</item>
-				<item id="2">
-					<label>$INFO[ListItem.Art(fanart2)]</label>
-					<visible>!String.IsEmpty(ListItem.Art(fanart2))</visible>
-				</item>	
-				<item id="3">
-					<label>$INFO[ListItem.Art(fanart3)]</label>
-					<visible>!String.IsEmpty(ListItem.Art(fanart3))</visible>
-				</item>
-				<item id="4">
-					<label>$INFO[ListItem.Art(fanart4)]</label>
-					<visible>!String.IsEmpty(ListItem.Art(fanart4))</visible>
-				</item>
-				<item id="5">
-					<label>$INFO[ListItem.Art(fanart5)]</label>
-					<visible>!String.IsEmpty(ListItem.Art(fanart5))</visible>
-				</item>
-				<item id="6">
-					<label>$INFO[ListItem.Art(fanart6)]</label>
-					<visible>!String.IsEmpty(ListItem.Art(fanart6))</visible>
-				</item>
-				<item id="7">
-					<label>$INFO[ListItem.Art(fanart7)]</label>
-					<visible>!String.IsEmpty(ListItem.Art(fanart7))</visible>
-				</item>
-				<item id="8">
-					<label>$INFO[ListItem.Art(fanart18)]</label>
-					<visible>!String.IsEmpty(ListItem.Art(fanart8))</visible>
-				</item>
-				<item id="9">
-					<label>$INFO[ListItem.Art(fanart9)]</label>
-					<visible>!String.IsEmpty(ListItem.Art(fanart9))</visible>
-				</item>
-				<item id="10">
-					<label>$INFO[ListItem.Art(fanart10)]</label>
-					<visible>!String.IsEmpty(ListItem.Art(fanart10))</visible>
-				</item>
-				<item id="11">
-					<label>$INFO[ListItem.Art(fanart11)]</label>
-					<visible>!String.IsEmpty(ListItem.Art(fanart11))</visible>
-				</item>
-				<item id="12">
-					<label>$INFO[ListItem.Art(tvshow.fanart)]</label>
-					<visible>!String.IsEmpty(ListItem.Art(tvshow.fanart))</visible>
-				</item>
-				<item id="13">
-					<label>$INFO[ListItem.Art(tvshow.fanart1)]</label>
-					<visible>!String.IsEmpty(ListItem.Art(tvshow.fanart1))</visible>
-				</item>
-				<item id="14">
-					<label>$INFO[ListItem.Art(tvshow.fanart2)]</label>
-					<visible>!String.IsEmpty(ListItem.Art(tvshow.fanart2))</visible>
-				</item>			
-				<item id="15">
-					<label>$INFO[ListItem.Art(tvshow.fanart3)]</label>
-					<visible>!String.IsEmpty(ListItem.Art(tvshow.fanart3))</visible>
-				</item>
-				<item id="16">
-					<label>$INFO[ListItem.Art(tvshow.fanart4)]</label>
-					<visible>!String.IsEmpty(ListItem.Art(tvshow.fanart4))</visible>
-				</item>
-				<item id="17">
-					<label>$INFO[ListItem.Art(tvshow.fanart5)]</label>
-					<visible>!String.IsEmpty(ListItem.Art(tvshow.fanart5))</visible>
-				</item>
-				<item id="18">
-					<label>$INFO[ListItem.Art(tvshow.fanart6)]</label>
-					<visible>!String.IsEmpty(ListItem.Art(tvshow.fanart6))</visible>
-				</item>
-				<item id="19">
-					<label>$INFO[ListItem.Art(tvshow.fanart7)]</label>
-					<visible>!String.IsEmpty(ListItem.Art(tvshow.fanart7))</visible>
-				</item>
-				<item id="20">
-					<label>$INFO[ListItem.Art(tvshow.fanart8)]</label>
-					<visible>!String.IsEmpty(ListItem.Art(tvshow.fanart8))</visible>
-				</item>
-				<item id="21">
-					<label>$INFO[ListItem.Art(tvshow.fanart9)]</label>
-					<visible>!String.IsEmpty(ListItem.Art(tvshow.fanart9))</visible>
-				</item>
-				<item id="22">
-					<label>$INFO[ListItem.Art(tvshow.fanart10)]</label>
-					<visible>!String.IsEmpty(ListItem.Art(tvshow.fanart10))</visible>
-				</item>
-			</content>
-		</control>
-		<control type="image">
-			<visible>Control.HasFocus(9151)</visible> 
-			<include>Animation.FadeIn</include>
-			<animation effect="fade" start="100" end="0" time="400" delay="2000" condition="Control.HasFocus(9151)">Conditional</animation>
-			<bottom>70</bottom>
-			<right>70</right>
-			<width>48</width>
-			<height>48</height>
-			<texture background="true">osd/pauset.png</texture>
-		</control>
-		<control type="image">
-			<visible>Control.HasFocus(9603)</visible> 
-			<animation effect="fade" start="100" end="0" time="400" delay="2000" condition="Control.HasFocus(9603)">Conditional</animation>
-			<include>Animation.FadeIn</include>
-			<bottom>70</bottom>
-			<right>70</right>
-			<width>48</width>
-			<height>48</height>
-			<texture background="true">osd/play.png</texture>
-		</control>
-		<control type="button" id="9603">
-			<width>1</width>
-			<height>1</height>
-			<visible allowhiddenfocus="true">false</visible>
-			<onleft>SetFocus(9151)</onleft>
-			<onleft>Left</onleft>
-			<onright>SetFocus(9151)</onright>
-			<onright>Right</onright>
-			<ondown>9000</ondown>
-			<onback>9000</onback>
-		</control>	
-	</include>
+
 	<include name="Furniture_FlagsFromHome">
 		<control type="group">
 			<visible>Window.IsVisible(Home.xml) + !Control.HasFocus(9603)</visible>
@@ -968,7 +1134,7 @@
 			<include condition="Window.IsVisible(Home.xml)">Furniture_Flags</include>
 		</control>
 	</include>
-	
+    
 	<include name="DialogVideoInfoNavigation">
 		<control type="grouplist" id="9000">
 			<animation condition="Control.HasFocus(50) | Control.HasFocus(9501)" effect="fade" end="0"  start="100" time="300">Conditional</animation>
@@ -991,7 +1157,7 @@
 			<control type="button" id="9019">
 				<include>DefInfoButtons</include>
 				<label>37551</label>                  
-				<onclick>SetProperty(filminfo,33)</onclick>
+				<onclick>SetProperty(filminfo,1)</onclick>
 				<onleft>ClearProperty(filminfo)</onleft>
 				<onright>ClearProperty(filminfo)</onright> 				
 				<visible>Container.Content(movies) | Container.Content(tvshows)</visible>							
@@ -1004,6 +1170,7 @@
 				<onfocus>ClearProperty(filminfo)</onfocus>
 			</control>
 			<control type="togglebutton" id ="7">
+                <onfocus>ClearProperty(filminfo)</onfocus>
 				<description>Tracklist</description>
 				<label>38023</label>
 				<altlabel>$LOCALIZE[563] $INFO[ListItem.UserRating,,.0]</altlabel>
@@ -1012,6 +1179,7 @@
 				<visible>Container.Content(movies) | Container.Content(tvshows) | Container.Content(episodes)</visible>
 			</control>
 			<control type="button" id="146">
+                <onfocus>ClearProperty(filminfo)</onfocus>
 				<description>Special Features button</description>
 				<label>31282</label>
 				<include>DefInfoButtons</include>
@@ -1021,24 +1189,28 @@
 				<onclick>RunScript(plugin.video.specialfeatures,listitem)</onclick>
 			</control>
 			<control type="button" id="9012">
+                <onfocus>ClearProperty(filminfo)</onfocus>
 				<include>DefInfoButtons</include>
 				<label>31206</label>
 				<onclick condition="String.IsEqual(ListItem.DBType,movie)">SetProperty(content,2)</onclick>
 				<onclick condition="String.IsEqual(ListItem.DBType,tvshow)">SetProperty(content,3)</onclick>
+                <onclick>SetProperty(filminfo,3)</onclick>
 				<ondown>9012</ondown>					
 				<onup condition="Control.IsVisible(50) + String.IsEmpty(Window.Property(content))">50</onup>--> 
 				<onup>9501</onup> 
 				<visible>Container.Content(movies) | Container.Content(tvshows)</visible>					
 			</control>
 			<control type="button" id="49">
+                <onfocus>ClearProperty(filminfo)</onfocus>
 				<description>Home Theatre</description>
 				<label>31170</label>
 				<include>DefInfoButtons</include>
-				<onclick>XBMC.RunScript(script.cinema.experience,movieid=$INFO[ListItem.DBID])</onclick>
-				<visible>system.hasaddon(script.cinema.experience) + Container.Content(movies)</visible>
+				<onclick>RunScript(script.cinemavision,experience)</onclick>
+				<visible>System.HasAddon(script.cinemavision) + [Container.Content(movies) | Container.Content(tvshows) | Container.Content(episodes)]</visible>
 				<onfocus>ClearProperty(filminfo)</onfocus>
 			</control>
 			<control type="button" id="51">
+                <onfocus>ClearProperty(filminfo)</onfocus>
 				<description>Get Thumb</description>
 				<label>37550</label>
 				<include>DefInfoButtons</include>
@@ -1150,9 +1322,10 @@
 			<bottom>224</bottom>
 			<left>568</left>
 			<right>83</right>
-			<include>listdimensions</include>
-			<onup condition="!Skin.HasSetting(HideActorImages)">50</onup>    
-			<ondown>9601</ondown>     
+			<include>listdimensions</include>   
+			<onup condition="!Skin.HasSetting(HideActorImages)">50</onup> 
+            <ondown>9601</ondown>
+            <onfocus>SetProperty(test,1,Home)</onfocus>     
 			<orientation>horizontal</orientation>
 			<control type="radiobutton" id ="8">
 				<include>buttondimensions</include>
@@ -1165,77 +1338,128 @@
 				<textureradiooffnofocus colordiffuse="FFFFFFFF">buttonsdialogs/play.png</textureradiooffnofocus>
 				<selected>ListItem.IsResumable</selected>
 				<onfocus>ClearProperty(filminfo)</onfocus>
-				<onclick>Dialog.Close(1132)</onclick>					
-			</control>
+				<onclick>Dialog.Close(1132)</onclick>
+                <onup condition="!Skin.HasSetting(HideActorImages)">50</onup>				
+			</control>   
 			<control type="radiobutton" id ="9019">
+                <onfocus>ClearProperty(filminfo)</onfocus>
+				<onfocus>ClearProperty(content)</onfocus>                
 				<include>buttondimensions</include>
-				<onfocus>ClearProperty(content)</onfocus>
+                <onclick>SetProperty(filminfo,1)</onclick>                
 				<include content="buttontextures">
 					<param name="icon" value="buttonsdialogs/info.png" />
 				</include>
-				<onclick>SetProperty(filminfo,33)</onclick>
 				<onleft>ClearProperty(filminfo)</onleft>
 				<onright>ClearProperty(filminfo)</onright> 				
 				<visible>Container.Content(movies) | Container.Content(tvshows)</visible>				
-			</control>
-			<control type="radiobutton" id ="11">
+			</control>	
+            
+			<control type="radiobutton" id ="9012">
+                <onfocus>ClearProperty(filminfo)</onfocus>
+				<onfocus condition="!String.IsEqual(Window.Property(content),2) + !String.IsEqual(Window.Property(content),3)">ClearProperty(content)</onfocus>              
 				<include>buttondimensions</include>
-				<onfocus>ClearProperty(content)</onfocus>
+                <onclick>SetProperty(filminfo,3)</onclick>
+				<onclick condition="String.IsEqual(ListItem.DBType,movie)">SetProperty(content,2)</onclick>
+				<onclick condition="String.IsEqual(ListItem.DBType,tvshow)">SetProperty(content,3)</onclick>                           
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/similar.png" />
+				</include>					
+				<onup condition="Control.IsVisible(50) + String.IsEmpty(Window.Property(content)) + !Skin.HasSetting(HideActorImages)">50</onup>
+				<onup>9501</onup> 
+				<visible>String.IsEqual(ListItem.DBType,movie) | String.IsEqual(ListItem.DBType,tvshow)</visible>
+			</control>
+            <control type="radiobutton" id ="9035">
+                <onfocus>ClearProperty(filminfo)</onfocus>
+				<onfocus condition="!String.IsEqual(Window.Property(content),6)">ClearProperty(content)</onfocus>                
+				<include>buttondimensions</include>
+				<onclick condition="String.IsEqual(ListItem.DBType,movie)">SetProperty(content,6)</onclick>
+                <onclick>SetProperty(filminfo,5)</onclick>                          
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/director.png" />
+				</include>
+				<ondown>9601</ondown>					
+				<onup condition="Control.IsVisible(50) + String.IsEmpty(Window.Property(content)) + !Skin.HasSetting(HideActorImages)">50</onup>
+				<onup>9501</onup> 
+				<visible>String.IsEqual(ListItem.DBType,movie)</visible>
+			</control>
+            <control type="radiobutton" id ="9036">
+                <onfocus>ClearProperty(filminfo)</onfocus>
+				<onfocus condition="!String.IsEqual(Window.Property(content),1)">ClearProperty(content)</onfocus>              
+				<include>buttondimensions</include>
+                <onclick>SetProperty(filminfo,7)</onclick>
+				<onclick condition="String.IsEqual(ListItem.DBType,movie)">SetProperty(content,1)</onclick>                          
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/studio.png" />
+				</include>					
+				<onup condition="Control.IsVisible(50) + String.IsEmpty(Window.Property(content)) + !Skin.HasSetting(HideActorImages)">50</onup>
+				<onup>9501</onup> 
+				<visible>String.IsEqual(ListItem.DBType,movie)</visible>
+			</control>
+            <control type="radiobutton" id ="51">
+                <onfocus condition="!String.IsEqual(Window.Property(filminfo),4)">ClearProperty(filminfo)</onfocus>
+				<onfocus>ClearProperty(content)</onfocus>                
+				<include>buttondimensions</include>
+                <onclick>SetProperty(filminfo,4)</onclick>
+                                 
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/image.png" />
+				</include>
+                <onup condition="Control.IsVisible(50) + String.IsEmpty(Window.Property(content)) + !Skin.HasSetting(HideActorImages) + !String.IsEqual(Window.Property(filminfo),4)">50</onup>
+				<onup>9151</onup>
+				<visible>!String.IsEmpty(ListItem.Art(fanart))</visible>
+			</control>	
+            <control type="radiobutton" id ="11">
+                <onfocus>ClearProperty(filminfo)</onfocus>
+				<onfocus>ClearProperty(content)</onfocus>                
+				<include>buttondimensions</include>
+                <onclick>SetProperty(filminfo,2)</onclick>
 				<include content="buttontextures">
 					<param name="icon" value="buttonsdialogs/trailer.png" />
 				</include>
-				<visible>!String.IsEmpty(ListItem.Trailer) + !Skin.HasSetting(PlayTrailerWindowed)</visible>
-				<onfocus>ClearProperty(filminfo)</onfocus>			
+                <onup condition="Control.IsVisible(50) + String.IsEmpty(Window.Property(content)) + !Skin.HasSetting(HideActorImages)">50</onup>
+				<onup>7011</onup>
+				<visible>!String.IsEmpty(ListItem.Trailer) + !Skin.HasSetting(PlayTrailerWindowed)</visible>			
 			</control>
 			<control type="radiobutton" id ="1223">
-				<include>buttondimensions</include>
+                <onfocus>ClearProperty(filminfo)</onfocus>
 				<onfocus>ClearProperty(content)</onfocus>
+                <onfocus>SetProperty(filminfo,2)</onfocus>
+                <onclick>SetProperty(filminfo,2)</onclick>               
+				<include>buttondimensions</include>
 				<include content="buttontextures">
 					<param name="icon" value="buttonsdialogs/trailer.png" />
 				</include>
 				<visible>!String.IsEmpty(ListItem.Trailer) + Skin.HasSetting(PlayTrailerWindowed)</visible>
-				<onfocus>ClearProperty(filminfo)</onfocus>
-				<!--<onback>stop</onback>-->	
+                <onup>7011</onup>	
 				<onclick>PlayMedia($INFO[ListItem.Trailer],1)</onclick>		
 			</control>	
-			<control type="radiobutton" id ="9012">
+            <control type="radiobutton" id ="7">
+                <onfocus>ClearProperty(filminfo)</onfocus>
+				<onfocus>ClearProperty(content)</onfocus>                
 				<include>buttondimensions</include>
-				<onfocus>ClearProperty(content)</onfocus>
-				<include content="buttontextures">
-					<param name="icon" value="buttonsdialogs/similar.png" />
-				</include>
-				<onclick condition="Control.IsVisible(50)">SendClick(2003,5)</onclick>
-				<onclick condition="String.IsEqual(ListItem.DBType,movie)">SetProperty(content,2)</onclick>
-				<onclick condition="String.IsEqual(ListItem.DBType,tvshow)">SetProperty(content,3)</onclick>
-				<onfocus>ClearProperty(filminfo)</onfocus>
-				<ondown>9012</ondown>					
-				<onup condition="Control.IsVisible(50) + String.IsEmpty(Window.Property(content)) + !Skin.HasSetting(HideActorImages)">50</onup>--> 
-				<onup>9501</onup> 
-				<visible>String.IsEqual(ListItem.DBType,movie) | String.IsEqual(ListItem.DBType,tvshow)</visible>
-			</control>
-			<control type="radiobutton" id ="51">
-				<include>buttondimensions</include>
-				<onfocus>ClearProperty(content)</onfocus>
-				<onfocus>ClearProperty(filminfo)</onfocus>
-				<include content="buttontextures">
-					<param name="icon" value="buttonsdialogs/image.png" />
-				</include>
-				<onclick>SetFocus(9603)</onclick>
-				<visible>!String.IsEmpty(ListItem.Art(fanart))</visible>
-			</control>			
-			<control type="radiobutton" id ="7">
-				<include>buttondimensions</include>
-				<onfocus>ClearProperty(content)</onfocus>
-				<onfocus>ClearProperty(filminfo)</onfocus>
+                <!--<onfocus>SetProperty(filminfo,5)</onfocus>-->
 				<include content="buttontextures">
 					<param name="icon" value="buttonsdialogs/rating.png" />
 				</include>
 				<visible>Container.Content(movies) | Container.Content(tvshows) | Container.Content(episodes)</visible>
 				<visible>Control.IsEnabled(7)</visible>
-			</control>		
+			</control>	
+            <control type="radiobutton" id="49">
+                <onfocus>ClearProperty(filminfo)</onfocus>
+				<onfocus>ClearProperty(content)</onfocus>               
+				<description>Home Theatre</description>
+                <include>buttondimensions</include>
+                <include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/cinema.png" />
+				</include>
+				<onclick>RunScript(script.cinemavision,experience)</onclick>
+				<visible>System.HasAddon(script.cinemavision) + [Container.Content(movies) | Container.Content(tvshows) | Container.Content(episodes)]</visible>
+			</control> 			
+				
 			<control type="radiobutton" id ="6">
+                <onfocus>ClearProperty(filminfo)</onfocus>
+				<onfocus>ClearProperty(content)</onfocus>               
 				<include>buttondimensions</include>
-				<onfocus>ClearProperty(content)</onfocus>
 				<include content="buttontextures">
 					<param name="icon" value="buttonsdialogs/update.png" />
 				</include>
@@ -1243,8 +1467,9 @@
 				<visible>Control.IsEnabled(6)</visible>
 			</control>		
 			<control type="radiobutton" id ="10">
+                <onfocus>ClearProperty(filminfo)</onfocus>
+				<onfocus>ClearProperty(content)</onfocus>               
 				<include>buttondimensions</include>
-				<onfocus>ClearProperty(content)</onfocus>
 				<include content="buttontextures">
 					<param name="icon" value="buttonsdialogs/choose_image.png" />
 				</include>
@@ -1252,8 +1477,9 @@
 				<visible>Control.IsEnabled(10)</visible>
 			</control>		
 			<control type="radiobutton" id ="9001">
+                <onfocus>ClearProperty(filminfo)</onfocus>
+				<onfocus>ClearProperty(content)</onfocus>               
 				<include>buttondimensions</include>
-				<onfocus>ClearProperty(content)</onfocus>
 				<include content="buttontextures">
 					<param name="icon" value="buttonsdialogs/artworkdownloader.png" />
 				</include>
@@ -1262,6 +1488,18 @@
 				<onclick condition="Container.Content(musicvideos)">RunScript(script.artwork.beef, mode=gui, mediatype=musicvideo, dbid=$INFO[ListItem.DBID])</onclick>
 				<visible>!Skin.HasSetting(global.kioskmode)</visible>
 				<visible>[Container.Content(tvshows) | Container.Content(movies) | Container.Content(musicvideos)] + system.hasaddon(script.artwork.beef)</visible>
+			</control>
+            <control type="radiobutton" id ="9010">
+                <onfocus>ClearProperty(filminfo)</onfocus>
+				<onfocus>ClearProperty(content)</onfocus>           
+				<include>buttondimensions</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/settings.png" />
+				</include>
+				<onclick condition="!Skin.HasSetting(wipinfo)">ActivateWindow(1204)</onclick>
+                <onclick condition="Skin.HasSetting(wipinfo)">ActivateWindow(1205)</onclick>
+				<visible>!Skin.HasSetting(global.kioskmode)</visible>
+				
 			</control>
 		</control>	
 	</include>	
@@ -1353,6 +1591,16 @@
 				<visible>!Skin.HasSetting(global.kioskmode)</visible>
 				<onup>9502</onup>
 			</control>
+            <control type="radiobutton" id ="9007">
+                <onfocus>ClearProperty(setsinfo)</onfocus>            
+				<include>buttondimensions</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/settings.png" />
+				</include>
+				<onclick condition="!Skin.HasSetting(wipinfo)">ActivateWindow(1204)</onclick>
+                <onclick condition="Skin.HasSetting(wipinfo)">ActivateWindow(1205)</onclick>
+				<visible>!Skin.HasSetting(global.kioskmode)</visible>
+			</control>	
 		</control>		
 	</include>
 	
@@ -1378,7 +1626,19 @@
 				<onclick>Dialog.Close(135)</onclick>
 				<visible>String.IsEqual(ListItem.DBType,album) | String.IsEqual(ListItem.DBType,song)</visible>
 				<onup condition="Control.IsVisible(50)">SetFocus(9009)</onup>	
-			</control>				
+			</control>
+            
+            <control type="button" id ="8">
+				<description>Play</description>
+				<label>208</label>
+				<width>260</width>
+				<include>DefInfoButtons</include>
+				<onclick>PlayMedia($INFO[ListItem.FileNameAndPath])</onclick>
+				<onclick>Dialog.Close(135)</onclick>
+				<visible>String.IsEqual(ListItem.DBType,album) | String.IsEqual(ListItem.DBType,song)</visible>
+				<onup condition="Control.IsVisible(50)">SetFocus(9009)</onup>	
+			</control>
+            				
 			<control type="button" id="7">
 				<width>260</width>
 				<include>DefInfoButtons</include>
@@ -1503,8 +1763,8 @@
 				<texturefocus colordiffuse="$VAR[ColorHighlight]" border="0">common/box.png</texturefocus>
 				<textureradioonfocus colordiffuse="FFFFFFFF">buttonsdialogs/bio.png</textureradioonfocus>
 				<textureradioonnofocus colordiffuse="FFFFFFFF">buttonsdialogs/bio.png</textureradioonnofocus>
-				<textureradioofffocus colordiffuse="FFFFFFFF">buttonsdialogs/tracks.png</textureradioofffocus>
-				<textureradiooffnofocus colordiffuse="FFFFFFFF">buttonsdialogs/tracks.png</textureradiooffnofocus>
+				<textureradioofffocus colordiffuse="FFFFFFFF">buttonsdialogs/musictracklist.png</textureradioofffocus>
+				<textureradiooffnofocus colordiffuse="FFFFFFFF">buttonsdialogs/musictracklist.png</textureradiooffnofocus>
 				<textureradiooffdisabled colordiffuse="disabled">buttonsdialogs/set.png</textureradiooffdisabled>
 				<textureradioondisabled colordiffuse="disabled">buttonsdialogs/set.png</textureradioondisabled>
 				<onclick condition="String.IsEmpty(Window.Property(tracklist))">SetProperty(tracklist,1)</onclick>
@@ -1567,7 +1827,19 @@
 				<visible>!Skin.HasSetting(global.kioskmode)</visible>
 				<onup condition="Control.IsVisible(50)">SetFocus(9009)</onup>
 				<onclick>SendClick(10)</onclick>	
-			</control>		
+			</control>	
+            <control type="radiobutton" id ="9010">
+                <onfocus>ClearProperty(content)</onfocus>
+           
+				<include>buttondimensions</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/settings.png" />
+				</include>
+				<onclick condition="!Skin.HasSetting(wipinfo)">ActivateWindow(1204)</onclick>
+                <onclick condition="Skin.HasSetting(wipinfo)">ActivateWindow(1205)</onclick>
+				<visible>!Skin.HasSetting(global.kioskmode)</visible>
+				
+			</control>	
 		</control>		
 	</include>
 	
@@ -1714,6 +1986,15 @@
 					<param name="icon" value="buttonsdialogs/enabled.png" />
 				</include>					
 			</control>
+            <control type="radiobutton" id ="9010">
+				<include>buttondimensions</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/settings.png" />
+				</include>
+				<onclick condition="!Skin.HasSetting(wipinfo)">ActivateWindow(1204)</onclick>
+                <onclick condition="Skin.HasSetting(wipinfo)">ActivateWindow(1205)</onclick>
+				<visible>!Skin.HasSetting(global.kioskmode)</visible>				
+			</control>	
 		</control>		
 	</include>
 	
@@ -1778,6 +2059,35 @@
 				</include>
 				<visible>Control.IsEnabled(8)</visible>					
 			</control>
+            <control type="radiobutton" id ="13">
+				<include>buttondimensionssquare</include>
+				<texturenofocus colordiffuse="Dark4" border="0">common/box.png</texturenofocus>
+				<texturefocus colordiffuse="$VAR[ColorHighlight]" border="0">common/box.png</texturefocus>
+				<textureradioonfocus colordiffuse="FFFFFFFF">buttonsdialogs/autoupdateon.png</textureradioonfocus>
+				<textureradioonnofocus colordiffuse="FFFFFFFF">buttonsdialogs/autoupdateon.png</textureradioonnofocus>
+				<textureradioofffocus colordiffuse="FFFFFFFF">buttonsdialogs/autoupdate.png</textureradioofffocus>
+				<textureradiooffnofocus colordiffuse="FFFFFFFF">buttonsdialogs/autoupdate.png</textureradiooffnofocus>
+				<visible>!Skin.HasSetting(global.kioskmode)</visible>
+				<visible>Control.IsEnabled(13)</visible>	
+				<textcolor>Dark4</textcolor>
+				<font>Null</font>						
+			</control>
+            <control type="radiobutton" id ="10">
+				<include>buttondimensionssquare</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/dependency.png" />
+				</include>
+				<visible>Control.IsEnabled(10)</visible>					
+			</control>
+            <control type="radiobutton" id ="9010">          
+				<include>buttondimensions</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/settings.png" />
+				</include>
+				<onclick condition="!Skin.HasSetting(wipinfo)">ActivateWindow(1204)</onclick>
+                <onclick condition="Skin.HasSetting(wipinfo)">ActivateWindow(1205)</onclick>
+				<visible>!Skin.HasSetting(global.kioskmode)</visible>				
+			</control>	
 		</control>
 	</include>	
 	
@@ -1864,8 +2174,11 @@
 				<description>Play</description>
 				<label>208</label>
 				<include>DefInfoButtons</include>
-				<visible>!String.IsEmpty(Window.Property(DBID)) + !String.IsEqual(Window.Property(Type),tvshow)</visible>
-				<visible>String.IsEmpty(Window(home).Property(globalsearch))</visible>
+				<visible>!String.IsEmpty(Window.Property(DBID)) + !String.IsEqual(Window.Property(Type),tvshow) + System.HasAddon(script.embuary.helper)</visible>
+				<visible>String.IsEmpty(Window(home).Property(globalsearch))</visible>	
+                <onclick>PlayMedia($ESCINFO[Container(1501).listitem.FileNameAndPath()])</onclick>
+                <onclick>Dialog.Close(2003)</onclick>
+                <onclick>Close</onclick>
 			</control>
 			<control type="button" id ="120">
 				<description>Browse</description>
@@ -1928,8 +2241,11 @@
 				<include content="buttontextures">
 					<param name="icon" value="buttonsdialogs/play.png" />
 				</include>
-				<visible>!String.IsEmpty(Window.Property(DBID)) + !String.IsEqual(Window.Property(Type),tvshow)</visible>
-				<visible>String.IsEmpty(Window(home).Property(globalsearch))</visible>					
+				<visible>!String.IsEmpty(Window.Property(DBID)) + !String.IsEqual(Window.Property(Type),tvshow) + System.HasAddon(script.embuary.helper)</visible>
+				<visible>String.IsEmpty(Window(home).Property(globalsearch))</visible>	
+                <onclick>PlayMedia($ESCINFO[Container(1501).listitem.FileNameAndPath()])</onclick>
+                <onclick>Dialog.Close(2003)</onclick>
+                <onclick>Close</onclick>		
 			</control>
 			<control type="radiobutton" id ="120">
 				<description>Browse</description>
@@ -2033,7 +2349,7 @@
 			</control>  
 		</control>
 	</include>
-	
+
 	<include name="ExtendedDialogInfoNavigationNew">
 		<control type="grouplist" id="9000">
 			<visible allowhiddenfocus="true">ControlGroup(9000).HasFocus()</visible>
@@ -2087,53 +2403,6 @@
 			</control>
 		</control>
 	</include>
-	<variable name="DialogInfoLabel">	
-		<value condition="Control.HasFocus(9006) + Window.IsVisible(script-script.extendedinfo-DialogInfo.xml)">$LOCALIZE[37513]</value>
-		<value condition="Control.HasFocus(9002) + Window.IsVisible(script-script.extendedinfo-DialogInfo.xml)">$ADDON[script.extendedinfo 32010]</value>
-		<value condition="Control.HasFocus(9003) + Window.IsVisible(script-script.extendedinfo-DialogInfo.xml)">$ADDON[script.extendedinfo 32031]</value>
-		<value condition="Control.HasFocus(9004) + Window.IsVisible(script-script.extendedinfo-DialogInfo.xml)">$ADDON[script.extendedinfo 32118]</value>
-		<value condition="Control.HasFocus(9005) + Window.IsVisible(script-script.extendedinfo-DialogInfo.xml)">$ADDON[script.extendedinfo 32115]</value>		
-		<value condition="Control.HasFocus(8) + Window.IsVisible(script-script.extendedinfo-DialogVideoInfo.xml)">$LOCALIZE[208]</value>
-		<value condition="Control.HasFocus(120) + Window.IsVisible(script-script.extendedinfo-DialogVideoInfo.xml)">$LOCALIZE[21385]</value>
-		<value condition="Control.HasFocus(9002) + Window.IsVisible(script-script.extendedinfo-DialogVideoInfo.xml)">$LOCALIZE[206]</value>
-		<value condition="Control.HasFocus(9006) + Window.IsVisible(script-script.extendedinfo-DialogVideoInfo.xml)">$LOCALIZE[37513]</value>
-		<value condition="Control.HasFocus(9003) + Window.IsVisible(script-script.extendedinfo-DialogVideoInfo.xml)">$LOCALIZE[31206]</value>
-		<value condition="Control.HasFocus(9004) + Window.IsVisible(script-script.extendedinfo-DialogVideoInfo.xml)">$ADDON[script.extendedinfo 32118]</value>
-		<value condition="Control.HasFocus(9005) + Window.IsVisible(script-script.extendedinfo-DialogVideoInfo.xml)">$ADDON[script.extendedinfo 32115]</value>
-		<value condition="Control.HasFocus(12) + Window.IsVisible(DialogAddonInfo.xml)">$LOCALIZE[518]</value>
-		<value condition="Control.HasFocus(9) + Window.IsVisible(DialogAddonInfo.xml)">$LOCALIZE[24020]</value>
-		<value condition="Control.HasFocus(8) + Window.IsVisible(DialogAddonInfo.xml)">$LOCALIZE[24069]</value>
-		<value condition="Control.HasFocus(7) + Window.IsVisible(DialogAddonInfo.xml)">$INFO[Control.GetLabel(7)]</value>
-		<value condition="Control.HasFocus(6) + Window.IsVisible(DialogAddonInfo.xml)">$INFO[Control.GetLabel(6)]</value>
-		<value condition="Control.HasFocus(4) + Window.IsVisible(DialogPVRInfo.xml)">$LOCALIZE[19003]</value>
-		<value condition="Control.HasFocus(5) + Window.IsVisible(DialogPVRInfo.xml)">$LOCALIZE[19165]</value>
-		<value condition="Control.HasFocus(8) + Window.IsVisible(DialogPVRInfo.xml)">$LOCALIZE[19687]</value>
-		<value condition="Control.HasFocus(10) + Window.IsVisible(DialogPVRInfo.xml)">$LOCALIZE[19190]</value>		
-		<value condition="Control.HasFocus(7) + Window.IsVisible(DialogPVRInfo.xml)">$LOCALIZE[186]</value>
-		<value condition="Control.HasFocus(6) + Window.IsVisible(DialogPVRInfo.xml)">$LOCALIZE[264]</value>		
-		<value condition="Control.HasFocus(9019) + Window.IsVisible(DialogVideoInfo.xml)">$LOCALIZE[37551]</value>
-		<value condition="Control.HasFocus(8)">$LOCALIZE[208]</value>
-		<value condition="Control.HasFocus(666)">$LOCALIZE[37554]</value>
-		<value condition="Control.HasFocus(667)">$LOCALIZE[37555]</value>
-		<value condition="Control.HasFocus(9019)">$LOCALIZE[21888]</value>
-		<value condition="Control.HasFocus(9018)">$LOCALIZE[37551]</value>
-		<value condition="Control.HasFocus(11)">$LOCALIZE[20410]</value>
-		<value condition="Control.HasFocus(1223)">$LOCALIZE[20410]</value>
-		<value condition="Control.HasFocus(9012)">$LOCALIZE[31206]</value>
-		<value condition="Control.HasFocus(51)">$LOCALIZE[37550]</value>
-		<value condition="Control.HasFocus(7)">$LOCALIZE[38023]</value>
-		<value condition="Control.HasFocus(6)">$LOCALIZE[184]</value>
-		<value condition="Control.HasFocus(10)">$LOCALIZE[13405]</value>
-		<value condition="Control.HasFocus(9001)">$LOCALIZE[31203]</value>
-		<value condition="Control.HasFocus(49)">$LOCALIZE[31170]</value>
-		<value condition="Control.HasFocus(9100)">$LOCALIZE[31203]</value>
-		<value condition="Control.HasFocus(123)">$LOCALIZE[38023]</value>
-		<value condition="Control.HasFocus(9003)">$LOCALIZE[31141]</value>
-		<value condition="Control.HasFocus(48)">$LOCALIZE[184]</value>
-		<value condition="Control.HasFocus(54)">$LOCALIZE[13405]</value>		
-		<value condition="Control.HasFocus(9002) + String.IsEmpty(Window.Property(tracklist))">$LOCALIZE[182]</value>
-		<value condition="Control.HasFocus(9002) + !String.IsEmpty(Window.Property(tracklist))">$LOCALIZE[21887]</value>
-	</variable>
 	
 	<variable name="ListItemAudioCodec"> 
 		<value condition="String.Contains(ListItem.Filenameandpath,.atmos.)">atmos</value> 
@@ -2443,7 +2712,1424 @@
 			<texturenofocus colordiffuse="Black12" border="5">common/box.png</texturenofocus>
 		</control>
 	</include>
-	
 
-	
+    <include name="FullscreenArtwork">
+		<control type="fixedlist" id="9151">
+			<top>0</top>
+			<visible allowhiddenfocus="true">Control.HasFocus(9603) | Control.HasFocus(9151)</visible>
+			<include>Animation.FadeIn</include>
+			<include>Dimensions_Fullscreen</include>
+			<onright>9151</onright>
+			<onleft>9151</onleft>
+			<ondown>9000</ondown>
+			<onback>9603</onback>
+			<onup>9000</onup>
+			<autoscroll time="5000">Control.HasFocus(9603)</autoscroll>
+            <scrolltime tween="quadratic">300</scrolltime>
+			<preloaditems>2</preloaditems>				
+			<viewtype label="37518">fixedlist</viewtype>
+			<orientation>horizontal</orientation>
+			<itemlayout width="1920" height="1080">
+				<control type="image">
+					<left>0</left>
+					<top>0</top>
+					<include>Animation.ViHi</include>
+					<include>Dimensions_Fullscreen</include>
+					<texture>$INFO[ListItem.Label]</texture>
+				</control>
+			</itemlayout>
+			<focusedlayout width="1920" height="1080">
+				<control type="image">
+					<left>0</left>
+					<top>0</top>				
+					<include>Animation.ViHi</include>
+					<include>Dimensions_Fullscreen</include>
+					<texture>$INFO[ListItem.Label]</texture>
+				</control>
+			</focusedlayout>
+			<content>
+				<item id="0">
+					<label>$INFO[ListItem.Art(fanart)]</label>
+					<visible>!String.IsEmpty(ListItem.Art(fanart))</visible>
+				</item>
+				<item id="1">
+					<label>$INFO[ListItem.Art(fanart1)]</label>
+					<visible>!String.IsEmpty(ListItem.Art(fanart1))</visible>
+				</item>
+				<item id="2">
+					<label>$INFO[ListItem.Art(fanart2)]</label>
+					<visible>!String.IsEmpty(ListItem.Art(fanart2))</visible>
+				</item>	
+				<item id="3">
+					<label>$INFO[ListItem.Art(fanart3)]</label>
+					<visible>!String.IsEmpty(ListItem.Art(fanart3))</visible>
+				</item>
+				<item id="4">
+					<label>$INFO[ListItem.Art(fanart4)]</label>
+					<visible>!String.IsEmpty(ListItem.Art(fanart4))</visible>
+				</item>
+				<item id="5">
+					<label>$INFO[ListItem.Art(fanart5)]</label>
+					<visible>!String.IsEmpty(ListItem.Art(fanart5))</visible>
+				</item>
+				<item id="6">
+					<label>$INFO[ListItem.Art(fanart6)]</label>
+					<visible>!String.IsEmpty(ListItem.Art(fanart6))</visible>
+				</item>
+				<item id="7">
+					<label>$INFO[ListItem.Art(fanart7)]</label>
+					<visible>!String.IsEmpty(ListItem.Art(fanart7))</visible>
+				</item>
+				<item id="8">
+					<label>$INFO[ListItem.Art(fanart18)]</label>
+					<visible>!String.IsEmpty(ListItem.Art(fanart8))</visible>
+				</item>
+				<item id="9">
+					<label>$INFO[ListItem.Art(fanart9)]</label>
+					<visible>!String.IsEmpty(ListItem.Art(fanart9))</visible>
+				</item>
+				<item id="10">
+					<label>$INFO[ListItem.Art(fanart10)]</label>
+					<visible>!String.IsEmpty(ListItem.Art(fanart10))</visible>
+				</item>
+				<item id="11">
+					<label>$INFO[ListItem.Art(fanart11)]</label>
+					<visible>!String.IsEmpty(ListItem.Art(fanart11))</visible>
+				</item>
+				<item id="12">
+					<label>$INFO[ListItem.Art(tvshow.fanart)]</label>
+					<visible>!String.IsEmpty(ListItem.Art(tvshow.fanart))</visible>
+				</item>
+				<item id="13">
+					<label>$INFO[ListItem.Art(tvshow.fanart1)]</label>
+					<visible>!String.IsEmpty(ListItem.Art(tvshow.fanart1))</visible>
+				</item>
+				<item id="14">
+					<label>$INFO[ListItem.Art(tvshow.fanart2)]</label>
+					<visible>!String.IsEmpty(ListItem.Art(tvshow.fanart2))</visible>
+				</item>			
+				<item id="15">
+					<label>$INFO[ListItem.Art(tvshow.fanart3)]</label>
+					<visible>!String.IsEmpty(ListItem.Art(tvshow.fanart3))</visible>
+				</item>
+				<item id="16">
+					<label>$INFO[ListItem.Art(tvshow.fanart4)]</label>
+					<visible>!String.IsEmpty(ListItem.Art(tvshow.fanart4))</visible>
+				</item>
+				<item id="17">
+					<label>$INFO[ListItem.Art(tvshow.fanart5)]</label>
+					<visible>!String.IsEmpty(ListItem.Art(tvshow.fanart5))</visible>
+				</item>
+				<item id="18">
+					<label>$INFO[ListItem.Art(tvshow.fanart6)]</label>
+					<visible>!String.IsEmpty(ListItem.Art(tvshow.fanart6))</visible>
+				</item>
+				<item id="19">
+					<label>$INFO[ListItem.Art(tvshow.fanart7)]</label>
+					<visible>!String.IsEmpty(ListItem.Art(tvshow.fanart7))</visible>
+				</item>
+				<item id="20">
+					<label>$INFO[ListItem.Art(tvshow.fanart8)]</label>
+					<visible>!String.IsEmpty(ListItem.Art(tvshow.fanart8))</visible>
+				</item>
+				<item id="21">
+					<label>$INFO[ListItem.Art(tvshow.fanart9)]</label>
+					<visible>!String.IsEmpty(ListItem.Art(tvshow.fanart9))</visible>
+				</item>
+				<item id="22">
+					<label>$INFO[ListItem.Art(tvshow.fanart10)]</label>
+					<visible>!String.IsEmpty(ListItem.Art(tvshow.fanart10))</visible>
+				</item>
+			</content>
+		</control>
+		<control type="image">
+			<visible>Control.HasFocus(9151)</visible> 
+			<include>Animation.FadeIn</include>
+			<animation effect="fade" start="100" end="0" time="400" delay="2000" condition="Control.HasFocus(9151)">Conditional</animation>
+			<bottom>70</bottom>
+			<right>70</right>
+			<width>48</width>
+			<height>48</height>
+			<texture background="true">osd/pauset.png</texture>
+		</control>
+		<control type="image">
+			<visible>Control.HasFocus(9603)</visible> 
+			<animation effect="fade" start="100" end="0" time="400" delay="2000" condition="Control.HasFocus(9603)">Conditional</animation>
+			<include>Animation.FadeIn</include>
+			<bottom>70</bottom>
+			<right>70</right>
+			<width>48</width>
+			<height>48</height>
+			<texture background="true">osd/play.png</texture>
+		</control>
+		<control type="button" id="9603">
+			<width>1</width>
+			<height>1</height>
+			<visible allowhiddenfocus="true">false</visible>
+			<onleft>SetFocus(9151)</onleft>
+			<onleft>Left</onleft>
+			<onright>SetFocus(9151)</onright>
+			<onright>Right</onright>
+			<ondown>9000</ondown>
+			<onback>9000</onback>
+		</control>	
+	</include>
+    
+    
+    
+    <include name="DialogMusicInfoNavigationWIP">
+		<control type="grouplist" id="9000">
+			<bottom>144</bottom>
+			<left>783</left>
+			<right>SidePad</right>
+			<include>listdimensions</include>
+			<orientation>horizontal</orientation>
+            <ondown>9601</ondown>
+            <onup condition="String.IsEqual(Window.Property(musiccontent),2)">9501</onup>
+            <onup condition="String.IsEqual(Window.Property(musiccontent),3)">9502</onup>
+            <onup condition="String.IsEqual(Window.Property(musiccontent),4)">95031</onup>
+            <onup condition="String.IsEqual(Window.Property(musiccontent),1)">9009</onup>
+            <onup condition="String.IsEmpty(Window.Property(musiccontent))">9010</onup>
+      
+            <control type="radiobutton" id ="9001">
+                <visible>[String.IsEqual(ListItem.DBType,album) | String.IsEqual(ListItem.DBType,song)]</visible>	
+                <onfocus>ClearProperty(musiccontent)</onfocus>             
+                <onclick condition="String.IsEqual(ListItem.DBType,song)">PlayMedia($INFO[ListItem.FileNameAndPath])</onclick>               
+                <onclick condition="String.IsEqual(ListItem.DBType,album) + !String.IsEmpty(ListItem.FolderPath)">PlayMedia($INFO[ListItem.FileNameAndPath])</onclick> 
+                <onclick condition="!System.HasAddon(script.playalbum) + String.IsEqual(ListItem.DBType,album) + String.IsEmpty(ListItem.FolderPath)">InstallAddon(script.playalbum)</onclick>
+                <onclick condition="System.HasAddon(script.playalbum) + String.IsEqual(ListItem.DBType,album) + String.IsEmpty(ListItem.FolderPath)">RunScript(script.playalbum,albumid=$INFO[ListItem.DBID])</onclick>           				
+				<include>buttondimensionssquare</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/play.png" />
+				</include>			
+			</control>
+
+            <!-- Info (Startseite) Button -->
+            <control type="radiobutton" id ="9002">	
+                <visible>!String.IsEqual(ListItem.DBType,song)</visible>
+                <onfocus>ClearProperty(musiccontent)</onfocus>
+				<include>buttondimensionssquare</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/info.png" />
+				</include>						
+			</control>
+            
+            <!-- Tracklist Button -->	
+            <control type="radiobutton" id ="9003">
+                <visible>String.IsEqual(ListItem.DBType,album)</visible>
+                <onfocus condition="!String.IsEqual(Window.Property(musiccontent),1)">ClearProperty(musiccontent)</onfocus>
+                <onclick>SetProperty(musiccontent,1)</onclick>              
+                <onfocus condition="!Skin.HasSetting(dontclickonfocus)">SetProperty(musiccontent,1)</onfocus>
+				<include>buttondimensionssquare</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/musictracklist.png" />
+				</include>	
+			</control>
+            
+            <!-- SETS Button -->
+            <control type="radiobutton" id ="9004">
+                <visible>String.IsEqual(ListItem.DBType,artist)</visible>	
+                <onfocus condition="!String.IsEqual(Window.Property(musiccontent),2)">ClearProperty(musiccontent)</onfocus>
+                <onclick>SetProperty(musiccontent,2)</onclick>                               
+                <onfocus condition="!Skin.HasSetting(dontclickonfocus)">SetProperty(musiccontent,2)</onfocus>                
+                <onfocus condition="!Skin.HasSetting(preloadcontent)">SetProperty(discography,1)</onfocus>
+                <onclick condition="!Skin.HasSetting(preloadcontent)">SetProperty(discography,1)</onclick>                                
+				<include>buttondimensionssquare</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/set.png" />
+				</include>						
+			</control>
+            
+            <!-- Youtube Button -->	
+            <control type="radiobutton" id ="9005">
+                <onfocus condition="!String.IsEqual(Window.Property(musiccontent),3)">ClearProperty(musiccontent)</onfocus>
+                <onclick>SetProperty(musiccontent,3)</onclick>                              
+                <onfocus condition="!Skin.HasSetting(dontclickonfocus)">SetProperty(musiccontent,3)</onfocus>                
+                <onfocus condition="!Skin.HasSetting(preloadcontent)">SetProperty(musicyoutube,1)</onfocus>
+                <onclick condition="!Skin.HasSetting(preloadcontent)">SetProperty(musicyoutube,1)</onclick> 
+                
+				<include>buttondimensionssquare</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/youtube.png" />
+				</include>
+			</control>
+
+            
+            <!-- Fanart Button -->	
+			<control type="radiobutton" id ="9006">
+                <visible>String.IsEqual(ListItem.DBType,artist)</visible>
+                <onfocus condition="!String.IsEqual(Window.Property(musiccontent),4)">ClearProperty(musiccontent)</onfocus>
+                <onclick>SetProperty(musiccontent,4)</onclick>              
+                <onfocus condition="!Skin.HasSetting(dontclickonfocus)">SetProperty(musiccontent,4)</onfocus>
+				<font>Button</font>
+				<textcolor>Dark2</textcolor>
+				<include>buttondimensionssquare</include>
+				<texturenofocus colordiffuse="Dark4" border="0">common/box.png</texturenofocus>
+				<texturefocus colordiffuse="$VAR[ColorHighlight]" border="0">common/box.png</texturefocus>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/image.png" />
+				</include>
+			</control>
+            
+            <!-- Rating Button -->
+            <control type="radiobutton" id ="9007"> 
+                <visible>!String.IsEqual(ListItem.DBType,artist) + String.IsEmpty(ListItem.UserRating)</visible>
+                <include>OnFocusOnClick</include>
+                <include>ClearOnFocusOnClick</include> 
+                <onfocus>ClearProperty(musiccontent)</onfocus>               
+                <onclick>SendClick(7)</onclick>
+				<include>buttondimensionssquare</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/rating.png" />
+				</include>
+				<textcolor>Dark4</textcolor>
+				<font>Null</font>
+			</control>
+            
+            <control type="radiobutton" id ="9110">
+                <visible>!String.IsEqual(ListItem.DBType,artist) + !String.IsEmpty(ListItem.UserRating)</visible>
+                <include>OnFocusOnClick</include> 
+                <include>ClearOnFocusOnClick</include>
+                <onfocus>ClearProperty(musiccontent)</onfocus>               
+                <onclick>SendClick(7)</onclick>
+				<include>buttondimensionssquare</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/rating_new.png" />
+				</include>
+				<textcolor>Dark4</textcolor>
+				<font>Null</font>
+			</control>	
+            
+            <!-- Setting Button -->
+            <control type="radiobutton" id ="9008"> 
+                <onfocus>ClearProperty(musiccontent)</onfocus>                           
+				<include>buttondimensions</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/settings.png" />
+				</include>
+                <onclick>ActivateWindow(1205)</onclick>
+				<visible>!Skin.HasSetting(global.kioskmode)</visible>
+			</control>		
+		</control>		
+	</include>
+    
+    
+    <include name="DialogVideoInfoNavigationWIP">
+		<control type="grouplist" id="9000">			
+			<visible>true</visible>
+			<bottom>224</bottom>
+			<left>568</left>
+			<right>83</right>
+			<include>listdimensions</include>    
+            <ondown>9601</ondown>
+            <onfocus>SetProperty(test,1,Home)</onfocus>     
+			<orientation>horizontal</orientation>
+            
+            <onup condition="String.IsEqual(Window.Property(moviecontent),2)">9502</onup>
+            <onup condition="String.IsEqual(Window.Property(moviecontent),3)">9503</onup>
+            <onup condition="String.IsEqual(Window.Property(moviecontent),4)">9504</onup>
+            <onup condition="String.IsEqual(Window.Property(moviecontent),5)">95051</onup>
+            <onup condition="String.IsEqual(Window.Property(moviecontent),6)">7011</onup>
+            <onup condition="String.IsEmpty(Window.Property(moviecontent))">50</onup>
+            
+			<control type="radiobutton" id ="8">
+                <onfocus>ClearProperty(moviecontent)</onfocus>
+				<onclick>Dialog.Close(1132)</onclick>                           
+				<include>buttondimensions</include>
+				<texturenofocus colordiffuse="Dark4" border="0">common/box.png</texturenofocus>
+				<texturefocus colordiffuse="$VAR[ColorHighlight]" border="0">common/box.png</texturefocus>
+				<textureradioonfocus colordiffuse="FFFFFFFF">buttonsdialogs/continue.png</textureradioonfocus>
+				<textureradioonnofocus colordiffuse="FFFFFFFF">buttonsdialogs/continue.png</textureradioonnofocus>
+				<textureradioofffocus colordiffuse="FFFFFFFF">buttonsdialogs/play.png</textureradioofffocus>
+				<textureradiooffnofocus colordiffuse="FFFFFFFF">buttonsdialogs/play.png</textureradiooffnofocus>
+				<selected>ListItem.IsResumable</selected>				
+			</control> 
+
+			<control type="radiobutton" id ="9001">
+                <visible>String.IsEqual(ListItem.DBType,movie) | String.IsEqual(ListItem.DBType,tvshow)</visible>                
+                <onfocus condition="!String.IsEqual(Window.Property(moviecontent),1)">ClearProperty(moviecontent)</onfocus> 
+                <onclick>SetProperty(moviecontent,1)</onclick>
+                <onfocus condition="!Skin.HasSetting(dontclickonfocus)">SetProperty(moviecontent,1)</onfocus>                              
+				<include>buttondimensions</include>               
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/info.png" />
+				</include>											
+			</control>	
+            
+			<control type="radiobutton" id ="9002">
+                <visible>String.IsEqual(ListItem.DBType,movie) | String.IsEqual(ListItem.DBType,tvshow)</visible>
+                <onfocus condition="!String.IsEqual(Window.Property(moviecontent),2)">ClearProperty(moviecontent)</onfocus>               
+                <onclick>SetProperty(moviecontent,2)</onclick>
+                <onfocus condition="!Skin.HasSetting(dontclickonfocus)">SetProperty(moviecontent,2)</onfocus>                
+                <onfocus condition="!Skin.HasSetting(preloadcontent)">SetProperty(videosimilar,1)</onfocus>
+                <onclick condition="!Skin.HasSetting(preloadcontent)">SetProperty(videosimilar,1)</onclick>                  
+                <include>buttondimensions</include>                         
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/similar.png" />
+				</include>									
+			</control>
+            
+            <control type="radiobutton" id ="9003">
+                <visible>String.IsEqual(ListItem.DBType,movie)</visible>
+                <onfocus condition="!String.IsEqual(Window.Property(moviecontent),3)">ClearProperty(moviecontent)</onfocus>                
+                <onclick>SetProperty(moviecontent,3)</onclick>
+                <onfocus condition="!Skin.HasSetting(dontclickonfocus)">SetProperty(moviecontent,3)</onfocus>                
+                <onfocus condition="!Skin.HasSetting(preloadcontent)">SetProperty(videostudio,1)</onfocus>
+                <onclick condition="!Skin.HasSetting(preloadcontent)">SetProperty(videostudio,1)</onclick>                
+                <include>buttondimensions</include>
+                <include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/studio.png" />
+				</include>					
+			</control>
+            
+            <control type="radiobutton" id ="9004">
+                <visible>String.IsEqual(ListItem.DBType,movie) | String.IsEqual(ListItem.DBType,tvshow)</visible>
+                <onfocus condition="!String.IsEqual(Window.Property(moviecontent),4)">ClearProperty(moviecontent)</onfocus>               
+                <onclick>SetProperty(moviecontent,4)</onclick>
+                <onfocus condition="!Skin.HasSetting(dontclickonfocus)">SetProperty(moviecontent,4)</onfocus>                
+                <onfocus condition="!Skin.HasSetting(preloadcontent)">SetProperty(videoyoutube,1)</onfocus>
+                <onclick condition="!Skin.HasSetting(preloadcontent)">SetProperty(videoyoutube,1)</onclick>               
+				<include>buttondimensions</include>                       
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/youtube.png" />
+				</include>
+			</control>
+            
+            <control type="radiobutton" id ="9005">
+                <onfocus condition="!String.IsEqual(Window.Property(moviecontent),5)">ClearProperty(moviecontent)</onfocus>
+                <visible>!String.IsEmpty(ListItem.Art(fanart))</visible>                
+                <onclick>SetProperty(moviecontent,5)</onclick>
+                <onfocus condition="!Skin.HasSetting(dontclickonfocus)">SetProperty(moviecontent,5)</onfocus>                                              
+				<include>buttondimensions</include>               
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/image.png" />
+				</include>
+    		</control>	
+            
+            <control type="radiobutton" id ="11">
+                <onfocus>ClearProperty(moviecontent)</onfocus>                              
+				<include>buttondimensions</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/trailer.png" />
+				</include>
+				<visible>!String.IsEmpty(ListItem.Trailer) + !Skin.HasSetting(PlayTrailerWindowed)</visible>			
+			</control>
+
+			<control type="radiobutton" id ="1223">
+                <onfocus condition="!String.IsEqual(Window.Property(moviecontent),6)">ClearProperty(moviecontent)</onfocus>              
+                <onclick>SetProperty(moviecontent,6)</onclick>                
+                <onfocus condition="!Skin.HasSetting(dontclickonfocus)">SetProperty(moviecontent,6)</onfocus>                   
+				<include>buttondimensions</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/trailer.png" />
+				</include>
+				<visible>!String.IsEmpty(ListItem.Trailer) + Skin.HasSetting(PlayTrailerWindowed)</visible>	
+				<onclick>PlayMedia($INFO[ListItem.Trailer],1)</onclick>		
+			</control>	
+            
+            <control type="radiobutton" id ="7">
+                <onfocus>ClearProperty(moviecontent)</onfocus>
+                <include>OnFocusOnClick</include> 
+                <include>ClearOnFocusOnClick</include>           
+				<include>buttondimensions</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/rating.png" />
+				</include>
+				<visible>Container.Content(movies) | Container.Content(tvshows) | Container.Content(episodes)</visible>
+				<visible>Control.IsEnabled(7) + String.IsEmpty(ListItem.UserRating)</visible>
+			</control>	
+            <control type="radiobutton" id ="9110">
+                <onfocus>ClearProperty(moviecontent)</onfocus>
+                <include>OnFocusOnClick</include>
+                <include>ClearOnFocusOnClick</include> 
+                <onclick>SendClick(7)</onclick>              
+				<include>buttondimensions</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/rating_new.png" />
+				</include>
+				<visible>Container.Content(movies) | Container.Content(tvshows) | Container.Content(episodes)</visible>
+				<visible>Control.IsEnabled(7) + !String.IsEmpty(ListItem.UserRating)</visible>
+			</control>	
+            
+            <control type="radiobutton" id="49">
+                <onfocus>ClearProperty(moviecontent)</onfocus>                                 
+				<description>Home Theatre</description>
+                <include>buttondimensions</include>
+                <include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/cinema.png" />
+				</include>
+				<onclick>RunScript(script.cinemavision,experience)</onclick>
+				<visible>System.HasAddon(script.cinemavision) + [Container.Content(movies) | Container.Content(tvshows) | Container.Content(episodes)]</visible>
+			</control> 			
+
+            <control type="radiobutton" id ="9010">
+                <onfocus>ClearProperty(moviecontent)</onfocus>           
+				<include>buttondimensions</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/settings.png" />
+				</include>
+				<onclick condition="!Skin.HasSetting(wipinfo)">ActivateWindow(1204)</onclick>
+                <onclick condition="Skin.HasSetting(wipinfo)">ActivateWindow(1205)</onclick>
+				<visible>!Skin.HasSetting(global.kioskmode)</visible>
+			</control>
+		</control>	
+	</include>	
+       
+    <include name="ExtendedDialogInfoNavigationWIP">
+		<control type="grouplist" id="9000">			
+			<bottom>224</bottom>
+			<left>571</left>
+			<right>SidePad</right>
+			<include>listdimensions</include>
+			<ondown>9601</ondown>
+			<onup condition="Control.IsVisible(50)">51</onup>
+			<onup condition="Control.IsVisible(9501)">9501</onup>
+            <onup condition="Control.IsVisible(10052)">10052</onup>
+            <onup condition="Control.IsVisible(10053)">10053</onup>
+            <onup condition="Control.IsVisible(10054)">10054</onup>
+			<orientation>horizontal</orientation>		
+			<control type="radiobutton" id ="9001">
+                <onfocus>ClearProperty(actinfo)</onfocus>              
+                <onup>10054</onup>
+				<include>buttondimensions</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/thumb.png" />
+				</include>			
+			</control>
+            
+			<control type="radiobutton" id ="9002">
+                <onfocus condition="!String.IsEqual(Window.Property(actinfo),1)">ClearProperty(actinfo)</onfocus>
+                <onfocus condition="!Skin.HasSetting(dontclickonfocus)">SetProperty(actinfo,1)</onfocus>
+                <onclick>SetProperty(actinfo,1)</onclick>
+				<include>buttondimensions</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/trailer.png" />
+				</include>				
+			</control>
+            
+			<control type="radiobutton" id ="9003">
+                <onfocus condition="!String.IsEqual(Window.Property(actinfo),2)">ClearProperty(actinfo)</onfocus>    
+                <onfocus condition="!Skin.HasSetting(dontclickonfocus)">SetProperty(actinfo,2)</onfocus>
+                <onclick>SetProperty(actinfo,2)</onclick>
+				<include>buttondimensions</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/tvshows.png" />
+				</include>								
+			</control>
+            <control type="radiobutton" id ="9007">
+                <onfocus>ClearProperty(actinfo)</onfocus>            
+				<include>buttondimensions</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/settings.png" />
+				</include>
+				<visible>!Skin.HasSetting(global.kioskmode)</visible>
+				<onclick condition="System.HasAddon(script.embuary.info)">Addon.OpenSettings(script.embuary.info)</onclick>  
+			</control>
+		</control>
+	</include>
+
+
+    <include name="ExtendedDialogInfoNavigationVideoWIP">
+		<control type="grouplist" id="9000">
+            <onup condition="String.IsEqual(Window.Property(videoinfo),1">10053</onup>
+			<onup condition="String.IsEqual(Window.Property(videoinfo),2)">10054</onup>
+            <onup condition="String.IsEqual(Window.Property(videoinfo),3)">10055</onup>
+            <onup condition="String.IsEqual(Window.Property(videoinfo),4)">10056</onup>
+            <onup condition="String.IsEqual(Window.Property(videoinfo),5)">10058</onup>
+            <onup condition="String.IsEqual(Window.Property(videoinfo),6)">10057</onup>
+            <onup condition="String.IsEmpty(Window.Property(videoinfo))">10052</onup>
+            
+			<bottom>224</bottom>
+			<left>571</left>
+			<right>SidePad</right>
+			<include>listdimensions</include>
+			<ondown>9601</ondown>
+			<orientation>horizontal</orientation>
+            <control type="radiobutton" id ="8">
+                <onfocus>ClearProperty(videoinfo)</onfocus>
+                <visible>[!String.IsEmpty(Container(10051).ListItem.DBID) + !String.IsEmpty(Container(10051).ListItem.Property(file)) + !String.IsEqual(Container(10051).ListItem.Property(call),tv)] | [!String.IsEmpty(Container(10051).ListItem.DBID) + String.IsEqual(Container(10051).ListItem.Property(call),tv)]</visible>
+
+                <onclick condition="[!String.IsEmpty(Container(10051).ListItem.DBID) + !String.IsEmpty(Container(10051).ListItem.Property(file)) + !String.IsEqual(Container(10051).ListItem.Property(call),tv)]">PlayMedia($INFO[Container(10051).ListItem.Property(file)])</onclick>                
+                <onclick condition="!Window.IsVisible(MyVideoNav.xml) + [!String.IsEmpty(Container(10051).ListItem.DBID) + String.IsEqual(Container(10051).ListItem.Property(call),tv)]">ActivateWindow(videos,videodb://tvshows/titles/$INFO[Container(10051).ListItem.DBID]/,return)</onclick>
+                <onclick condition="Window.IsVisible(MyVideoNav.xml) + [!String.IsEmpty(Container(10051).ListItem.DBID) + String.IsEqual(Container(10051).ListItem.Property(call),tv)]">Container.Update(videodb://tvshows/titles/$INFO[Container(10051).ListItem.DBID]/)</onclick>               
+                <onclick>Dialog.Close(all)</onclick>
+				<include>buttondimensions</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/play.png" />
+				</include>		
+			</control>
+
+			<control type="radiobutton" id ="9001">
+                <onfocus>ClearProperty(videoinfo)</onfocus>                        
+				<include>buttondimensions</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/cast.png" />
+				</include>				
+			</control>
+            
+			<control type="radiobutton" id ="9002">
+                <onfocus condition="!String.IsEqual(Window.Property(videoinfo),1)">ClearProperty(videoinfo)</onfocus>      
+                <onfocus condition="!Skin.HasSetting(dontclickonfocus)">SetProperty(videoinfo,1)</onfocus>            
+                <onclick>SetProperty(videoinfo,1)</onclick>                       
+				<include>buttondimensions</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/similar.png" />
+				</include>				
+			</control>
+            
+			<control type="radiobutton" id ="9003">
+                <onfocus condition="!String.IsEqual(Window.Property(videoinfo),2)">ClearProperty(videoinfo)</onfocus> 
+                <onfocus condition="!Skin.HasSetting(dontclickonfocus)">SetProperty(videoinfo,2)</onfocus>
+                <onclick>SetProperty(videoinfo,2)</onclick>           
+				<include>buttondimensions</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/youtube.png" />
+				</include>								
+			</control>
+            
+            <control type="radiobutton" id ="9005">
+                <onfocus condition="!String.IsEqual(Window.Property(videoinfo),4)">ClearProperty(videoinfo)</onfocus>                
+                <onfocus condition="!Skin.HasSetting(dontclickonfocus)">SetProperty(videoinfo,4)</onfocus>  
+                <onclick>SetProperty(videoinfo,4)</onclick>                         
+				<include>buttondimensions</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/crew.png" />
+				</include>								
+			</control>
+            
+            <control type="radiobutton" id ="9006">
+                <visible>Integer.IsGreater(Container(10058).NumItems,0)</visible>
+                <onfocus condition="!String.IsEqual(Window.Property(videoinfo),5)">ClearProperty(videoinfo)</onfocus>                
+                <onfocus condition="!Skin.HasSetting(dontclickonfocus)">SetProperty(videoinfo,5)</onfocus>  
+                <onclick>SetProperty(videoinfo,5)</onclick>                         
+				<include>buttondimensions</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/seasons.png" />
+				</include>								
+			</control>
+            
+            <control type="radiobutton" id ="9008">
+                <visible>Integer.IsGreater(Container(10057).NumItems,0)</visible>
+                <onfocus condition="!String.IsEqual(Window.Property(videoinfo),6)">ClearProperty(videoinfo)</onfocus>                
+                <onfocus condition="!Skin.HasSetting(dontclickonfocus)">SetProperty(videoinfo,6)</onfocus>  
+                <onclick>SetProperty(videoinfo,6)</onclick>                         
+				<include>buttondimensions</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/set.png" />
+				</include>								
+			</control>
+            
+            <control type="radiobutton" id ="9004">
+                <onfocus condition="!String.IsEqual(Window.Property(videoinfo),3)">ClearProperty(videoinfo)</onfocus>                
+                <onfocus condition="!Skin.HasSetting(dontclickonfocus)">SetProperty(videoinfo,3)</onfocus>     
+                <onclick>SetProperty(videoinfo,3)</onclick>               
+				<include>buttondimensions</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/image.png" />
+				</include>								
+			</control>
+            
+            <control type="radiobutton" id ="9007">
+                <onfocus>ClearProperty(videoinfo)</onfocus>            
+				<include>buttondimensions</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/settings.png" />
+				</include>
+				<visible>!Skin.HasSetting(global.kioskmode)</visible>
+				<onclick condition="System.HasAddon(script.embuary.info)">Addon.OpenSettings(script.embuary.info)</onclick>  
+			</control>
+		</control>
+	</include>
+    
+    <include name="DialogMovieSetsInfoNavigationWIP">
+		<control type="grouplist" id="9000">
+			<bottom>224</bottom>
+			<left>570</left>
+			<right>160</right>
+			<include>listdimensions</include>  
+            
+            <onup condition="String.IsEqual(Window.Property(setsinfo),2)">95051</onup>
+            <onup condition="String.IsEmpty(Window.Property(setsinfo))">9502</onup>
+             
+			<ondown>9601</ondown>     
+			<orientation>horizontal</orientation>
+			<control type="radiobutton" id ="9001">
+                <onfocus>ClearProperty(setsinfo)</onfocus>
+                <onclick>Dialog.Close(all,force)</onclick>
+                <onclick>PlayMedia($INFO[ListItem.FolderPath],isdir)</onclick>
+				<description>Play</description>
+				<font>Button</font>
+				<textcolor>Dark2</textcolor>
+				<include>buttondimensions</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/play.png" />
+				</include>
+                <oninfo>Close</oninfo>					
+			</control>
+            
+            <control type="radiobutton" id ="9018">
+                <onfocus>ClearProperty(setsinfo)</onfocus>
+				<description>Play</description>
+				<font>Button</font>
+				<textcolor>Dark2</textcolor>
+				<include>buttondimensions</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/info.png" />
+				</include>
+                <oninfo>Close</oninfo>					
+			</control>
+            
+			<control type="radiobutton" id ="9005">
+                <visible>!String.IsEmpty(ListItem.Art(fanart))</visible>
+                <onfocus condition="!String.IsEqual(Window.Property(setsinfo),2)">ClearProperty(setsinfo)</onfocus>               
+                <onclick condition="!Skin.HasSetting(wipinfo)">SetFocus(95051)</onclick>	
+                <onclick>SetProperty(setsinfo,2)</onclick>                
+                <onfocus condition="!Skin.HasSetting(dontclickonfocus)">SetProperty(setsinfo,2)</onfocus>
+				<font>Button</font>
+				<textcolor>Dark2</textcolor>
+				<include>buttondimensions</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/image.png" />
+				</include>
+                <oninfo>Close</oninfo>
+			</control>			
+
+            <control type="radiobutton" id ="9007">
+                <onfocus>ClearProperty(setsinfo)</onfocus>            
+				<include>buttondimensions</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/settings.png" />
+				</include>
+				<onclick condition="!Skin.HasSetting(wipinfo)">ActivateWindow(1204)</onclick>
+                <onclick condition="Skin.HasSetting(wipinfo)">ActivateWindow(1205)</onclick>
+				<visible>!Skin.HasSetting(global.kioskmode)</visible>
+                <oninfo>Close</oninfo>
+			</control>	
+		</control>		
+	</include>
+
+    <include name="DialogAddonInfoNavigationWIP">
+		<control type="grouplist" id="9000">
+			<bottom>224</bottom>
+			<left>783</left>
+			<right>SidePad</right>
+			<include>listdimensions</include>
+			<ondown>9000</ondown>
+			<onup condition="Control.IsVisible(50)">50</onup>
+			<orientation>horizontal</orientation>
+			<control type="radiobutton" id ="12">
+				<include>buttondimensionssquare</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/launch.png" />
+				</include>
+				<textcolor>Dark4</textcolor>
+				<font>Null</font>
+				<visible>Control.IsEnabled(12)</visible>						
+			</control>
+			<control type="radiobutton" id ="6">
+				<include>buttondimensionssquare</include>
+				<texturenofocus colordiffuse="Dark4" border="0">common/box.png</texturenofocus>
+				<texturefocus colordiffuse="$VAR[ColorHighlight]" border="0">common/box.png</texturefocus>
+				<textureradioonfocus colordiffuse="FFFFFFFF">buttonsdialogs/uninstall.png</textureradioonfocus>
+				<textureradioonnofocus colordiffuse="FFFFFFFF">buttonsdialogs/uninstall.png</textureradioonnofocus>
+				<textureradioofffocus colordiffuse="FFFFFFFF">buttonsdialogs/install.png</textureradioofffocus>
+				<textureradiooffnofocus colordiffuse="FFFFFFFF">buttonsdialogs/install.png</textureradiooffnofocus>
+				<visible>!Skin.HasSetting(global.kioskmode)</visible>
+				<visible>Control.IsEnabled(6)</visible>	
+				<textcolor>Dark4</textcolor>
+				<font>Null</font>
+				<selected>ListItem.Property(addon.isinstalled) | !Window.IsActive(addonbrowser)</selected>					
+			</control>
+			<control type="radiobutton" id ="7">
+				<include>buttondimensionssquare</include>
+				<texturenofocus colordiffuse="Dark4" border="0">common/box.png</texturenofocus>
+				<texturefocus colordiffuse="$VAR[ColorHighlight]" border="0">common/box.png</texturefocus>
+				<textureradioonfocus colordiffuse="FFFFFFFF">buttonsdialogs/disable.png</textureradioonfocus>
+				<textureradioonnofocus colordiffuse="FFFFFFFF">buttonsdialogs/disable.png</textureradioonnofocus>
+				<textureradioofffocus colordiffuse="FFFFFFFF">buttonsdialogs/enabled.png</textureradioofffocus>
+				<textureradiooffnofocus colordiffuse="FFFFFFFF">buttonsdialogs/enabled.png</textureradiooffnofocus>
+				<visible>!Skin.HasSetting(global.kioskmode)</visible>
+				<visible>Control.IsEnabled(7)</visible>	
+				<textcolor>Dark4</textcolor>
+				<font>Null</font>
+				<selected>!String.StartsWith(Control.GetLabel(7),$LOCALIZE[24022]) | !Window.IsActive(addonbrowser)</selected>						
+			</control>
+			<control type="radiobutton" id ="9">
+				<include>buttondimensionssquare</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/configure.png" />
+				</include>
+				<visible>Control.IsEnabled(9)</visible>					
+			</control>
+			<control type="radiobutton" id ="8">
+				<include>buttondimensionssquare</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/update.png" />
+				</include>
+				<visible>Control.IsEnabled(8)</visible>					
+			</control>
+            <control type="radiobutton" id ="13">
+				<include>buttondimensionssquare</include>
+				<texturenofocus colordiffuse="Dark4" border="0">common/box.png</texturenofocus>
+				<texturefocus colordiffuse="$VAR[ColorHighlight]" border="0">common/box.png</texturefocus>
+				<textureradioonfocus colordiffuse="FFFFFFFF">buttonsdialogs/autoupdateon.png</textureradioonfocus>
+				<textureradioonnofocus colordiffuse="FFFFFFFF">buttonsdialogs/autoupdateon.png</textureradioonnofocus>
+				<textureradioofffocus colordiffuse="FFFFFFFF">buttonsdialogs/autoupdate.png</textureradioofffocus>
+				<textureradiooffnofocus colordiffuse="FFFFFFFF">buttonsdialogs/autoupdate.png</textureradiooffnofocus>
+				<visible>!Skin.HasSetting(global.kioskmode)</visible>
+				<visible>Control.IsEnabled(13)</visible>	
+				<textcolor>Dark4</textcolor>
+				<font>Null</font>						
+			</control>
+            <control type="radiobutton" id ="10">
+				<include>buttondimensionssquare</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/dependency.png" />
+				</include>
+				<visible>Control.IsEnabled(10)</visible>					
+			</control>
+            <control type="radiobutton" id ="9010">          
+				<include>buttondimensions</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/settings.png" />
+				</include>
+				<onclick condition="!Skin.HasSetting(wipinfo)">ActivateWindow(1204)</onclick>
+                <onclick condition="Skin.HasSetting(wipinfo)">ActivateWindow(1209)</onclick>
+				<visible>!Skin.HasSetting(global.kioskmode)</visible>				
+			</control>	
+		</control>
+	</include>
+    
+    <include name="DialogPVRInfoNavigationWIP">
+		<control type="grouplist" id="9000">
+			<bottom>224</bottom>
+			<left>783</left>
+			<right>SidePad</right>
+			<include>listdimensions</include>
+			<onup>50</onup>    
+			<ondown>9601</ondown>     
+			<orientation>horizontal</orientation>
+			<control type="radiobutton" id ="4">
+				<include>buttondimensionssquare</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/similar.png" />
+				</include>
+				<visible>Window.IsActive(PVRGuideInfo)</visible>					
+			</control>
+			<control type="radiobutton" id ="5">
+				<include>buttondimensionssquare</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/launch.png" />
+				</include>
+				<visible>Window.IsActive(PVRGuideInfo)</visible>					
+			</control>
+			<control type="radiobutton" id ="6">
+				<include>buttondimensionssquare</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/record.png" />
+				</include>
+				<visible>Window.IsActive(PVRGuideInfo)</visible>					
+			</control>
+			<control type="radiobutton" id ="8">
+				<include>buttondimensionssquare</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/play_record.png" />
+				</include>
+				<visible>Window.IsActive(PVRGuideInfo) | Window.IsActive(PVRRecordingInfo)</visible>					
+			</control>	
+			<control type="radiobutton" id ="666">
+				<include>buttondimensionssquare</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/record.png" />
+				</include>
+				<onclick>Action(close)</onclick>
+				<onclick>RunScript(plugin.video.iptv.recorder,$ESCINFO[ListItem.ChannelName],$ESCINFO[ListItem.Title],$ESCINFO[ListItem.Date],$ESCINFO[ListItem.Duration],$ESCINFO[ListItem.Plot])</onclick>
+				<visible>System.hasAddon(plugin.video.iptv.recorder)</visible>					
+			</control>
+			<control type="radiobutton" id ="667">
+				<include>buttondimensionssquare</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/play_record.png" />
+				</include>
+				<onclick>Action(close)</onclick>
+				<onclick>ActivateWindow(10025,&quot;plugin://plugin.video.iptv.recorder/recordings&quot;,return)</onclick>
+				<visible>System.hasAddon(plugin.video.iptv.recorder)</visible>				
+			</control>
+			<control type="radiobutton" id ="10">
+				<include>buttondimensionssquare</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/play.png" />
+				</include>
+				<visible>Window.IsActive(PVRGuideInfo)</visible>					
+			</control>
+			<control type="radiobutton" id ="7">
+				<include>buttondimensionssquare</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/enabled.png" />
+				</include>					
+			</control>
+            <control type="radiobutton" id ="9010">          
+				<include>buttondimensions</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/settings.png" />
+				</include>
+				<onclick condition="!Skin.HasSetting(wipinfo)">ActivateWindow(1204)</onclick>
+                <onclick condition="Skin.HasSetting(wipinfo)">ActivateWindow(1209)</onclick>
+				<visible>!Skin.HasSetting(global.kioskmode)</visible>				
+			</control>	
+		</control>		
+	</include>
+    
+    <include name="ArrowsNavigation">
+        <control type="group">
+            <include>Animation.DelayFadeIn</include>
+            <visible>Integer.IsGreater(Container(9000).NumItems,8) + ControlGroup(9000).HasFocus()</visible>
+            <centerbottom>257</centerbottom>
+            <height>16</height>
+            <control type="image">
+                <centerleft>550</centerleft>
+                <width>16</width>
+                <height>16</height>
+                <texture colordiffuse="Dark1" flipx="true">common/arrow-small-right.png</texture>
+            </control>
+            <control type="image">
+                <centerright>68</centerright>
+                <width>16</width>
+                <height>16</height>
+                <texture colordiffuse="Dark1" flipx="false">common/arrow-small-right.png</texture>
+            </control>
+        </control>
+    </include>
+    
+    <include name="DialogVideoInfoHeader">
+        <control type="label">
+            <font>LargeNew</font>
+            <description>Header Label</description>
+            <textcolor>Dark1</textcolor>
+            <label>$VAR[LabelWIPDialogVideoInfoHeader]</label>
+        </control>
+        <control type="label">
+            <top>55</top>
+            <height>36</height>
+            <font>Tiny</font>
+            <textcolor>Dark1</textcolor>                      
+            <label fallback="19055">$VAR[LabelWIPDialogVideoInfoTagline]</label>
+            <aligny>center</aligny>
+        </control>
+    </include>
+    
+    <include name="Custom_MovieSetsHeader">
+        <control type="label">
+            <top>-120</top>
+            <left>0</left>
+            <font>LargeNew</font>
+            <description>Header Label</description>
+            <textcolor>Dark1</textcolor>
+            <include>DefDialogInfoHeader</include>
+            <label>$VAR[LabelMovieSetsDialogInfo]</label>
+        </control>	
+        <control type="label">
+            <top>-65</top>
+            <height>36</height>
+            <font>Tiny</font>
+            <textcolor>Dark2</textcolor>
+            <label>$INFO[Container(9502).NumItems,, / ]$INFO[Window(Home).Property(SkinHelper.ListItem.Totalmovies),, $LOCALIZE[37542]]</label>
+            <aligny>center</aligny>
+        </control>
+    </include>
+    
+    <include name="ExtendedImage">
+        <control type="button" id="$PARAM[buttonid]">		
+			<left>-1000</left>
+			<width>1</width>
+			<height>1</height>
+			<label></label>
+			<font></font>
+			<texturenofocus></texturenofocus>
+			<texturefocus></texturefocus>          
+			<onleft>SetFocus($PARAM[containerid])</onleft>
+            <onleft>LEFT</onleft>
+            <onleft>SetFocus($PARAM[buttonid])</onleft>
+			<onright>SetFocus($PARAM[containerid])</onright>
+			<onright>RIGHT</onright>
+            <onright>SetFocus($PARAM[buttonid])</onright>
+            <ondown>Close</ondown>
+		</control>        
+        <control type="group">		
+			<visible>Control.HasFocus($PARAM[buttonid])</visible>			
+			<animation effect="fade" end="100" start="20" time="200" tween="sine" easing="in">Visible</animation>
+			<animation effect="fade" end="0" start="100" time="200" tween="sine" easing="in">Hidden</animation>
+			<control type="image">
+				<left>0</left>
+				<top>0</top>
+				<width>1920</width>
+				<height>1080</height>
+				<texture>common/black.png</texture>
+			</control>
+			<control type="image">
+				<height>1080</height>	
+                <fadetime>400</fadetime>	
+				<aspectratio align="center">keep</aspectratio>
+				<texture background="true">$INFO[Container($PARAM[containerid]).ListItem.Art(thumb)]</texture>
+			</control>			
+		</control> 
+    </include> 
+    
+    <include name="DialogGTOInfoNavigationWIP">
+		<control type="grouplist" id="9000">
+			<bottom>224</bottom>
+			<left>783</left>
+			<right>SidePad</right>
+			<include>listdimensions</include>   
+			<orientation>horizontal</orientation>
+			<control type="radiobutton" id ="20">
+				<include>buttondimensionssquare</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/timer.png" />
+				</include>
+				<visible>!IsEmpty(Window(Home).Property(GTO.Info.isInFuture)) + !String.IsEqual(Window(Home).Property(GTO.Info.ChannelID),False) + System.HasAddon(service.kn.switchtimer)</visible>								                <onclick>RunScript(service.kn.switchtimer,action=add,channel=$INFO[Window(Home).Property(GTO.Info.Channel)],icon=$INFO[Window(Home).Property(GTO.Info.Logo)],date=$INFO[Window(Home).Property(GTO.Info.Date)],title=$INFO[Window(Home).Property(GTO.Info.Title)])</onclick>	   
+				<onclick>Dialog.Close(all)</onclick>					
+			</control>
+			<control type="radiobutton" id ="21">
+				<include>buttondimensionssquare</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/launch.png" />
+				</include>
+				<visible>!IsEmpty(Window(Home).Property(GTO.Info.isRunning)) + !String.IsEqual(Window(Home).Property(GTO.Info.ChannelID),False) + System.HasAddon(service.kn.switchtimer)</visible>
+                <onclick>RunScript(script.service.gto,action=switch_channel&amp;pvrid=$INFO[Window(Home).Property(GTO.Info.ChannelID)])</onclick>
+                <onclick>Dialog.Close(all)</onclick>					
+			</control>
+            <control type="radiobutton" id ="22">
+				<include>buttondimensionssquare</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/timer.png" />
+				</include>
+				<visible>!String.IsEmpty(Window(Home).Property(GTO.Info.BroadcastID)) + !String.IsEqual(Window(Home).Property(GTO.Info.ChannelID),False) + String.IsEqual(Window(Home).Property(GTO.Info.hasTimer),False)</visible>
+                <onclick>RunScript(script.service.gto,action=record&amp;broadcastid=$INFO[Window(Home).Property(GTO.Info.BroadcastID)]&amp;blob=$INFO[Window(Home).Property(GTO.Info.BlobID)])</onclick>
+                <onclick>Dialog.Close(all)</onclick>					
+			</control>
+			<control type="radiobutton" id ="23">
+				<include>buttondimensionssquare</include>
+				<include content="buttontextures">
+					<param name="icon" value="buttonsdialogs/enabled.png" />
+				</include>
+                <onclick>RunScript(script.service.gto,action=refresh)</onclick>	
+                <onclick>Dialog.Close(all)</onclick>				
+			</control>
+		</control>		
+	</include>
+    
+    <include name="Weatherdaily">
+        <item>
+            <label>$INFO[Weather.Conditions]</label>
+            <property name="HighTemp">$INFO[Window(Weather).Property(Current.Temperature),[B],[/B]°]</property>
+            <property name="Title">[B]$LOCALIZE[19030][/B]</property>
+            <property name="FanartTexture">$INFO[Skin.String(weather.icons.path),,/]$INFO[Weather.FanartCode,,.png]</property>
+            <property name="OutlookTexture">resource://resource.images.weathericons.default/$INFO[Weather.FanartCode,,.png]</property>
+            <property name="Today">true</property>
+            <visible>!String.IsEmpty(Weather.FanartCode)</visible>
+        </item>
+        <item>
+            <label>$INFO[Window(Weather).Property(Day0.Outlook)]</label>
+            <property name="LowTemp">$INFO[Window(Weather).Property(Day0.LowTemp),,°]</property>
+            <property name="HighTemp">$INFO[Window(Weather).Property(Day0.HighTemp),[B],[/B]°  ]</property>
+            <property name="Title">$LOCALIZE[33006]</property>
+            <property name="FanartTexture">$INFO[Skin.String(weather.icons.path),,/]$INFO[Window(Weather).Property(Day0.FanartCode),,.png]</property>
+            <property name="OutlookTexture">$INFO[Window(Weather).Property(Day0.OutlookIcon)]</property>
+            <visible>!String.IsEmpty(Window(Weather).Property(Day0.Outlook))</visible>
+        </item>
+        <item>
+            <label>$INFO[Window(Weather).Property(Day1.Outlook)]</label>
+            <property name="LowTemp">$INFO[Window(Weather).Property(Day1.LowTemp),,°]</property>
+            <property name="HighTemp">$INFO[Window(Weather).Property(Day1.HighTemp),[B],[/B]°  ]</property>
+            <property name="Title">$INFO[Window(Weather).Property(Day1.Title)]</property>
+            <property name="FanartTexture">$INFO[Skin.String(weather.icons.path),,/]$INFO[Window(Weather).Property(Day1.FanartCode),,.png]</property>
+            <property name="OutlookTexture">$INFO[Window(Weather).Property(Day1.OutlookIcon)]</property>
+            <visible>!String.IsEmpty(Window(Weather).Property(Day1.Outlook))</visible>
+        </item>
+        <item>
+            <label>$INFO[Window(Weather).Property(Day2.Outlook)]</label>
+            <property name="LowTemp">$INFO[Window(Weather).Property(Day2.LowTemp),,°]</property>
+            <property name="HighTemp">$INFO[Window(Weather).Property(Day2.HighTemp),[B],[/B]°  ]</property>
+            <property name="Title">$INFO[Window(Weather).Property(Day2.Title)]</property>
+            <property name="FanartTexture">$INFO[Skin.String(weather.icons.path),,/]$INFO[Window(Weather).Property(Day2.FanartCode),,.png]</property>
+            <property name="OutlookTexture">$INFO[Window(Weather).Property(Day2.OutlookIcon)]</property>
+            <visible>!String.IsEmpty(Window(Weather).Property(Day2.Outlook))</visible>
+        </item>
+        <item>
+            <label>$INFO[Window(Weather).Property(Day3.Outlook)]</label>
+            <property name="LowTemp">$INFO[Window(Weather).Property(Day3.LowTemp),,°]</property>
+            <property name="HighTemp">$INFO[Window(Weather).Property(Day3.HighTemp),[B],[/B]°  ]</property>
+            <property name="Title">$INFO[Window(Weather).Property(Day3.Title)]</property>
+            <property name="FanartTexture">$INFO[Skin.String(weather.icons.path),,/]$INFO[Window(Weather).Property(Day3.FanartCode),,.png]</property>
+            <property name="OutlookTexture">$INFO[Window(Weather).Property(Day3.OutlookIcon)]</property>
+            <visible>!String.IsEmpty(Window(Weather).Property(Day3.Outlook))</visible>
+        </item>
+        <item>
+            <label>$INFO[Window(Weather).Property(Day4.Outlook)]</label>
+            <property name="LowTemp">$INFO[Window(Weather).Property(Day4.LowTemp),,°]</property>
+            <property name="HighTemp">$INFO[Window(Weather).Property(Day4.HighTemp),[B],[/B]°  ]</property>
+            <property name="Title">$INFO[Window(Weather).Property(Day4.Title)]</property>
+            <property name="FanartTexture">$INFO[Skin.String(weather.icons.path),,/]$INFO[Window(Weather).Property(Day4.FanartCode),,.png]</property>
+            <property name="OutlookTexture">$INFO[Window(Weather).Property(Day4.OutlookIcon)]</property>
+            <visible>!String.IsEmpty(Window(Weather).Property(Day4.Outlook))</visible>
+        </item>
+        <item>
+            <label>$INFO[Window(Weather).Property(Day5.Outlook)]</label>
+            <property name="LowTemp">$INFO[Window(Weather).Property(Day5.LowTemp),,°]</property>
+            <property name="HighTemp">$INFO[Window(Weather).Property(Day5.HighTemp),[B],[/B]°  ]</property>
+            <property name="Title">$INFO[Window(Weather).Property(Day5.Title)]</property>
+            <property name="FanartTexture">$INFO[Skin.String(weather.icons.path),,/]$INFO[Window(Weather).Property(Day5.FanartCode),,.png]</property>
+            <property name="OutlookTexture">$INFO[Window(Weather).Property(Day5.OutlookIcon)]</property>
+            <visible>!String.IsEmpty(Window(Weather).Property(Day5.Outlook))</visible>
+        </item>
+        <item>
+            <label>$INFO[Window(Weather).Property(Day6.Outlook)]</label>
+            <property name="LowTemp">$INFO[Window(Weather).Property(Day6.LowTemp),,°]</property>
+            <property name="HighTemp">$INFO[Window(Weather).Property(Day6.HighTemp),[B],[/B]°  ]</property>
+            <property name="Title">$INFO[Window(Weather).Property(Day6.Title)]</property>
+            <property name="FanartTexture">$INFO[Skin.String(weather.icons.path),,/]$INFO[Window(Weather).Property(Day6.FanartCode),,.png]</property>
+            <property name="OutlookTexture">$INFO[Window(Weather).Property(Day6.OutlookIcon)]</property>
+            <visible>!String.IsEmpty(Window(Weather).Property(Day6.Outlook))</visible>
+        </item> 
+        <item>
+            <label>$INFO[Window(Weather).Property(Daily.8.Outlook)]</label>
+            <property name="LowTemp">$INFO[Window(Weather).Property(Daily.8.LowTemperature),,°]</property>
+            <property name="HighTemp">$INFO[Window(Weather).Property(Daily.8.HighTemperature),[B],[/B]°  ]</property>
+            <property name="Title">$INFO[Window(Weather).Property(Daily.8.LongDay)]</property>
+            <property name="FanartTexture">$INFO[Skin.String(weather.icons.path),,/]$INFO[Window(Weather).Property(Daily.8.FanartCode),,.png]</property>
+            <property name="OutlookTexture">resource://resource.images.weathericons.default/$INFO[Window(Weather).Property(Daily.8.FanartCode),,.png]</property>
+            <visible>[String.IsEqual(Container(300).ListItem.Property(widgetaspect),Poster) | String.IsEmpty(Container(300).ListItem.Property(widgetaspect)) | String.IsEqual(Container(300).ListItem.Property(widgetaspect),Fanart) | String.IsEqual(Container(300).ListItem.Property(widgetaspect),Thumbnail)] + !String.IsEmpty(Window(Weather).Property(Daily.8.LongDay)</visible>
+        </item>
+        <item>
+            <label>$INFO[Window(Weather).Property(Daily.9.Outlook)]</label>
+            <property name="LowTemp">$INFO[Window(Weather).Property(Daily.9.LowTemperature),,°]</property>
+            <property name="HighTemp">$INFO[Window(Weather).Property(Daily.9.HighTemperature),[B],[/B]°  ]</property>
+            <property name="Title">$INFO[Window(Weather).Property(Daily.9.LongDay)]</property>
+            <property name="FanartTexture">$INFO[Skin.String(weather.icons.path),,/]$INFO[Window(Weather).Property(Daily.9.FanartCode),,.png]</property>
+            <property name="OutlookTexture">resource://resource.images.weathericons.default/$INFO[Window(Weather).Property(Daily.9.FanartCode),,.png]</property>
+            <visible>[String.IsEqual(Container(300).ListItem.Property(widgetaspect),Poster) | String.IsEmpty(Container(300).ListItem.Property(widgetaspect)) | String.IsEqual(Container(300).ListItem.Property(widgetaspect),Fanart) | String.IsEqual(Container(300).ListItem.Property(widgetaspect),Thumbnail)] + !String.IsEmpty(Window(Weather).Property(Daily.9.LongDay)</visible>
+        </item>
+        <item>
+            <label>$INFO[Window(Weather).Property(Daily.10.Outlook)]</label>
+            <property name="LowTemp">$INFO[Window(Weather).Property(Daily.10.LowTemperature),,°]</property>
+            <property name="HighTemp">$INFO[Window(Weather).Property(Daily.10.HighTemperature),[B],[/B]°  ]</property>
+            <property name="Title">$INFO[Window(Weather).Property(Daily.10.LongDay)]</property>
+            <property name="FanartTexture">$INFO[Skin.String(weather.icons.path),,/]$INFO[Window(Weather).Property(Daily.10.FanartCode),,.png]</property>
+            <property name="OutlookTexture">resource://resource.images.weathericons.default/$INFO[Window(Weather).Property(Daily.10.FanartCode),,.png]</property>
+            <visible>[String.IsEqual(Container(300).ListItem.Property(widgetaspect),Poster) | String.IsEmpty(Container(300).ListItem.Property(widgetaspect)) | String.IsEqual(Container(300).ListItem.Property(widgetaspect),Fanart) | String.IsEqual(Container(300).ListItem.Property(widgetaspect),Thumbnail)] + !String.IsEmpty(Window(Weather).Property(Daily.10.LongDay)</visible>
+        </item>                    
+    </include> 
+    
+    <include name="Weatherhourly">
+        <item>
+            <label>$INFO[Window(Weather).Property(Hourly.1.Outlook)]</label>
+            <property name="HighTemp">$INFO[Window(Weather).Property(Hourly.1.Temperature),[B],[/B]]</property>
+            <property name="Title">[B]$LOCALIZE[19030][/B]</property>
+            <property name="FanartTexture">$INFO[Skin.String(weather.icons.path),,/]$INFO[Window(Weather).Property(Hourly.1.FanartCode),,.png]</property>
+            <property name="OutlookTexture">resource://resource.images.weathericons.default/$INFO[Window(Weather).Property(Hourly.1.FanartCode),,.png]</property>
+            <property name="Today">true</property>
+            <visible>!String.IsEmpty(Window(Weather).Property(Hourly.1.Outlook))</visible>
+        </item>
+        <item>
+            <label>$INFO[Window(Weather).Property(Hourly.2.Outlook)]</label>
+            <property name="HighTemp">$INFO[Window(Weather).Property(Hourly.2.Temperature),,]</property>
+            <property name="Title">$INFO[Window(Weather).Property(Hourly.2.Time)]</property>
+            <property name="FanartTexture">$INFO[Skin.String(weather.icons.path),,/]$INFO[Window(Weather).Property(Hourly.2.FanartCode),,.png]</property>
+            <property name="OutlookTexture">resource://resource.images.weathericons.default/$INFO[Window(Weather).Property(Hourly.2.FanartCode),,.png]</property>
+            <visible>!String.IsEmpty(Window(Weather).Property(Hourly.2.Outlook))</visible>
+        </item>
+        <item>
+            <label>$INFO[Window(Weather).Property(Hourly.3.Outlook)]</label>
+            <property name="HighTemp">$INFO[Window(Weather).Property(Hourly.3.Temperature),,]</property>
+            <property name="Title">$INFO[Window(Weather).Property(Hourly.3.Time)]</property>
+            <property name="FanartTexture">$INFO[Skin.String(weather.icons.path),,/]$INFO[Window(Weather).Property(Hourly.3.FanartCode),,.png]</property>
+            <property name="OutlookTexture">resource://resource.images.weathericons.default/$INFO[Window(Weather).Property(Hourly.3.FanartCode),,.png]</property>
+            <visible>!String.IsEmpty(Window(Weather).Property(Hourly.3.Outlook))</visible>
+        </item>
+        <item>
+            <label>$INFO[Window(Weather).Property(Hourly.4.Outlook)]</label>
+            <property name="HighTemp">$INFO[Window(Weather).Property(Hourly.4.Temperature),,]</property>
+            <property name="Title">$INFO[Window(Weather).Property(Hourly.4.Time)]</property>
+            <property name="FanartTexture">$INFO[Skin.String(weather.icons.path),,/]$INFO[Window(Weather).Property(Hourly.4.FanartCode),,.png]</property>
+            <property name="OutlookTexture">resource://resource.images.weathericons.default/$INFO[Window(Weather).Property(Hourly.4.FanartCode),,.png]</property>
+            <visible>!String.IsEmpty(Window(Weather).Property(Hourly.4.Outlook))</visible>
+        </item>
+        <item>
+            <label>$INFO[Window(Weather).Property(Hourly.5.Outlook)]</label>
+            <property name="HighTemp">$INFO[Window(Weather).Property(Hourly.5.Temperature),,]</property>
+            <property name="Title">$INFO[Window(Weather).Property(Hourly.5.Time)]</property>
+            <property name="FanartTexture">$INFO[Skin.String(weather.icons.path),,/]$INFO[Window(Weather).Property(Hourly.5.FanartCode),,.png]</property>
+            <property name="OutlookTexture">resource://resource.images.weathericons.default/$INFO[Window(Weather).Property(Hourly.5.FanartCode),,.png]</property>
+            <visible>!String.IsEmpty(Window(Weather).Property(Hourly.5.Outlook))</visible>
+        </item>
+        <item>
+            <label>$INFO[Window(Weather).Property(Hourly.6.Outlook)]</label>
+            <property name="HighTemp">$INFO[Window(Weather).Property(Hourly.6.Temperature),,]</property>
+            <property name="Title">$INFO[Window(Weather).Property(Hourly.6.Time)]</property>
+            <property name="FanartTexture">$INFO[Skin.String(weather.icons.path),,/]$INFO[Window(Weather).Property(Hourly.6.FanartCode),,.png]</property>
+            <property name="OutlookTexture">resource://resource.images.weathericons.default/$INFO[Window(Weather).Property(Hourly.6.FanartCode),,.png]</property>
+            <visible>!String.IsEmpty(Window(Weather).Property(Hourly.6.Outlook))</visible>
+        </item>
+        <item>
+            <label>$INFO[Window(Weather).Property(Hourly.7.Outlook)]</label>
+            <property name="HighTemp">$INFO[Window(Weather).Property(Hourly.7.Temperature),,]</property>
+            <property name="Title">$INFO[Window(Weather).Property(Hourly.7.Time)]</property>
+            <property name="FanartTexture">$INFO[Skin.String(weather.icons.path),,/]$INFO[Window(Weather).Property(Hourly.7.FanartCode),,.png]</property>
+            <property name="OutlookTexture">resource://resource.images.weathericons.default/$INFO[Window(Weather).Property(Hourly.7.FanartCode),,.png]</property>
+            <visible>!String.IsEmpty(Window(Weather).Property(Hourly.7.Outlook))</visible>
+        </item> 
+        <item>
+            <label>$INFO[Window(Weather).Property(Hourly.8.Outlook)]</label>
+            <property name="HighTemp">$INFO[Window(Weather).Property(Hourly.8.Temperature),,]</property>
+            <property name="Title">$INFO[Window(Weather).Property(Hourly.8.Time)]</property>
+            <property name="FanartTexture">$INFO[Skin.String(weather.icons.path),,/]$INFO[Window(Weather).Property(Hourly.8.FanartCode),,.png]</property>
+            <property name="OutlookTexture">resource://resource.images.weathericons.default/$INFO[Window(Weather).Property(Hourly.8.FanartCode),,.png]</property>
+            <visible>!String.IsEmpty(Window(Weather).Property(Hourly.8.Outlook))</visible>
+        </item>         
+        <item>
+            <label>$INFO[Window(Weather).Property(Hourly.9.Outlook)]</label>
+            <property name="HighTemp">$INFO[Window(Weather).Property(Hourly.9.Temperature),,]</property>
+            <property name="Title">$INFO[Window(Weather).Property(Hourly.9.Time)]</property>
+            <property name="FanartTexture">$INFO[Skin.String(weather.icons.path),,/]$INFO[Window(Weather).Property(Hourly.9.FanartCode),,.png]</property>
+            <property name="OutlookTexture">resource://resource.images.weathericons.default/$INFO[Window(Weather).Property(Hourly.9.FanartCode),,.png]</property>
+            <visible>!String.IsEmpty(Window(Weather).Property(Hourly.9.Outlook))</visible>
+        </item> 
+        <item>
+            <label>$INFO[Window(Weather).Property(Hourly.10.Outlook)]</label>
+            <property name="HighTemp">$INFO[Window(Weather).Property(Hourly.10.Temperature),,]</property>
+            <property name="Title">$INFO[Window(Weather).Property(Hourly.10.Time)]</property>
+            <property name="FanartTexture">$INFO[Skin.String(weather.icons.path),,/]$INFO[Window(Weather).Property(Hourly.10.FanartCode),,.png]</property>
+            <property name="OutlookTexture">resource://resource.images.weathericons.default/$INFO[Window(Weather).Property(Hourly.10.FanartCode),,.png]</property>
+            <visible>!String.IsEmpty(Window(Weather).Property(Hourly.10.Outlook))</visible>
+        </item> 
+        <item>
+            <label>$INFO[Window(Weather).Property(Hourly.11.Outlook)]</label>
+            <property name="HighTemp">$INFO[Window(Weather).Property(Hourly.11.Temperature),,]</property>
+            <property name="Title">$INFO[Window(Weather).Property(Hourly.11.Time)]</property>
+            <property name="FanartTexture">$INFO[Skin.String(weather.icons.path),,/]$INFO[Window(Weather).Property(Hourly.11.FanartCode),,.png]</property>
+            <property name="OutlookTexture">resource://resource.images.weathericons.default/$INFO[Window(Weather).Property(Hourly.11.FanartCode),,.png]</property>
+            <visible>!String.IsEmpty(Window(Weather).Property(Hourly.11.Outlook))</visible>
+        </item> 
+        <item>
+            <label>$INFO[Window(Weather).Property(Hourly.12.Outlook)]</label>
+            <property name="HighTemp">$INFO[Window(Weather).Property(Hourly.12.Temperature),,]</property>
+            <property name="Title">$INFO[Window(Weather).Property(Hourly.12.Time)]</property>
+            <property name="FanartTexture">$INFO[Skin.String(weather.icons.path),,/]$INFO[Window(Weather).Property(Hourly.12.FanartCode),,.png]</property>
+            <property name="OutlookTexture">resource://resource.images.weathericons.default/$INFO[Window(Weather).Property(Hourly.12.FanartCode),,.png]</property>
+            <visible>!String.IsEmpty(Window(Weather).Property(Hourly.12.Outlook))</visible>
+        </item> 
+        <item>
+            <label>$INFO[Window(Weather).Property(Hourly.13.Outlook)]</label>
+            <property name="HighTemp">$INFO[Window(Weather).Property(Hourly.13.Temperature),,]</property>
+            <property name="Title">$INFO[Window(Weather).Property(Hourly.13.Time)]</property>
+            <property name="FanartTexture">$INFO[Skin.String(weather.icons.path),,/]$INFO[Window(Weather).Property(Hourly.13.FanartCode),,.png]</property>
+            <property name="OutlookTexture">resource://resource.images.weathericons.default/$INFO[Window(Weather).Property(Hourly.13.FanartCode),,.png]</property>
+            <visible>!String.IsEmpty(Window(Weather).Property(Hourly.13.Outlook))</visible>
+        </item> 
+        <item>
+            <label>$INFO[Window(Weather).Property(Hourly.14.Outlook)]</label>
+            <property name="HighTemp">$INFO[Window(Weather).Property(Hourly.14.Temperature),,]</property>
+            <property name="Title">$INFO[Window(Weather).Property(Hourly.14.Time)]</property>
+            <property name="FanartTexture">$INFO[Skin.String(weather.icons.path),,/]$INFO[Window(Weather).Property(Hourly.14.FanartCode),,.png]</property>
+            <property name="OutlookTexture">resource://resource.images.weathericons.default/$INFO[Window(Weather).Property(Hourly.14.FanartCode),,.png]</property>
+            <visible>!String.IsEmpty(Window(Weather).Property(Hourly.14.Outlook))</visible>
+        </item> 
+        <item>
+            <label>$INFO[Window(Weather).Property(Hourly.15.Outlook)]</label>
+            <property name="HighTemp">$INFO[Window(Weather).Property(Hourly.15.Temperature),,]</property>
+            <property name="Title">$INFO[Window(Weather).Property(Hourly.15.Time)]</property>
+            <property name="FanartTexture">$INFO[Skin.String(weather.icons.path),,/]$INFO[Window(Weather).Property(Hourly.15.FanartCode),,.png]</property>
+            <property name="OutlookTexture">resource://resource.images.weathericons.default/$INFO[Window(Weather).Property(Hourly.15.FanartCode),,.png]</property>
+            <visible>!String.IsEmpty(Window(Weather).Property(Hourly.15.Outlook))</visible>
+        </item> 
+        <item>
+            <label>$INFO[Window(Weather).Property(Hourly.16.Outlook)]</label>
+            <property name="HighTemp">$INFO[Window(Weather).Property(Hourly.16.Temperature),,]</property>
+            <property name="Title">$INFO[Window(Weather).Property(Hourly.16.Time)]</property>
+            <property name="FanartTexture">$INFO[Skin.String(weather.icons.path),,/]$INFO[Window(Weather).Property(Hourly.16.FanartCode),,.png]</property>
+            <property name="OutlookTexture">resource://resource.images.weathericons.default/$INFO[Window(Weather).Property(Hourly.16.FanartCode),,.png]</property>
+            <visible>!String.IsEmpty(Window(Weather).Property(Hourly.16.Outlook))</visible>
+        </item>           
+    </include> 
+    
+    <include name="OnFocusOnClick">
+        <onclick>SetProperty(SetUserRating,mixed,home)</onclick>
+        <onclick>SetProperty(SetUserRating2,mixed,home)</onclick>
+        <onfocus>SetProperty(SetUserRating,mixed,home)</onfocus>
+        <onfocus>SetProperty(SetUserRating2,mixed,home)</onfocus>
+    </include>
+    
+    <include name="ClearOnFocusOnClick">
+        <onunfocus>ClearProperty(SetUserRating,home)</onunfocus>
+        <onunfocus>ClearProperty(SetUserRating2,home)</onunfocus>
+    </include>
+    
+    <include name="DefDialogBackgroundRating">
+        <include>Animation.ZoomIn</include>
+        <centerleft>50%</centerleft>
+        <centertop>50%</centertop>
+        <height>310</height>
+        <width>468</width>
+        <control type="image">
+            <width>100%</width>
+            <height>100%</height>
+            <texture border="16" colordiffuse="White100">common/rounded-shadow8.png</texture>
+        </control>
+    </include> 
+    
+    <include name="DialogSelectUserRating">
+        <control id="3" type="list">
+            <onleft>noop</onleft>
+            <onright>noop</onright>
+            <onup>noop</onup>
+            <include>HiddenListControl</include>
+            <include>ClearOnFocusOnClick</include>
+        </control>
+        <control id="21" type="button">
+            <onleft condition="!String.IsEmpty(Container(3).ListItemNoWrap(-1).Label)">Control.Move(3,-1)</onleft>
+            <onright condition="!String.IsEmpty(Container(3).ListItemNoWrap(1).Label)">Control.Move(3,1)</onright>
+            <ondown condition="!String.IsEmpty(Container(3).ListItemNoWrap(-1).Label)">Control.Move(3,-1)</ondown>
+            <onup condition="!String.IsEmpty(Container(3).ListItemNoWrap(1).Label)">Control.Move(3,1)</onup>
+            <onclick>SetFocus(3)</onclick>
+            <onclick>Select</onclick>
+            <include>HiddenButton</include>
+        </control>
+        <control type="group">
+            <centerleft>50%</centerleft>
+            <centertop>50%</centertop>
+            <control type="textbox">
+                <top>110</top>
+                <left>38</left>
+                <right>30</right>
+                <height>86</height>
+                <font>Tiny</font>
+                <align>left</align>
+                <label>37741</label>
+            </control>
+            <control type="group">
+                <control type="grouplist">
+                    <centerleft>50%</centerleft>
+                    <top>210</top>
+                    <width>340</width>
+                    <height>45</height>
+                    <orientation>horizontal</orientation>
+                    <align>center</align>
+                    <itemgap>12</itemgap>
+                    <usecontrolcoords>true</usecontrolcoords>		
+                    <control type="image">	
+                        <width>45</width>
+                        <height>45</height>
+                        <centertop>50%</centertop>
+                        <texture colordiffuse="$VAR[ColorHighlight]">backg/$VAR[FlagstarSelect1].png</texture>		
+                    </control>
+                    <control type="image">			
+                        <width>45</width>
+                        <height>45</height>
+                        <centertop>50%</centertop>
+                        <texture colordiffuse="$VAR[ColorHighlight]">backg/$VAR[FlagstarSelect2].png</texture>			
+                    </control>
+                    <control type="image">				
+                        <width>45</width>
+                        <height>45</height>
+                        <centertop>50%</centertop>
+                        <texture colordiffuse="$VAR[ColorHighlight]">backg/$VAR[FlagstarSelect3].png</texture>		
+                    </control>
+                    <control type="image">			
+                        <width>45</width>
+                        <height>45</height>
+                        <centertop>50%</centertop>
+                        <texture colordiffuse="$VAR[ColorHighlight]">backg/$VAR[FlagstarSelect4].png</texture>				
+                    </control>
+                    <control type="image">			
+                        <width>45</width>
+                        <height>45</height>
+                        <centertop>50%</centertop>
+                        <texture colordiffuse="$VAR[ColorHighlight]">backg/$VAR[FlagstarSelect5].png</texture>		
+                    </control>			
+                </control>
+                <control type="group">
+                    <centerleft>50%</centerleft>
+                    <top>225</top>
+                    <width>330</width>
+                    <height>45</height>                            
+                    <align>center</align> 
+                    <include>Animation.DelayFadeIn</include>                    	
+                    <control type="image">                        
+                        <width>16</width>
+                        <height>16</height>
+                        <left>0</left>
+                        <texture colordiffuse="Black70" flipx="true">common/arrow-small-right.png</texture>                        
+                    </control> 
+                     <control type="image">   
+                        <width>16</width>
+                        <height>16</height>
+                        <right>0</right>
+                        <texture colordiffuse="Black70">common/arrow-small-right.png</texture>                        
+                    </control>                                                            
+                </control>                    
+            </control>                    
+        </control>
+    </include>  
+    
+    <include name="DialogSelect">
+        <control type="list" id="3">
+            <left>8</left>
+            <width>1064</width>
+            <posy>115</posy>
+            <height>759</height>
+            <onleft>5</onleft>
+            <onright>5</onright>
+            <onup>3</onup>
+            <ondown>3</ondown>
+            <itemlayout height="69" width="1064">
+                <control type="label">
+                    <left>30</left>
+                    <right>30</right>
+                    <font>Small</font>
+                    <textcolor>Black70</textcolor>
+                    <height>66</height>
+                    <aligny>center</aligny>
+                    <info>ListItem.Label</info>
+                </control>
+                <control type="label">
+                    <left>30</left>
+                    <right>30</right>
+                    <textcolor>Black70</textcolor>
+                    <align>right</align>
+                    <height>66</height>
+                    <aligny>center</aligny>
+                    <info>ListItem.Label2</info>
+                </control>
+            </itemlayout>
+
+            <focusedlayout height="69" width="1064">
+                <control type="image">
+                    <left>0</left>
+                    <right>0</right>
+                    <height>66</height>
+                    <texture border="5" colordiffuse="$VAR[ColorHighlight]">common/white.png</texture>
+                    <animation effect="fade" start="100" end="50" condition="!Control.HasFocus(3)">Conditional</animation>
+                </control>
+                <control type="label">
+                    <left>30</left>
+                    <right>30</right>
+                    <height>66</height>
+                    <font>Small</font>
+                    <aligny>center</aligny>
+                    <textcolor>Selected</textcolor>
+                    <info>ListItem.Label</info>
+                </control>
+                <control type="label">
+                    <left>30</left>
+                    <right>30</right>
+                    <align>right</align>
+                    <height>66</height>
+                    <aligny>center</aligny>
+                    <textcolor>Selected</textcolor>
+                    <info>ListItem.Label2</info>
+                </control>
+            </focusedlayout>
+        </control>
+    </include>   
 </includes>

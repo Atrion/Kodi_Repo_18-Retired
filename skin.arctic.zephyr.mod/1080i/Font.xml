@@ -223,6 +223,16 @@
             <size>48</size>
         </font>
         <font>
+            <name>LargeX2</name>
+            <filename>MC360.ttf</filename>
+            <size>78</size>
+        </font>
+        <font>
+            <name>LargeNew</name>
+            <filename>MC360.ttf</filename>
+            <size>48</size>
+        </font>
+        <font>
             <name>EpisodeNumber</name>
             <filename>MC360.ttf</filename>
             <size>100</size>
@@ -280,10 +290,15 @@
         <font>
             <name>MediumBold</name>
             <filename>MC360.ttf</filename>
-            <size>42</size>
-			<!--<style>bold</style>-->
-			
+            <size>42</size>			
         </font>
+        
+        <font>
+            <name>MediumBold3</name>
+            <filename>MC360.ttf</filename>
+            <size>40</size>			
+        </font>
+        
 		<font>
             <name>HeaderLabel</name>
             <filename>MC360.ttf</filename>
@@ -308,7 +323,7 @@
 		<!-- Liste Jahreszahlen, Berwertung und so-->
             <name>Small</name>
             <filename>MC360.ttf</filename>
-            <size>30</size>
+            <size>29</size>
         </font>
         <font>
             <name>SmallBold</name>
@@ -363,7 +378,7 @@
 			<!-- Text Home Rampenlicht textfeld-->
             <name>ChannelTiny</name>
             <filename>MC360.ttf</filename>
-            <size>22</size>
+            <size>20</size>
             
         </font>
 		
@@ -379,7 +394,7 @@
 			<!-- Text Home Rampenlicht textfeld-->
             <name>Tiny44</name>
             <filename>MC360.ttf</filename>
-            <size>20</size>
+            <size>21</size>
             
         </font>
         <font>
@@ -549,7 +564,7 @@
         </font>		
     </fontset>
 	
-	<fontset id="Default bold (1)" unicode="true">
+	<fontset id="Recommended" unicode="true">
 	<font>
 	<name>lyrics1</name>
 	<filename>lyrspin03.ttf</filename>
@@ -770,6 +785,16 @@
             <size>48</size>
         </font>
         <font>
+            <name>LargeX2</name>
+            <filename>MC360.ttf</filename>
+            <size>78</size>
+        </font>
+        <font>
+            <name>LargeNew</name>
+            <filename>RobotoCondensed-Bold.ttf</filename>
+            <size>48</size>
+        </font>
+        <font>
             <name>EpisodeNumber</name>
             <filename>MC360.ttf</filename>
             <size>100</size>
@@ -831,6 +856,13 @@
 			<!--<style>bold</style>-->
 			
         </font>
+        
+        <font>
+            <name>MediumBold3</name>
+            <filename>RobotoCondensed-Bold.ttf</filename>
+            <size>36</size>
+        </font>
+        
 		<font>
             <name>HeaderLabel</name>
             <filename>RobotoCondensed-Bold.ttf</filename>
@@ -855,7 +887,7 @@
 		<!-- Liste Jahreszahlen, Berwertung und so-->
             <name>Small</name>
             <filename>MC360.ttf</filename>
-            <size>30</size>
+            <size>29</size>
         </font>
         <font>
             <name>SmallBold</name>
@@ -926,7 +958,7 @@
 			<!-- Text Home Rampenlicht textfeld-->
             <name>Tiny44</name>
             <filename>MC360.ttf</filename>
-            <size>20</size>
+            <size>21</size>
             
         </font>
         <font>
@@ -934,6 +966,7 @@
             <name>TinyBold</name>
             <filename>MC360.ttf</filename>
             <size>30</size>
+            <style>bold</style>
         </font>
         <font>
             <name>Mini</name>
@@ -1319,6 +1352,16 @@
             <size>48</size>
         </font>
         <font>
+            <name>LargeX2</name>
+            <filename>MC360.ttf</filename>
+            <size>78</size>
+        </font>
+        <font>
+            <name>LargeNew</name>
+            <filename>MC360.ttf</filename>
+            <size>48</size>
+        </font>
+        <font>
             <name>EpisodeNumber</name>
             <filename>MC360.ttf</filename>
             <size>100</size>
@@ -1335,6 +1378,12 @@
         </font>
         <font>
             <name>MediumBold</name>
+            <filename>MC360.ttf</filename>
+            <size>32</size>
+			<style>bold</style>
+        </font>
+        <font>
+            <name>MediumBold3</name>
             <filename>MC360.ttf</filename>
             <size>32</size>
 			<style>bold</style>
@@ -1836,6 +1885,16 @@
             <size>43</size>
         </font>
         <font>
+            <name>LargeX2</name>
+            <filename>MC360.ttf</filename>
+            <size>78</size>
+        </font>
+        <font>
+            <name>LargeNew</name>
+            <filename>default-light.ttf</filename>
+            <size>43</size>
+        </font>
+        <font>
             <name>EpisodeNumber</name>
             <filename>default-light.ttf</filename>
             <size>98</size>
@@ -1895,6 +1954,11 @@
             <size>34</size>
 			<!--<style>bold</style>-->
 			
+        </font>
+        <font>
+            <name>MediumBold3</name>
+            <filename>default-light.ttf</filename>
+            <size>34</size>
         </font>
 		<font>
             <name>HeaderLabel</name>
@@ -1991,7 +2055,7 @@
 			<!-- Text Home Rampenlicht textfeld-->
             <name>Tiny44</name>
             <filename>default-light.ttf</filename>
-            <size>18</size>
+            <size>21</size>
             
         </font>
         <font>
@@ -2385,6 +2449,16 @@
             <size>43</size>
         </font>
         <font>
+            <name>LargeX2</name>
+            <filename>MC360.ttf</filename>
+            <size>78</size>
+        </font>
+        <font>
+            <name>LargeNew</name>
+            <filename>default-light.ttf</filename>
+            <size>43</size>
+        </font>
+        <font>
             <name>EpisodeNumber</name>
             <filename>default-light.ttf</filename>
             <size>98</size>
@@ -2444,6 +2518,12 @@
             <size>34</size>
 			<style>bold</style>
 			
+        </font>
+        <font>
+            <name>MediumBold3</name>
+            <filename>default-light.ttf</filename>
+            <size>34</size>
+			<style>bold</style>			
         </font>
 		<font>
             <name>HeaderLabel</name>
@@ -2540,7 +2620,7 @@
 			<!-- Text Home Rampenlicht textfeld-->
             <name>Tiny44</name>
             <filename>default-light.ttf</filename>
-            <size>18</size>
+            <size>21</size>
             
         </font>
         <font>
@@ -2935,6 +3015,16 @@
             <size>48</size>
         </font>
         <font>
+            <name>LargeX2</name>
+            <filename>MC360.ttf</filename>
+            <size>78</size>
+        </font>
+        <font>
+            <name>LargeNew</name>
+            <filename>RobotoCondensed-Regular.ttf</filename>
+            <size>48</size>
+        </font>
+        <font>
             <name>EpisodeNumber</name>
             <filename>RobotoCondensed-Regular.ttf</filename>
             <size>100</size>
@@ -2995,6 +3085,11 @@
             <size>36</size>
 			<!--<style>bold</style>-->
 			
+        </font>
+        <font>
+            <name>MediumBold3</name>
+            <filename>RobotoCondensed-Regular.ttf</filename>
+            <size>36</size>
         </font>
 		<font>
             <name>Headerlabel</name>
@@ -3091,7 +3186,7 @@
 			<!-- Text Home Rampenlicht textfeld-->
             <name>Tiny44</name>
             <filename>RobotoCondensed-Regular.ttf</filename>
-            <size>20</size>
+            <size>21</size>
             
         </font>
         <font>
@@ -3485,6 +3580,16 @@
             <size>48</size>
         </font>
         <font>
+            <name>LargeX2</name>
+            <filename>MC360.ttf</filename>
+            <size>78</size>
+        </font>
+        <font>
+            <name>LargeNew</name>
+            <filename>RobotoCondensed-Regular.ttf</filename>
+            <size>48</size>
+        </font>
+        <font>
             <name>EpisodeNumber</name>
             <filename>RobotoCondensed-Regular.ttf</filename>
             <size>100</size>
@@ -3501,6 +3606,12 @@
         </font>
         <font>
             <name>MediumBold</name>
+            <filename>RobotoCondensed-Regular.ttf</filename>
+            <size>32</size>
+			<style>bold</style>
+        </font>
+        <font>
+            <name>MediumBold3</name>
             <filename>RobotoCondensed-Regular.ttf</filename>
             <size>32</size>
 			<style>bold</style>
@@ -4002,6 +4113,16 @@
             <size>48</size>
         </font>
         <font>
+            <name>LargeX2</name>
+            <filename>MC360.ttf</filename>
+            <size>78</size>
+        </font>
+        <font>
+            <name>LargeNew</name>
+            <filename>Segoe-Light.ttf</filename>
+            <size>48</size>
+        </font>
+        <font>
             <name>EpisodeNumber</name>
             <filename>Segoe-Light.ttf</filename>
             <size>100</size>
@@ -4062,6 +4183,11 @@
             <size>38</size>
 			<!--<style>bold</style>-->
 			
+        </font>
+        <font>
+            <name>MediumBold3</name>
+            <filename>Segoe-Light.ttf</filename>
+            <size>38</size>
         </font>
 		<font>
             <name>HeaderLabel</name>
@@ -4159,7 +4285,7 @@
 			<!-- Text Home Rampenlicht textfeld-->
             <name>Tiny44</name>
             <filename>Segoe-Light.ttf</filename>
-            <size>20</size>
+            <size>21</size>
             
         </font>
         <font>
@@ -4550,6 +4676,16 @@
             <size>48</size>
         </font>
         <font>
+            <name>LargeX2</name>
+            <filename>MC360.ttf</filename>
+            <size>78</size>
+        </font>
+        <font>
+            <name>LargeNew</name>
+            <filename>arial.ttf</filename>
+            <size>48</size>
+        </font>
+        <font>
             <name>EpisodeNumber</name>
             <filename>arial.ttf</filename>
             <size>100</size>
@@ -4610,6 +4746,11 @@
             <size>38</size>
 			<!--<style>bold</style>-->
 			
+        </font>
+        <font>
+            <name>MediumBold3</name>
+            <filename>arial.ttf</filename>
+            <size>38</size>
         </font>
 		<font>
             <name>HeaderLabel</name>
@@ -4708,7 +4849,7 @@
 			<!-- Text Home Rampenlicht textfeld-->
             <name>Tiny44</name>
             <filename>arial.ttf</filename>
-            <size>20</size>
+            <size>21</size>
             
         </font>
         <font>

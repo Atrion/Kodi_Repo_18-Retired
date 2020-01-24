@@ -8,6 +8,7 @@
     <onload>SetProperty(750_onback,SetFocus(9000))</onload>
     <onload>SetProperty(1000_onback,SetFocus(9000))</onload>
     <onload>SetProperty(1150_onback,SetFocus(9000))</onload>
+    <onload>SetProperty(1350_onback,SetFocus(9000))</onload>
     <onload>ClearProperty(content)</onload>
     <!--<onload>Dialog.Close(2003)</onload>-->
     <onunload>Skin.Reset(ExtendedInfoDialog)</onunload> 
@@ -110,14 +111,29 @@
 
                 <!-- List Headers -->
 				
+                
+                <control type="list" id="1501">
+                    <top>-1000</top>
+                    <left>-2000</left>				
+                    <itemlayout>				                 		
+                        <control type="label">									
+                            <label>$INFO[Container(1501).ListItem.FileNameAndPath]</label>
+                        </control>                     	
+                    </itemlayout>
+                    <focusedlayout>	
+                        <control type="label">									
+                            <label>$INFO[Container(1501).ListItem.FileNameAndPath]</label>
+                        </control> 		
+                    </focusedlayout>
+                    <content>plugin://script.embuary.helper/?info=getbydbid&dbid=$INFO[Window.Property(DBID)]&type=movie</content>
+                    <visible>System.HasAddon(script.embuary.helper)</visible>
+                </control>	
                 <control type="label">
                     <visible>String.IsEqual(Window.Property(content),1000)</visible>
                     <visible>Control.HasFocus(1000)</visible>
                     <left>750</left>
                     <right>SidePad</right>
                     <top>300</top>
-                    
-                    
 					<textcolor>Dark1</textcolor>
 					<include>DefDialogInfoHeader</include>
                     <label>$INFO[Window.Property(title)] $LOCALIZE[206] ($INFO[Container(1000).NumItems])</label>
@@ -246,7 +262,7 @@
                             <description>Header Label</description>
                             <textcolor>Dark1</textcolor>
                             <include>DefDialogInfoHeader</include>
-                            <label>$INFO[Window.Property(Title)]</label>
+                            <label>$VAR[LabelExtendedDialogInfo]</label>
                         </control>
                         <control type="group">
                             <height>50</height>
@@ -256,7 +272,7 @@
                                 <height>36</height>
                                 <font>Tiny</font>
                                 <textcolor>Dark2</textcolor>
-                                <label fallback="19055">$INFO[Window.Property(Tagline)]</label>
+                                <label fallback="19055">$VAR[LabelExtendedDialogInfoTagline]</label>
                                 <aligny>center</aligny>
                             </control>
                         </control>
@@ -511,7 +527,8 @@
 			<visible>ControlGroup(9000).HasFocus() + !Skin.HasSetting(olddialogbuttons)</visible>
 			<include>Animation.FadeIn</include>
 			<include>Animation.FadeOut</include>
-		</control>
+		</control>       
+        
     </controls>
 
 </window>

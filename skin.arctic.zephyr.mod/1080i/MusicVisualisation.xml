@@ -2,7 +2,8 @@
 <!-- Foundation -->
 <window id="2006">
     <defaultcontrol always="true">-</defaultcontrol>
-
+    <onunload>ClearProperty(SetUserRating,home)</onunload>
+    <onunload>ClearProperty(SetUserRating2,home)</onunload>
     <onload condition="Skin.HasSetting(osd.alwaysshowmusicosd)">ActivateWindow(musicosd)</onload>
 	<!--<onload condition="Skin.HasSetting(osd.lyrics)">RunScript(script.cu.lrclyrics)</onload>-->
 	<onload>RunScript(script.artistslideshow)</onload>
@@ -21,20 +22,18 @@
             <animation effect="fade" start="100" end="65" time="0" condition="Skin.HasSetting(OSDVisualisation.ShowFanart)">Conditional</animation>
             <animation effect="zoom" start="110" end="130" center="auto" time="10000" tween="sine" easing="inout" pulse="true" condition="Skin.HasSetting(ArtistSlideshow.Animate)">Conditional</animation>
             <animation effect="slide" start="-30,-30" end="30,30" time="6000" tween="sine" easing="inout" pulse="true" condition="Skin.HasSetting(ArtistSlideshow.Animate)">Conditional</animation>
-        </control>
+        </control>        
         <control type="multiimage">
+            <!-- AS 3 -->
             <aspectratio>scale</aspectratio>
             <include>Dimensions_Fullscreen</include>
-            <timeperimage>10000</timeperimage>
-            <randomize>true</randomize>
             <fadetime>600</fadetime>
-            <loop>yes</loop>
-            <imagepath background="true">$INFO[Window(Visualisation).Property(ArtistSlideshow)]</imagepath>
+            <imagepath background="true">$INFO[Window(Visualisation).Property(ArtistSlideshow.Image)]</imagepath>
             <visible>System.HasAddon(script.artistslideshow) + !Skin.HasSetting(ArtistSlideShow.Disabled)</visible>
             <animation effect="fade" start="100" end="75" time="0" condition="Skin.HasSetting(OSDVisualisation.ShowFanart)">Conditional</animation>
             <animation effect="zoom" start="110" end="130" center="auto" time="10000" tween="sine" easing="inout" pulse="true" condition="Skin.HasSetting(ArtistSlideshow.Animate)">Conditional</animation>
             <animation effect="slide" start="-30,-30" end="30,30" time="6000" tween="sine" easing="inout" pulse="true" condition="Skin.HasSetting(ArtistSlideshow.Animate)">Conditional</animation>
-        </control>
+        </control>            
 		<control type="group">
             <top>350</top>
             <visible>!Skin.HasSetting(HideMusicScrollingText)</visible>
@@ -651,7 +650,7 @@
 						<font>Tiny</font>
 						<align>justify</align>					
 						<textcolor>$VAR[OSDPanelWhite70]</textcolor>
-						<label fallback="nicht verfügbar">$INFO[Window(Visualisation).Property(ArtistSlideshow.ArtistBiography),]</label>	
+						<label fallback="19055">$INFO[Window(Visualisation).Property(ArtistSlideshow.ArtistBiography),]</label>	
 						<label>$INFO[MusicPlayer.Artist,[COLOR labelheader]$LOCALIZE[31105] ,:[/COLOR] ]$INFO[Window(Visualisation).Property(ArtistSlideshow.1.AlbumName)]$INFO[Window(Visualisation).Property(ArtistSlideshow.2.AlbumName),[COLOR labelheader]  •  [/COLOR]]$INFO[Window(Visualisation).Property(ArtistSlideshow.3.AlbumName),[COLOR labelheader]  •  [/COLOR]]$INFO[Window(Visualisation).Property(ArtistSlideshow.4.AlbumName),[COLOR labelheader]  •  [/COLOR]]$INFO[Window(Visualisation).Property(ArtistSlideshow.5.AlbumName),[COLOR labelheader]  •  [/COLOR]]$INFO[Window(Visualisation).Property(ArtistSlideshow.6.AlbumName),[COLOR labelheader]  •  [/COLOR]]$INFO[Window(Visualisation).Property(ArtistSlideshow.7.AlbumName),[COLOR labelheader]  •  [/COLOR]]$INFO[Window(Visualisation).Property(ArtistSlideshow.8.AlbumName),[COLOR labelheader]  •  [/COLOR]]$INFO[Window(Visualisation).Property(ArtistSlideshow.9.AlbumName),[COLOR labelheader]  •  [/COLOR]]$INFO[Window(Visualisation).Property(ArtistSlideshow.10.AlbumName),[COLOR labelheader]  •  [/COLOR]]</label>		
 					</control>
 				</control>
@@ -707,7 +706,7 @@
 					<height>240</height>
 					<top>647</top>
 					<left>95</left>				
-					<texture fallback="backg/default.png">$INFO[Player.Art(discart)]</texture>
+					<texture>$VAR[MusicDiscart]</texture>
 					<animation effect="rotate" center="auto" time="6000" end="-360" condition="true" loop="true">Conditional</animation>
 				</control>
 			</control>			
@@ -889,7 +888,7 @@
 						<pauseatend>500</pauseatend>
 						<font>Tiny</font>					
 						<textcolor>$VAR[OSDPanelWhite70]</textcolor>
-						<label fallback="nicht verfügbar">$INFO[Window(Visualisation).Property(ArtistSlideshow.ArtistBiography),]</label>	
+						<label fallback="19055">$INFO[Window(Visualisation).Property(ArtistSlideshow.ArtistBiography),]</label>	
 						<label>$INFO[MusicPlayer.Artist,[COLOR labelheader]$LOCALIZE[31105] ,:[/COLOR] ]$INFO[Window(Visualisation).Property(ArtistSlideshow.1.AlbumName)]$INFO[Window(Visualisation).Property(ArtistSlideshow.2.AlbumName),[COLOR labelheader]  •  [/COLOR]]$INFO[Window(Visualisation).Property(ArtistSlideshow.3.AlbumName),[COLOR labelheader]  •  [/COLOR]]$INFO[Window(Visualisation).Property(ArtistSlideshow.4.AlbumName),[COLOR labelheader]  •  [/COLOR]]$INFO[Window(Visualisation).Property(ArtistSlideshow.5.AlbumName),[COLOR labelheader]  •  [/COLOR]]$INFO[Window(Visualisation).Property(ArtistSlideshow.6.AlbumName),[COLOR labelheader]  •  [/COLOR]]$INFO[Window(Visualisation).Property(ArtistSlideshow.7.AlbumName),[COLOR labelheader]  •  [/COLOR]]$INFO[Window(Visualisation).Property(ArtistSlideshow.8.AlbumName),[COLOR labelheader]  •  [/COLOR]]$INFO[Window(Visualisation).Property(ArtistSlideshow.9.AlbumName),[COLOR labelheader]  •  [/COLOR]]$INFO[Window(Visualisation).Property(ArtistSlideshow.10.AlbumName),[COLOR labelheader]  •  [/COLOR]]</label>		
 					</control>
 				</control>
@@ -920,7 +919,7 @@
 					<height>240</height>
 					<top>647</top>
 					<left>95</left>				
-					<texture fallback="backg/default.png">$INFO[Player.Art(discart)]</texture>
+					<texture>$VAR[MusicDiscart]</texture>
 					<animation effect="rotate" center="auto" time="6000" end="-360" condition="true" loop="true">Conditional</animation>
 				</control>
 			</control>

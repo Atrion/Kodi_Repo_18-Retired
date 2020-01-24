@@ -182,6 +182,7 @@
         <value>$INFO[Container(301).ListItem.clearlogo]</value>
     </variable>	
     <variable name="ThumbImage">
+        <value condition="Window.IsVisible(MyVideoNav.xml) + [Container.Content(movies) | Container.Content(tvshows)] + Control.IsVisible(514)">$VAR[FanartImageFanart]</value>
         <value condition="Window.IsVisible(MyVideoNav.xml) + Container.Content(movies) | Container.Content(tvshows) | Container.Content(seasons) | Container.Content(episodes) | Container.Content(sets)">$VAR[FanartImage]</value>
         <value>$INFO[ListItem.Icon]</value>
     </variable>
@@ -214,6 +215,13 @@
         <value condition="!String.IsEmpty(ListItem.Art(fanart))">$INFO[ListItem.Art(fanart)]</value>
         <value condition="!String.IsEmpty(ListItem.Thumb)">$INFO[ListItem.Thumb]</value>
         <value>$INFO[ListItem.Icon]</value>
+    </variable>
+    <variable name="BannerImage301">    
+        <value condition="!String.IsEmpty(Container(301).ListItem.Art(banner))">$INFO[Container(301).ListItem.Art(banner)]</value>
+		<value condition="!String.IsEmpty(Container(301).ListItem.Art(tvshow.banner))">$INFO[Container(301).ListItem.Art(tvshow.banner)]</value>
+        <value condition="!String.IsEmpty(Container(301).ListItem.Art(fanart))">$INFO[Container(301).ListItem.Art(fanart)]</value>
+        <value condition="!String.IsEmpty(Container(301).ListItem.Thumb)">$INFO[Container(301).ListItem.Thumb]</value>
+        <value>$INFO[Container(301).ListItem.Icon]</value>
     </variable>
     <variable name="FanartImage">
 		<value condition="!String.IsEmpty(ListItem.Art(animatedfanart)) + !Container.Content(episodes) + Skin.HasSetting(furniture.animatedfanarts)">$INFO[ListItem.Art(animatedfanart)]</value>
@@ -279,5 +287,21 @@
         <value condition="Integer.IsGreater(Window(Home).Property(SkinHelper.ListItem.RottenTomatoes.Rating),0) + !String.IsEmpty(Window(Home).Property(SkinHelper.ListItem.RottenTomatoes.Rating))">backg/rt_white.png</value>
 		<value></value>
     </variable>
+    <variable name="RottenTomatoesAudienceColored">
+		<value condition="Integer.IsGreater(Window(Home).Property(SkinHelper.ListItem.Rottentomatoes.Audience),59) + !String.IsEmpty(Window(Home).Property(SkinHelper.ListItem.Rottentomatoes.Audience))">backg/good.png</value>
+        <value condition="Integer.IsGreater(Window(Home).Property(SkinHelper.ListItem.Rottentomatoes.Audience),0) + !String.IsEmpty(Window(Home).Property(SkinHelper.ListItem.Rottentomatoes.Audience))">backg/notgood.png</value>
+    </variable>
+    <variable name="RottenTomatoesAudience">
+		<value condition="Integer.IsGreater(Window(Home).Property(SkinHelper.ListItem.Rottentomatoes.Audience),59) + !String.IsEmpty(Window(Home).Property(SkinHelper.ListItem.Rottentomatoes.Audience))">backg/good_white.png</value>
+        <value condition="Integer.IsGreater(Window(Home).Property(SkinHelper.ListItem.Rottentomatoes.Audience),0) + !String.IsEmpty(Window(Home).Property(SkinHelper.ListItem.Rottentomatoes.Audience))">backg/notgood_white.png</value>	
+    </variable>
+    
+    <variable name="MusicDiscart">
+		<value condition="!String.IsEmpty(Player.Art(album.discart))">$INFO[Player.Art(album.discart)]</value>
+		<value condition="!String.IsEmpty(Player.Art(discart))">$INFO[Player.Art(discart)]</value>
+		<value>backg/default.png</value>	
+    </variable>
+    
+    
 	
 </includes>

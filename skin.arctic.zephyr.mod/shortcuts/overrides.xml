@@ -40,6 +40,11 @@
 	<propertySettings property="widgetSort" buttonID="9403" templateonly="True" title="$LOCALIZE[31709]" />
 	<property property="widgetSort" label="585">descending</property>
 	<property property="widgetSort" label="584">ascending</property>
+    
+    <!-- Widget Banner -->
+    <propertySettings property="widgetBanner" buttonID="9404" title="$LOCALIZE[37709]" />
+	<property property="widgetBanner" label="107">yes</property>
+	<property property="widgetBanner" label="106">no</property>
 	
     
     <!-- Override Actions Because Im A Dummy Who Doesnt Know The Correct Window IDs To Use -->
@@ -377,10 +382,14 @@
     </video-groupings>
 	
 	<widget-groupings>
-		<shortcut label="31251" type="Widget" icon="DefaultAddonPVRClient.png" widget="weather" widgetType="widget" widgetTarget="weather">Weather</shortcut>	
+		<!--<shortcut label="31251" type="Widget" icon="sun.png" widget="weather" widgetType="widget" widgetTarget="weather">Weather</shortcut>-->
+        <node label="8">
+			<shortcut label="$LOCALIZE[37732]" type="Widget" icon="sun.png" widget="weatherdaily" widgetType="widget" widgetTarget="weather">weatherdaily</shortcut>
+            <shortcut label="$LOCALIZE[37733]" type="Widget" icon="sun.png" widget="weatherhourly" widgetType="widget" widgetTarget="weather" condition="Skin.HasSetting(home.modernwidgets)">weatherhourly</shortcut>
+		</node>	
 		<node label="$LOCALIZE[342]">
-			 <shortcut widget="NewMovies" label="37560" icon="DefaultRecentlyAddedMovies.png" widgetTarget="video">special://skin/extras/playlists/NewMovies.xsp</shortcut>
-             <shortcut widget="RecentMovies" label="37561" icon="DefaultMusicRecentlyPlayed.png" widgetTarget="video">special://skin/extras/playlists/RecentMovies.xsp</shortcut>
+			<shortcut widget="NewMovies" label="37560" icon="DefaultRecentlyAddedMovies.png" widgetTarget="video">special://skin/extras/playlists/NewMovies.xsp</shortcut>
+            <shortcut widget="RecentMovies" label="37561" icon="DefaultMusicRecentlyPlayed.png" widgetTarget="video">special://skin/extras/playlists/RecentMovies.xsp</shortcut>
 			<shortcut widget="RandomMovies" label="37562" icon="DefaultMovies.png" widgetTarget="video">special://skin/extras/playlists/RandomMovies.xsp</shortcut>
 			<shortcut widget="InProgressMovies" label="37563" icon="special://skin/extras/icons/timer.png" widgetTarget="video">special://skin/extras/playlists/InProgressMovies.xsp</shortcut>
 			<shortcut widget="TopRatedMovies" label="37564" icon="DefaultMovies.png" widgetTarget="video">special://skin/extras/playlists/TopRatedMovies.xsp</shortcut>
@@ -405,15 +414,18 @@
 		</node>
 		<node label="31103">
 			<shortcut widget="37558" label="Last Played Channels" icon="DefaultTVShows.png" widgetTarget="pvr">pvr://channels/tv/*?view=lastplayed</shortcut>
-			<shortcut widget="37559" label="All Channels" icon="DefaultTVShows.png" widgetTarget="pvr">pvr://channels/tv/*</shortcut>             
+			<shortcut widget="37559" label="All Channels" icon="DefaultTVShows.png" widgetTarget="pvr">pvr://channels/tv/*</shortcut> 
+            <shortcut widget="gto" label="German Telecast Offers" icon="DefaultTVShows.png" widgetTarget="pvr" condition="System.HasAddon(script.service.gto)">plugin://script.service.gto?action=getcontent&amp;ts=$INFO[Window(Home).Property(GTO.timestamp)]</shortcut>             
         </node>		
 		<node label="$LOCALIZE[249]">
 			<shortcut widget="NewAlbums" label="37580" icon="DefaultMusicRecentlyAdded.png" widgetTarget="music">musicdb://recentlyaddedalbums/</shortcut>
 			<shortcut widget="RecentAlbums" label="37581" icon="DefaultMusicRecentlyPlayed.png" widgetTarget="music">musicdb://recentlyplayedalbums/</shortcut>
 			<shortcut widget="TopAlbums" label="37582" icon="DefaultMusicAlbums.png" widgetTarget="music">musicdb://top100/albums/</shortcut>
 			<shortcut widget="RandomAlbums" label="37583" icon="DefaultMusicAlbums.png" widgetTarget="music">special://skin/extras/playlists/RandomAlbums.xsp</shortcut>
-			<shortcut widget="RandomArtists" label="37584" icon="DefaultMusicArtists.png" widgetTarget="music">special://skin/extras/playlists/RandomArtists.xsp</shortcut>
-		</node>
+            <shortcut widget="TopSongs" label="37729" icon="DefaultMusicAlbums.png" widgetTarget="music">musicdb://top100/songs/</shortcut>
+            <shortcut widget="RandomSongs" label="37730" icon="DefaultMusicAlbums.png" widgetTarget="music">special://skin/extras/playlists/RandomSongs.xsp</shortcut>
+            <shortcut widget="RandomArtists" label="37584" icon="DefaultMusicArtists.png" widgetTarget="music">special://skin/extras/playlists/RandomArtists.xsp</shortcut>
+        </node>
 		<node label="32020">
             <content>picturesources</content>
         </node>		

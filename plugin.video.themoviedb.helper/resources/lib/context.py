@@ -6,6 +6,7 @@ import xbmcgui
 from resources.lib.traktapi import TraktAPI
 from resources.lib.kodilibrary import KodiLibrary
 import resources.lib.utils as utils
+_addon = xbmcaddon.Addon('plugin.video.themoviedb.helper')
 
 
 def library_cleancontent_replacer(content, old, new):
@@ -25,44 +26,70 @@ def library_cleancontent(content, details='info=play'):
     return content
 
 
-def library_createfile(filename, content, *args):
+def library_createpath(path):
+    if xbmcvfs.exists(path):
+        return path
+    if xbmcvfs.mkdirs(path):
+        utils.kodi_log('ADD LIBRARY -- Created path:\n{}'.format(path), 1)
+        return path
+    if _addon.getSettingBool('ignore_folderchecking'):
+        utils.kodi_log('ADD LIBRARY -- xbmcvfs reports folder does NOT exist:\n{}\nIGNORING ERROR: User set folder checking to ignore'.format(path), 1)
+        return path
+
+
+def library_createfile(filename, content, *args, **kwargs):
     """
     Create the file and folder structure: filename=.strm file, content= content of file.
     *args = folders to create.
     """
-    path = ''
+    file_ext = kwargs.pop('file_ext', 'strm')
+    path = kwargs.pop('basedir', '')
+    path = path.replace('\\', '/')
+    if not path:
+        return utils.kodi_log('ADD LIBRARY -- No basedir specified!', 1)
     content = library_cleancontent(content)
     for folder in args:
-        path = '{}/{}'.format(path, folder) if path else folder
-    if not path:
-        return utils.kodi_log('ADD LIBRARY -- No path specified!', 1)
+        folder = utils.validify_filename(folder)
+        path = '{}{}/'.format(path, folder)
     if not content:
         return utils.kodi_log('ADD LIBRARY -- No content specified!', 1)
     if not filename:
         return utils.kodi_log('ADD LIBRARY -- No filename specified!', 1)
-    if not xbmcvfs.exists(path) and not xbmcvfs.mkdirs(path):
-        return utils.kodi_log('ADD LIBRARY -- Failed to create path:\n{}'.format(path), 1)
-    filename = '{}.strm'.format(filename)
-    filepath = '{}/{}'.format(path, filename)
+    if not library_createpath(path):
+        xbmcgui.Dialog().ok(
+            'Add to Library',
+            'XBMCVFS reports unable to create path [B]{}[/B]'.format(path),
+            'If error persists and the folders are created correctly, '
+            'please disable folder path creation checking in TMDBHelper settings.')
+        return utils.kodi_log('ADD LIBRARY -- XBMCVFS unable to create path:\n{}'.format(path), 1)
+    filepath = '{}{}.{}'.format(path, utils.validify_filename(filename), file_ext)
     f = xbmcvfs.File(filepath, 'w')
     f.write(str(content))
     f.close()
     utils.kodi_log('ADD LIBRARY -- Successfully added:\n{}\n{}'.format(filepath, content), 1)
 
 
+def library_create_nfo(tmdbtype, tmdb_id, *args, **kwargs):
+    filename = 'movie' if tmdbtype == 'movie' else 'tvshow'
+    content = 'https://www.themoviedb.org/{}/{}'.format(tmdbtype, tmdb_id)
+    library_createfile(filename, content, file_ext='nfo', *args, **kwargs)
+
+
 def library():
     with utils.busy_dialog():
-        title = sys.listitem.getVideoInfoTag().getTitle()
+        title = utils.validify_filename(sys.listitem.getVideoInfoTag().getTitle())
         dbtype = sys.listitem.getVideoInfoTag().getMediaType()
-        basedir = 'special://profile/addon_data/plugin.video.themoviedb.helper/'
-        basedir_movie = 'movies'
-        basedir_tv = 'tvshows'
+        basedir_movie = _addon.getSetting('movies_library') or 'special://profile/addon_data/plugin.video.themoviedb.helper/movies/'
+        basedir_tv = _addon.getSetting('tvshows_library') or 'special://profile/addon_data/plugin.video.themoviedb.helper/tvshows/'
+        auto_update = _addon.getSettingBool('auto_update') or False
 
         # Setup our folders and file names
         if dbtype == 'movie':
             folder = '{} ({})'.format(title, sys.listitem.getVideoInfoTag().getYear())
             movie_name = '{} ({})'.format(title, sys.listitem.getVideoInfoTag().getYear())
-            library_createfile(movie_name, sys.listitem.getPath(), basedir, basedir_movie, folder)
+            library_createfile(movie_name, sys.listitem.getPath(), folder, basedir=basedir_movie)
+            library_create_nfo('movie', sys.listitem.getProperty('tmdb_id'), folder, basedir=basedir_movie)
+            xbmc.executebuiltin('UpdateLibrary(video, {})'.format(basedir_movie)) if auto_update else None
 
         elif dbtype == 'episode':
             folder = sys.listitem.getVideoInfoTag().getTVShowTitle()
@@ -71,12 +98,14 @@ def library():
                 utils.try_parse_int(sys.listitem.getVideoInfoTag().getSeason()),
                 utils.try_parse_int(sys.listitem.getVideoInfoTag().getEpisode()),
                 title)
-            library_createfile(episode_name, sys.listitem.getPath(), basedir, basedir_tv, folder, season_name)
+            library_createfile(episode_name, sys.listitem.getPath(), folder, season_name, basedir=basedir_tv)
+            xbmc.executebuiltin('UpdateLibrary(video, {})'.format(basedir_tv)) if auto_update else None
 
         elif dbtype == 'tvshow':
-            folder = sys.listitem.getVideoInfoTag().getTVShowTitle()
+            folder = sys.listitem.getVideoInfoTag().getTVShowTitle() or title
             seasons = library_cleancontent(sys.listitem.getPath(), details='info=seasons')
             seasons = KodiLibrary().get_directory(seasons)
+            library_create_nfo('tv', sys.listitem.getProperty('tmdb_id'), folder, basedir=basedir_tv)
             for season in seasons:
                 if not season.get('season'):
                     continue  # Skip special seasons S00
@@ -89,8 +118,9 @@ def library():
                     episode_name = 'S{:02d}E{:02d} - {}'.format(
                         utils.try_parse_int(episode.get('season')),
                         utils.try_parse_int(episode.get('episode')),
-                        episode.get('title'))
-                    library_createfile(episode_name, episode_path, basedir, basedir_tv, folder, season_name)
+                        utils.validify_filename(episode.get('title')))
+                    library_createfile(episode_name, episode_path, folder, season_name, basedir=basedir_tv)
+            xbmc.executebuiltin('UpdateLibrary(video, {})'.format(basedir_tv)) if auto_update else None
 
         elif dbtype == 'season':
             folder = sys.listitem.getVideoInfoTag().getTVShowTitle()
@@ -103,8 +133,9 @@ def library():
                 episode_name = 'S{:02d}E{:02d} - {}'.format(
                     utils.try_parse_int(episode.get('season')),
                     utils.try_parse_int(episode.get('episode')),
-                    episode.get('title'))
-                library_createfile(episode_name, episode_path, basedir, basedir_tv, folder, season_name)
+                    utils.validify_filename(episode.get('title')))
+                library_createfile(episode_name, episode_path, folder, season_name, basedir=basedir_tv)
+            xbmc.executebuiltin('UpdateLibrary(video, {})'.format(basedir_tv)) if auto_update else None
 
         else:
             return
@@ -139,7 +170,7 @@ def action(action):
         return
 
     with utils.busy_dialog():
-        trakt_type = utils.type_convert(dbtype, 'trakt')
+        trakt_type = utils.type_convert(tmdb_type, 'trakt')
         slug_type = 'show' if dbtype == 'episode' else trakt_type
         slug = _traktapi.get_traktslug(slug_type, 'tmdb', tmdb_id)
         season = sys.listitem.getVideoInfoTag().getSeason() if dbtype == 'episode' else None

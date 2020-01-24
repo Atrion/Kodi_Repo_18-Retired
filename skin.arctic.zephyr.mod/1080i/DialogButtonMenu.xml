@@ -104,10 +104,10 @@
                 <control type="button" id="3114">
                     <description>LogOff Profile</description>
                     <include>DefContextButton</include>
-                    <label>$LOCALIZE[20126] $INFO[system.profilename]</label>
+                    <label>$LOCALIZE[20126]: $INFO[system.profilename]</label>
                     <onclick>dialog.close(all,true)</onclick>
                     <onclick>System.LogOff</onclick>
-                    <visible>System.Loggedon + System.HasLoginScreen</visible>
+                    <visible>System.Loggedon</visible>
                     <align>left</align>
                 </control>
 
@@ -167,35 +167,48 @@
                 </control>
                 
                 <control type="button" id="3121">
+                    <description>Reboot button</description>
+                    <include>DefContextButton</include>
+                    <label>37703</label>
+					<onclick>System.ExecWait("/usr/sbin/rebootfromnand")</onclick>
+					<onclick>Reset()</onclick>
+					<visible>System.CanReboot</visible>
+                    <align>left</align>
+                </control>
+                
+                <control type="button" id="3122">
                     <description>Leia Mod Skin Settings</description>
                     <include>DefContextButton</include>
                     <label>$LOCALIZE[37663]</label>
 					<onclick>ActivateWindowAndFocus(skinsettings,9108,2)</onclick>
                     <align>left</align>
+                    <visible>System.Loggedon</visible>
                 </control>
                 
-                <control type="button" id="3122">
+                <control type="button" id="3123">
                     <include>DefContextButton</include>
                     <label>5</label>
                     <onclick>ActivateWindow(settings)</onclick>
                     <align>left</align>
+                    <visible>System.Loggedon</visible>
                 </control>
                 
-                <control type="button" id="3123">
+                <control type="button" id="3124">
                     <include>DefContextButton</include>
                     <label>130</label>
                     <onclick>ActivateWindow(systeminfo)</onclick>
                     <align>left</align>
                 </control>
                 
-                <control type="button" id="3124">
+                <control type="button" id="3125">
                     <include>DefContextButton</include>
                     <label>10003</label>
                     <onclick>ActivateWindow(filemanager)</onclick>
                     <align>left</align>
+                    <visible>System.Loggedon</visible>
                 </control>
                 
-                <control type="button" id="3125">
+                <control type="button" id="3126">
                     <include>DefContextButton</include>
                     <label>31195</label>
                     <onclick>ReloadSkin()</onclick>

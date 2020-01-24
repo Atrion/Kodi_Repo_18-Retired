@@ -13,6 +13,21 @@
             <include>Furniture_Clock</include>
             <include>Furniture_Weather</include>
             <include>Furniture_NowPlaying</include>
+           
+            <control type="button" id ="20">
+                <centerleft>50%</centerleft>
+				<bottom>260</bottom>
+				<description>Close</description>
+				<label>10111</label>
+				<width>320</width>
+				<include>DefInfoButtons</include>
+                <onclick>ActivateWindow(ShutdownMenu)</onclick>
+                <onleft>52</onleft>
+				<onright>52</onright>
+				<onup>52</onup>
+				<ondown>52</ondown>
+			</control>
+            
             <control type="list" id="52">
                 <visible>!Window.IsVisible(ProfileSettings.xml)</visible>
                 <posx>635</posx>
@@ -21,8 +36,8 @@
                 <height>360</height>
                 <onleft>61</onleft>
                 <onright>noop</onright>
-                <onup>52</onup>
-                <ondown>52</ondown>
+                <onup>20</onup>
+                <ondown>20</ondown>
                 <pagecontrol>61</pagecontrol>
                 <scrolltime tween="cubic" easing="out">500</scrolltime>
                 <movement>1</movement>
@@ -33,7 +48,7 @@
                         <width>490</width>
                         <height>40</height>
                         <textcolor>Dark1</textcolor>
-                        <font>SmallBold</font>
+                        <font>Small</font>
                         <label>$INFO[ListItem.Label]</label>
                     </control>
                     <control type="label">
@@ -43,7 +58,7 @@
                         <height>40</height>
                         <textcolor>Dark2</textcolor>
                         <label>$INFO[ListItem.Label2]</label>
-                        <font>Font-ListInfo</font>
+                        <font>Tiny</font>
                     </control>
                 </itemlayout>
                 <focusedlayout height="120">
@@ -53,7 +68,7 @@
                         <width>111</width>
                         <height>111</height>
                         <aspectratio scalediffuse="false">scale</aspectratio>
-                        <texture diffuse="diffuse/dialogselect.png" fallback="DefaultAddonNone.png">$INFO[Listitem.Icon]</texture>
+                        <texture diffuse="diffuse/dialogselect.png" fallback="defaultactor.png">$INFO[Listitem.Icon]</texture>
                         <animation effect="slide" start="0,120" end="0,0" time="300" reversible="false" tween="back" easing="out" condition="Container(52).OnPrevious">Focus</animation>
                         <animation effect="slide" start="0,-120" end="0,0" time="300" reversible="false" tween="back" easing="out" condition="Container(52).OnNext">Focus</animation>
                         <visible>!Skin.HasSetting(global.hidecirles)</visible>
@@ -64,7 +79,7 @@
                         <width>111</width>
                         <height>111</height>
                         <aspectratio scalediffuse="false">scale</aspectratio>
-                        <texture fallback="DefaultAddonNone.png">$INFO[Listitem.Icon]</texture>
+                        <texture fallback="defaultactor.png">$INFO[Listitem.Icon]</texture>
                         <animation effect="slide" start="0,120" end="0,0" time="300" reversible="false" tween="back" easing="out" condition="Container(52).OnPrevious">Focus</animation>
                         <animation effect="slide" start="0,-120" end="0,0" time="300" reversible="false" tween="back" easing="out" condition="Container(52).OnNext">Focus</animation>
                         <visible>Skin.HasSetting(global.hidecirles)</visible>
@@ -80,7 +95,7 @@
                             <posy>22</posy>
                             <width>490</width>
                             <height>40</height>
-                            <font>SmallBold</font>
+                            <font>Small</font>
                             <textcolor>Dark1</textcolor>
                             <label>$INFO[ListItem.Label]</label>
                         </control>
@@ -91,11 +106,12 @@
                             <height>40</height>
                             <textcolor>Dark2</textcolor>
                             <label>$INFO[ListItem.Label2]</label>
-                            <font>Font-ListInfo</font>
+                            <font>Tiny</font>
                         </control>
                     </control>
                 </focusedlayout>
             </control>
+            
         </control>
     </controls>
 </window>
