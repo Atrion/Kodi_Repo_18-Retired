@@ -4,7 +4,7 @@ import xbmc
 import xbmcgui
 import xbmcaddon
 import unicodedata
-from datetime import datetime
+import datetime
 from copy import copy
 from contextlib import contextmanager
 from resources.lib.constants import TYPE_CONVERSION, VALID_FILECHARS
@@ -66,6 +66,18 @@ def try_encode_string(string, encoding='utf-8'):
     if sys.version_info.major == 3:
         return string
     return string.encode(encoding)
+
+
+def get_timestamp(timestamp=None):
+    if not timestamp:
+        return
+    if time.time() > timestamp:
+        return
+    return timestamp
+
+
+def set_timestamp(wait_time=60):
+    return time.time() + wait_time
 
 
 def rate_limiter(addon_name='plugin.video.themoviedb.helper', wait_time=None, api_name=None):
@@ -138,8 +150,8 @@ def filtered_item(item, key, value, exclude=False):
 
 def age_difference(birthday, deathday=''):
     try:  # Added Error Checking as strptime doesn't work correctly on LibreElec
-        deathday = datetime.strptime(deathday, '%Y-%m-%d') if deathday else datetime.now()
-        birthday = datetime.strptime(birthday, '%Y-%m-%d')
+        deathday = convert_timestamp(deathday, '%Y-%m-%d', 10) if deathday else datetime.datetime.now()
+        birthday = convert_timestamp(birthday, '%Y-%m-%d', 10)
         age = deathday.year - birthday.year
         if birthday.month * 100 + birthday.day > deathday.month * 100 + deathday.day:
             age = age - 1
@@ -148,15 +160,18 @@ def age_difference(birthday, deathday=''):
         return
 
 
-def convert_timestamp(time_str):
-    time_str = time_str[:19]
-    time_fmt = "%Y-%m-%dT%H:%M:%S"
+def convert_timestamp(time_str, time_fmt="%Y-%m-%dT%H:%M:%S", time_lim=19):
+    time_str = time_str[:time_lim] if time_lim else time_str
     try:
-        time_obj = datetime.strptime(time_str, time_fmt)
+        time_obj = datetime.datetime.strptime(time_str, time_fmt)
         return time_obj
     except TypeError:
-        time_obj = datetime(*(time.strptime(time_str, time_fmt)[0:6]))
-        return time_obj
+        try:
+            time_obj = datetime.datetime(*(time.strptime(time_str, time_fmt)[0:6]))
+            return time_obj
+        except Exception as exc:
+            kodi_log(exc, 1)
+            return
     except Exception as exc:
         kodi_log(exc, 1)
         return
@@ -262,3 +277,9 @@ def make_kwparams(params):
     return del_dict_keys(tempparams, ['info', 'type', 'tmdb_id', 'filter_key', 'filter_value',
                                       'with_separator', 'with_id', 'season', 'episode', 'prop_id',
                                       'exclude_key', 'exclude_value'])
+
+
+try:
+    _throwaway = time.strptime("2001-01-01", "%Y-%m-%d")  # Throwaway to deal with PY2 _strptime import bug
+except Exception as exc:
+    kodi_log(exc, 1)

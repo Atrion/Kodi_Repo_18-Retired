@@ -14,6 +14,7 @@ class ListItem(object):
     def __init__(self, label=None, label2=None, dbtype=None, library=None, tmdb_id=None, imdb_id=None, dbid=None, tvdb_id=None,
                  cast=None, infolabels=None, infoproperties=None, poster=None, thumb=None, icon=None, fanart=None, nextpage=None,
                  streamdetails=None, clearlogo=None, clearart=None, banner=None, landscape=None, discart=None,
+                 tvshow_clearlogo=None, tvshow_clearart=None, tvshow_banner=None, tvshow_landscape=None, tvshow_poster=None,
                  mixed_type=None, url=None, is_folder=True):
         self.addon = xbmcaddon.Addon()
         self.addonpath = self.addon.getAddonInfo('path')
@@ -26,6 +27,7 @@ class ListItem(object):
         self.tvdb_id = tvdb_id or ''  # IMDb ID for item
         self.poster, self.thumb = poster, thumb
         self.clearlogo, self.clearart, self.banner, self.landscape, self.discart = clearlogo, clearart, banner, landscape, discart
+        self.tvshow_clearlogo, self.tvshow_clearart, self.tvshow_banner, self.tvshow_landscape, self.tvshow_poster = tvshow_clearlogo, tvshow_clearart, tvshow_banner, tvshow_landscape, tvshow_poster
         self.url = url or {}
         self.mixed_type = mixed_type or ''
         self.streamdetails = streamdetails or {}
@@ -49,7 +51,7 @@ class ListItem(object):
             self.url['type'] = self.mixed_type
             self.infolabels['mediatype'] = utils.type_convert(self.mixed_type, 'dbtype')
         if self.label == 'Next Page':
-            self.infolabels['mediatype'] = ''
+            self.infolabels.pop('mediatype', None)
         if self.infolabels.get('mediatype') in ['season', 'episode']:
             self.url['season'] = self.infolabels.get('season')
         if self.infolabels.get('mediatype') == 'episode':
@@ -196,7 +198,12 @@ class ListItem(object):
         self.get_omdb_details(omdb=omdb)
         self.get_kodi_details() if self.addon.getSettingBool('local_db') or kodi else None
 
-        if self.infolabels.get('mediatype') == 'tvshow':
+        if (
+                (
+                    not self.addon.getSettingBool('trakt_unwatchedcounts') or
+                    not self.addon.getSettingBool('trakt_watchedindicators')) and
+                self.infolabels.get('mediatype') == 'tvshow' and
+                utils.try_parse_int(self.infoproperties.get('watchedepisodes', 0)) > 0):
             self.infoproperties['unwatchedepisodes'] = utils.try_parse_int(self.infolabels.get('episode')) - utils.try_parse_int(self.infoproperties.get('watchedepisodes'))
 
     def set_listitem(self, path=None):
@@ -207,7 +214,10 @@ class ListItem(object):
         listitem.setProperties(self.infoproperties)
         listitem.setArt({
             'thumb': self.thumb, 'icon': self.icon, 'poster': self.poster, 'fanart': self.fanart, 'discart': self.discart,
-            'clearlogo': self.clearlogo, 'clearart': self.clearart, 'landscape': self.landscape, 'banner': self.banner})
+            'clearlogo': self.clearlogo, 'clearart': self.clearart, 'landscape': self.landscape, 'banner': self.banner,
+            'tvshow.poster': self.tvshow_poster, 'tvshow.clearlogo': self.tvshow_clearlogo,
+            'tvshow.clearart': self.tvshow_clearart, 'tvshow.landscape': self.tvshow_landscape,
+            'tvshow.banner': self.tvshow_banner})
         listitem.setCast(self.cast)
 
         if self.streamdetails:

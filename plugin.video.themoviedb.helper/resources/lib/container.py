@@ -9,7 +9,6 @@ import resources.lib.constants as constants
 from resources.lib.traktapi import TraktAPI
 from resources.lib.listitem import ListItem
 from resources.lib.plugin import Plugin
-
 try:
     from urllib.parse import parse_qsl  # Py3
 except ImportError:
@@ -35,6 +34,7 @@ class Container(Plugin):
         self.randomlist = []
         self.numitems_dbid = 0
         self.numitems_tmdb = 0
+        self.trakt_limit = 20 if self.addon.getSettingBool('trakt_extendlimit') else 10
 
     def start_container(self):
         xbmcplugin.setPluginCategory(self.handle, self.plugincategory)  # Container.PluginCategory
@@ -43,6 +43,10 @@ class Container(Plugin):
     def finish_container(self):
         if self.params.get('random'):
             return
+        xbmcplugin.addSortMethod(self.handle, xbmcplugin.SORT_METHOD_UNSORTED)
+        xbmcplugin.addSortMethod(self.handle, xbmcplugin.SORT_METHOD_TITLE_IGNORE_THE)
+        xbmcplugin.addSortMethod(self.handle, xbmcplugin.SORT_METHOD_LASTPLAYED)
+        xbmcplugin.addSortMethod(self.handle, xbmcplugin.SORT_METHOD_PLAYCOUNT)
         xbmcplugin.endOfDirectory(self.handle, updateListing=self.updatelisting)
 
     def set_url_params(self, url):
@@ -147,6 +151,7 @@ class Container(Plugin):
             if self.fanarttv and self.details_tv and self.exp_fanarttv():
                 tvdb_id = self.tmdb.get_item_externalid('tv', self.params.get('tmdb_id'), 'tvdb_id')
                 artwork = self.fanarttv.get_tvshow_allart_lc(tvdb_id)
+                self.details_tv['poster'] = artwork.get('poster')
                 self.details_tv['clearart'] = artwork.get('clearart')
                 self.details_tv['clearlogo'] = artwork.get('clearlogo')
                 self.details_tv['landscape'] = artwork.get('landscape')
@@ -165,7 +170,7 @@ class Container(Plugin):
                 i.url = self.params.copy()
                 i.url['page'] = i.nextpage
                 i.icon = '{0}/resources/icons/tmdb/nextpage.png'.format(self.addonpath)
-                if self.params.get('nextpage'):
+                if self.params.get('nextpage') or (self.params.get('widget') and self.addon.getSettingBool('widgets_nextpage')):
                     nextpage.append(i)
                 continue
 
@@ -186,6 +191,11 @@ class Container(Plugin):
                 i.infoproperties = utils.merge_two_dicts(self.details_tv.get('infoproperties', {}), i.infoproperties)
                 i.poster = i.poster or self.details_tv.get('poster')
                 i.fanart = i.fanart if i.fanart and i.fanart != '{0}/fanart.jpg'.format(self.addonpath) else self.details_tv.get('fanart')
+                i.tvshow_clearart = i.tvshow_clearart or self.details_tv.get('clearart')
+                i.tvshow_clearlogo = i.tvshow_clearlogo or self.details_tv.get('clearlogo')
+                i.tvshow_landscape = i.tvshow_landscape or self.details_tv.get('landscape')
+                i.tvshow_banner = i.tvshow_banner or self.details_tv.get('banner')
+                i.tvshow_poster = self.details_tv.get('poster') or i.poster
                 i.infolabels['season'] = season_num
 
             # Format label For Future Eps/Movies
@@ -193,7 +203,7 @@ class Container(Plugin):
                 # Don't format label for plugin methods specifically about the future or details/seasons
                 if self.params.get('info') not in ['details', 'seasons', 'trakt_calendar', 'trakt_myairing', 'trakt_anticipated']:
                     try:
-                        if datetime.datetime.strptime(i.infolabels.get('premiered'), '%Y-%m-%d') > datetime.datetime.now():
+                        if utils.convert_timestamp(i.infolabels.get('premiered'), "%Y-%m-%d", 10) > datetime.datetime.now():
                             i.label = '[COLOR=ffcc0000][I]{}[/I][/COLOR]'.format(i.label)
                             # Don't add if option enabled to hide
                             if self.addon.getSettingBool('hide_unaired'):
@@ -438,14 +448,14 @@ class Container(Plugin):
         userslug = traktapi.get_usernameslug(login=True)
         self.item_tmdbtype = self.params.get('type')
         if self.params.get('info') == 'trakt_nextepisodes':
-            items = traktapi.get_inprogress(userslug, limit=10, episodes=True)
+            items = traktapi.get_inprogress(userslug, limit=self.trakt_limit, episodes=True)
             self.item_tmdbtype = 'episode'
         elif self.params.get('info') == 'trakt_inprogress':
-            items = traktapi.get_inprogress(userslug, limit=10)
+            items = traktapi.get_inprogress(userslug, limit=self.trakt_limit)
         elif self.params.get('info') == 'trakt_mostwatched':
-            items = traktapi.get_mostwatched(userslug, self.params.get('type'), limit=10)
+            items = traktapi.get_mostwatched(userslug, self.params.get('type'), limit=self.trakt_limit)
         elif self.params.get('info') == 'trakt_history':
-            items = traktapi.get_recentlywatched(userslug, self.params.get('type'), limit=10)
+            items = traktapi.get_recentlywatched(userslug, self.params.get('type'), limit=self.trakt_limit)
         self.list_items(
             items=items, url={
                 'info': 'trakt_upnext' if self.params.get('info') == 'trakt_inprogress' else 'details',
@@ -532,7 +542,7 @@ class Container(Plugin):
         params = self.params.copy()
         params['type'] = utils.type_convert(self.item_tmdbtype, 'trakt') + 's'
 
-        (limit, rnd_list) = (50, 10) if self.params.pop('random', False) else (10, None)
+        (limit, rnd_list) = (50, self.trakt_limit) if self.params.pop('random', False) else (self.trakt_limit, None)
 
         self.list_items(
             items=traktapi.get_itemlist(
@@ -593,6 +603,8 @@ class Container(Plugin):
         command = 'RunScript(plugin.video.themoviedb.helper,play={0},tmdb_id={1}{{0}})'.format(self.params.get('type'), self.params.get('tmdb_id'))
         command = command.format(',season={0},episode={1}'.format(season, episode) if season and episode else '')
         xbmc.executebuiltin(command)
+        if not self.params.get('widget') and not self.params.get('nextpage'):
+            xbmcplugin.setResolvedUrl(self.handle, True, ListItem().set_listitem())
 
     def list_search(self):
         if not self.params.get('query'):
@@ -601,8 +613,8 @@ class Container(Plugin):
             self.list_tmdb(query=self.params.get('query'), year=self.params.get('year'))
 
     def list_items(self, items=None, url=None, url_tmdb_id=None):
-        """ 
-        Sort listitems and then display 
+        """
+        Sort listitems and then display
         url= for listitem base folderpath url params
         url_tmdb_id= for listitem tmdb_id used in url
         """
@@ -620,6 +632,7 @@ class Container(Plugin):
         x = 0
         self.start_container()
         for i in items:
+            i.label2 = i.infoproperties.get('role') or i.label2
             i.infoproperties['numitems.dbid'] = self.numitems_dbid
             i.infoproperties['numitems.tmdb'] = self.numitems_tmdb
             i.get_details(self.item_dbtype, self.tmdb, self.omdb, self.params.get('localdb'))

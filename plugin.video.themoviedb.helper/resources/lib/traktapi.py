@@ -39,7 +39,7 @@ class TraktAPI(RequestAPI):
     def authorize(self, login=False):
         if self.authorization:
             return self.authorization
-        token = self.addon.getSetting('trakt_token')
+        token = self.addon.getSettingString('trakt_token')
         token = loads(token) if token else None
         if token and type(token) is dict and token.get('access_token'):
             self.authorization = token
@@ -202,6 +202,7 @@ class TraktAPI(RequestAPI):
 
     def get_limitedlist(self, itemlist, tmdbtype, limit, islistitem):
         items = []
+        added_items = []
         if not self.tmdb or not self.authorize():
             return items
 
@@ -214,11 +215,16 @@ class TraktAPI(RequestAPI):
                 i.get(itemtype, {}).get('ids', {}).get('slug'),
                 i.get(itemtype, {}).get('ids', {}).get('tmdb'),
                 i.get(itemtype, {}).get('title'))
+
+            if item in added_items:
+                continue
+
+            added_items.append(item)
             if islistitem:
                 item = ListItem(library=self.library, **self.tmdb.get_detailed_item(tmdbtype, item[1]))
-            if item not in items:
-                items.append(item)
-                n += 1
+            items.append(item)
+            n += 1
+
         return items
 
     def get_ratings(self, tmdbtype=None, imdb_id=None, trakt_id=None, trakt_slug=None, season=None, episode=None):
@@ -355,7 +361,7 @@ class TraktAPI(RequestAPI):
         cache_refresh = False if not check_sync or self.sync_activities('shows', 'watched_at') else True
         return self.get_request_lc('shows', imdb_id, 'progress', 'watched', cache_refresh=cache_refresh)
 
-    def get_unwatched_count(self, tmdb_id=None, imdb_id=None, season=None, request=None, check_sync=True):
+    def get_unwatched_count(self, tmdb_id=None, imdb_id=None, season=None, request=None, check_sync=True, only_inprogress=True):
         if not tmdb_id and not imdb_id and not request:
             return -1
 
@@ -363,6 +369,9 @@ class TraktAPI(RequestAPI):
         request = utils.get_dict_in_list(request.get('seasons', []), 'number', utils.try_parse_int(season)) if season else request
 
         if not request or not request.get('aired'):
+            return -1
+
+        if not utils.try_parse_int(request.get('completed', 0)):
             return -1
 
         return utils.try_parse_int(request.get('aired')) - utils.try_parse_int(request.get('completed', 0))
