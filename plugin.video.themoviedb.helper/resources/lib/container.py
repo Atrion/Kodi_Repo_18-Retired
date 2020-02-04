@@ -138,6 +138,21 @@ class Container(Plugin):
         if self.item_dbtype == 'tvshow':
             return
 
+    def get_details_tv(self, tmdb_id=None, season=None, artwork_only=False, cache_only=False):
+        if not tmdb_id:
+            return
+        if not self.details_tv:
+            self.details_tv = {} if artwork_only else self.tmdb.get_detailed_item('tv', tmdb_id, season=season, cache_only=cache_only) or {}
+        if self.fanarttv and self.exp_fanarttv():
+            tvdb_id = self.tmdb.get_item_externalid('tv', tmdb_id, 'tvdb_id')
+            artwork = self.fanarttv.get_tvshow_allart_lc(tvdb_id)
+            self.details_tv['poster'] = artwork.get('poster')
+            self.details_tv['clearart'] = artwork.get('clearart')
+            self.details_tv['clearlogo'] = artwork.get('clearlogo')
+            self.details_tv['landscape'] = artwork.get('landscape')
+            self.details_tv['banner'] = artwork.get('banner')
+            self.details_tv['fanart'] = self.details_tv.get('fanart') or artwork.get('fanart')
+
     def get_sortedlist(self, items):
         if not items:
             return
@@ -146,17 +161,7 @@ class Container(Plugin):
         mixed_movies, mixed_tvshows = 0, 0
 
         if self.item_tmdbtype in ['season', 'episode'] and self.params.get('tmdb_id'):
-            if not self.details_tv:
-                self.details_tv = self.tmdb.get_detailed_item('tv', self.params.get('tmdb_id'), season=self.params.get('season', None))
-            if self.fanarttv and self.details_tv and self.exp_fanarttv():
-                tvdb_id = self.tmdb.get_item_externalid('tv', self.params.get('tmdb_id'), 'tvdb_id')
-                artwork = self.fanarttv.get_tvshow_allart_lc(tvdb_id)
-                self.details_tv['poster'] = artwork.get('poster')
-                self.details_tv['clearart'] = artwork.get('clearart')
-                self.details_tv['clearlogo'] = artwork.get('clearlogo')
-                self.details_tv['landscape'] = artwork.get('landscape')
-                self.details_tv['banner'] = artwork.get('banner')
-                self.details_tv['fanart'] = self.details_tv.get('fanart') or artwork.get('fanart')
+            self.get_details_tv(self.params.get('tmdb_id'), season=self.params.get('season', None))
 
         if self.item_tmdbtype == 'season' and self.details_tv:
             item_upnext = ListItem(library=self.library, **self.details_tv)
@@ -184,6 +189,11 @@ class Container(Plugin):
             elif i.mixed_type == 'movie':
                 mixed_movies += 1
 
+            # Special Look-up for Episode Widgets
+            if self.params.get('info') in ['trakt_calendar', 'trakt_nextepisodes']:
+                self.details_tv = None
+                self.get_details_tv(i.tmdb_id or self.get_tmdb_id(query=i.infolabels.get('tvshowtitle'), itemtype='tv'), artwork_only=True)
+
             if self.details_tv:
                 season_num = i.infolabels.get('season')
                 i.cast = self.details_tv.get('cast', []) + i.cast
@@ -198,18 +208,24 @@ class Container(Plugin):
                 i.tvshow_poster = self.details_tv.get('poster') or i.poster
                 i.infolabels['season'] = season_num
 
-            # Format label For Future Eps/Movies
-            if i.infolabels.get('premiered'):
-                # Don't format label for plugin methods specifically about the future or details/seasons
-                if self.params.get('info') not in ['details', 'seasons', 'trakt_calendar', 'trakt_myairing', 'trakt_anticipated']:
-                    try:
-                        if utils.convert_timestamp(i.infolabels.get('premiered'), "%Y-%m-%d", 10) > datetime.datetime.now():
-                            i.label = '[COLOR=ffcc0000][I]{}[/I][/COLOR]'.format(i.label)
-                            # Don't add if option enabled to hide
-                            if self.addon.getSettingBool('hide_unaired'):
-                                continue
-                    except Exception as exc:
-                        utils.kodi_log('Error: {}'.format(exc), 1)
+            # Format episode labels
+            if self.item_tmdbtype == 'episode' and i.infolabels.get('season') and i.infolabels.get('episode'):
+                i.label = u'{:02d}. {}'.format(utils.try_parse_int(i.infolabels.get('episode')), i.label)
+                if self.params.get('info') in ['trakt_calendar', 'trakt_nextepisodes', 'trakt_upnext'] or self.addon.getSettingBool('flatten_seasons'):
+                    i.label = u'{}x{}'.format(utils.try_parse_int(i.infolabels.get('season')), i.label)
+
+            # Format label for future eps/movies but not plugin methods specifically about the future or details/seasons
+            if i.infolabels.get('premiered') and self.params.get('info') not in ['details', 'seasons', 'trakt_calendar', 'trakt_myairing', 'trakt_anticipated']:
+                try:
+                    if utils.convert_timestamp(i.infolabels.get('premiered'), "%Y-%m-%d", 10) > datetime.datetime.now():
+                        i.label = '[COLOR=ffcc0000][I]{}[/I][/COLOR]'.format(i.label)
+                        # Don't add if option enabled to hide
+                        if self.addon.getSettingBool('hide_unaired_episodes') and self.item_tmdbtype in ['tv', 'episode']:
+                            continue
+                        if self.addon.getSettingBool('hide_unaired_movies') and self.item_tmdbtype in ['movie']:
+                            continue
+                except Exception as exc:
+                    utils.kodi_log('Error: {}'.format(exc), 1)
 
             i.dbid = self.get_db_info(
                 info='dbid', tmdbtype=self.item_tmdbtype, imdb_id=i.imdb_id,
@@ -544,6 +560,9 @@ class Container(Plugin):
 
         (limit, rnd_list) = (50, self.trakt_limit) if self.params.pop('random', False) else (self.trakt_limit, None)
 
+        if self.params.get('info') == 'trakt_watchlist':
+            params['sortmethod'] = self.addon.getSettingString('trakt_watchlistsort')
+
         self.list_items(
             items=traktapi.get_itemlist(
                 cat.get('path', '').format(**params), page=self.params.get('page', 1), limit=limit, rnd_list=rnd_list, req_auth=cat.get('req_auth'),
@@ -670,6 +689,21 @@ class Container(Plugin):
             items=self.tmdb.get_credits_list(self.params.get('type'), self.params.get('tmdb_id'), key),
             url={'info': 'details', 'type': 'person'})
 
+    def list_flatseasons(self):
+        items = []
+        basepath = 'tv/{}'.format(self.params.get('tmdb_id'))
+        seasons = self.tmdb.get_list(basepath, key='seasons', pagination=False)
+        for season in seasons:
+            if not season.infolabels.get('season'):
+                continue
+            path = '{}/season/{}'.format(basepath, season.infolabels.get('season'))
+            episodes = self.tmdb.get_list(path, key='episodes', pagination=False)
+            items = items + [i for i in episodes]
+        self.item_tmdbtype = 'episode'
+        self.list_items(
+            items=items, url_tmdb_id=self.params.get('tmdb_id'),
+            url={'info': 'details', 'type': 'episode'})
+
     def list_details(self):
         # Build empty container if no tmdb_id
         if not self.params.get('tmdb_id'):
@@ -708,7 +742,7 @@ class Container(Plugin):
         if self.params.get('type') == 'movie':
             firstitem.url = {'info': 'play', 'type': self.params.get('type')}
         elif self.params.get('type') == 'tv':
-            firstitem.url = {'info': 'seasons', 'type': self.params.get('type')}
+            firstitem.url = {'info': 'flatseasons', 'type': 'episode'} if self.addon.getSettingBool('flatten_seasons') else {'info': 'seasons', 'type': self.params.get('type')}
         elif self.params.get('type') == 'episode':
             firstitem.url = {'info': 'play', 'type': self.params.get('type')}
         else:
@@ -828,6 +862,9 @@ class Container(Plugin):
             self.list_getid()
             self.list_traktmanagement()
             self.list_details()
+        elif self.params.get('info') == 'flatseasons':
+            self.list_getid()
+            self.list_flatseasons()
         elif self.params.get('info') in constants.RANDOM_LISTS:
             self.list_random()
         elif self.params.get('info') in constants.RANDOM_TRAKT:

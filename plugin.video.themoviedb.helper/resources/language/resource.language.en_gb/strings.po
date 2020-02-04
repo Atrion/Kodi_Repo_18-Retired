@@ -369,7 +369,7 @@ msgstr ""
 
 #: /resources/settings.xml
 msgctxt "#32073"
-msgid "Hide unaired movies/episodes"
+msgid "Hide unaired movies"
 msgstr ""
 
 #: /resources/settings.xml
@@ -410,6 +410,31 @@ msgstr ""
 #: /resources/settings.xml
 msgctxt "#32081"
 msgid "Show next page item on widgets (requires skin reload)"
+msgstr ""
+
+#: /resources/settings.xml
+msgctxt "#32082"
+msgid "Watchlist sort method"
+msgstr ""
+
+#: /resources/settings.xml
+msgctxt "#32083"
+msgid "Accounts"
+msgstr ""
+
+#: /resources/settings.xml
+msgctxt "#32084"
+msgid "Hide unaired episodes"
+msgstr ""
+
+#: /resources/settings.xml
+msgctxt "#32085"
+msgid "Flatten seasons"
+msgstr ""
+
+#: /resources/settings.xml
+msgctxt "#32086"
+msgid "Auto-update TvShows for new/missing episodes on startup"
 msgstr ""
 
 msgctxt "#30030"
@@ -651,7 +676,7 @@ msgstr ""
 
 #: /resources/settings.xml
 msgctxt "#32017"
-msgid "Accounts / API Keys"
+msgid "API Keys"
 msgstr ""
 
 #: /resources/settings.xml
