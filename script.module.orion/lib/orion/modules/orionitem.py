@@ -77,9 +77,15 @@ class OrionItem:
 	AccessRealdebridUsenet = 'realdebridusenet'
 	AccessRealdebridHoster = 'realdebridhoster'
 
+	LookupPremiumize = 'premiumize'
+	LookupOffcloud = 'offcloud'
+	LookupRealdebrid = 'realdebrid'
+
 	FilterNone = None
 	FilterSettings = -1
 
+	SortNone = 'none'
+	SortBest = 'best'
 	SortShuffle = 'shuffle'
 	SortPopularity = 'popularity'
 	SortTimeAdded = 'timeadded'
@@ -89,7 +95,7 @@ class OrionItem:
 	SortFileSize = 'filesize'
 	SortStreamSeeds = 'streamseeds'
 	SortStreamAge = 'streamage'
-	SortIds = [None, SortShuffle, SortPopularity, SortTimeAdded, SortTimeUpdated, SortVideoQuality, SortAudioChannels, SortFileSize, SortStreamSeeds, SortStreamAge]
+	SortIds = [SortNone, SortBest, SortShuffle, SortPopularity, SortTimeAdded, SortTimeUpdated, SortVideoQuality, SortAudioChannels, SortFileSize, SortStreamSeeds, SortStreamAge]
 
 	OrderAscending = 'ascending'
 	OrderDescending = 'descendig'
@@ -282,6 +288,7 @@ class OrionItem:
 				protocolHoster = FilterSettings,
 
 				access = FilterSettings,
+				lookup = FilterSettings,
 
 				filePack = FilterSettings,
 				fileName = FilterSettings,
@@ -383,27 +390,33 @@ class OrionItem:
 				if protocol in (1, 4, 5, 9): protocolHoster.append(OrionItem.ProtocolFtps)
 			if access is OrionItem.FilterSettings:
 				access = []
-				accessSettings = OrionSettings.getFiltersInteger('filters.stream.access', app)
+				accessSettings = OrionSettings.getFiltersInteger('filters.access', app)
 				if accessSettings in (1, 3, 5): access.append(OrionItem.AccessDirect)
 				if accessSettings in (4, 5): access.append(OrionItem.AccessIndirect)
 				if accessSettings in (1, 2, 4, 5):
-					value = OrionSettings.getFiltersInteger('filters.stream.access.premiumize', app)
+					value = OrionSettings.getFiltersInteger('filters.access.premiumize', app)
 					if value == 1: access.append(OrionItem.AccessPremiumize)
 					if value in (2, 3, 5): access.append(OrionItem.AccessPremiumizeTorrent)
 					if value in (2, 4, 6): access.append(OrionItem.AccessPremiumizeUsenet)
 					if value in (3, 4, 7): access.append(OrionItem.AccessPremiumizeHoster)
 				if accessSettings in (1, 2, 4, 5):
-					value = OrionSettings.getFiltersInteger('filters.stream.access.offcloud', app)
+					value = OrionSettings.getFiltersInteger('filters.access.offcloud', app)
 					if value == 1: access.append(OrionItem.AccessOffcloud)
 					if value in (2, 3, 5): access.append(OrionItem.AccessOffcloudTorrent)
 					if value in (2, 4, 6): access.append(OrionItem.AccessOffcloudUsenet)
 					if value in (3, 4, 7): access.append(OrionItem.AccessOffcloudHoster)
 				if accessSettings in (1, 2, 4, 5):
-					value = OrionSettings.getFiltersInteger('filters.stream.access.realdebrid', app)
+					value = OrionSettings.getFiltersInteger('filters.access.realdebrid', app)
 					if value == 1: access.append(OrionItem.AccessRealdebrid)
 					if value in (2, 3, 5): access.append(OrionItem.AccessRealdebridTorrent)
 					if value in (2, 4, 6): access.append(OrionItem.AccessRealdebridUsenet)
 					if value in (3, 4, 7): access.append(OrionItem.AccessRealdebridHoster)
+			if lookup is OrionItem.FilterSettings:
+				lookup = []
+				if OrionSettings.getFiltersBoolean('filters.lookup', app):
+					if OrionSettings.getFiltersBoolean('filters.lookup.premiumize', app): lookup.append(OrionItem.LookupPremiumize)
+					if OrionSettings.getFiltersBoolean('filters.lookup.offcloud', app): lookup.append(OrionItem.LookupOffcloud)
+					if OrionSettings.getFiltersBoolean('filters.lookup.realdebrid', app): lookup.append(OrionItem.LookupRealdebrid)
 			if filePack is OrionItem.FilterSettings: filePack = OrionItem.ChoiceIds[OrionSettings.getFiltersInteger('filters.file.pack', app)]
 			if fileName is OrionItem.FilterSettings: fileName = OrionItem.ChoiceIds[OrionSettings.getFiltersInteger('filters.file.name', app)]
 			if fileSize is OrionItem.FilterSettings: fileSize = [OrionSettings.getFiltersInteger('filters.file.size.minimum', app), OrionSettings.getFiltersInteger('filters.file.size.maximum', app)] if OrionSettings.getFiltersBoolean('filters.file.size', app) else OrionItem.FilterNone
@@ -435,7 +448,7 @@ class OrionItem:
 			if sortValue is OrionItem.FilterNone:
 				sortOrder = OrionItem.FilterNone
 			elif sortValue <= 0:
-				sortValue = OrionItem.FilterNone
+				sortValue = OrionItem.SortNone
 				sortOrder = OrionItem.FilterNone
 			if not popularityPercent is OrionItem.FilterNone:
 				if popularityPercent <= 0: popularityPercent == OrionItem.FilterNone
@@ -482,6 +495,8 @@ class OrionItem:
 				if len(protocolHoster) == 0: protocolHoster = None
 			if not access is OrionItem.FilterNone:
 				if len(access) == 0: access = None
+			if not lookup is OrionItem.FilterNone:
+				if len(lookup) == 0: lookup = None
 			if not filePack is OrionItem.FilterNone:
 				if filePack is OrionItem.ChoiceInclude: filePack = OrionItem.FilterNone
 				elif filePack is OrionItem.ChoiceRequire: filePack = True
@@ -641,6 +656,10 @@ class OrionItem:
 			if not access == None:
 				if OrionTools.isString(access): access = [access]
 				filters['access'] = access
+
+			if not lookup == None:
+				if OrionTools.isString(lookup): lookup = [lookup]
+				filters['lookup'] = lookup
 
 			if not filePack == None or not fileName == None or not fileSize == None or not fileUnknown == None:
 				filters['file'] = {}

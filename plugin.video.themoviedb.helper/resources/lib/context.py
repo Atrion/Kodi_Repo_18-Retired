@@ -23,6 +23,7 @@ def library_cleancontent(content, details='info=play'):
     content = library_cleancontent_replacer(content, '&amp;', '&')
     content = library_cleancontent_replacer(content, '&&', '&')
     content = library_cleancontent_replacer(content, '?&', '?')
+    content = content + '&islocal=True'
     return content
 
 
@@ -97,6 +98,33 @@ def library_addtvshow(basedir=None, folder=None, url=None, tmdb_id=None):
             library_createfile(episode_name, episode_path, folder, season_name, basedir=basedir)
 
 
+def browse():
+    tmdb_id = sys.listitem.getProperty('tvshow.tmdb_id')
+    path = 'plugin://plugin.video.themoviedb.helper/'
+    path = path + '?info=seasons&type=tv&nextpage=True&tmdb_id={}'.format(tmdb_id)
+    path = path + '&fanarttv=True' if _addon.getSettingBool('fanarttv_lookup') else path
+    command = 'Container.Update({})' if xbmc.getCondVisibility("Window.IsMedia") else 'ActivateWindow(videos,{},return)'
+    xbmc.executebuiltin(command.format(path))
+
+
+def play():
+    with utils.busy_dialog():
+        tmdb_id, season, episode = None, None, None
+        dbtype = sys.listitem.getVideoInfoTag().getMediaType()
+
+        if dbtype == 'episode':
+            tmdb_id = sys.listitem.getProperty('tvshow.tmdb_id')
+            season = sys.listitem.getVideoInfoTag().getSeason()
+            episode = sys.listitem.getVideoInfoTag().getEpisode()
+            xbmc.executebuiltin('RunScript(plugin.video.themoviedb.helper,play={},tmdb_id={},season={},episode={},force_dialog=True)'.format(
+                dbtype, tmdb_id, season, episode))
+
+        elif dbtype == 'movie':
+            tmdb_id = sys.listitem.getProperty('tmdb_id')
+            xbmc.executebuiltin('RunScript(plugin.video.themoviedb.helper,play={},tmdb_id={},force_dialog=True)'.format(
+                dbtype, tmdb_id))
+
+
 def library():
     with utils.busy_dialog():
         title = utils.validify_filename(sys.listitem.getVideoInfoTag().getTitle())
@@ -151,7 +179,7 @@ def library():
             return
 
 
-def action(action):
+def action(action, tmdb_id=None, tmdb_type=None, season=None, episode=None, label=None, cache_refresh=False):
     _traktapi = TraktAPI()
 
     if action == 'history':
@@ -162,29 +190,40 @@ def action(action):
         func = _traktapi.sync_watchlist
     elif action == 'library':
         return library()
+    elif action == 'play':
+        return play()
+    elif action == 'open':
+        return browse()
     else:
         return
 
     with utils.busy_dialog():
-        label = sys.listitem.getLabel()
-        dbtype = sys.listitem.getVideoInfoTag().getMediaType()
-        tmdb_id = sys.listitem.getProperty('tmdb_id')
+        if tmdb_type == 'episode' and (not season or not episode):
+            return
+        elif tmdb_id and tmdb_type:
+            dbtype = utils.type_convert(tmdb_type, 'dbtype')
+            label = label or 'this {}'.format(utils.type_convert(tmdb_type, 'trakt'))
+        else:
+            label = sys.listitem.getLabel()
+            dbtype = sys.listitem.getVideoInfoTag().getMediaType()
+            tmdb_id = sys.listitem.getProperty('tmdb_id') if not dbtype == 'episode' else sys.listitem.getProperty('tvshow.tmdb_id')
+            season = sys.listitem.getVideoInfoTag().getSeason() if dbtype == 'episode' else None
+            episode = sys.listitem.getVideoInfoTag().getEpisode() if dbtype == 'episode' else None
         tmdb_type = 'movie' if dbtype == 'movie' else 'tv'
-        trakt_ids = func(utils.type_convert(tmdb_type, 'trakt'), 'tmdb')
+        trakt_ids = func(utils.type_convert(tmdb_type, 'trakt'), 'tmdb', cache_refresh=cache_refresh)
         boolean = 'remove' if int(tmdb_id) in trakt_ids else 'add'
 
     dialog_header = 'Trakt {0}'.format(action.capitalize())
     dialog_text = xbmcaddon.Addon().getLocalizedString(32065) if boolean == 'add' else xbmcaddon.Addon().getLocalizedString(32064)
-    dialog_text = dialog_text.format(label, action.capitalize(), dbtype.capitalize(), tmdb_id)
+    dialog_text = dialog_text.format(label, action.capitalize(), tmdb_type, tmdb_id)
+    dialog_text = dialog_text + ' Season: {}  Episode: {}'.format(season, episode) if dbtype == 'episode' else dialog_text
     if not xbmcgui.Dialog().yesno(dialog_header, dialog_text):
         return
 
     with utils.busy_dialog():
-        trakt_type = utils.type_convert(tmdb_type, 'trakt')
+        trakt_type = 'episode' if dbtype == 'episode' else utils.type_convert(tmdb_type, 'trakt')
         slug_type = 'show' if dbtype == 'episode' else trakt_type
         slug = _traktapi.get_traktslug(slug_type, 'tmdb', tmdb_id)
-        season = sys.listitem.getVideoInfoTag().getSeason() if dbtype == 'episode' else None
-        episode = sys.listitem.getVideoInfoTag().getEpisode() if dbtype == 'episode' else None
         item = _traktapi.get_details(slug_type, slug, season=season, episode=episode)
         items = {trakt_type + 's': [item]}
         func(slug_type, mode=boolean, items=items)

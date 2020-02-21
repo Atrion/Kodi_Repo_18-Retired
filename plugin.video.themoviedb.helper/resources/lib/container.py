@@ -4,15 +4,18 @@ import xbmcgui
 import xbmcplugin
 import datetime
 import random
+import simplecache
 import resources.lib.utils as utils
 import resources.lib.constants as constants
 from resources.lib.traktapi import TraktAPI
 from resources.lib.listitem import ListItem
+from resources.lib.kodilibrary import KodiLibrary
 from resources.lib.plugin import Plugin
 try:
-    from urllib.parse import parse_qsl  # Py3
+    from urllib.parse import parse_qsl, urlencode  # Py3
 except ImportError:
     from urlparse import parse_qsl  # Py2
+    from urllib import urlencode
 
 
 class Container(Plugin):
@@ -120,6 +123,26 @@ class Container(Plugin):
                 lookup_person,
                 separator=self.params.get('with_separator'))
 
+        if self.params.get('with_release_type'):
+            self.params['with_release_type'] = self.tmdb.get_translated_list(
+                utils.split_items(self.params.get('with_release_type')),
+                None,
+                separator='OR')
+
+        # Translate relative dates based upon today's date
+        for i in constants.USER_DISCOVER_RELATIVEDATES:
+            datecode = self.params.get(i, '')
+            datecode = datecode.lower()
+            if not datecode or all(x not in datecode for x in ['t-', 't+']):
+                continue  # No value or not a relative date so skip
+            elif 't-' in datecode:
+                days = utils.try_parse_int(datecode.replace('t-', ''))
+                date = datetime.datetime.now() - datetime.timedelta(days=days)
+            elif 't+' in datecode:
+                days = utils.try_parse_int(datecode.replace('t+', ''))
+                date = datetime.datetime.now() + datetime.timedelta(days=days)
+            self.params[i] = date.strftime("%Y-%m-%d")
+
     def get_trakt_watched(self):
         if not self.addon.getSettingBool('trakt_watchedindicators'):
             return
@@ -215,7 +238,7 @@ class Container(Plugin):
                     i.label = u'{}x{}'.format(utils.try_parse_int(i.infolabels.get('season')), i.label)
 
             # Format label for future eps/movies but not plugin methods specifically about the future or details/seasons
-            if i.infolabels.get('premiered') and self.params.get('info') not in ['details', 'seasons', 'trakt_calendar', 'trakt_myairing', 'trakt_anticipated']:
+            if i.infolabels.get('premiered') and self.params.get('info') not in constants.NO_LABEL_FORMATTING:
                 try:
                     if utils.convert_timestamp(i.infolabels.get('premiered'), "%Y-%m-%d", 10) > datetime.datetime.now():
                         i.label = '[COLOR=ffcc0000][I]{}[/I][/COLOR]'.format(i.label)
@@ -270,6 +293,7 @@ class Container(Plugin):
 
     def get_userdiscover_folderpath_url(self):
         url = {'info': 'discover', 'type': self.params.get('type'), 'with_id': 'True'}
+        url = self.set_url_params(url)
         for i in self.get_userdiscover_listitems(basedir=True):
             k = i.get('url', {}).get('method')
             v = self.get_userdiscover_prop(k)
@@ -284,6 +308,7 @@ class Container(Plugin):
         if label:
             url['label'] = label
         url['type'] = self.params.get('type')
+        url = self.set_url_params(url)
         return url
 
     def clear_userdiscover_properties(self):
@@ -328,22 +353,30 @@ class Container(Plugin):
         self.new_property_value = 'OR' if choice else 'AND'
         self.new_property_label = 'ANY' if choice else 'ALL'
 
-    def set_userdiscover_genre_property(self):
-        genres_list = self.tmdb.get_request_lc('genre', self.params.get('type'), 'list')
-        if not genres_list:
+    def set_userdiscover_selectlist_properties(self, data_list=None, header='Select Items', multiselect=True):
+        if not data_list:
             return
-        genres_list = genres_list.get('genres', [])
-        dialog_list = [i.get('name') for i in genres_list]
-        select_list = xbmcgui.Dialog().multiselect('Select Genres', dialog_list)
+        func = xbmcgui.Dialog().multiselect if multiselect else xbmcgui.Dialog().select
+        dialog_list = [i.get('name') for i in data_list]
+        select_list = func(header, dialog_list)
         if not select_list:
             return
+        if not multiselect:
+            select_list = [select_list]
         for i in select_list:
-            label = genres_list[i].get('name')
-            value = genres_list[i].get('id')
+            label = data_list[i].get('name')
+            value = data_list[i].get('id')
             if not value:
                 continue
             self.new_property_label = '{0} / {1}'.format(self.new_property_label, label) if self.new_property_label else label
             self.new_property_value = '{0} / {1}'.format(self.new_property_value, value) if self.new_property_value else '{}'.format(value)
+
+    def set_userdiscover_genre_property(self):
+        data_list = self.tmdb.get_request_lc('genre', self.params.get('type'), 'list')
+        if not data_list:
+            return
+        data_list = data_list.get('genres', [])
+        self.set_userdiscover_selectlist_properties(data_list, header='Select Genres')
 
     def set_userdiscover_method_property(self):
         method = self.params.get('method')
@@ -360,7 +393,7 @@ class Container(Plugin):
             inputtype = xbmcgui.INPUT_NUMERIC
         elif '_date' in method:
             header = 'Enter '
-            affix = ' YYYY-MM-DD'
+            affix = ' YYYY-MM-DD\nAlso accepts X days relative from today in the format T-X or T+X (e.g. T-10 is ten days ago)'
         elif '_genres' in method:
             label = 'Genre'
             tmdbtype = 'genre'
@@ -386,6 +419,10 @@ class Container(Plugin):
             self.set_userdiscover_separator_property()
         elif '_genres' in method:
             self.set_userdiscover_genre_property()
+        elif 'with_release_type' in method:
+            self.set_userdiscover_selectlist_properties(constants.USER_DISCOVER_RELEASETYPES, header='Select Release Types')
+        elif 'region' in method:
+            self.set_userdiscover_selectlist_properties(constants.USER_DISCOVER_REGIONS, header='Select Region for Release', multiselect=False)
         elif 'with_runtime' not in method and 'with_networks' not in method and any(i in method for i in ['with_', 'without_']):
             self.add_userdiscover_method_property(header, tmdbtype, usedetails, old_label=old_label, old_value=old_value)
         else:
@@ -492,18 +529,53 @@ class Container(Plugin):
                 startdate=utils.try_parse_int(self.params.get('startdate'))),
             url={'info': 'details', 'type': 'episode'})
 
-    def list_traktcalendar(self):
+    def list_librarycalendar_episodes(self):
+        kodidb = KodiLibrary(dbtype='tvshow')
+
+        trakt = TraktAPI()
+        traktitems = [
+            i for i in trakt.get_airingshows(
+                start_date=utils.try_parse_int(self.params.get('startdate', 0)) - 1,
+                days=utils.try_parse_int(self.params.get('days', 1)) + 1)
+            if kodidb.get_info('dbid', title=i.get('show', {}).get('title'), year=str(i.get('show', {}).get('year')))]
+
+        items = []
+        for i in traktitems:
+            if not utils.date_in_range(
+                    i.get('first_aired'),
+                    start_date=utils.try_parse_int(self.params.get('startdate', 0)) - 1,
+                    days=utils.try_parse_int(self.params.get('days', 1))):
+                continue
+            li = ListItem(library=self.library, **self.tmdb.get_detailed_item(
+                itemtype='tv', tmdb_id=i.get('show', {}).get('ids', {}).get('tmdb'),
+                season=i.get('episode', {}).get('season'),
+                episode=i.get('episode', {}).get('number')))
+            air_date = utils.convert_timestamp(i.get('first_aired'), utc_convert=True)
+            li.infolabels['premiered'] = air_date.strftime('%Y-%m-%d')
+            li.infolabels['year'] = air_date.strftime('%Y')
+            li.infoproperties['air_date'] = utils.get_region_date(air_date, 'datelong')
+            li.infoproperties['air_time'] = utils.get_region_date(air_date, 'time')
+            li.infoproperties['air_day'] = air_date.strftime('%A')
+            items.append(li)
+
+        # Create our list
+        self.item_tmdbtype = 'episode'
+        self.list_items(items=items, url={'info': 'details', 'type': 'episode'})
+
+    def list_calendar(self, trakt=False):
         if self.params.get('type') == 'episode':
-            self.list_traktcalendar_episodes()
+            self.list_traktcalendar_episodes() if trakt else self.list_librarycalendar_episodes()
             return
 
-        icon = '{0}/resources/trakt.png'.format(self.addonpath)
+        icon = '{0}/resources/trakt.png'.format(self.addonpath) if trakt else '{0}/resources/icons/tmdb/airing.png'.format(self.addonpath)
+        calendar = constants.TRAKT_CALENDAR if trakt else constants.LIBRARY_CALENDAR
+        info = 'trakt_calendar' if trakt else 'library_nextaired'
         self.start_container()
-        for i in constants.TRAKT_CALENDAR:
+        for i in calendar:
             date = datetime.datetime.today() + datetime.timedelta(days=i[1])
             label = i[0].format(date.strftime('%A'))
             listitem = ListItem(label=label, icon=icon)
-            url = {'info': 'trakt_calendar', 'type': 'episode', 'startdate': i[1], 'days': i[2]}
+            url = {'info': info, 'type': 'episode', 'startdate': i[1], 'days': i[2]}
             url = self.set_url_params(url)
             listitem.create_listitem(self.handle, **url)
         self.finish_container()
@@ -558,15 +630,18 @@ class Container(Plugin):
         params = self.params.copy()
         params['type'] = utils.type_convert(self.item_tmdbtype, 'trakt') + 's'
 
-        (limit, rnd_list) = (50, self.trakt_limit) if self.params.pop('random', False) else (self.trakt_limit, None)
+        rnd_list = self.trakt_limit if self.params.pop('random', False) else None
+        key_list = ['movie', 'show'] if self.params.get('type') == 'both' else [utils.type_convert(self.item_tmdbtype, 'trakt')]
+        usr_list = True if self.params.get('info') == 'trakt_userlist' else False
+        limit = 50 if rnd_list else self.trakt_limit
 
         if self.params.get('info') == 'trakt_watchlist':
             params['sortmethod'] = self.addon.getSettingString('trakt_watchlistsort')
 
         self.list_items(
             items=traktapi.get_itemlist(
-                cat.get('path', '').format(**params), page=self.params.get('page', 1), limit=limit, rnd_list=rnd_list, req_auth=cat.get('req_auth'),
-                key_list=['movie', 'show'] if self.params.get('type') == 'both' else [utils.type_convert(self.item_tmdbtype, 'trakt')]),
+                cat.get('path', '').format(**params), page=self.params.get('page', 1), limit=limit,
+                rnd_list=rnd_list, req_auth=cat.get('req_auth'), usr_list=usr_list, key_list=key_list),
             url={'info': cat.get('url_info', 'details')})
 
     def list_traktmanagement(self):
@@ -592,6 +667,11 @@ class Container(Plugin):
             if self.params.get('trakt') == 'collection_remove':
                 traktapi.sync_collection(slug_type, mode='remove', items=items)
             # TODO: Check status response and add dialog
+        dialog_action = self.params.get('trakt').replace('_add', '').replace('_remove', '')
+        dialog_header = 'Trakt {0}'.format(dialog_action.capitalize())
+        dialog_text = self.addon.getLocalizedString(32062) if '_add' in self.params.get('trakt') else self.addon.getLocalizedString(32063)
+        dialog_text = dialog_text.format(self.params.get('tmdb_id'), dialog_action.capitalize())
+        xbmcgui.Dialog().ok(dialog_header, dialog_text)
         self.updatelisting = True
 
     def list_becauseyouwatched(self, mostwatched=False):
@@ -610,8 +690,9 @@ class Container(Plugin):
         self.list_tmdb()
 
     def list_getid(self):
-        params = self.params.copy()
+        params = self.params
         if self.params.get('info') == 'play' and self.params.get('type') == 'episode':
+            params = self.params.copy()
             params['type'] = 'tv'
         self.params['tmdb_id'] = self.get_tmdb_id(**params)
 
@@ -622,22 +703,102 @@ class Container(Plugin):
         command = 'RunScript(plugin.video.themoviedb.helper,play={0},tmdb_id={1}{{0}})'.format(self.params.get('type'), self.params.get('tmdb_id'))
         command = command.format(',season={0},episode={1}'.format(season, episode) if season and episode else '')
         xbmc.executebuiltin(command)
-        if not self.params.get('widget') and not self.params.get('nextpage'):
-            xbmcplugin.setResolvedUrl(self.handle, True, ListItem().set_listitem())
+        if self.params.get('islocal'):
+            if self.addon.getSettingBool('strm_method_resolvedurl'):
+                xbmcplugin.setResolvedUrl(self.handle, True, ListItem().set_listitem())
+            else:
+                xbmcplugin.endOfDirectory(self.handle, updateListing=False, cacheToDisc=False)
+
+    def get_searchhistory(self, itemtype=None, cache=None):
+        if not itemtype:
+            return []
+        if not cache:
+            cache = simplecache.SimpleCache()
+        cache_name = 'plugin.video.themoviedb.helper.search.history.{}'.format(itemtype)
+        return cache.get(cache_name) or []
+
+    def set_searchhistory(self, query=None, itemtype=None, cache=None, cache_days=120, clearcache=False):
+        if not clearcache and not query:
+            return
+        if not itemtype:
+            return query
+        if not cache:
+            cache = simplecache.SimpleCache()
+        cache_name = 'plugin.video.themoviedb.helper.search.history.{}'.format(itemtype)
+        search_history = []
+        if not clearcache:
+            search_history = self.get_searchhistory(itemtype, cache=cache)
+            if query in search_history:
+                search_history.remove(query)  # Remove query if in history because we want it to be first in list
+            if len(search_history) > 9:
+                search_history.pop(0)
+            search_history.append(query)
+        utils.kodi_log(search_history, 1)
+        cache.set(cache_name, search_history, expiration=datetime.timedelta(days=cache_days))
+        return query
 
     def list_search(self):
         if not self.params.get('query'):
-            self.params['query'] = xbmcgui.Dialog().input(self.addon.getLocalizedString(32044), type=xbmcgui.INPUT_ALPHANUM)
+            self.params['query'] = self.set_searchhistory(
+                query=xbmcgui.Dialog().input(self.addon.getLocalizedString(32044), type=xbmcgui.INPUT_ALPHANUM),
+                itemtype=self.params.get('type'))
+        elif self.params.get('history', '').lower() == 'true':  # Param to force history save
+            self.set_searchhistory(query=self.params.get('query'), itemtype=self.params.get('type'))
         if self.params.get('query'):
             self.list_tmdb(query=self.params.get('query'), year=self.params.get('year'))
 
-    def list_items(self, items=None, url=None, url_tmdb_id=None):
+    def list_searchdir(self):
+        # Clear the cache if asked
+        container_url = None
+        if self.params.get('clearcache'):
+            self.updatelisting = True
+            self.params.pop('clearcache', '')
+            self.set_searchhistory(itemtype=self.params.get('type'), clearcache=True)
+            container_url = 'plugin://plugin.video.themoviedb.helper/?'
+            container_url = u'{0}{1}'.format(container_url, urlencode(self.params))
+
+        self.start_container()
+        # Set our icon
+        icon = '{0}/resources/icons/tmdb/search.png'.format(self.addonpath)
+
+        # Re-use our current params
+        url = self.params.copy()
+        url['info'] = 'search'
+
+        # Create first search item
+        listitem = ListItem(label='Search {}'.format(utils.type_convert(self.params.get('type'), 'plural')), icon=icon)
+        listitem.create_listitem(self.handle, **url)
+
+        # Create cached history searches
+        history = self.get_searchhistory(self.params.get('type'))
+        history.reverse()
+        for query in history:
+            url['query'] = query  # Add query as param so we search it
+            listitem = ListItem(label=query, icon=icon)
+            listitem.create_listitem(self.handle, **url)
+
+        # Create clear cache item if history exists
+        if history:
+            url['info'] = 'dir_search'
+            url['clearcache'] = 'True'
+            url.pop('query', '')
+            listitem = ListItem(label='Clear Search History', icon=icon)
+            listitem.create_listitem(self.handle, **url)
+
+        # Finish container
+        self.finish_container()
+
+        # If we cleared cache we need to update the container and replace the path so we don't keep clearing cache
+        if container_url:
+            xbmc.executebuiltin('Container.Update({}, replace)'.format(container_url))
+
+    def list_items(self, items=None, url=None, url_tmdb_id=None, get_sortedlist=True):
         """
         Sort listitems and then display
         url= for listitem base folderpath url params
         url_tmdb_id= for listitem tmdb_id used in url
         """
-        items = self.get_sortedlist(items)
+        items = self.get_sortedlist(items) if get_sortedlist else items
 
         if not items:
             return
@@ -742,7 +903,10 @@ class Container(Plugin):
         if self.params.get('type') == 'movie':
             firstitem.url = {'info': 'play', 'type': self.params.get('type')}
         elif self.params.get('type') == 'tv':
-            firstitem.url = {'info': 'flatseasons', 'type': 'episode'} if self.addon.getSettingBool('flatten_seasons') else {'info': 'seasons', 'type': self.params.get('type')}
+            if self.addon.getSettingBool('flatten_seasons'):
+                firstitem.url = {'info': 'flatseasons', 'type': 'episode'}
+            else:
+                firstitem.url = {'info': 'seasons', 'type': self.params.get('type')}
         elif self.params.get('type') == 'episode':
             firstitem.url = {'info': 'play', 'type': self.params.get('type')}
         else:
@@ -879,6 +1043,10 @@ class Container(Plugin):
             self.list_credits(self.params.get('info'))
         elif self.params.get('info') == 'search':
             self.list_search()
+        elif self.params.get('info') == 'dir_search':
+            self.list_searchdir()
+        elif self.params.get('info') == 'library_nextaired':
+            self.list_calendar(trakt=False)
         elif self.params.get('info') == 'trakt_becauseyouwatched':
             self.list_becauseyouwatched()
         elif self.params.get('info') == 'trakt_becausemostwatched':
@@ -892,7 +1060,7 @@ class Container(Plugin):
             self.list_getid()
             self.list_traktupnext()
         elif self.params.get('info') == 'trakt_calendar':
-            self.list_traktcalendar()
+            self.list_calendar(trakt=True)
         elif self.params.get('info') == 'trakt_collection':
             self.list_traktcollection()
         elif self.params.get('info') in constants.TRAKT_USERLISTS:

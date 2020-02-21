@@ -2,7 +2,6 @@ from json import loads, dumps
 import resources.lib.utils as utils
 from resources.lib.requestapi import RequestAPI
 from resources.lib.listitem import ListItem
-import time
 import xbmc
 import random
 import xbmcgui
@@ -27,8 +26,6 @@ class TraktAPI(RequestAPI):
         self.headers = {'trakt-api-version': '2', 'trakt-api-key': self.client_id, 'Content-Type': 'application/json'}
         self.tmdb = tmdb
         self.library = 'video'
-        self.utc_offset = -time.timezone // 3600
-        self.utc_offset += 1 if time.localtime().tm_isdst > 0 else 0
 
         if force:
             self.login()
@@ -48,6 +45,8 @@ class TraktAPI(RequestAPI):
             if not self.attempedlogin and xbmcgui.Dialog().yesno(self.dialog_noapikey_header, self.dialog_noapikey_text, '', '', 'Cancel', 'OK'):
                 self.login()
             self.attempedlogin = True
+        if self.authorization:
+            xbmcgui.Window(10000).setProperty('TMDbHelper.TraktIsAuth', 'True')
         return self.authorization
 
     def login(self):
@@ -142,6 +141,21 @@ class TraktAPI(RequestAPI):
     def get_request(self, *args, **kwargs):
         return self.use_cache(self.get_response_json, *args, **kwargs)
 
+    def get_itemlist_sorted(self, *args, **kwargs):
+        response = self.get_response(*args)
+        items = response.json()
+        return sorted(items, key=lambda i: i['listed_at'], reverse=True)
+
+    def get_itemlist_sortedcached(self, *args, **kwargs):
+        page = kwargs.pop('page', 1)
+        limit = kwargs.pop('limit', 10)
+        kwparams = {'cache_name': self.cache_name + '.trakt.sortedlist', 'cache_days': 0.125}
+        items = self.use_cache(self.get_itemlist_sorted, *args, **kwparams)
+        index_z = page * limit
+        index_a = index_z - limit
+        index_z = len(items) if len(items) < index_z else index_z
+        return {'items': items[index_a:index_z], 'pagecount': -(-len(items) // limit)}
+
     def get_itemlist(self, *args, **kwargs):
         items = []
 
@@ -150,15 +164,25 @@ class TraktAPI(RequestAPI):
 
         key_list = kwargs.pop('key_list', ['dummy'])
         rnd_list = kwargs.pop('rnd_list', 0)
-        response = self.get_response(*args, **kwargs)
-
-        if not response:
-            return items
-
-        itemlist = response.json()
+        usr_list = kwargs.pop('usr_list', False)
 
         this_page = int(kwargs.get('page', 1))
-        last_page = int(response.headers.get('X-Pagination-Page-Count', 0))
+        limit = kwargs.get('limit', 0)
+
+        if usr_list:  # Check if userlist and apply special sorting
+            kwparams = {'page': this_page, 'limit': limit}
+            response = self.get_itemlist_sortedcached(*args, **kwparams)
+            itemlist = response.get('items')
+            if not itemlist:
+                return items
+            last_page = response.get('pagecount')
+        else:
+            response = self.get_response(*args, **kwargs)
+            if not response:
+                return items
+            itemlist = response.json()
+            last_page = int(response.headers.get('X-Pagination-Page-Count', 0))
+
         next_page = this_page + 1 if this_page < last_page and not rnd_list else False
 
         if rnd_list:
@@ -166,7 +190,6 @@ class TraktAPI(RequestAPI):
             itemlist = [itemlist[i] for i in rnd_list]
 
         n = 0
-        limit = kwargs.get('limit', 0)
         for i in itemlist:
             if limit and not n < limit:
                 break
@@ -201,8 +224,7 @@ class TraktAPI(RequestAPI):
         return items
 
     def get_limitedlist(self, itemlist, tmdbtype, limit, islistitem):
-        items = []
-        added_items = []
+        items, added_items = [], []
         if not self.tmdb or not self.authorize():
             return items
 
@@ -285,6 +307,10 @@ class TraktAPI(RequestAPI):
                 n += 1
         return items
 
+    def get_airingshows(self, start_date=0, days=1):
+        start_date = datetime.datetime.today() + datetime.timedelta(days=start_date)
+        return self.get_response_json('calendars', 'all', 'shows', start_date.strftime('%Y-%m-%d'), days)
+
     def get_calendar(self, tmdbtype, user=True, start_date=None, days=None):
         user = 'my' if user else 'all'
         return self.get_response_json('calendars', user, tmdbtype, start_date, days)
@@ -309,7 +335,7 @@ class TraktAPI(RequestAPI):
                 itemtype='tv', tmdb_id=tmdb_id, season=season, episode=episode))
             item.tmdb_id, item.season, item.episode = tmdb_id, season, episode
             item.infolabels['title'] = item.label = i.get('episode', {}).get('title')
-            air_date = utils.convert_timestamp(i.get('first_aired', '')) + datetime.timedelta(hours=self.utc_offset)
+            air_date = utils.convert_timestamp(i.get('first_aired', ''), utc_convert=True)
             item.infolabels['premiered'] = air_date.strftime('%Y-%m-%d')
             item.infolabels['year'] = air_date.strftime('%Y')
             item.infoproperties['air_time'] = air_date.strftime('%I:%M %p')
@@ -384,12 +410,14 @@ class TraktAPI(RequestAPI):
 
     def get_details(self, item_type, id_num, season=None, episode=None):
         if not season or not episode:
-            return self.get_response_json(item_type + 's', id_num)
-        return self.get_response_json(item_type + 's', id_num, 'seasons', season, 'episodes', episode)
+            return self.get_response_json(item_type + 's', id_num, extended='full')
+        return self.get_response_json(item_type + 's', id_num, 'seasons', season, 'episodes', episode, extended='full')
 
     def get_traktslug(self, item_type, id_type, id_num):
-        item = self.get_response_json('search', id_type, id_num, '?' + item_type)
-        return item[0].get(item_type, {}).get('ids', {}).get('slug')
+        items = self.get_response_json('search', id_type, id_num, type=item_type)
+        for i in items:
+            if str(i.get(item_type, {}).get('ids', {}).get(id_type)) == str(id_num):
+                return i.get(item_type, {}).get('ids', {}).get('slug')
 
     def get_collection(self, tmdbtype, page=1, limit=20):
         items = []
@@ -423,27 +451,28 @@ class TraktAPI(RequestAPI):
         if self.prev_activities.get(itemtype, {}).get(listtype) == self.last_activities.get(itemtype, {}).get(listtype):
             return self.last_activities.get(itemtype, {}).get(listtype)
 
-    def sync_collection(self, itemtype, idtype=None, mode=None, items=None):
-        return self.get_sync('collection', 'collected_at', itemtype, idtype, mode, items)
+    def sync_collection(self, itemtype, idtype=None, mode=None, items=None, cache_refresh=False):
+        return self.get_sync('collection', 'collected_at', itemtype, idtype, mode, items, cache_refresh)
 
-    def sync_watchlist(self, itemtype, idtype=None, mode=None, items=None):
-        return self.get_sync('watchlist', 'watchlisted_at', itemtype, idtype, mode, items)
+    def sync_watchlist(self, itemtype, idtype=None, mode=None, items=None, cache_refresh=False):
+        return self.get_sync('watchlist', 'watchlisted_at', itemtype, idtype, mode, items, cache_refresh)
 
-    def sync_history(self, itemtype, idtype=None, mode=None, items=None):
-        return self.get_sync('history', 'watched_at', itemtype, idtype, mode, items)
+    def sync_history(self, itemtype, idtype=None, mode=None, items=None, cache_refresh=False):
+        return self.get_sync('history', 'watched_at', itemtype, idtype, mode, items, cache_refresh)
 
     def get_watched(self, itemtype, idtype=None):
-        return self.get_sync('watched', 'watched_at', itemtype, idtype, None, None)
+        return self.get_sync('watched', 'watched_at', itemtype, idtype)
 
-    def get_sync(self, name, activity, itemtype, idtype=None, mode=None, items=None):
+    def get_sync(self, name, activity, itemtype, idtype=None, mode=None, items=None, cache_refresh=False):
         if not self.authorize():
             return {}
         if mode == 'add' or mode == 'remove':
             name = name + '/remove' if mode == 'remove' else name
             return self.get_api_request('{0}/sync/{1}'.format(self.req_api_url, name), headers=self.headers, postdata=dumps(items))
         if not self.sync.get(name):
-            cache_refresh = False if self.sync_activities(itemtype + 's', activity) else True
-            self.sync[name] = self.get_request_lc('sync/', name, itemtype + 's', cache_refresh=cache_refresh)
+            if not cache_refresh:
+                cache_refresh = False if self.sync_activities(itemtype + 's', activity) else True
+            self.sync[name] = self.get_request_lc('sync', name, itemtype + 's', cache_refresh=cache_refresh)
         if not self.sync.get(name):
             return {}
         if idtype:

@@ -433,6 +433,8 @@ class OrionIntegration:
 		elif not scrapers is None:
 			if OrionInterface.dialogOption(title = 32174, message = OrionTools.translate(33023) % (addon, scrapers, scrapers)):
 				addon = scrapers
+			else:
+				return None
 
 		items = []
 		if integrate:
@@ -1005,8 +1007,11 @@ class OrionIntegration:
 			return self._integrateFailure('Scrubs addon metadata integration failure', self.pathAddon)
 
 		# __init__.py
-		data = self._comment(self._content('sources.py'), OrionIntegration.LanguagePython, '                    ')
+		data = self._comment(self._content('sources1.py'), OrionIntegration.LanguagePython, '                    ')
 		if not OrionTools.fileInsert(self.pathSources, '\.load_module\(module_name\)', data, validate = True):
+			return self._integrateFailure('Scrubs sources integration failure', self.pathSources)
+		data = self._comment(self._content('sources2.py'), OrionIntegration.LanguagePython, '        ')
+		if not OrionTools.fileInsert(self.pathSources, 'return\s*sourceDict', data, validate = True, replace = True):
 			return self._integrateFailure('Scrubs sources integration failure', self.pathSources)
 
 		# orionoid.py
@@ -1069,27 +1074,39 @@ class OrionIntegration:
 		self.name = OrionIntegration.AddonFen
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.fen'
-		self.idModule = 'script.module.tikiscrapers'
-		self.idSettings = self.idModule
-		self.version = self._version(self.idPlugin, self.idModule)
 
-		self.pathPlugin = OrionTools.addonPath(self.idPlugin)
-		self.pathModule = OrionTools.addonPath(self.idModule)
+		if OrionTools.versionValue(OrionTools.addonVersion(self.idPlugin)) < 1584: # 1.5.84
+			self.idModule = 'script.module.tikiscrapers'
+			self.idSettings = self.idModule
+			self.version = self._version(self.idPlugin, self.idModule)
 
-		self.pathSettings = OrionTools.pathJoin(self.pathModule, 'resources', 'settings.xml')
-		self.pathAddon = OrionTools.pathJoin(self.pathModule, 'addon.xml')
-		self.pathSources = OrionTools.pathJoin(self.pathModule, 'lib', 'tikiscrapers', '__init__.py')
-		self.pathOrion = OrionTools.pathJoin(self.pathModule, 'lib', 'tikiscrapers', 'sources_tikiscrapers', 'orion')
-		self.pathOrionoid = OrionTools.pathJoin(self.pathOrion, 'orionoid.py')
-		self.pathInit = OrionTools.pathJoin(self.pathOrion, '__init__.py')
+			self.pathPlugin = OrionTools.addonPath(self.idPlugin)
+			self.pathModule = OrionTools.addonPath(self.idModule)
 
-		self.files = []
-		self.files.append(self.pathSettings)
-		self.files.append(self.pathAddon)
-		self.files.append(self.pathSources)
+			self.pathSettings = OrionTools.pathJoin(self.pathModule, 'resources', 'settings.xml')
+			self.pathAddon = OrionTools.pathJoin(self.pathModule, 'addon.xml')
+			self.pathSources = OrionTools.pathJoin(self.pathModule, 'lib', 'tikiscrapers', '__init__.py')
+			self.pathOrion = OrionTools.pathJoin(self.pathModule, 'lib', 'tikiscrapers', 'sources_tikiscrapers', 'orion')
+			self.pathOrionoid = OrionTools.pathJoin(self.pathOrion, 'orionoid.py')
+			self.pathInit = OrionTools.pathJoin(self.pathOrion, '__init__.py')
 
-		self.deletes = []
-		self.deletes.append(self.pathOrion)
+			self.files = []
+			self.files.append(self.pathSettings)
+			self.files.append(self.pathAddon)
+			self.files.append(self.pathSources)
+
+			self.deletes = []
+			self.deletes.append(self.pathOrion)
+		else:
+			# Clear old integration
+			setting = OrionSettings.getIntegration(self.id)
+			if '-' in setting: OrionSettings.setIntegration(self.id, None)
+
+			self.idSettings = self.idPlugin
+			self.version = self._version(self.idPlugin)
+			self.scrapers = OrionIntegration.AddonOpenScrapers
+			self.files = []
+			self.deletes = []
 
 	def _fenIntegrate(self):
 		# settings.xml
@@ -1338,8 +1355,11 @@ class OrionIntegration:
 			return self._integrateFailure('BoomMovies addon metadata integration failure', self.pathAddon)
 
 		# __init__.py
-		data = self._comment(self._content('sources.py'), OrionIntegration.LanguagePython, '                    ')
+		data = self._comment(self._content('sources1.py'), OrionIntegration.LanguagePython, '                    ')
 		if not OrionTools.fileInsert(self.pathSources, '\.load_module\(module_name\)', data, validate = True):
+			return self._integrateFailure('BoomMovies sources integration failure', self.pathSources)
+		data = self._comment(self._content('sources2.py'), OrionIntegration.LanguagePython, '        ')
+		if not OrionTools.fileInsert(self.pathSources, 'return\s*sourceDict', data, validate = True, replace = True):
 			return self._integrateFailure('BoomMovies sources integration failure', self.pathSources)
 
 		# orionoid.py
@@ -1483,13 +1503,16 @@ class OrionIntegration:
 
 	def _openScrapersIntegrate(self):
 		# settings.xml
-		data = self._comment(self._content('settings.xml'), OrionIntegration.LanguageXml, '\t')
+		data = self._comment(self._content('settings.xml'), OrionIntegration.LanguageXml, '\t\t')
 		if not OrionTools.fileInsert(self.pathSettings, '<\s*/\s*category\s*>', data):
 			return self._integrateFailure('Open Scrapers settings integration failure', self.pathSettings)
 
 		# __init__.py
-		data = self._comment(self._content('sources.py'), OrionIntegration.LanguagePython, '\t\t\t\t\t')
+		data = self._comment(self._content('sources1.py'), OrionIntegration.LanguagePython, '\t\t\t\t\t')
 		if not OrionTools.fileInsert(self.pathSources, '\.load_module\(module_name\)', data, validate = True):
+			return self._integrateFailure('Open Scrapers sources integration failure', self.pathSources)
+		data = self._comment(self._content('sources2.py'), OrionIntegration.LanguagePython, '\t')
+		if not OrionTools.fileInsert(self.pathSources, 'return\s*enabledHosters\(sourceDict\)', data, validate = True, replace = True):
 			return self._integrateFailure('Open Scrapers sources integration failure', self.pathSources)
 
 		# addon.xml
@@ -1580,8 +1603,11 @@ class OrionIntegration:
 				return self._integrateFailure('Lambda Scrapers settings integration failure', self.pathSettings)
 
 			# __init__.py
-			data = self._comment(self._content('sources.py'), OrionIntegration.LanguagePython, '                    ')
+			data = self._comment(self._content('sources1.py'), OrionIntegration.LanguagePython, '                    ')
 			if not OrionTools.fileInsert(self.pathSources, '\.load_module\(module_name\)', data, validate = True):
+				return self._integrateFailure('Lambda Scrapers sources integration failure', self.pathSources)
+			data = self._comment(self._content('sources2.py'), OrionIntegration.LanguagePython, '        ')
+			if not OrionTools.fileInsert(self.pathSources, 'return\s*enabledHosters\(sourceDict\)', data, validate = True, replace = True):
 				return self._integrateFailure('Lambda Scrapers sources integration failure', self.pathSources)
 
 			# addon.xml

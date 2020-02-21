@@ -13,13 +13,13 @@ class TMDb(RequestAPI):
         super(TMDb, self).__init__(
             cache_short=cache_short, cache_long=cache_long,
             req_api_name='TMDb', req_api_url='https://api.themoviedb.org/3', req_wait_time=0.25,
-            req_api_key='?api_key=a07324c669cac4d96789197134ce272b')
+            req_api_key='api_key=a07324c669cac4d96789197134ce272b')
         api_key = api_key if api_key else 'a07324c669cac4d96789197134ce272b'
         language = language if language else 'en-US'
         self.iso_language = language[:2]
         self.iso_country = language[-2:]
         self.req_language = '{0}-{1}&include_image_language={0},null'.format(self.iso_language, self.iso_country)
-        self.req_api_key = '?api_key={0}'.format(api_key)
+        self.req_api_key = 'api_key={0}'.format(api_key)
         self.req_append = append_to_response if append_to_response else None
         self.imagepath_original = 'https://image.tmdb.org/t/p/original'
         self.imagepath_poster = 'https://image.tmdb.org/t/p/w500'
@@ -85,6 +85,8 @@ class TMDb(RequestAPI):
         infolabels['episode'] = item.get('episode_number') if item.get('episode_number') or item.get('episode_number') == 0 else item.get('number_of_episodes')
         infolabels['season'] = item.get('season_number') if item.get('season_number') or item.get('season_number') == 0 else item.get('number_of_seasons')
         infolabels['genre'] = utils.dict_to_list(item.get('genres', []), 'name')
+        if item.get('site') == 'YouTube' and item.get('key'):
+            infolabels['path'] = 'plugin://plugin.video.youtube/play/?video_id={0}'.format(item.get('key'))
         if item.get('runtime'):
             infolabels['duration'] = item.get('runtime', 0) * 60
         if item.get('belongs_to_collection'):
@@ -129,6 +131,7 @@ class TMDb(RequestAPI):
         if item.get('last_episode_to_air'):
             i = item.get('last_episode_to_air', {})
             infoproperties['last_aired'] = i.get('air_date')
+            infoproperties['last_aired.day'] = utils.date_to_format(i.get('air_date'), "%A")
             infoproperties['last_aired.episode'] = i.get('episode_number')
             infoproperties['last_aired.name'] = i.get('name')
             infoproperties['last_aired.tmdb_id'] = i.get('id')
@@ -140,6 +143,7 @@ class TMDb(RequestAPI):
         if item.get('next_episode_to_air'):
             i = item.get('next_episode_to_air', {})
             infoproperties['next_aired'] = i.get('air_date')
+            infoproperties['next_aired.day'] = utils.date_to_format(i.get('air_date'), "%A")
             infoproperties['next_aired.episode'] = i.get('episode_number')
             infoproperties['next_aired.name'] = i.get('name')
             infoproperties['next_aired.tmdb_id'] = i.get('id')
@@ -382,7 +386,7 @@ class TMDb(RequestAPI):
         if not itemtype or not tmdb_id:
             return {}
         extra_request = None
-        cache_name = '{0}.TMDb.v2_2_18.{1}.{2}'.format(self.cache_name, itemtype, tmdb_id)
+        cache_name = '{0}.TMDb.v2_2_67.{1}.{2}'.format(self.cache_name, itemtype, tmdb_id)
         cache_name = '{0}.Season{1}'.format(cache_name, season) if season else cache_name
         cache_name = '{0}.Episode{1}'.format(cache_name, episode) if season and episode else cache_name
         itemdict = self.get_cache(cache_name) if not cache_refresh else None

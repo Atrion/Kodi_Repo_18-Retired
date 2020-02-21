@@ -25,6 +25,7 @@
 ##############################################################################
 
 import copy
+import threading
 from orion.modules.oriontools import *
 from orion.modules.orionsettings import *
 from orion.modules.orioninterface import *
@@ -246,7 +247,11 @@ class OrionApi:
 							count = self.mData[OrionApi.ParameterCount]
 							message = OrionTools.translate(32062) + ': ' + str(count[OrionApi.ParameterTotal]) + ' • ' + OrionTools.translate(32063) + ': ' + str(count[OrionApi.ParameterRetrieved])
 							OrionTools.log('ORION STREAMS FOUND: ' + message)
-							OrionInterface.dialogNotification(title = 32060, message = message, icon = OrionInterface.IconSuccess)
+							notifications = []
+							if self.mDescription: notifications.append({'title' : self.mDescription, 'message' : self.mMessage, 'icon' : OrionInterface.IconInformation})
+							notifications.append({'title' : 32060, 'message' : message, 'icon' : OrionInterface.IconSuccess})
+							thread = threading.Thread(target = self._notification, args = (notifications,))
+							thread.start()
 					elif mode == OrionApi.ModeContainer:
 						if action == OrionApi.ActionRetrieve:
 							count = self.mData[OrionApi.ParameterCount]
@@ -274,6 +279,18 @@ class OrionApi:
 				OrionTools.error('ORION UNKNOWN API EXCEPTION')
 
 		return self.statusSuccess()
+
+	##############################################################################
+	# NOTIFICATION
+	##############################################################################
+
+	@classmethod
+	def _notification(self, notifications):
+		time = 5000
+		single = len(notifications) <= 1
+		for notification in notifications:
+			OrionInterface.dialogNotification(title = notification['title'], message = notification['message'], icon = notification['icon'], time = time)
+			if not single: OrionTools.sleep(time / 1000.0)
 
 	##############################################################################
 	# STATUS

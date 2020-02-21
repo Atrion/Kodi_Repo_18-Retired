@@ -285,7 +285,7 @@ class Orion:
 	ProtocolFtp = OrionItem.ProtocolFtp								# 'ftp'					(Torrent, usenet, and hoster FTP links)
 	ProtocolFtps = OrionItem.ProtocolFtps							# 'ftps'				(Torrent, usenet, and hoster FTPS links)
 
-	# Stream Access
+	# Access Status
 	AccessDirect = OrionItem.AccessDirect							# 'direct'				(Direct hoster link)
 	AccessIndirect = OrionItem.AccessIndirect						# 'indirect'			(Indirect hoster link)
 	AccessPremiumize = OrionItem.AccessPremiumize					# 'premiumize'			(Cached any on Premiumize)
@@ -300,6 +300,11 @@ class Orion:
 	AccessRealdebridTorrent = OrionItem.AccessRealdebridTorrent		# 'realdebridtorrent'	(Cached torrent on RealDebrid)
 	AccessRealdebridUsenet = OrionItem.AccessRealdebridUsenet		# 'realdebridusenet'	(Cached usenet on RealDebrid)
 	AccessRealdebridHoster = OrionItem.AccessRealdebridHoster		# 'realdebridhoster'	(Cached hoster on RealDebrid)
+
+	# Cache Lookup
+	LookupPremiumize = OrionItem.LookupPremiumize					# 'premiumize'			(Cache lookup on Premiumize)
+	LookupOffcloud = OrionItem.LookupOffcloud						# 'offcloud'			(Cache lookup on OffCloud)
+	LookupRealdebrid = OrionItem.LookupRealdebrid					# 'realdebrid'			(Cache lookup on RealDebrid)
 
 	# Stream Type
 	StreamTorrent = OrionStream.TypeTorrent							# 'torrent'				(Torrent magnet or link)
@@ -327,15 +332,20 @@ class Orion:
 	CodecH264 = OrionStream.CodecH264								# 'h264'				(Moving Picture Experts Group Advanced Video Coding)
 	CodecH262 = OrionStream.CodecH262								# 'h262'				(Moving Picture Experts Group Part 2)
 	CodecH222 = OrionStream.CodecH222								# 'h222'				(Moving Picture Experts Group Part 1)
+	CodecAv1 = OrionStream.CodecAv1									# 'av1'					(AOMedia Video 1)
+	CodecVp10 = OrionStream.CodecVp10								# 'vp10'				(Google VP10)
+	CodecVp9 = OrionStream.CodecVp9									# 'vp9'					(Google VP9)
+	CodecVp8 = OrionStream.CodecVp8									# 'vp8'					(Google VP8)
 	Codec3gp = OrionStream.Codec3gp									# '3gp'					(Third Generation Partnership Project)
 	CodecAvi = OrionStream.CodecAvi									# 'avi'					(Audio Video Interleave)
 	CodecDivx = OrionStream.CodecDivx								# 'divx'				(DivX Video)
 	CodecFlv = OrionStream.CodecFlv									# 'flv'					(Flash Video)
-	CodecMkv = OrionStream.CodecMkv									# 'mkv'					(Matroska Multimedia Container)
 	CodecMov = OrionStream.CodecMov									# 'mov'					(QuickTime File Format)
 	CodecMpeg = OrionStream.CodecMpeg								# 'mpeg'				(Moving Picture Experts Group)
 	CodecWmv = OrionStream.CodecWmv									# 'wmv'					(Windows Media Video)
 	CodecXvid = OrionStream.CodecXvid								# 'xvid'				(XviD)
+	CodecMkv = OrionStream.CodecMkv									# 'mkv'					(Matroska Multimedia Container)
+	CodecWebm = OrionStream.CodecWebm								# 'webm'				(Web Multimedia Container)
 
 	# Release Type
 	ReleaseBdrip = OrionStream.ReleaseBdrip							# 'bdrip'				(BluRay Rip)
@@ -361,6 +371,7 @@ class Orion:
 	ReleaseVcd = OrionStream.ReleaseVcd								# 'vcd'					(Virtual CD)
 	ReleaseVhs = OrionStream.ReleaseVhs								# 'vhs'					(VHS)
 	ReleaseVhsrip = OrionStream.ReleaseVhsrip						# 'vhsrip'				(VHS Rip)
+	ReleaseDcprip = OrionStream.ReleaseDcprip						# 'dcprip'				(Digital Cinema Package Rip)
 	ReleaseWebcap = OrionStream.ReleaseWebcap						# 'webcap'				(Web Capture)
 	ReleaseWebdl = OrionStream.ReleaseWebdl							# 'webdl'				(Web Download)
 	ReleaseWebrip = OrionStream.ReleaseWebrip						# 'webrip'				(Web Rip)
@@ -438,6 +449,9 @@ class Orion:
 	SubtitleHard = OrionStream.SubtitleHard							# 'hard'				(Hard-coded subtitles that cannot be disabled)
 
 	# Sorting Value
+	SortNone = OrionItem.SortNone									# 'none'				(No sorting)
+	SortBest = OrionItem.SortBest									# 'best'				(Sort by best selection)
+	SortShuffle = OrionItem.SortShuffle								# 'shuffle'				(Randomly shuffle results)
 	SortShuffle = OrionItem.SortShuffle								# 'shuffle'				(Randomly shuffle results)
 	SortPopularity = OrionItem.SortPopularity						# 'popularity'			(Sort by popularity)
 	SortTimeAdded = OrionItem.SortTimeAdded							# 'timeadded'			(Sort by time first added)
@@ -646,6 +660,7 @@ class Orion:
 				protocolHoster = FilterSettings,
 
 				access = FilterSettings,
+				lookup = FilterSettings,
 
 				filePack = FilterSettings,
 				fileName = FilterSettings,
@@ -718,6 +733,7 @@ class Orion:
 			protocolHoster = protocolHoster,
 
 			access = access,
+			lookup = lookup,
 
 			filePack = filePack,
 			fileName = fileName,

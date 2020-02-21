@@ -323,7 +323,8 @@ class Script(Plugin):
             return
         Player().play(
             itemtype=self.params.get('play'), tmdb_id=self.params.get('tmdb_id'),
-            season=self.params.get('season'), episode=self.params.get('episode'))
+            season=self.params.get('season'), episode=self.params.get('episode'),
+            force_dialog=self.params.get('force_dialog'))
 
     def update_players(self):
         players_url = self.addon.getSettingString('players_url')
@@ -393,6 +394,16 @@ class Script(Plugin):
         t = threading.Thread(target=ServiceMonitor)
         t.start()  # Start our service monitor thread
 
+    def sync_trakt(self):
+        self.params['tmdb_id'] = self.get_tmdb_id(**self.params)
+        if not self.params.get('tmdb_id'):
+            return
+        context.action(
+            action=self.params.get('sync_trakt'), tmdb_id=self.params.get('tmdb_id'),
+            tmdb_type=self.params.get('type'), label=self.params.get('query'),
+            season=self.params.get('season'), episode=self.params.get('episode'),
+            cache_refresh=self.params.get('cache_refresh'))
+
     def router(self):
         if not self.params:
             """ If no params assume user wants to run plugin """
@@ -408,6 +419,8 @@ class Script(Plugin):
             self.clear_defaultplayers()
         elif self.params.get('library_autoupdate'):
             self.library_autoupdate()
+        elif self.params.get('sync_trakt'):
+            self.sync_trakt()
         elif self.params.get('add_path'):
             self.add_path()
         elif self.params.get('add_query') and self.params.get('type'):

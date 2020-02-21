@@ -22,7 +22,7 @@ class RequestAPI(object):
         self.cache_name = 'plugin.video.themoviedb.helper'
         self.addon_name = 'plugin.video.themoviedb.helper'
         self.addon = xbmcaddon.Addon(self.addon_name)
-        self.dialog_noapikey_header = '{0} {1} {2}'.format(self.addon.getLocalizedString(32007), self.req_api_name, self.addon.getLocalizedString(32008))
+        self.dialog_noapikey_header = '{0} - {1}'.format(self.addon.getLocalizedString(32007), self.req_api_name)
         self.dialog_noapikey_text = self.addon.getLocalizedString(32009)
         self.dialog_noapikey_check = None
 
@@ -84,15 +84,15 @@ class RequestAPI(object):
             xbmcgui.Window(10000).setProperty(self.req_connect_err_prop, str(self.req_connect_err))
             utils.kodi_log('ConnectionError: {}\nSuppressing retries for 1 minute'.format(err), 1)
             return {} if dictify else None
-        if not response.status_code == requests.codes.ok:  # Error Checking
+        if not response.status_code == requests.codes.ok and utils.try_parse_int(response.status_code) >= 400:  # Error Checking
             if response.status_code == 401:
-                utils.kodi_log('HTTP Error Code: {0}'.format(response.status_code), 1)
+                utils.kodi_log('HTTP Error Code: {0}\nRequest: {1}\nPostdata: {2}\nHeaders: {3}\nResponse: {4}'.format(response.status_code, request, postdata, headers, response), 1)
                 self.invalid_apikey()
             elif response.status_code == 500:
                 self.req_connect_err = utils.set_timestamp()
                 xbmcgui.Window(10000).setProperty(self.req_connect_err_prop, str(self.req_connect_err))
                 utils.kodi_log('HTTP Error Code: {0}\nRequest: {1}\nSuppressing retries for 1 minute'.format(response.status_code, request), 1)
-            elif not response.status_code == 400:  # Don't write 400 error to log
+            elif utils.try_parse_int(response.status_code) > 400:  # Don't write 400 error to log
                 utils.kodi_log('HTTP Error Code: {0}\nRequest: {1}'.format(response.status_code, request), 1)
             return {} if dictify else None
         if dictify and is_json:
@@ -110,7 +110,8 @@ class RequestAPI(object):
         for arg in args:
             if arg:  # Don't add empty args
                 request = u'{0}/{1}'.format(request, arg)
-        request = u'{0}{1}'.format(request, self.req_api_key)
+        sep = '?' if '?' not in request else '&'
+        request = u'{0}{1}{2}'.format(request, sep, self.req_api_key)
         for key, value in kwargs.items():
             if value:  # Don't add empty kwargs
                 sep = '?' if '?' not in request else ''

@@ -430,7 +430,7 @@ msgid "Minimum Seeds"
 msgstr ""
 
 msgctxt "#32105"
-msgid "Stream Access"
+msgid "Access Status"
 msgstr ""
 
 msgctxt "#32106"
@@ -438,15 +438,15 @@ msgid "Sources"
 msgstr ""
 
 msgctxt "#32107"
-msgid "Premiumize Cached"
+msgid "Premiumize Cache"
 msgstr ""
 
 msgctxt "#32108"
-msgid "OffCloud Cached"
+msgid "OffCloud Cache"
 msgstr ""
 
 msgctxt "#32109"
-msgid "RealDebrid Cached"
+msgid "RealDebrid Cache"
 msgstr ""
 
 msgctxt "#32110"
@@ -1241,6 +1241,22 @@ msgctxt "#32307"
 msgid "Attachment Removed"
 msgstr ""
 
+msgctxt "#32308"
+msgid "[COLOR FFB48800][B]Best (Premium)[/B][/COLOR]"
+msgstr ""
+
+msgctxt "#32309"
+msgid "Starting Playback"
+msgstr ""
+
+msgctxt "#32310"
+msgid "Access"
+msgstr ""
+
+msgctxt "#32311"
+msgid "Cache Lookup (Premium)"
+msgstr ""
+
 ##############################################################################
 # MESSAGES
 ##############################################################################
@@ -1513,6 +1529,10 @@ msgctxt "#33066"
 msgid "The support team is out of office until %s and replies might be delayed. We apologize for the inconvenience."
 msgstr ""
 
+msgctxt "#33067"
+msgid "Starting playback of link submitted from Orion's website."
+msgstr ""
+
 ##############################################################################
 # HELP
 ##############################################################################
@@ -1558,7 +1578,7 @@ msgid "If your filters are too restrictive, no results might be returned. In suc
 msgstr ""
 
 msgctxt "#34011"
-msgid "The attribute to sort streams by. Results can also be randomly shuffled. The popularity is the frequency at which streams are accessed by users. The added and updated time is when the stream was first added to Orion and the last time it was updated by a user, respectively."
+msgid "The attribute to sort streams by. Either retrieve the best available streams, randomly shuffle the results, or sort by a specific attribute. The popularity is the frequency at which streams are accessed by users. The added and updated time is when the stream was first added to Orion and the last time it was updated by a user, respectively."
 msgstr ""
 
 msgctxt "#34012"
@@ -1763,6 +1783,22 @@ msgstr ""
 
 msgctxt "#34062"
 msgid "Show notifications when the support team replies to one of your tickets."
+msgstr ""
+
+msgctxt "#34063"
+msgid "Does a fresh lookup and return the latest debrid cache status. Authorize your debrid account on Orion's website. Enabling this option will take more time and should only be enabled if no local cache lookup is done."
+msgstr ""
+
+msgctxt "#34064"
+msgid "Does a fresh cache lookup on Premiumize. Only enable this option if you have a Premiumize account."
+msgstr ""
+
+msgctxt "#34065"
+msgid "Does a fresh cache lookup on OffCloud. Only enable this option if you have a OffCloud account."
+msgstr ""
+
+msgctxt "#34066"
+msgid "Does a fresh cache lookup on RealDebrid. Only enable this option if you have a RealDebrid account."
 msgstr ""
 
 ##############################################################################

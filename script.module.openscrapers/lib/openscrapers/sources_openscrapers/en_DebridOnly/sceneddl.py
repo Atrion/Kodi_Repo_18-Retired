@@ -82,7 +82,7 @@ class source:
 				return sources
 
 			if debrid.status() is False:
-				raise Exception()
+				return sources
 
 			hostDict = hostprDict + hostDict
 

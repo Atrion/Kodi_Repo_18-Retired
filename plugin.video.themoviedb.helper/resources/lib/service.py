@@ -38,6 +38,9 @@ class ServiceMonitor(Plugin):
         if self.addon.getSettingBool('library_autoupdate'):
             xbmc.executebuiltin('RunScript(plugin.video.themoviedb.helper,library_autoupdate)')
 
+        if self.addon.getSettingString('trakt_token'):
+            self.home.setProperty('TMDbHelper.TraktIsAuth', 'True')
+
         while not self.kodimonitor.abortRequested() and not self.exit:
             if self.home.getProperty('TMDbHelper.ServiceStop'):
                 self.exit = True
@@ -122,7 +125,7 @@ class ServiceMonitor(Plugin):
 
             self.home.setProperty('TMDbHelper.IsUpdating', 'True')
 
-            tmdb_id = self.get_tmdb_id(tmdbtype, self.imdb_id, self.query, self.year)
+            tmdb_id = self.get_tmdb_id(tmdbtype, self.imdb_id, self.query, self.year if tmdbtype == 'movie' else None)
             details = self.tmdb.get_detailed_item(tmdbtype, tmdb_id, season=self.season, episode=self.episode)
             details = self.get_kodi_person_stats(details) if tmdbtype == 'person' else details
             details = self.get_omdb_ratings(details) if tmdbtype == 'movie' else details

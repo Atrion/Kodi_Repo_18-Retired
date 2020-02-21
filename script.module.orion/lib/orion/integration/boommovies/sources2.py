@@ -1,0 +1,1 @@
+import xbmcaddon; return [(' orion' if i[0] == 'orion' else i[0], i[1]) for i in sourceDict] if xbmcaddon.Addon('plugin.video.BoomMovies').getSetting('provider.orionoid.first') == 'true' else sourceDict

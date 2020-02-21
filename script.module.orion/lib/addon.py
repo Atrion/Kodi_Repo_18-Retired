@@ -170,6 +170,14 @@ elif action == 'settingsFiltersSubtitleLanguages':
 	OrionNavigator.settingsFiltersSubtitleLanguages(type)
 
 ##############################################################################
+# PLAY
+##############################################################################
+
+elif action == 'play':
+	from orion.modules.orionplayer import OrionPlayer
+	OrionPlayer.play(data = parameters.get('data'))
+
+##############################################################################
 # INTEGRATION
 ##############################################################################
 

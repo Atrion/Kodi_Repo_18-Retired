@@ -100,7 +100,7 @@ class source:
 	def _settings(self):
 		settings = []
 		for i in range(1, 16):
-			setting = int(self.addon.getSetting('provider.orionoid.info.' + str(i)))
+			setting = int(self.addon.getSetting('provider.orion.info.' + str(i)))
 			if setting > 0: settings.append(setting)
 		return settings
 
@@ -205,11 +205,8 @@ class source:
 		except: return 'en'
 
 	def _source(self, data, label = True):
-		try: cached = data['cached']
-		except: cached = False
-		if cached:
-			return 'cached'
-		elif label:
+		if label:
+			if data['stream']['type'] == Orion.StreamTorrent: return data['stream']['type']
 			try: hoster = data['stream']['hoster']
 			except: hoster = None
 			if hoster: return hoster
@@ -278,9 +275,7 @@ class source:
 	def _debrid(self, data):
 		link = self._link(data)
 		if data['stream']['type'] == Orion.StreamTorrent:
-			try: cached = data['cached']
-			except: cached = False
-			return not cached
+			return True
 		else:
 			for resolver in self.resolvers:
 				if resolver.valid_url(url = link, host = None):
@@ -324,7 +319,8 @@ class source:
 				protocolTorrent = Orion.ProtocolMagnet
 			)
 
-			from resources.lib.modules import debrid
+			try: from resources.lib.modules import debrid
+			except: from openscrapers.modules import debrid
 			debridResolvers = debrid.debrid_resolvers
 			debridProviders = ['premiumize', 'realdebrid', 'alldebrid', 'rpnet', 'megadebrid', 'debridlink', 'zevera', 'smoozed', 'simplydebrid']
 			self.resolvers = []
@@ -335,7 +331,9 @@ class source:
 						self.resolvers.append(debridResolver)
 				except: pass
 
-			results = self._cached(results)
+			# Cache inspection takes too long and most addons time out before it finishes and therefore the scraper returns no results.
+			#results = self._cached(results)
+
 			for data in results:
 				try:
 					info = []
@@ -416,20 +414,4 @@ class source:
 		return sources
 
 	def resolve(self, url):
-		item = self._cacheFind(url)
-		try:
-			provider = self._provider(item['provider'], True)
-			if provider: url = provider.resolve(url)
-		except: self._error()
-		try:
-			if item['source'] == 'cached':
-				files = self._premiumizeRequest(link = url)['content']
-				size = 0
-				link = None
-				for file in files:
-					if file['size'] > size:
-						size = file['size']
-						link = file['link']
-				url = link
-		except: pass
 		return url

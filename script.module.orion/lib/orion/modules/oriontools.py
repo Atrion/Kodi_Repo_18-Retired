@@ -77,6 +77,8 @@ class OrionTools:
 
 	PythonVersion = None
 
+	Base64Url = [['+', '.'], ['/', '_'], ['=', '-']]
+
 	# Higher numbers means bigger sub-version values.
 	# Eg: 1000 means valueues can be between 0 and 999.
 	VersionMain = 1000
@@ -89,6 +91,8 @@ class OrionTools:
 
 	LanguageNames = ['Abkhaz', 'Afar', 'Afrikaans', 'Akan', 'Albanian', 'Amharic', 'Arabic', 'Aragonese', 'Armenian', 'Assamese', 'Avaric', 'Avestan', 'Aymara', 'Azerbaijani', 'Bambara', 'Bashkir', 'Basque', 'Belarusian', 'Bengali', 'Bihari', 'Bislama', 'Bokmal', 'Bosnian', 'Breton', 'Bulgarian', 'Burmese', 'Catalan', 'Chamorro', 'Chechen', 'Chichewa', 'Chinese', 'Chuvash', 'Cornish', 'Corsican', 'Cree', 'Croatian', 'Czech', 'Danish', 'Divehi', 'Dutch', 'Dzongkha', 'English', 'Esperanto', 'Estonian', 'Ewe', 'Faroese', 'Fijian', 'Finnish', 'French', 'Fula', 'Gaelic', 'Galician', 'Ganda', 'Georgian', 'German', 'Greek', 'Guarani', 'Gujarati', 'Haitian', 'Hausa', 'Hebrew', 'Herero', 'Hindi', 'Hiri Motu', 'Hungarian', 'Icelandic', 'Ido', 'Igbo', 'Indonesian', 'Interlingua', 'Interlingue', 'Inuktitut', 'Inupiaq', 'Irish', 'Italian', 'Japanese', 'Javanese', 'Kalaallisut', 'Kannada', 'Kanuri', 'Kashmiri', 'Kazakh', 'Khmer', 'Kikuyu', 'Kinyarwanda', 'Kirundi', 'Komi', 'Kongo', 'Korean', 'Kurdish', 'Kwanyama', 'Kyrgyz', 'Lao', 'Latin', 'Latvian', 'Limburgish', 'Lingala', 'Lithuanian', 'Luba-Katanga', 'Luxembourgish', 'Macedonian', 'Malagasy', 'Malay', 'Malayalam', 'Maltese', 'Manx', 'Maori', 'Marathi', 'Marshallese', 'Mongolian', 'Nauruan', 'Navajo', 'Ndonga', 'Nepali', 'Northern Ndebele', 'Northern Sami', 'Norwegian', 'Nuosu', 'Nynorsk', 'Occitan', 'Ojibwe', 'Oriya', 'Oromo', 'Ossetian', 'Pali', 'Pashto', 'Persian', 'Polish', 'Portuguese', 'Punjabi', 'Quechua', 'Romanian', 'Romansh', 'Russian', 'Samoan', 'Sango', 'Sanskrit', 'Sardinian', 'Serbian', 'Shona', 'Sindhi', 'Sinhalese', 'Slavonic', 'Slovak', 'Slovene', 'Somali', 'Southern Ndebele', 'Southern Sotho', 'Spanish', 'Sundanese', 'Swahili', 'Swati', 'Swedish', 'Tagalog', 'Tahitian', 'Tajik', 'Tamil', 'Tatar', 'Telugu', 'Thai', 'Tibetan', 'Tigrinya', 'Tonga', 'Tsonga', 'Tswana', 'Turkish', 'Turkmen', 'Twi', 'Ukrainian', 'Urdu', 'Uyghur', 'Uzbek', 'Venda', 'Vietnamese', 'Volapuk', 'Walloon', 'Welsh', 'Western Frisian', 'Wolof', 'Xhosa', 'Yiddish', 'Yoruba', 'Zhuang', 'Zulu']
 	LanguageCodes = ['ab', 'aa', 'af', 'ak', 'sq', 'am', 'ar', 'an', 'hy', 'as', 'av', 'ae', 'ay', 'az', 'bm', 'ba', 'eu', 'be', 'bn', 'bh', 'bi', 'nb', 'bs', 'br', 'bg', 'my', 'ca', 'ch', 'ce', 'ny', 'zh', 'cv', 'kw', 'co', 'cr', 'hr', 'cs', 'da', 'dv', 'nl', 'dz', 'en', 'eo', 'et', 'ee', 'fo', 'fj', 'fi', 'fr', 'ff', 'gd', 'gl', 'lg', 'ka', 'de', 'el', 'gn', 'gu', 'ht', 'ha', 'he', 'hz', 'hi', 'ho', 'hu', 'is', 'io', 'ig', 'id', 'ia', 'ie', 'iu', 'ik', 'ga', 'it', 'ja', 'jv', 'kl', 'kn', 'kr', 'ks', 'kk', 'km', 'ki', 'rw', 'rn', 'kv', 'kg', 'ko', 'ku', 'kj', 'ky', 'lo', 'la', 'lv', 'li', 'ln', 'lt', 'lu', 'lb', 'mk', 'mg', 'ms', 'ml', 'mt', 'gv', 'mi', 'mr', 'mh', 'mn', 'na', 'nv', 'ng', 'ne', 'nd', 'se', 'no', 'ii', 'nn', 'oc', 'oj', 'or', 'om', 'os', 'pi', 'ps', 'fa', 'pl', 'pt', 'pa', 'qu', 'ro', 'rm', 'ru', 'sm', 'sg', 'sa', 'sc', 'sr', 'sn', 'sd', 'si', 'cu', 'sk', 'sl', 'so', 'nr', 'st', 'es', 'su', 'sw', 'ss', 'sv', 'tl', 'ty', 'tg', 'ta', 'tt', 'te', 'th', 'bo', 'ti', 'to', 'ts', 'tn', 'tr', 'tk', 'tw', 'uk', 'ur', 'ug', 'uz', 've', 'vi', 'vo', 'wa', 'cy', 'fy', 'wo', 'xh', 'yi', 'yo', 'za', 'zu']
+
+	Countries = {'af':'Afghanistan','ax':'Aland Islands','al':'Albania','dz':'Algeria','as':'American Samoa','ad':'Andorra','ao':'Angola','ai':'Anguilla','aq':'Antarctica','ag':'Antigua And Barbuda','ar':'Argentina','am':'Armenia','aw':'Aruba','au':'Australia','at':'Austria','az':'Azerbaijan','bs':'Bahamas','bh':'Bahrain','bd':'Bangladesh','bb':'Barbados','by':'Belarus','be':'Belgium','bz':'Belize','bj':'Benin','bm':'Bermuda','bt':'Bhutan','bo':'Bolivia','ba':'Bosnia And Herzegovina','bw':'Botswana','bv':'Bouvet Island','br':'Brazil','io':'British Indian Ocean Territory','bn':'Brunei Darussalam','bg':'Bulgaria','bf':'Burkina Faso','bi':'Burundi','kh':'Cambodia','cm':'Cameroon','ca':'Canada','cv':'Cape Verde','ky':'Cayman Islands','cf':'Central African Republic','td':'Chad','cl':'Chile','cn':'China','cx':'Christmas Island','cc':'Cocos (Keeling) Islands','co':'Colombia','km':'Comoros','cg':'Congo','cd':'Congo, Democratic Republic','ck':'Cook Islands','cr':'Costa Rica','ci':'Cote D\'Ivoire','hr':'Croatia','cu':'Cuba','cy':'Cyprus','cz':'Czech Republic','dk':'Denmark','dj':'Djibouti','dm':'Dominica','do':'Dominican Republic','ec':'Ecuador','eg':'Egypt','sv':'El Salvador','gq':'Equatorial Guinea','er':'Eritrea','ee':'Estonia','et':'Ethiopia','fk':'Falkland Islands (Malvinas)','fo':'Faroe Islands','fj':'Fiji','fi':'Finland','fr':'France','gf':'French Guiana','pf':'French Polynesia','tf':'French Southern Territories','ga':'Gabon','gm':'Gambia','ge':'Georgia','de':'Germany','gh':'Ghana','gi':'Gibraltar','gr':'Greece','gl':'Greenland','gd':'Grenada','gp':'Guadeloupe','gu':'Guam','gt':'Guatemala','gg':'Guernsey','gn':'Guinea','gw':'Guinea-Bissau','gy':'Guyana','ht':'Haiti','hm':'Heard Island & Mcdonald Islands','va':'Holy See (Vatican City State)','hn':'Honduras','hk':'Hong Kong','hu':'Hungary','is':'Iceland','in':'India','id':'Indonesia','ir':'Iran, Islamic Republic Of','iq':'Iraq','ie':'Ireland','im':'Isle Of Man','il':'Israel','it':'Italy','jm':'Jamaica','jp':'Japan','je':'Jersey','jo':'Jordan','kz':'Kazakhstan','ke':'Kenya','ki':'Kiribati','kr':'Korea','kw':'Kuwait','kg':'Kyrgyzstan','la':'Lao People\'s Democratic Republic','lv':'Latvia','lb':'Lebanon','ls':'Lesotho','lr':'Liberia','ly':'Libyan Arab Jamahiriya','li':'Liechtenstein','lt':'Lithuania','lu':'Luxembourg','mo':'Macao','mk':'Macedonia','mg':'Madagascar','mw':'Malawi','my':'Malaysia','mv':'Maldives','ml':'Mali','mt':'Malta','mh':'Marshall Islands','mq':'Martinique','mr':'Mauritania','mu':'Mauritius','yt':'Mayotte','mx':'Mexico','fm':'Micronesia, Federated States Of','md':'Moldova','mc':'Monaco','mn':'Mongolia','me':'Montenegro','ms':'Montserrat','ma':'Morocco','mz':'Mozambique','mm':'Myanmar','na':'Namibia','nr':'Nauru','np':'Nepal','nl':'Netherlands','an':'Netherlands Antilles','nc':'New Caledonia','nz':'New Zealand','ni':'Nicaragua','ne':'Niger','ng':'Nigeria','nu':'Niue','nf':'Norfolk Island','mp':'Northern Mariana Islands','no':'Norway','om':'Oman','pk':'Pakistan','pw':'Palau','ps':'Palestinian Territory, Occupied','pa':'Panama','pg':'Papua New Guinea','py':'Paraguay','pe':'Peru','ph':'Philippines','pn':'Pitcairn','pl':'Poland','pt':'Portugal','pr':'Puerto Rico','qa':'Qatar','re':'Reunion','ro':'Romania','ru':'Russian Federation','rw':'Rwanda','bl':'Saint Barthelemy','sh':'Saint Helena','kn':'Saint Kitts And Nevis','lc':'Saint Lucia','mf':'Saint Martin','pm':'Saint Pierre And Miquelon','vc':'Saint Vincent And Grenadines','ws':'Samoa','sm':'San Marino','st':'Sao Tome And Principe','sa':'Saudi Arabia','sn':'Senegal','rs':'Serbia','sc':'Seychelles','sl':'Sierra Leone','sg':'Singapore','sk':'Slovakia','si':'Slovenia','sb':'Solomon Islands','so':'Somalia','za':'South Africa','gs':'South Georgia And Sandwich Isl.','es':'Spain','lk':'Sri Lanka','sd':'Sudan','sr':'Suriname','sj':'Svalbard And Jan Mayen','sz':'Swaziland','se':'Sweden','ch':'Switzerland','sy':'Syrian Arab Republic','tw':'Taiwan','tj':'Tajikistan','tz':'Tanzania','th':'Thailand','tl':'Timor-Leste','tg':'Togo','tk':'Tokelau','to':'Tonga','tt':'Trinidad And Tobago','tn':'Tunisia','tr':'Turkey','tm':'Turkmenistan','tc':'Turks And Caicos Islands','tv':'Tuvalu','ug':'Uganda','ua':'Ukraine','ae':'United Arab Emirates','gb':'United Kingdom','us':'United States','um':'United States Outlying Islands','uy':'Uruguay','uz':'Uzbekistan','vu':'Vanuatu','ve':'Venezuela','vn':'Viet Nam','vg':'Virgin Islands, British','vi':'Virgin Islands, U.S.','wf':'Wallis And Futuna','eh':'Western Sahara','ye':'Yemen','zm':'Zambia','zw':'Zimbabwe'}
 
 	##############################################################################
 	# LOG
@@ -413,7 +417,7 @@ class OrionTools:
 			return False
 
 	@classmethod
-	def fileInsert(self, path, after, data, flags = None, validate = False):
+	def fileInsert(self, path, after, data, flags = None, validate = False, replace = False):
 		content = self.fileRead(path)
 		if not self.isArray(after): after = [after]
 		if not self.isArray(data): data = [data]
@@ -423,11 +427,20 @@ class OrionTools:
 			dataValue = data[i]
 			try: flagsValue = flags[i]
 			except: flagsValue = None
-			try: index = re.search(afterValue, content, flagsValue if flagsValue else 0).end()
+			try:
+				match = re.search(afterValue, content, flagsValue if flagsValue else 0)
+				index = (match.start(), match.end()) if replace else match.end()
 			except: index = -1
-			if index < 0: return False
-			split1 = content[:index]
-			split2 = content[index:]
+
+			if replace:
+				if self.isInteger(index) and index < 0: return False
+				split1 = content[:index[0]]
+				split2 = content[index[1]:]
+			else:
+				if index < 0: return False
+				split1 = content[:index]
+				split2 = content[index:]
+
 			content = split1 + dataValue + split2
 			if validate and not self.syntaxValid(code = content, identation = True):
 				valid = False
@@ -961,28 +974,37 @@ class OrionTools:
 	##############################################################################
 
 	@classmethod
-	def base64From(self, data, iterations = 1):
+	def base64From(self, data, iterations = 1, url = False):
 		import base64
 		data = self.unicodeString(data)
 		if self.pythonNew(): data = bytes(data, 'utf-8')
 		for i in range(iterations):
+			if url:
+				for j in OrionTools.Base64Url:
+					data = data.replace(j[1], j[0])
 			data = base64.b64decode(data)
 		return data
 
 	@classmethod
-	def base64To(self, data, iterations = 1):
+	def base64To(self, data, iterations = 1, url = False):
 		import base64
 		data = self.unicodeString(data)
 		if self.pythonOld():
 			for i in range(iterations):
 				data = self.unicodeString(base64.b64encode(data))
 				data = data.replace('\n', '')
+				if url:
+					for j in OrionTools.Base64Url:
+						data = data.replace(j[0], j[1])
 		else:
 			for i in range(iterations):
 				try: data = bytes(data, 'utf-8')
 				except: pass # Already bytes object.
 				data = self.unicodeString(base64.b64encode(data))
 				data = data.replace('\n', '')
+				if url:
+					for j in OrionTools.Base64Url:
+						data = data.replace(j[0], j[1])
 		return data
 
 	##############################################################################
@@ -1019,6 +1041,28 @@ class OrionTools:
 			json.loads(data)
 			return True
 		except: return False
+
+	##############################################################################
+	# COMPRESS
+	##############################################################################
+
+	@classmethod
+	def compress(self, data, level = 9, raw = True, base64 = True, url = False):
+		import zlib
+		object = zlib.compressobj(zlib.Z_DEFAULT_COMPRESSION, zlib.DEFLATED, -zlib.MAX_WBITS if raw else 0, 8, zlib.Z_DEFAULT_STRATEGY)
+		data = object.compress(data)
+		data += object.flush()
+		if base64: data = self.base64To(data, url = url)
+		return data
+
+	@classmethod
+	def decompress(self, data, raw = True, base64 = True, url = False):
+		import zlib
+		if base64: data = self.base64From(data, url = url)
+		object = zlib.decompressobj(-zlib.MAX_WBITS if raw else 0)
+		data = object.decompress(data)
+		data += object.flush()
+		return data
 
 	##############################################################################
 	# ITERATOR
@@ -1207,6 +1251,15 @@ class OrionTools:
 	@classmethod
 	def languageNames(self):
 		return OrionTools.LanguageNames
+
+	##############################################################################
+	# COUNTRY
+	##############################################################################
+
+	@classmethod
+	def country(self, id):
+		try: return OrionTools.Countries[id]
+		except: return None
 
 	##############################################################################
 	# BUGS

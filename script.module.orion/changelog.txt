@@ -1,4 +1,13 @@
 
+[B]4.1.0 (2020.02.12)[/B]
+- Added best sorting option.
+- Added website player support.
+- Added new video codecs.
+- Updated Fen integration.
+- Fixed OpenScrapers integration.
+- Fixed old integrations.
+- Added integration list first setting.
+
 [B]4.0.0 (2019.12.30)[/B]
 - Porting to Python 3.
 - Fixed Fen integration.
