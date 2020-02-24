@@ -1511,8 +1511,8 @@ class OrionIntegration:
 		data = self._comment(self._content('sources1.py'), OrionIntegration.LanguagePython, '\t\t\t\t\t')
 		if not OrionTools.fileInsert(self.pathSources, '\.load_module\(module_name\)', data, validate = True):
 			return self._integrateFailure('Open Scrapers sources integration failure', self.pathSources)
-		data = self._comment(self._content('sources2.py'), OrionIntegration.LanguagePython, '\t')
-		if not OrionTools.fileInsert(self.pathSources, 'return\s*enabledHosters\(sourceDict\)', data, validate = True, replace = True):
+		data = self._comment(self._content('sources2.py'), OrionIntegration.LanguagePython, '\t\t')
+		if not OrionTools.fileInsert(self.pathSources, 'return\s*sourceDict', data, validate = True, replace = True):
 			return self._integrateFailure('Open Scrapers sources integration failure', self.pathSources)
 
 		# addon.xml
