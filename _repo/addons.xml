@@ -914,7 +914,7 @@ Added Trakt Manager
     </extension>
 </addon>
 
-<addon id="script.embuary.helper" name="Embuary Helper" version="1.4.2" provider-name="sualfred">
+<addon id="script.embuary.helper" name="Embuary Helper" version="1.4.3" provider-name="sualfred">
     <requires>
         <import addon="xbmc.python" version="2.26.0"/>
         <import addon="script.module.pil" version="1.1.7"/>
@@ -1840,7 +1840,7 @@ v5.2.14 (2017-01-23)
   <extension-point id="skin" schema="skin.xsd"/>
 </addon>
 
-<addon id="plugin.program.indigo" version="4.0.16" name="Indigo" provider-name="tvaddons">
+<addon id="plugin.program.indigo" version="4.0.17" name="Indigo" provider-name="tvaddons">
 	<requires>
 		<import addon="xbmc.python" version="2.1.0"/>
 	</requires>
@@ -3873,33 +3873,35 @@ Supported formats are:
   </extension>
 </addon>
 
-<addon id="script.embuary.info" name="Embuary Info" version="1.2.1" provider-name="sualfred">
-	<requires>
-		<import addon="xbmc.python" version="2.26.0"/>
-		<import addon="script.module.requests" version="2.9.1"/>
-		<import addon="script.module.arrow" version="0.10.0"/>
-		<import addon="script.module.simplecache" version="1.0.17" />
-	</requires>
-	<extension point="xbmc.python.pluginsource" library="plugin.py">
-	  <provides>video</provides>
-	</extension>
-	<extension point="xbmc.python.script" library="default.py">
-		<provides>executable</provides>
-	</extension>
-	<extension point="xbmc.addon.metadata">
-		<summary lang="en_GB">Embuary Info Script</summary>
-		<summary lang="de_DE">Embuary Info Script</summary>
-		<description lang="en_GB">Helper script to provide The Movie DB informations for persons, shows and movies. Works best with a skin integration.</description>
-		<description lang="de_DE">Helfer Script das Abfragen von The Movie DB informationen für Personen, Serien und Filme zu ermöglichen. Funktioniert am besten mit einer Skin Integration.</description>
-		<platform>all</platform>
-		<license>Apache-2.0</license>
-		<forum>https://forum.kodi.tv/showthread.php?tid=346034</forum>
-		<source>https://github.com/sualfred/script.embuary.info</source>
-		<assets>
-			<icon>resources/icon.png</icon>
-			<fanart>resources/fanart.jpg</fanart>
-		</assets>
-	</extension>
+<addon id="script.embuary.info" name="Embuary Info" version="1.2.5" provider-name="sualfred">
+    <requires>
+        <import addon="xbmc.python" version="2.26.0"/>
+        <import addon="script.module.requests" version="2.9.1"/>
+        <import addon="script.module.arrow" version="0.10.0"/>
+        <import addon="script.module.simplecache" version="1.0.17" />
+        <import addon="script.module.routing" version="0.2.0"/>
+    </requires>
+    <extension point="xbmc.python.pluginsource" library="plugin.py">
+      <provides>video</provides>
+    </extension>
+    <extension point="xbmc.python.script" library="default.py">
+        <provides>executable</provides>
+    </extension>
+    <extension point="xbmc.service" library="service.py" />
+    <extension point="xbmc.addon.metadata">
+        <summary lang="en_GB">Embuary Info Script</summary>
+        <summary lang="de_DE">Embuary Info Script</summary>
+        <description lang="en_GB">Helper script to provide The Movie DB informations for persons, shows and movies. Works best with a skin integration.</description>
+        <description lang="de_DE">Helfer Script das Abfragen von The Movie DB informationen für Personen, Serien und Filme zu ermöglichen. Funktioniert am besten mit einer Skin Integration.</description>
+        <platform>all</platform>
+        <license>Apache-2.0</license>
+        <forum>https://forum.kodi.tv/showthread.php?tid=346034</forum>
+        <source>https://github.com/sualfred/script.embuary.info</source>
+        <assets>
+            <icon>resources/icon.png</icon>
+            <fanart>resources/fanart.jpg</fanart>
+        </assets>
+    </extension>
 </addon>
 
 <addon id="script.module.pil"
@@ -3995,7 +3997,7 @@ Supported formats are:
 
 <addon id="metadata.tvshows.themoviedb.org"
        name="The Movie Database"
-       version="3.4.2"
+       version="3.5.0"
        provider-name="Team Kodi">
   <requires>
     <import addon="xbmc.metadata" version="2.1.0"/>
@@ -4695,7 +4697,7 @@ More minor bugfixes (honestly could not list them all)
 	</extension>
 </addon>
 
-<addon id="script.module.urlresolver" name="URLResolver" version="5.0.55" provider-name="tvaddons">
+<addon id="script.module.urlresolver" name="URLResolver" version="5.0.56" provider-name="tvaddons">
     <requires>
         <import addon="xbmc.python" version="2.1.0" />
         <import addon="plugin.video.youtube" optional="true" />
@@ -4940,7 +4942,7 @@ More minor bugfixes (honestly could not list them all)
     </extension>
 </addon>
 
-    <addon id="repository.Atrion18B" name="[COLOR darkgreen]Atrion's Repo for Kodi 18.x Backup[/COLOR]" version="0.4.6" provider-name="Atrion Darnay">
+    <addon id="repository.Atrion18B" name="[COLOR darkgreen]Atrion's Repo for Kodi 18.x Backup[/COLOR]" version="0.4.7" provider-name="Atrion Darnay">
         <requires>
             <import addon="xbmc.addon" version="12.0.0"/>
         </requires>
@@ -4970,7 +4972,7 @@ More minor bugfixes (honestly could not list them all)
 </addon>
 
 <addon id="plugin.video.themoviedb.helper"
-version="2.2.73"
+version="2.2.77"
 name="TheMovieDb Helper"
 provider-name="jurialmunkey">
 <requires>
@@ -5022,7 +5024,7 @@ provider-name="jurialmunkey">
     <screenshot>resources/screenshot-01.jpg</screenshot>
     <screenshot>resources/screenshot-02.jpg</screenshot>
   </assets>
-  <news>2.2.73 - Trakt Error fix[CR]2.2.72 - Some playlist fixes[CR]2.2.71 - Add URL encode options for player values[CR]2.2.70 - NextAired Library Improvements use Trakt[CR]2.2.69 - LMAO - Browse seasons[CR]2.2.68 - Fix trakt context for episodes[CR]2.2.67 - Add day to next aired labels[CR]2.2.66 - Some next aired library tweeks[CR]2.2.65 - Add play using context menu[CR]2.2.64 - Library next aired[CR]2.2.63 - Sort userlists by added date instead of rating[CR]2.2.62 - Add regions for release dates[CR]2.2.61 - Relative release dates in discover[CR]2.2.60 - Add release type selection in discover[CR]2.2.59 - Expose Trakt context addremove function[CR]2.2.58 - Add search history caching[CR]2.2.57 - Add feedback for adding items to watchlist etc.[CR]2.2.56 - Add Videos section to details[CR]2.2.55 - Fix for TraktAPI false positives getting slug[CR]2.2.54 - Potential fix for Trakt management options to only show if auth[CR]2.2.53 - Another fix for resolving url bugs - NOTICE: Users should re-add old strm files[CR]2.2.52 - Add autoupdate on startup option for library added shows[CR]2.2.51 - Flatten seasons option[CR]2.2.50 - Add season and episode numbers to episodes[CR]2.2.49 - Separate unaired movies/episodes option[CR]2.2.48 - Remove TMDB/Fanart develop key expert options as children can't help but get their sticky fingers all over it even after being told not to touch[CR]2.2.47 - Better clearing of service monitor properties[CR]2.2.46 - Fix for fanarttv on episode widgets[CR]2.2.45 - Add option to show next page item on widgets[CR]2.2.44 - Potential fix for both strm and widget player resolve[CR]2.2.43 - Fix for mostwatched shows/movies not reaching limit[CR]2.2.42 - Fix for unwatched episode counts[CR]2.2.41 - Remove resolveurl to prevent crashing bug and add fixes for fanarttv: Episode artwork plus connection error loop[CR]2.2.39/40 - Add role to label2[CR]2.2.38 - Expand Trakt list limit option[CR]2.2.37 - Add throwaway var to attempt fix for _strptime import bug[CR]2.2.36 - Possible fix for old settings format log spam[CR]2.2.35 - Potential fix for datetime bug in py2[CR]2.2.34 - Fix for plugin failed to play error[CR]2.2.33 - Fix for context menu trakt management of tvshows[CR]2.2.32 - Fix for trakt collection url not resolving to details[CR]2.2.31 - Add option to disable folder creation check[CR]2.2.30 - Reattempt create filepath as possible fix for false failure report[CR]2.2.29 - Only skip TMDbHelper .strm files in local library[CR]2.2.28 - Add options for add to library path[CR]2.2.26/27 - Fixes for add to library[CR]2.2.25 - Formatting future episodes fix[CR]2.2.24 - Browse Trakt Collection[CR]2.2.23 - Add to Kodi Library function[CR]2.2.22 - Player now ignores strm files in local library[CR]2.2.21 - Improvements to In-Progress[CR]2.2.20 - Add option to hide unaired episodes/movies. Format unaired episode/movie labels to red italic[CR]2.2.19 - Additional artwork types from kodilibrary[CR]2.2.18 - Cleanup and clear some empty keys[CR]2.2.17 - Add person kodidb stats to service monitor[CR]2.2.16 - Fix service monitor for people[CR]2.2.14/5 - playmedia param for close dialog[CR]2.2.13 - Extra checks to prevent double adding[CR]2.2.11 - Add Rule improvements to Discover[CR]2.2.10 - Move stats to infoproperties[CR]2.2.9 - DB Stats for Person[CR]2.2.8 - Use select dialog instead of container for discover method[CR]2.2.7 - Add discover select boxes[CR]2.2.6 - Fix for unicode error in add_query params[CR]2.2.5 - Expose discover method for users[CR]2.2.4 - Cleanup for window manager service monitor[CR]2.2.3 - Add close dialog option[CR]2.2.2 - Add Gender Field[CR]2.2.1 - Additional Sets Properties[CR]2.2.0 - Call Auto method for handling extendedinfo experience</news>
+  <news>2.2.77 - Add extrafanart[CR]2.2.76 - Fixes for dialog auto play[CR]2.2.75 - Add play with Kodi as player option in dialog[CR]2.2.74 - Various minor changes[CR]2.2.73 - Trakt Error fix[CR]2.2.72 - Some playlist fixes[CR]2.2.71 - Add URL encode options for player values[CR]2.2.70 - NextAired Library Improvements use Trakt[CR]2.2.69 - LMAO - Browse seasons[CR]2.2.68 - Fix trakt context for episodes[CR]2.2.67 - Add day to next aired labels[CR]2.2.66 - Some next aired library tweeks[CR]2.2.65 - Add play using context menu[CR]2.2.64 - Library next aired[CR]2.2.63 - Sort userlists by added date instead of rating[CR]2.2.62 - Add regions for release dates[CR]2.2.61 - Relative release dates in discover[CR]2.2.60 - Add release type selection in discover[CR]2.2.59 - Expose Trakt context addremove function[CR]2.2.58 - Add search history caching[CR]2.2.57 - Add feedback for adding items to watchlist etc.[CR]2.2.56 - Add Videos section to details[CR]2.2.55 - Fix for TraktAPI false positives getting slug[CR]2.2.54 - Potential fix for Trakt management options to only show if auth[CR]2.2.53 - Another fix for resolving url bugs - NOTICE: Users should re-add old strm files[CR]2.2.52 - Add autoupdate on startup option for library added shows[CR]2.2.51 - Flatten seasons option[CR]2.2.50 - Add season and episode numbers to episodes[CR]2.2.49 - Separate unaired movies/episodes option[CR]2.2.48 - Remove TMDB/Fanart develop key expert options as children can't help but get their sticky fingers all over it even after being told not to touch[CR]2.2.47 - Better clearing of service monitor properties[CR]2.2.46 - Fix for fanarttv on episode widgets[CR]2.2.45 - Add option to show next page item on widgets[CR]2.2.44 - Potential fix for both strm and widget player resolve[CR]2.2.43 - Fix for mostwatched shows/movies not reaching limit[CR]2.2.42 - Fix for unwatched episode counts[CR]2.2.41 - Remove resolveurl to prevent crashing bug and add fixes for fanarttv: Episode artwork plus connection error loop[CR]2.2.39/40 - Add role to label2[CR]2.2.38 - Expand Trakt list limit option[CR]2.2.37 - Add throwaway var to attempt fix for _strptime import bug[CR]2.2.36 - Possible fix for old settings format log spam[CR]2.2.35 - Potential fix for datetime bug in py2[CR]2.2.34 - Fix for plugin failed to play error[CR]2.2.33 - Fix for context menu trakt management of tvshows[CR]2.2.32 - Fix for trakt collection url not resolving to details[CR]2.2.31 - Add option to disable folder creation check[CR]2.2.30 - Reattempt create filepath as possible fix for false failure report[CR]2.2.29 - Only skip TMDbHelper .strm files in local library[CR]2.2.28 - Add options for add to library path[CR]2.2.26/27 - Fixes for add to library[CR]2.2.25 - Formatting future episodes fix[CR]2.2.24 - Browse Trakt Collection[CR]2.2.23 - Add to Kodi Library function[CR]2.2.22 - Player now ignores strm files in local library[CR]2.2.21 - Improvements to In-Progress[CR]2.2.20 - Add option to hide unaired episodes/movies. Format unaired episode/movie labels to red italic[CR]2.2.19 - Additional artwork types from kodilibrary[CR]2.2.18 - Cleanup and clear some empty keys[CR]2.2.17 - Add person kodidb stats to service monitor[CR]2.2.16 - Fix service monitor for people[CR]2.2.14/5 - playmedia param for close dialog[CR]2.2.13 - Extra checks to prevent double adding[CR]2.2.11 - Add Rule improvements to Discover[CR]2.2.10 - Move stats to infoproperties[CR]2.2.9 - DB Stats for Person[CR]2.2.8 - Use select dialog instead of container for discover method[CR]2.2.7 - Add discover select boxes[CR]2.2.6 - Fix for unicode error in add_query params[CR]2.2.5 - Expose discover method for users[CR]2.2.4 - Cleanup for window manager service monitor[CR]2.2.3 - Add close dialog option[CR]2.2.2 - Add Gender Field[CR]2.2.1 - Additional Sets Properties[CR]2.2.0 - Call Auto method for handling extendedinfo experience</news>
 </extension>
 </addon>
 
@@ -5226,7 +5228,7 @@ Kodi is a registered trademark of the XBMC Foundation. We are not connected to o
 	</extension>
 </addon>
 
-    <addon id="repository.Atrion18" name="[COLOR darkgreen]Atrion's Repo for Kodi 18.x[/COLOR]" version="0.4.6" provider-name="Atrion Darnay">
+    <addon id="repository.Atrion18" name="[COLOR darkgreen]Atrion's Repo for Kodi 18.x[/COLOR]" version="0.4.7" provider-name="Atrion Darnay">
         <requires>
             <import addon="xbmc.addon" version="12.0.0"/>
         </requires>

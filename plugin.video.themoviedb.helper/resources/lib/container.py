@@ -34,6 +34,7 @@ class Container(Plugin):
         self.library = 'video'
         self.updatelisting = False
         self.check_sync = False
+        self.dbid_sorting = False
         self.randomlist = []
         self.numitems_dbid = 0
         self.numitems_tmdb = 0
@@ -176,16 +177,18 @@ class Container(Plugin):
             self.details_tv['banner'] = artwork.get('banner')
             self.details_tv['fanart'] = self.details_tv.get('fanart') or artwork.get('fanart')
 
-    def get_sortedlist(self, items):
+    def configure_list_items(self, items):
         if not items:
             return
 
         added, dbiditems, tmdbitems, lastitems, firstitems, nextpage = [], [], [], [], [], []
         mixed_movies, mixed_tvshows = 0, 0
 
+        # Get TV Show details for Container
         if self.item_tmdbtype in ['season', 'episode'] and self.params.get('tmdb_id'):
             self.get_details_tv(self.params.get('tmdb_id'), season=self.params.get('season', None))
 
+        # Add Up Next Season
         if self.item_tmdbtype == 'season' and self.details_tv and not self.addon.getSettingBool('hide_special_seasons'):
             item_upnext = ListItem(library=self.library, **self.details_tv)
             item_upnext.infolabels['season'] = self.addon.getLocalizedString(32043)
@@ -194,6 +197,8 @@ class Container(Plugin):
             items.append(item_upnext)
 
         for i in items:
+
+            # Add NextPage Item to End of List
             if i.nextpage:
                 i.url = self.params.copy()
                 i.url['page'] = i.nextpage
@@ -202,21 +207,24 @@ class Container(Plugin):
                     nextpage.append(i)
                 continue
 
+            # Filter Out Duplicate Items
             name = u'{0}{1}'.format(i.label, i.imdb_id or i.tmdb_id or i.poster)
             if name in added:
                 continue
             added.append(name)
 
+            # Count Mixed Types to Set Appropriate Container Content
             if i.mixed_type == 'tv':
                 mixed_tvshows += 1
             elif i.mixed_type == 'movie':
                 mixed_movies += 1
 
-            # Special Look-up for Episode Widgets
-            if self.params.get('info') in ['trakt_calendar', 'trakt_nextepisodes']:
+            # Lookup TVShow Details for Episode Widgets
+            if self.params.get('info') in constants.EPISODE_WIDGETS:
                 self.details_tv = None
                 self.get_details_tv(i.tmdb_id or self.get_tmdb_id(query=i.infolabels.get('tvshowtitle'), itemtype='tv'), artwork_only=True)
 
+            # Add TVShow Details to Item
             if self.details_tv:
                 season_num = i.infolabels.get('season')
                 i.cast = self.details_tv.get('cast', []) + i.cast
@@ -231,11 +239,11 @@ class Container(Plugin):
                 i.tvshow_poster = self.details_tv.get('poster') or i.poster
                 i.infolabels['season'] = season_num
 
-            # Format episode labels
+            # Format Episode Labels
             if (not self.params.get('info') == 'details' and self.item_tmdbtype == 'episode' and
                     i.infolabels.get('season') and i.infolabels.get('episode')):
                 i.label = u'{:02d}. {}'.format(utils.try_parse_int(i.infolabels.get('episode')), i.label)
-                if self.params.get('info') in ['trakt_calendar', 'trakt_nextepisodes', 'trakt_upnext'] or self.addon.getSettingBool('flatten_seasons'):
+                if self.params.get('info') in constants.EPISODE_WIDGETS or self.addon.getSettingBool('flatten_seasons'):
                     i.label = u'{}x{}'.format(utils.try_parse_int(i.infolabels.get('season')), i.label)
 
             # Format label for future eps/movies but not plugin methods specifically about the future or details/seasons
@@ -251,20 +259,28 @@ class Container(Plugin):
                 except Exception as exc:
                     utils.kodi_log('Error: {}'.format(exc), 1)
 
+            # Get DBID From Library
             i.dbid = self.get_db_info(
-                info='dbid', tmdbtype=self.item_tmdbtype, imdb_id=i.imdb_id,
-                originaltitle=i.infolabels.get('originaltitle'), title=i.infolabels.get('title'), year=i.infolabels.get('year'),
-                tvshowtitle=i.infolabels.get('tvshowtitle'), season=i.infolabels.get('season'), episode=i.infolabels.get('episode'))
+                info='dbid',
+                tmdbtype=self.item_tmdbtype,
+                imdb_id=i.imdb_id,
+                originaltitle=i.infolabels.get('originaltitle'),
+                title=i.infolabels.get('title'),
+                year=i.infolabels.get('year'),
+                tvshowtitle=i.infolabels.get('tvshowtitle'),
+                season=i.infolabels.get('season'),
+                episode=i.infolabels.get('episode'))
 
+            # Special Property Because Plugin Category not Available in Widgets
             i.infoproperties['widget'] = self.plugincategory
 
             if self.item_tmdbtype == 'season' and not i.infolabels.get('season'):
                 if not self.addon.getSettingBool('hide_special_seasons'):  # Don't add specials if user set to hide
                     lastitems.append(i)  # Put special season last
             elif self.item_tmdbtype == 'season' and i.infolabels.get('season') == self.addon.getLocalizedString(32043):
-                firstitems.append(i)
-            elif i.dbid:
-                dbiditems.append(i)
+                firstitems.append(i)  # Put Up Next Season First
+            elif i.dbid and self.dbid_sorting:
+                dbiditems.append(i)  # Put DBID Items At Front
             else:
                 tmdbitems.append(i)
 
@@ -524,6 +540,8 @@ class Container(Plugin):
             url={'info': 'details', 'type': 'episode'})
 
     def list_traktcalendar_episodes(self):
+        date = datetime.datetime.today() + datetime.timedelta(days=utils.try_parse_int(self.params.get('startdate', 0)))
+        self.plugincategory = date.strftime('%A')  # For Trakt Calendar Custom Window
         self.item_tmdbtype = 'episode'
         self.list_items(
             items=TraktAPI(tmdb=self.tmdb, login=True).get_calendar_episodes(
@@ -563,6 +581,7 @@ class Container(Plugin):
                 itemtype='tv', tmdb_id=i.get('show', {}).get('ids', {}).get('tmdb'),
                 season=i.get('episode', {}).get('season'),
                 episode=i.get('episode', {}).get('number')))
+            li.tmdb_id = i.get('show', {}).get('ids', {}).get('tmdb')  # Set TVSHOW ID
 
             # Create our airing properties
             air_date = utils.convert_timestamp(i.get('first_aired'), utc_convert=True)
@@ -571,6 +590,8 @@ class Container(Plugin):
             li.infoproperties['air_date'] = utils.get_region_date(air_date, 'datelong')
             li.infoproperties['air_time'] = utils.get_region_date(air_date, 'time')
             li.infoproperties['air_day'] = air_date.strftime('%A')
+            li.infoproperties['air_day_short'] = air_date.strftime('%a')
+            li.infoproperties['air_date_short'] = air_date.strftime('%d %b')
 
             # Do some fallback properties in-case TMDb doesn't have info
             li.infolabels['title'] = li.label = i.get('episode', {}).get('title')
@@ -580,6 +601,10 @@ class Container(Plugin):
 
             # Add our item
             items.append(li)
+
+        # Today's date to plugin category
+        date = datetime.datetime.today() + datetime.timedelta(days=utils.try_parse_int(self.params.get('startdate', 0)))
+        self.plugincategory = date.strftime('%A')
 
         # Create our list
         self.item_tmdbtype = 'episode'
@@ -723,20 +748,40 @@ class Container(Plugin):
         for k, v in self.params.items():
             lock = '{}.{}={}'.format(lock, k, v) if lock else '{}={}'.format(k, v)
         cur_lock = xbmcgui.Window(10000).getProperty('TMDbHelper.Player.ResolvedUrl')
-        if self.params.get('islocal'):  # setResolvedUrl for local files
-            xbmcplugin.setResolvedUrl(self.handle, True, ListItem().set_listitem())
         if cur_lock == lock:
+            utils.kodi_log('Container -- Play IsLocked:\n{0}'.format(self.params), 1)
             return cur_lock
         xbmcgui.Window(10000).setProperty('TMDbHelper.Player.ResolvedUrl', lock)
 
     def list_play(self):
-        if not self.params.get('type') or not self.params.get('tmdb_id'):
+        utils.kodi_log('Container -- Attempting to Play Item...:\n{0}'.format(self.params), 1)
+        """
+        Kodi does 5x retries to resolve url but we don't use this method so we need to catch it
+        Instead we just give a blank resolved url if a strm file or do nothing if not
+        Otherwise Kodi re-triggers the start of the play function causing a slow down
+        Should be fixed in Kodi Kore for Matrix so won't need this hack anymore
+        """
+        if self.play_islocked():
+            if self.params.get('islocal'):
+                xbmcplugin.setResolvedUrl(self.handle, True, ListItem().set_listitem())
             return
+
+        # Check we have a TMDb ID and do nothing if we can't get one
+        self.list_getid()
+        if not self.params.get('type') or not self.params.get('tmdb_id'):
+            utils.kodi_log('Container -- Play No Type or TMDb_ID:\n{0}'.format(self.params), 1)
+            return
+
+        # Build our player script command and run it
         season, episode = self.params.get('season', ''), self.params.get('episode', '')
         command = 'play={0},tmdb_id={1}{{0}}'.format(self.params.get('type'), self.params.get('tmdb_id'))
         command = command.format(',season={0},episode={1}'.format(season, episode) if season and episode else '')
         command = 'RunScript(plugin.video.themoviedb.helper,{})'.format(command)
         xbmc.executebuiltin(command)
+
+        # Resolve to empty url if using a strm file because Kodi always expects resolvedurl in library
+        if self.params.get('islocal'):
+            xbmcplugin.setResolvedUrl(self.handle, True, ListItem().set_listitem())
 
     def get_searchhistory(self, itemtype=None, cache=None):
         if not itemtype:
@@ -821,13 +866,13 @@ class Container(Plugin):
         if container_url:
             xbmc.executebuiltin('Container.Update({}, replace)'.format(container_url))
 
-    def list_items(self, items=None, url=None, url_tmdb_id=None, get_sortedlist=True):
+    def list_items(self, items=None, url=None, url_tmdb_id=None):
         """
         Sort listitems and then display
         url= for listitem base folderpath url params
         url_tmdb_id= for listitem tmdb_id used in url
         """
-        items = self.get_sortedlist(items) if get_sortedlist else items
+        items = self.configure_list_items(items)
 
         if not items:
             return
@@ -864,6 +909,7 @@ class Container(Plugin):
         kwparams.setdefault('key', cat.get('key'))
         path = cat.get('path', '').format(**self.params)
 
+        self.dbid_sorting = cat.get('dbid_sorting', False)
         self.item_tmdbtype = cat.get('item_tmdbtype', '').format(**self.params)
         self.list_items(
             items=self.tmdb.get_list(path, *args, **kwparams),
@@ -1044,8 +1090,7 @@ class Container(Plugin):
         self.tmdb.exclude_value = utils.split_items(self.params.get('exclude_value', None))[0]
 
         # ROUTER LIST FUNCTIONS
-        if self.params.get('info') == 'play' and not self.play_islocked():
-            self.list_getid()
+        if self.params.get('info') == 'play':
             self.list_play()
         elif self.params.get('info') == 'textviewer':
             self.textviewer(xbmc.getInfoLabel('ListItem.Label'), xbmc.getInfoLabel('ListItem.Plot'))
