@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# modified by Venom for Openscrapers
 
 #  ..#######.########.#######.##....#..######..######.########....###...########.#######.########..######.
 #  .##.....#.##.....#.##......###...#.##....#.##....#.##.....#...##.##..##.....#.##......##.....#.##....##
@@ -126,9 +127,9 @@ class source:
 
 				links = client.parseDOM(post, 'a', ret='href')
 				magnet = [i.replace('&amp;', '&') for i in links if 'magnet:' in i][0]
-				url = magnet.split('&tr')[0]
+				url = urllib.unquote_plus(magnet).split('&tr')[0].replace(' ', '.')
 
-				if any(x in url.lower() for x in ['french', 'italian', 'spanish', 'truefrench', 'dublado', 'dubbed']):
+				if url in str(sources):
 					continue
 
 				name = client.parseDOM(post, 'a', ret='title')[1]
@@ -147,17 +148,16 @@ class source:
 
 				try:
 					size = re.findall('((?:\d+\,\d+\.\d+|\d+\.\d+|\d+\,\d+|\d+)\s*(?:GiB|MiB|GB|MB))', post)[0]
-					div = 1 if size.endswith(('GB', 'GiB')) else 1024
-					size = float(re.sub('[^0-9|/.|/,]', '', size.replace(',', '.'))) / div
-					size = '%.2f GB' % size
-					info.insert(0, size)
+					dsize, isize = source_utils._size(size)
+					info.insert(0, isize)
 				except:
+					dsize = 0
 					pass
 
 				info = ' | '.join(info)
 
 				sources.append({'source': 'torrent', 'quality': quality, 'language': 'en', 'url': url,
-											'info': info, 'direct': False, 'debridonly': True})
+											'info': info, 'direct': False, 'debridonly': True, 'size': dsize})
 
 			return sources
 		except:

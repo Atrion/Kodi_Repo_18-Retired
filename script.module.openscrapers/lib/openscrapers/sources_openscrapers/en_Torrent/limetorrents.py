@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# modified by Venom for Openscrapers
 
 #  ..#######.########.#######.##....#..######..######.########....###...########.#######.########..######.
 #  .##.....#.##.....#.##......###...#.##....#.##....#.##.....#...##.##..##.....#.##......##.....#.##....##
@@ -28,6 +29,7 @@ import re
 import urllib
 import urlparse
 
+from openscrapers.modules import cfscrape
 from openscrapers.modules import cleantitle
 from openscrapers.modules import client
 from openscrapers.modules import debrid
@@ -77,8 +79,9 @@ class source:
 
 
 	def sources(self, url, hostDict, hostprDict):
+		self.scraper = cfscrape.create_scraper()
+		self._sources = []
 		try:
-			self._sources = []
 			self.items = []
 
 			if url is None:
@@ -131,7 +134,7 @@ class source:
 	def _get_items(self, url):
 		try:
 			headers = {'User-Agent': client.agent()}
-			r = client.request(url, headers=headers)
+			r = self.scraper.get(url,headers=headers).content
 
 			posts = client.parseDOM(r, 'table', attrs={'class': 'table2'})[0]
 			posts = client.parseDOM(posts, 'tr')
@@ -165,14 +168,13 @@ class source:
 
 				try:
 					size = re.findall('((?:\d+\,\d+\.\d+|\d+\.\d+|\d+\,\d+|\d+)\s*(?:GiB|MiB|GB|MB))', post)[0]
-					div = 1 if size.endswith('GB') else 1024
-					size = float(re.sub('[^0-9|/.|/,]', '', size.replace(',', '.'))) / div
-					size = '%.2f GB' % size
+					dsize, isize = source_utils._size(size)
 				except:
-					size = '0'
+					isize = '0'
+					dsize = 0
 					pass
 
-				self.items.append((name, link, size))
+				self.items.append((name, link, isize, dsize))
 
 			return self.items
 
@@ -184,13 +186,13 @@ class source:
 	def _get_sources(self, item):
 		try:
 			name = item[0]
-
 			quality, info = source_utils.get_release_quality(name, name)
 
-			info.insert(0, item[2]) # if item[2] != '0'
+			if item[2] != '0':
+				info.insert(0, item[2])
 			info = ' | '.join(info)
 
-			data = client.request(item[1])
+			data = self.scraper.get(item[1]).content
 			if data is None:
 				return
 
@@ -200,7 +202,7 @@ class source:
 				return
 
 			self._sources.append({'source': 'torrent', 'quality': quality, 'language': 'en', 'url': url,
-												'info': info, 'direct': False, 'debridonly': True})
+												'info': info, 'direct': False, 'debridonly': True, 'size': item[3]})
 		except:
 			source_utils.scraper_error('LIMETORRENTS')
 			pass

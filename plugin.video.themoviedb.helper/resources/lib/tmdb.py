@@ -75,7 +75,7 @@ class TMDb(RequestAPI):
         infolabels['originaltitle'] = item.get('original_title')
         infolabels['tvshowtitle'] = item.get('tvshowtitle')
         infolabels['plot'] = item.get('overview') or item.get('biography') or item.get('content')
-        infolabels['rating'] = item.get('vote_average')
+        infolabels['rating'] = '{:0,.1f}'.format(utils.try_parse_float(item.get('vote_average')))
         infolabels['votes'] = '{:0,.0f}'.format(item.get('vote_count')) if item.get('vote_count') else None
         infolabels['premiered'] = item.get('air_date') or item.get('release_date') or item.get('first_air_date') or ''
         infolabels['year'] = infolabels.get('premiered')[:4]
@@ -102,12 +102,16 @@ class TMDb(RequestAPI):
         if item.get('release_dates') and item.get('release_dates').get('results'):
             for i in item.get('release_dates').get('results'):
                 if i.get('iso_3166_1') and i.get('iso_3166_1') == self.iso_country:
-                    if i.get('release_dates') and i.get('release_dates')[0].get('certification'):
-                        infolabels['MPAA'] = '{0}{1}'.format(self.mpaa_prefix, i.get('release_dates')[0].get('certification'))
+                    for i in sorted(i.get('release_dates', []), key=lambda k: k.get('type')):
+                        if i.get('certification'):
+                            infolabels['MPAA'] = '{0}{1}'.format(self.mpaa_prefix, i.get('certification'))
+                            break
+                    break
         if item.get('content_ratings') and item.get('content_ratings').get('results'):
             for i in item.get('content_ratings').get('results'):
                 if i.get('iso_3166_1') and i.get('iso_3166_1') == self.iso_country and i.get('rating'):
                     infolabels['MPAA'] = '{0}{1}'.format(self.mpaa_prefix, i.get('rating'))
+                    break
         return infolabels
 
     def get_infoproperties(self, item):
@@ -115,6 +119,9 @@ class TMDb(RequestAPI):
         infoproperties['tmdb_id'] = item.get('id')
         infoproperties['imdb_id'] = item.get('imdb_id') or item.get('external_ids', {}).get('imdb_id')
         infoproperties['tvdb_id'] = item.get('external_ids', {}).get('tvdb_id')
+        infoproperties['tvshow.tmdb_id'] = item.get('tvshow.tmdb_id')
+        infoproperties['tvshow.imdb_id'] = item.get('tvshow.imdb_id')
+        infoproperties['tvshow.tvdb_id'] = item.get('tvshow.tvdb_id')
         infoproperties['biography'] = item.get('biography')
         infoproperties['birthday'] = item.get('birthday')
         infoproperties['age'] = utils.age_difference(item.get('birthday'), item.get('deathday'))
@@ -124,7 +131,7 @@ class TMDb(RequestAPI):
         infoproperties['job'] = item.get('job')
         infoproperties['role'] = item.get('character') or item.get('job') or item.get('department') or item.get('known_for_department')
         infoproperties['born'] = item.get('place_of_birth')
-        infoproperties['tmdb_rating'] = item.get('vote_average')
+        infoproperties['tmdb_rating'] = '{:0,.1f}'.format(utils.try_parse_float(item.get('vote_average')))
         infoproperties['tmdb_votes'] = '{:0,.0f}'.format(item.get('vote_count')) if item.get('vote_count') else None
         if item.get('gender'):
             infoproperties['gender'] = self.addon.getLocalizedString(32070) if item.get('gender') == 2 else self.addon.getLocalizedString(32071)
@@ -137,7 +144,7 @@ class TMDb(RequestAPI):
             infoproperties['last_aired.tmdb_id'] = i.get('id')
             infoproperties['last_aired.plot'] = i.get('overview')
             infoproperties['last_aired.season'] = i.get('season_number')
-            infoproperties['last_aired.rating'] = i.get('vote_average')
+            infoproperties['last_aired.rating'] = '{:0,.1f}'.format(utils.try_parse_float(i.get('vote_average')))
             infoproperties['last_aired.votes'] = i.get('vote_count')
             infoproperties['last_aired.thumb'] = self.get_season_thumb(i)
         if item.get('next_episode_to_air'):
@@ -206,7 +213,7 @@ class TMDb(RequestAPI):
                 infoproperties['set.{}.plot'.format(p)] = i.get('overview', '')
                 infoproperties['set.{}.premiered'.format(p)] = i.get('release_date', '')
                 infoproperties['set.{}.year'.format(p)] = i.get('release_date', '')[:4]
-                infoproperties['set.{}.rating'.format(p)] = i.get('vote_average', '')
+                infoproperties['set.{}.rating'.format(p)] = '{:0,.1f}'.format(utils.try_parse_float(i.get('vote_average')))
                 infoproperties['set.{}.votes'.format(p)] = i.get('vote_count', '')
                 infoproperties['set.{}.poster'.format(p)] = self.get_imagepath(i.get('poster_path', ''), True)
                 infoproperties['set.{}.fanart'.format(p)] = self.get_imagepath(i.get('backdrop_path', ''))
@@ -387,7 +394,7 @@ class TMDb(RequestAPI):
             utils.kodi_log('TMDb Get Details: No Item Type or TMDb ID!\n{} {} {} {}'.format(itemtype, tmdb_id, season, episode), 2)
             return {}
         extra_request = None
-        cache_name = '{0}.TMDb.v2_2_67.{1}.{2}'.format(self.cache_name, itemtype, tmdb_id)
+        cache_name = '{0}.TMDb.v2_2_82.{1}.{2}'.format(self.cache_name, itemtype, tmdb_id)
         cache_name = '{0}.Season{1}'.format(cache_name, season) if season else cache_name
         cache_name = '{0}.Episode{1}'.format(cache_name, episode) if season and episode else cache_name
         itemdict = self.get_cache(cache_name) if not cache_refresh else None
@@ -402,6 +409,9 @@ class TMDb(RequestAPI):
             if season and episode and not extra_request:
                 extra_request = {'episode_number': episode, 'season_number': season}
             if extra_request:
+                extra_request['tvshow.tmdb_id'] = request.get('id')
+                extra_request['tvshow.imdb_id'] = request.get('imdb_id') or request.get('external_ids', {}).get('imdb_id')
+                extra_request['tvshow.tvdb_id'] = request.get('external_ids', {}).get('tvdb_id')
                 request = utils.merge_two_dicts(request, extra_request)
             itemdict = self.set_cache(self.get_niceitem(request), cache_name, self.cache_long) if request else {}
             utils.kodi_log('TMDb Get Details: No Item Found!\n{} {} {} {}'.format(itemtype, tmdb_id, season, episode), 2) if not request else None

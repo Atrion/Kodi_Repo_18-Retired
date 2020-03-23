@@ -159,7 +159,7 @@ class Script(Plugin):
         # If we're at 0 then close and exit
         if self.get_position() == 0:
             xbmc.executebuiltin('Action(Back)')
-            return self.call_reset()  # Clear and exit
+            return self.call_reset(openinfo=True)  # Clear and exit but reopen original info dialog
 
         # Open our call_id window if first run
         if self.first_run:
@@ -216,9 +216,17 @@ class Script(Plugin):
             xbmc.executebuiltin('PlayMedia({})'.format(self.params.get('playmedia')))
         self.call_window()
 
-    def call_reset(self):
+    def call_reset(self, openinfo=False):
         self.reset_props()
         self.home.clearProperty(self.prefixinstance)
+        if not openinfo:
+            return
+        is_active = xbmc.getCondVisibility("Window.IsVisible({})".format(self.params.get('call_auto')))
+        while not self.monitor.abortRequested() and is_active:
+            self.monitor.waitForAbort(0.5)
+            is_active = xbmc.getCondVisibility("Window.IsVisible({})".format(self.params.get('call_auto')))
+        if not self.params.get('return'):
+            xbmc.executebuiltin('Action(Info)')
 
     def call_previous(self):
         self.prev_path()
@@ -343,7 +351,7 @@ class Script(Plugin):
         player = Player()
         tmdbtype = self.params.get('set_defaultplayer')
         setting = 'default_player_episodes' if tmdbtype == 'tv' else 'default_player_{0}s'.format(tmdbtype)
-        player.setup_players(tmdbtype=tmdbtype, clearsetting=True)
+        player.setup_players(tmdbtype=tmdbtype, clearsetting=True, assertplayers=False)
         idx = xbmcgui.Dialog().select(
             'Choose Default Player for {0}'.format(utils.type_convert(tmdbtype, 'plural')), player.itemlist)
         if idx == 0:

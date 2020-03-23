@@ -36,9 +36,10 @@ class VideaResolver(UrlResolver):
         sources = helpers.get_dom(html, 'video_sources')
         if sources:
             sources = re.findall('name\s*=\s*[\'|"]([^\'"]+).+?streamable.+?>([^<]+)', sources[0])
-            source = helpers.pick_source(helpers.sort_sources_list(sources))
+            if sources[-1][0].lower() == 'lq': sources = sources[::-1]
+            source = helpers.pick_source(sources)
             if source.startswith('//'): source = 'http:' + source
-            return source.replace('&amp;', '&')
+            return source
 
         raise ResolverError('Stream not found')
 

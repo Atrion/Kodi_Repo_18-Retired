@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# modified by Venom for Openscrapers
 
 #  ..#######.########.#######.##....#..######..######.########....###...########.#######.########..######.
 #  .##.....#.##.....#.##......###...#.##....#.##....#.##.....#...##.##..##.....#.##......##.....#.##....##
@@ -133,12 +134,17 @@ class source:
 
 				quality, info = source_utils.get_release_quality(name, name)
 
-				size = source_utils.convert_size(file["size"])
-				info.insert(0, size)
+				try:
+					dsize, isize = source_utils.convert_size(file["size"], to='GB')
+					info.insert(0, isize)
+				except:
+					dsize = 0
+					pass
+
 				info = ' | '.join(info)
 
 				sources.append({'source': 'torrent', 'quality': quality, 'language': 'en', 'url': url,
-											'info': info, 'direct': False, 'debridonly': True})
+											'info': info, 'direct': False, 'debridonly': True, 'size': dsize})
 			return sources
 
 		except:

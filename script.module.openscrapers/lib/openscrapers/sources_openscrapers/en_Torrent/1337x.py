@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# modified by Venom for Openscrapers
 
 #  ..#######.########.#######.##....#..######..######.########....###...########.#######.########..######.
 #  .##.....#.##.....#.##......###...#.##....#.##....#.##.....#...##.##..##.....#.##......##.....#.##....##
@@ -38,8 +39,8 @@ from openscrapers.modules import workers
 class source:
 	def __init__(self):
 		self.priority = 1
-		self.language = ['en', 'de', 'fr', 'ko', 'pl', 'pt', 'ru']  # Old  1337x.se  1337x.eu  1337x.ws
-		self.domains = ['1337x.to', '1337x.st', '1337x.is']
+		self.language = ['en', 'de', 'fr', 'ko', 'pl', 'pt', 'ru']
+		self.domains = ['1337x.to', '1337x.st', '1337x.is'] #.st and .is behind cloudflare while .to is not
 		self.base_link = 'https://1337x.to/'
 		self.tvsearch = 'https://1337x.to/sort-category-search/%s/TV/seeders/desc/1/'
 		self.moviesearch = 'https://1337x.to/sort-category-search/%s/Movies/seeders/desc/1/'
@@ -155,14 +156,13 @@ class source:
 
 				try:
 					size = re.findall('((?:\d+\,\d+\.\d+|\d+\.\d+|\d+\,\d+|\d+)\s*(?:GiB|MiB|GB|MB))', post)[0]
-					div = 1 if size.endswith('GB') else 1024
-					size = float(re.sub('[^0-9|/.|/,]', '', size.replace(',', '.'))) / div
-					size = '%.2f GB' % size
+					dsize, isize = source_utils._size(size)
 				except:
-					size = '0'
+					isize = '0'
+					dsize = 0
 					pass
 
-				self.items.append((name, link, size))
+				self.items.append((name, link, isize, dsize))
 
 			return self.items
 
@@ -177,7 +177,8 @@ class source:
 
 			quality, info = source_utils.get_release_quality(item[1], name)
 
-			info.insert(0, item[2]) # if item[2] != '0'
+			if item[2] != '0':
+				info.insert(0, item[2])
 			info = ' | '.join(info)
 
 			data = client.request(item[1])
@@ -187,7 +188,7 @@ class source:
 			url = url.split('&tr')[0]
 
 			self._sources.append({'source': 'torrent', 'quality': quality, 'language': 'en', 'url': url,
-												'info': info, 'direct': False, 'debridonly': True})
+												'info': info, 'direct': False, 'debridonly': True, 'size': item[3]})
 		except:
 			source_utils.scraper_error('1337X')
 			pass

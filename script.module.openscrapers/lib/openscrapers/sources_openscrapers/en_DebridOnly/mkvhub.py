@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# modified by Venom for Openscrapers
 
 #  ..#######.########.#######.##....#..######..######.########....###...########.#######.########..######.
 #  .##.....#.##.....#.##......###...#.##....#.##....#.##.....#...##.##..##.....#.##......##.....#.##....##
@@ -150,11 +151,10 @@ class source:
 
 			try:
 				size = re.findall('((?:\d+\,\d+\.\d+|\d+\.\d+|\d+\,\d+|\d+)\s*(?:GB|GiB|Gb|MB|MiB|Mb))', result)[0]
-				div = 1 if size.endswith(('GB', 'GiB', 'Gb')) else 1024
-				size = float(re.sub('[^0-9|/.|/,]', '', size.replace(',', '.'))) / div
-				size = '%.2f GB' % size
-				info.append(size)
+				dsize, isize = source_utils._size(size)
+				info.insert(0, isize)
 			except:
+				dsize = 0
 				pass
 
 			fileType = source_utils.getFileType(name)
@@ -205,18 +205,17 @@ class source:
 
 						if rd:
 							self._sources.append({'source': host, 'quality': quality, 'language': 'en', 'url': i,
-																	'info': info, 'direct': False, 'debridonly': True})
+																	'info': info, 'direct': False, 'debridonly': True, 'size': dsize})
 						else:
 							self._sources.append({'source': host, 'quality': quality, 'language': 'en', 'url': i,
-																	'info': info, 'direct': False, 'debridonly': False})
+																	'info': info, 'direct': False, 'debridonly': False, 'size': dsize})
 
 				elif 'torrent' in url:
 					# info = Torrent_info
 					data = client.parseDOM(r, 'a', ret='href')
-
 					url = [i for i in data if 'magnet:' in i][0]
+					url = urllib.unquote_plus(url).replace('&amp;', '&').replace(' ', '.')
 					url = url.split('&tr')[0]
-
 					self._sources.append({'source': 'torrent', 'quality': quality, 'language': 'en', 'url': url,
 															'info': info, 'direct': False, 'debridonly': True})
 

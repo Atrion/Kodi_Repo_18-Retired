@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# created by Venom for Openscrapers
 
 #  ..#######.########.#######.##....#..######..######.########....###...########.#######.########..######.
 #  .##.....#.##.....#.##......###...#.##....#.##....#.##.....#...##.##..##.....#.##......##.....#.##....##
@@ -37,13 +38,12 @@ from openscrapers.modules import workers
 
 class source:
 	def __init__(self):
-		self.priority = 0
+		self.priority = 1
 		self.language = ['en']
-		# self.domain = ['ettv.unblockit.biz']
 		self.domain = ['ettv.to']
-		# self.base_link = 'https://ettv.unblockit.biz'
 		self.base_link = 'https://ettv.to'
 		self.search_link = '/torrents-search.php?search=%s'
+		self.min_seeders = 1
 
 
 	def movie(self, imdb, title, localtitle, aliases, year):
@@ -130,16 +130,19 @@ class source:
 				return
 
 			url = 'magnet:%s' % (re.findall('a href="magnet:(.+?)"', result, re.DOTALL)[0])
-			url = urllib.unquote(url).decode('utf8').replace('&amp;', '&')
+			url = urllib.unquote_plus(url).decode('utf8').replace('&amp;', '&').replace(' ', '.')
 			url = url.split('&xl=')[0]
 
 			if url in str(self.sources):
 				return
 
-			size_list = client.parseDOM(result, "td", attrs={"class": "table_col2"})
-
 			name = url.split('&dn=')[1]
-			name = urllib.unquote_plus(urllib.unquote_plus(name)).replace(' ', '.')
+			if name.startswith('www'):
+				try:
+					name = re.sub(r'www(.*?)\W{2,10}', '', name)
+				except:
+					name = name.split('-.', 1)[1].lstrip()
+
 			if source_utils.remove_lang(name):
 				return
 
@@ -150,25 +153,27 @@ class source:
 			if self.hdlr not in name:
 				return
 
+			try:
+				seeders = int(re.findall(r'<b>Seeds: </b>.*?>(.*?)</font>', result, re.DOTALL)[0].replace(',', ''))
+				if self.min_seeders > seeders:
+					return
+			except:
+				pass
+
 			quality, info = source_utils.get_release_quality(name, url)
 
-			for match in size_list:
-				try:
-					size = re.findall('((?:\d+\,\d+\.\d+|\d+\.\d+|\d+\,\d+|\d+)\s*(?:GiB|MiB|GB|MB))', match)[0]
-					div = 1 if size.endswith('GB') else 1024
-					size = float(re.sub('[^0-9|/.|/,]', '', size.replace(',', '.'))) / div
-					size = '%.2f GB' % size
-					info.insert(0, size)
-					if size:
-						break
-				except:
-					size = '0'
-					pass
+			try:
+				size = re.findall(r'<b>Total Size:</b></td><td>(.*?)</td>', result, re.DOTALL)[0].strip()
+				dsize, isize = source_utils._size(size)
+				info.insert(0, isize)
+			except:
+				dsize = 0
+				pass
 
 			info = ' | '.join(info)
 
 			self.sources.append({'source': 'torrent', 'quality': quality, 'language': 'en', 'url': url,
-												'info': info, 'direct': False, 'debridonly': True})
+												'info': info, 'direct': False, 'debridonly': True, 'size': dsize})
 
 		except:
 			source_utils.scraper_error('ETTV')

@@ -7,7 +7,7 @@ _setmain = {
     'tmdb_id', 'imdb_id'}
 _setinfo = {
     'title', 'originaltitle', 'tvshowtitle', 'plot', 'rating', 'votes', 'premiered', 'year', 'imdbnumber', 'tagline',
-    'status', 'episode', 'season', 'genre', 'set', 'studio', 'country', 'MPAA', 'director', 'writer', 'trailer'}
+    'status', 'episode', 'season', 'genre', 'set', 'studio', 'country', 'MPAA', 'director', 'writer', 'trailer', 'top250'}
 _setprop = {
     'tvdb_id', 'biography', 'birthday', 'age', 'deathday', 'character', 'department', 'job', 'known_for', 'role',
     'born', 'creator', 'aliases', 'budget', 'revenue', 'set.tmdb_id', 'set.name', 'set.poster', 'set.fanart',
@@ -111,6 +111,9 @@ class ServiceMonitor(Plugin):
             if self.cur_folder != self.pre_folder:
                 self.clear_properties()  # Clear props if the folder changed
                 self.pre_folder = self.cur_folder
+            if self.get_infolabel('Label') == '..':
+                self.clear_properties()
+                return  # Parent folder so clear properties and don't do look-up
 
             if self.dbtype in ['tvshows', 'seasons', 'episodes']:
                 tmdbtype = 'tv'
@@ -129,6 +132,7 @@ class ServiceMonitor(Plugin):
             details = self.tmdb.get_detailed_item(tmdbtype, tmdb_id, season=self.season, episode=self.episode)
             details = self.get_kodi_person_stats(details) if tmdbtype == 'person' else details
             details = self.get_omdb_ratings(details) if tmdbtype == 'movie' else details
+            details = self.get_top250_rank(details) if tmdbtype == 'movie' else details
             details = self.get_fanarttv_artwork(details, tmdbtype)
             details = self.get_trakt_ratings(
                 details, tmdbtype, tmdb_id, self.season, self.episode) if tmdbtype in ['movie', 'tv'] else details

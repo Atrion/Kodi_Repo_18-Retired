@@ -32,27 +32,48 @@ class Player(Plugin):
         self.traktapi = TraktAPI()
         self.search_movie, self.search_episode, self.play_movie, self.play_episode = [], [], [], []
         self.item = defaultdict(lambda: '+')
-        self.itemlist, self.actions, self.players = [], [], {}
+        self.itemlist, self.actions, self.players, self.identifierlist = [], [], {}, []
         self.is_local = None
+        self.dp_movies = self.addon.getSettingString('default_player_movies')
+        self.dp_episodes = self.addon.getSettingString('default_player_episodes')
+        self.dp_movies_id = None
+        self.dp_episodes_id = None
+        self.fallbacks = {}
 
-    def setup_players(self, tmdbtype=None, details=False, clearsetting=False):
+    def setup_players(self, tmdbtype=None, details=False, clearsetting=False, assertplayers=True):
         self.build_players(tmdbtype)
         if details:
             self.build_details()
-        self.build_selectbox(clearsetting)
+        self.build_selectbox(clearsetting, assertplayers)
+
+    def get_fallback(self, dp_file, dp_action):
+        fallback = self.players.get(dp_file, {}).get('fallback', {}).get(dp_action)
+        if not fallback:  # No fallback so prompt dialog
+            return xbmcgui.Dialog().select(self.addon.getLocalizedString(32042), self.itemlist)
+        if fallback in self.identifierlist:  # Found a fallback in list so play that
+            return self.identifierlist.index(fallback)
+        fb_file, fb_action = fallback.split()
+        return self.get_fallback(fb_file, fb_action)  # Fallback not in list so let's check fallback's fallback
 
     def get_playerindex(self, force_dialog=False):
-        default_player_movies = self.addon.getSettingString('default_player_movies')
-        default_player_episodes = self.addon.getSettingString('default_player_episodes')
-        if force_dialog or (self.itemtype == 'movie' and not default_player_movies) or (self.itemtype == 'episode' and not default_player_episodes):
+        if force_dialog or (self.itemtype == 'movie' and not self.dp_movies) or (self.itemtype == 'episode' and not self.dp_episodes):
             return xbmcgui.Dialog().select(self.addon.getLocalizedString(32042), self.itemlist)
         for i in range(0, len(self.itemlist)):
             label = self.itemlist[i].getLabel()
             if (
-                    (label == default_player_movies and self.itemtype == 'movie') or
-                    (label == default_player_episodes and self.itemtype == 'episode') or
+                    (label == self.dp_movies and self.itemtype == 'movie') or
+                    (label == self.dp_episodes and self.itemtype == 'episode') or
                     (label == u'{0} {1}'.format(self.addon.getLocalizedString(32061), 'Kodi'))):
                 return i  # Play local or with default player if found
+
+        # Check for fallbacks
+        if self.itemtype == 'movie' and self.dp_movies_id:
+            dp_file, dp_action = self.dp_movies_id.split()
+            return self.get_fallback(dp_file, dp_action)
+        if self.itemtype == 'episode' and self.dp_episodes_id:
+            dp_file, dp_action = self.dp_episodes_id.split()
+            return self.get_fallback(dp_file, dp_action)
+
         return -1
 
     def play_external(self, force_dialog=False, playerindex=-1):
@@ -60,6 +81,7 @@ class Player(Plugin):
             xbmcgui.Dialog().notification(self.itemlist[playerindex].getLabel(), self.addon.getLocalizedString(32040))
             del self.actions[playerindex]  # Item not found so remove the player's action list
             del self.itemlist[playerindex]  # Item not found so remove the player's select dialog entry
+            del self.identifierlist[playerindex]  # Item not found so remove the player's index
 
         playerindex = self.get_playerindex(force_dialog=force_dialog)
 
@@ -84,23 +106,46 @@ class Player(Plugin):
                 if d.get('dialog'):  # Special option to show dialog of items to select from
                     d_items = []
                     for f in folder:  # Create our list of items
+                        if not f.get('label') or f.get('label') == 'None':
+                            continue
+                        lb_list = []
+                        label_a = f.get('label')
+                        if f.get('year') and f.get('year') != 1601:
+                            label_a = u'{} ({})'.format(label_a, f.get('year'))
                         if utils.try_parse_int(f.get('season', 0)) > 0 and utils.try_parse_int(f.get('episode', 0)) > 0:
-                            li = u'{}x{}. {}'.format(f.get('season'), f.get('episode'), f.get('label'))
-                        else:
-                            li = u'{} ({})'.format(f.get('label'), f.get('year'))
-                        if f.get('label') and f.get('label') != 'None':
-                            d_items.append(li)
+                            label_a = u'{}x{}. {}'.format(f.get('season'), f.get('episode'), label_a)
+                        if f.get('streamdetails'):
+                            sdv_list = f.get('streamdetails', {}).get('video', [{}]) or [{}]
+                            sda_list = f.get('streamdetails', {}).get('audio', [{}]) or [{}]
+                            sdv, sda = sdv_list[0], sda_list[0]
+                            if sdv.get('width') or sdv.get('height'):
+                                lb_list.append(u'{}x{}'.format(sdv.get('width'), sdv.get('height')))
+                            if sdv.get('codec'):
+                                lb_list.append(u'{}'.format(sdv.get('codec', '').upper()))
+                            if sda.get('codec'):
+                                lb_list.append(u'{}'.format(sda.get('codec', '').upper()))
+                            if sda.get('channels'):
+                                lb_list.append(u'{} CH'.format(sda.get('channels', '')))
+                            for i in sda_list:
+                                if i.get('language'):
+                                    lb_list.append(u'{}'.format(i.get('language', '').upper()))
+                            if sdv.get('duration'):
+                                lb_list.append(u'{} mins'.format(utils.try_parse_int(sdv.get('duration', 0)) // 60))
+                        if f.get('size'):
+                            lb_list.append(u'{}'.format(utils.normalise_filesize(f.get('size', 0))))
+                        label_b = ' | '.join(lb_list) if lb_list else ''
+                        d_items.append(ListItem(label=label_a, label2=label_b, icon=f.get('thumbnail')).set_listitem())
                     if d_items:
                         idx = 0
                         if d.get('dialog', '').lower() != 'auto' or len(d_items) != 1:
-                            idx = xbmcgui.Dialog().select('Select Item to Play', d_items)
+                            idx = xbmcgui.Dialog().select('Select Item', d_items, useDetails=True)
                         if idx == -1:  # User exited the dialog so return and do nothing
                             return
                         resolve_url = True if folder[idx].get('filetype') == 'file' else False  # Set true for files so we can play
                         player = (resolve_url, folder[idx].get('file'))  # Set the folder path to open/play
                         break  # Move onto next action
                     else:  # Ask user to select a different player if no items in dialog
-                        return self.play_external(force_dialog=True, playerindex=playerindex)
+                        return self.play_external(force_dialog=force_dialog, playerindex=playerindex)
 
                 x = 0
                 for f in folder:  # Iterate through plugin folder looking for a matching item
@@ -116,17 +161,18 @@ class Player(Plugin):
                         player = (resolve_url, f.get('file'))  # Get ListItem.FolderPath for item
                         break  # Move onto next action (either open next folder or play file)
                 else:
-                    return self.play_external(force_dialog=True, playerindex=playerindex)  # Ask user to select a different player
+                    return self.play_external(force_dialog=force_dialog, playerindex=playerindex)  # Ask user to select a different player
 
         # Play/Search found item
         if player and player[1]:
             action = string_format_map(player[1], self.item)
-            if player[0]:  # Action is play so let's play the item and return
+            if player[0] and action.endswith('.strm'):  # Action is play and is a strm so PlayMedia
+                xbmc.executebuiltin(utils.try_decode_string(u'PlayMedia({0})'.format(action)))
+            elif player[0]:  # Action is play and not a strm so play with player
                 xbmc.Player().play(action, ListItem(library='video', **self.details).set_listitem())
-                return action
-            # Action is search so let's load the plugin path
-            action = u'Container.Update({0})'.format(action) if xbmc.getCondVisibility("Window.IsMedia") else u'ActivateWindow(videos,{0},return)'.format(action)
-            xbmc.executebuiltin(utils.try_decode_string(action))
+            else:
+                action = u'Container.Update({0})'.format(action) if xbmc.getCondVisibility("Window.IsMedia") else u'ActivateWindow(videos,{0},return)'.format(action)
+                xbmc.executebuiltin(utils.try_decode_string(action))
             return action
 
     def play(self, itemtype, tmdb_id, season=None, episode=None, force_dialog=False):
@@ -218,40 +264,68 @@ class Player(Plugin):
                     meta = loads(content) or {}
                 finally:
                     vfs_file.close()
+
+                self.players[file] = meta
                 if not meta.get('plugin') or not xbmc.getCondVisibility(u'System.HasAddon({0})'.format(meta.get('plugin'))):
                     continue  # Don't have plugin so skip
 
                 tmdbtype = tmdbtype or self.tmdbtype
                 priority = utils.try_parse_int(meta.get('priority')) or 1000
                 if tmdbtype == 'movie' and meta.get('search_movie'):
-                    self.search_movie.append((vfs_file, priority))
+                    self.search_movie.append((file, priority))
                 if tmdbtype == 'movie' and meta.get('play_movie'):
-                    self.play_movie.append((vfs_file, priority))
+                    self.play_movie.append((file, priority))
                 if tmdbtype == 'tv' and meta.get('search_episode'):
-                    self.search_episode.append((vfs_file, priority))
+                    self.search_episode.append((file, priority))
                 if tmdbtype == 'tv' and meta.get('play_episode'):
-                    self.play_episode.append((vfs_file, priority))
-                self.players[vfs_file] = meta
+                    self.play_episode.append((file, priority))
 
-    def build_selectbox(self, clearsetting=False):
+    def build_playeraction(self, playerfile, action, assertplayers=True):
+        player = self.players.get(playerfile, {})
+        isplay = True if action.startswith('play_') else False
+        prefix = self.addon.getLocalizedString(32061) if action.startswith('play_') else xbmc.getLocalizedString(137)
+        label = u'{0} {1}'.format(prefix, player.get('name', ''))
+
+        # Check if matches default player and set default player id
+        if label == self.dp_movies:
+            self.dp_movies_id = '{} {}'.format(playerfile, action)
+        if label == self.dp_episodes:
+            self.dp_episodes_id = '{} {}'.format(playerfile, action)
+
+        # Check that asserted values exist
+        if assertplayers:
+            for i in player.get('assert', {}).get(action, []):
+                if i.startswith('!'):
+                    if self.item.get(i[1:]) and self.item.get(i[1:]) != 'None':
+                        return  # inverted assert - has value but we don't want it so don't build that player
+                else:
+                    if not self.item.get(i) or self.item.get(i) == 'None':
+                        return  # missing / empty asserted value so don't build that player
+
+        # Add player action to list for dialog
+        self.append_playeraction(
+            label=label, action=player.get(action, ''), isplay=isplay,
+            identifier='{} {}'.format(playerfile, action))
+
+    def append_playeraction(self, label, action, isplay=True, identifier=''):
+        self.itemlist.append(xbmcgui.ListItem(label))
+        self.actions.append((isplay, action))
+        self.identifierlist.append(identifier)
+
+    def build_selectbox(self, clearsetting=False, assertplayers=True):
         self.itemlist, self.actions = [], []
         if clearsetting:
             self.itemlist.append(xbmcgui.ListItem(xbmc.getLocalizedString(13403)))  # Clear Default
         if self.is_local:
-            self.itemlist.append(xbmcgui.ListItem(u'{0} {1}'.format(self.addon.getLocalizedString(32061), 'Kodi')))
-            self.actions.append((True, self.is_local))
+            self.append_playeraction(u'{0} {1}'.format(self.addon.getLocalizedString(32061), 'Kodi'), self.is_local, identifier='play_kodi')
         for i in sorted(self.play_movie, key=lambda x: x[1]):
-            self.itemlist.append(xbmcgui.ListItem(u'{0} {1}'.format(self.addon.getLocalizedString(32061), self.players.get(i[0], {}).get('name', ''))))
-            self.actions.append((True, self.players.get(i[0], {}).get('play_movie', '')))
+            self.build_playeraction(i[0], 'play_movie', assertplayers=assertplayers)
         for i in sorted(self.search_movie, key=lambda x: x[1]):
-            self.itemlist.append(xbmcgui.ListItem(u'{0} {1}' .format(xbmc.getLocalizedString(137), self.players.get(i[0], {}).get('name', ''))))
-            self.actions.append((False, self.players.get(i[0], {}).get('search_movie', '')))
+            self.build_playeraction(i[0], 'search_movie', assertplayers=assertplayers)
         for i in sorted(self.play_episode, key=lambda x: x[1]):
-            self.itemlist.append(xbmcgui.ListItem(u'{0} {1}'.format(self.addon.getLocalizedString(32061), self.players.get(i[0], {}).get('name', ''))))
-            self.actions.append((True, self.players.get(i[0], {}).get('play_episode', '')))
+            self.build_playeraction(i[0], 'play_episode', assertplayers=assertplayers)
         for i in sorted(self.search_episode, key=lambda x: x[1]):
-            self.itemlist.append(xbmcgui.ListItem(u'{0} {1}'.format(xbmc.getLocalizedString(137), self.players.get(i[0], {}).get('name', ''))))
-            self.actions.append((False, self.players.get(i[0], {}).get('search_episode', '')))
+            self.build_playeraction(i[0], 'search_episode', assertplayers=assertplayers)
 
     def localfile(self, file):
         if not file:

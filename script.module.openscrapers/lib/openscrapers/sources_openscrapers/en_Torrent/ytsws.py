@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# modified by Venom for Openscrapers
 
 #  ..#######.########.#######.##....#..######..######.########....###...########.#######.########..######.
 #  .##.....#.##.....#.##......###...#.##....#.##....#.##.....#...##.##..##.....#.##......##.....#.##....##
@@ -41,7 +42,6 @@ class source:
 		self.domains = ['yts.ws']
 		self.base_link = 'https://yts.ws'
 		self.search_link = '/movie/%s'
-		# self.search_link = '/search?search=%s'
 
 
 	def movie(self, imdb, title, localtitle, aliases, year):
@@ -95,9 +95,10 @@ class source:
 
 				for url, ref in link:
 					url = str(client.replaceHTMLCodes(url).split('&tr')[0])
-
+					url = url.replace(' ', '')
 					name = url.split('&dn=')[1]
-					name = urllib.unquote_plus(name).replace(' ', '.')
+					name = urllib.unquote_plus(name)
+
 					if source_utils.remove_lang(name):
 						continue
 
@@ -112,18 +113,17 @@ class source:
 
 					try:
 						size = re.findall('((?:\d+\.\d+|\d+\,\d+|\d+)\s*(?:GB|GiB|MB|MiB))', quality_size[p])[-1]
-						div = 1 if size.endswith(('GB', 'GiB')) else 1024
-						size = float(re.sub('[^0-9|/.|/,]', '', size)) / div
-						size = '%.2f GB' % size
-						info.insert(0, size)
+						dsize, isize = source_utils._size(size)
+						info.insert(0, isize)
 					except:
+						dsize = 0
 						pass
 
 					p += 1
 					info = ' | '.join(info)
 
 					sources.append({'source': 'torrent', 'quality': quality, 'language': 'en', 'url': url,
-												'info': info, 'direct': False, 'debridonly': True})
+												'info': info, 'direct': False, 'debridonly': True, 'size': dsize})
 			return sources
 
 		except:

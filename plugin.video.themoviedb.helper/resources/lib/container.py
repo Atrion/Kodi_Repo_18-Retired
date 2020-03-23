@@ -197,7 +197,6 @@ class Container(Plugin):
             items.append(item_upnext)
 
         for i in items:
-
             # Add NextPage Item to End of List
             if i.nextpage:
                 i.url = self.params.copy()
@@ -583,24 +582,8 @@ class Container(Plugin):
                 episode=i.get('episode', {}).get('number')))
             li.tmdb_id = i.get('show', {}).get('ids', {}).get('tmdb')  # Set TVSHOW ID
 
-            # Create our airing properties
-            air_date = utils.convert_timestamp(i.get('first_aired'), utc_convert=True)
-            li.infolabels['premiered'] = air_date.strftime('%Y-%m-%d')
-            li.infolabels['year'] = air_date.strftime('%Y')
-            li.infoproperties['air_date'] = utils.get_region_date(air_date, 'datelong')
-            li.infoproperties['air_time'] = utils.get_region_date(air_date, 'time')
-            li.infoproperties['air_day'] = air_date.strftime('%A')
-            li.infoproperties['air_day_short'] = air_date.strftime('%a')
-            li.infoproperties['air_date_short'] = air_date.strftime('%d %b')
-
-            # Do some fallback properties in-case TMDb doesn't have info
-            li.infolabels['title'] = li.label = i.get('episode', {}).get('title')
-            li.infolabels['episode'] = i.get('episode', {}).get('number')
-            li.infolabels['season'] = i.get('episode', {}).get('season')
-            li.infolabels['tvshowtitle'] = i.get('show', {}).get('title')
-
-            # Add our item
-            items.append(li)
+            # Get some additional properties and add our item
+            items.append(trakt.get_calendar_properties(li, i))
 
         # Today's date to plugin category
         date = datetime.datetime.today() + datetime.timedelta(days=utils.try_parse_int(self.params.get('startdate', 0)))
@@ -807,7 +790,6 @@ class Container(Plugin):
             if len(search_history) > 9:
                 search_history.pop(0)
             search_history.append(query)
-        utils.kodi_log(search_history, 1)
         cache.set(cache_name, search_history, expiration=datetime.timedelta(days=cache_days))
         return query
 
@@ -889,6 +871,7 @@ class Container(Plugin):
             i.label2 = i.infoproperties.get('role') or i.label2
             i.infoproperties['numitems.dbid'] = self.numitems_dbid
             i.infoproperties['numitems.tmdb'] = self.numitems_tmdb
+            i.infoproperties['dbtype'] = self.item_dbtype
             i.get_details(self.item_dbtype, self.tmdb, self.omdb, self.params.get('localdb'))
             i.get_url(url, url_tmdb_id, self.params.get('widget'), self.params.get('fanarttv'), self.params.get('nextpage'), self.params.get('extended'))
             i.get_extra_artwork(self.tmdb, self.fanarttv) if len(items) < 22 and self.exp_fanarttv() else None
@@ -909,6 +892,7 @@ class Container(Plugin):
         kwparams.setdefault('key', cat.get('key'))
         path = cat.get('path', '').format(**self.params)
 
+        self.plugincategory = self.params.get('plugincategory') or self.plugincategory
         self.dbid_sorting = cat.get('dbid_sorting', False)
         self.item_tmdbtype = cat.get('item_tmdbtype', '').format(**self.params)
         self.list_items(
@@ -965,9 +949,10 @@ class Container(Plugin):
         if not details:
             return
 
-        # Merge OMDb rating details for movies
+        # Merge OMDb rating details and top250 for movies
         if self.params.get('type') == 'movie':
             details = self.get_omdb_ratings(details, cache_only=False)
+            details = self.get_top250_rank(details)
 
         # Merge library stats for person
         if self.params.get('type') == 'person':

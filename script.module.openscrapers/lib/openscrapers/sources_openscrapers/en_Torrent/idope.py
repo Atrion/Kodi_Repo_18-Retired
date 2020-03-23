@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# created by Venom for Openscrapers
 
 #  ..#######.########.#######.##....#..######..######.########....###...########.#######.########..######.
 #  .##.....#.##.....#.##......###...#.##....#.##....#.##.....#...##.##..##.....#.##......##.....#.##....##
@@ -125,17 +126,26 @@ class source:
 				row = client.parseDOM(r, 'div', attrs={'class': 'resultdivbotton'})
 
 				for post in row:
-					infohash = re.findall('<div id="hideinfohash.+?" class="hideinfohash">(.+?)<', post, re.DOTALL)[0]
+					hash = re.findall('<div id="hideinfohash.+?" class="hideinfohash">(.+?)<', post, re.DOTALL)[0]
 					name = re.findall('<div id="hidename.+?" class="hideinfohash">(.+?)<', post, re.DOTALL)[0]
 					name = urllib.unquote_plus(name).replace(' ', '.')
-					url = 'magnet:?xt=urn:btih:%s&dn=%s' % (infohash, name)
 
+					if name.startswith('www'):
+						try:
+							name = re.sub(r'www(.*?)\W{2,10}', '', name)
+						except:
+							name = name.split('-.', 1)[1].lstrip()
+
+					url = 'magnet:?xt=urn:btih:%s&dn=%s' % (hash, name)
 					if url in str(self.sources):
 						continue
 
-					seeders = re.findall('<div class="resultdivbottonseed">(.+?)<', post, re.DOTALL)[0]
-					if self.min_seeders > seeders:
-						continue
+					try:
+						seeders = int(re.findall('<div class="resultdivbottonseed">(.*?)<', post, re.DOTALL)[0].replace(',', ''))
+						if self.min_seeders > seeders:
+							continue
+					except:
+						pass
 
 					if source_utils.remove_lang(name):
 						continue
@@ -151,18 +161,16 @@ class source:
 
 					try:
 						size = re.findall('<div class="resultdivbottonlength">(.+?)<', post)[0]
-						div = 1 if size.endswith(('GB', 'GiB', 'Gb')) else 1024
-						size = float(re.sub('[^0-9|/.|/,]', '', size.replace(',', '.'))) / div
-						size = '%.2f GB' % size
-						info.insert(0, size)
+						dsize, isize = source_utils._size(size)
+						info.insert(0, isize)
 					except:
-						size = '0'
+						dsize = 0
 						pass
 
 					info = ' | '.join(info)
 
 					self.sources.append({'source': 'Torrent', 'quality': quality, 'language': 'en', 'url': url, 'info': info,
-													'direct': False, 'debridonly': True})
+													'direct': False, 'debridonly': True, 'size': dsize})
 
 		except:
 			source_utils.scraper_error('IDOPE')
