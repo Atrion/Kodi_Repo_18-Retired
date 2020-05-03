@@ -1,4 +1,20 @@
 
+[B]4.2.4 (2020.05.02)[/B]
+- Fixed NanScrapers integration.
+- Possible fix for settings file copy.
+
+[B]4.2.3 (2020.04.01)[/B]
+- Added size attribute to OpenScrapers integration.
+
+[B]4.2.2 (2020.03.30)[/B]
+- Changed networker header handling.
+
+[B]4.2.1 (2020.03.26)[/B]
+- Changed promotion notifications.
+
+[B]4.2.0 (2020.03.26)[/B]
+- Updated promotion options.
+
 [B]4.1.1 (2020.02.22)[/B]
 - Updated OpenScrapers integration.
 

@@ -30,6 +30,7 @@ from orion.modules.orionapi import *
 from orion.modules.orionnavigator import *
 from orion.modules.orionsettings import *
 from orion.modules.orionintegration import *
+from orion.modules.orionpromotion import *
 
 orion = Orion(OrionApi._keyInternal())
 parameters = OrionTools.addonParameters()
@@ -113,6 +114,9 @@ elif action == 'dialogSettings':
 
 elif action == 'dialogLogin':
     OrionNavigator.dialogLogin()
+
+elif action == 'dialogPromotion':
+    OrionPromotion.dialog()
 
 ##############################################################################
 # SETTINGS

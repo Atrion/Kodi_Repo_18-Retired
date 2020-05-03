@@ -1,3 +1,4 @@
+import re
 import xbmc
 import xbmcgui
 import xbmcvfs
@@ -11,9 +12,9 @@ from resources.lib.kodilibrary import KodiLibrary
 from resources.lib.traktapi import TraktAPI
 from resources.lib.listitem import ListItem
 try:
-    from urllib.parse import quote_plus  # Py3
+    from urllib.parse import quote_plus, quote  # Py3
 except ImportError:
-    from urllib import quote_plus  # Py2
+    from urllib import quote_plus, quote  # Py2
 
 
 def string_format_map(fmt, d):
@@ -34,6 +35,7 @@ class Player(Plugin):
         self.item = defaultdict(lambda: '+')
         self.itemlist, self.actions, self.players, self.identifierlist = [], [], {}, []
         self.is_local = None
+        self.dp_local = self.addon.getSettingBool('default_player_local')
         self.dp_movies = self.addon.getSettingString('default_player_movies')
         self.dp_episodes = self.addon.getSettingString('default_player_episodes')
         self.dp_movies_id = None
@@ -49,24 +51,39 @@ class Player(Plugin):
     def get_fallback(self, dp_file, dp_action):
         fallback = self.players.get(dp_file, {}).get('fallback', {}).get(dp_action)
         if not fallback:  # No fallback so prompt dialog
+            utils.kodi_log(u'Player -- {} {}\nFallback not set!'.format(dp_file, dp_action), 2)
             return xbmcgui.Dialog().select(self.addon.getLocalizedString(32042), self.itemlist)
         if fallback in self.identifierlist:  # Found a fallback in list so play that
+            utils.kodi_log(u'Player -- {} {}\nFallback found: {}'.format(dp_file, dp_action, fallback), 2)
             return self.identifierlist.index(fallback)
         fb_file, fb_action = fallback.split()
+        utils.kodi_log(u'Player -- {} {}\nFallback NOT found!\n{}'.format(dp_file, dp_action, fallback), 2)
         return self.get_fallback(fb_file, fb_action)  # Fallback not in list so let's check fallback's fallback
 
     def get_playerindex(self, force_dialog=False):
         if force_dialog or (self.itemtype == 'movie' and not self.dp_movies) or (self.itemtype == 'episode' and not self.dp_episodes):
-            return xbmcgui.Dialog().select(self.addon.getLocalizedString(32042), self.itemlist)
+            idx = xbmcgui.Dialog().select(self.addon.getLocalizedString(32042), self.itemlist)  # Ask user to select player
+            if self.itemtype == 'movie':
+                self.dp_movies = self.itemlist[idx].getLabel()
+                self.dp_movies_id = self.identifierlist[idx]
+                utils.kodi_log(u'Player -- User selected {}\n{}'.format(self.dp_movies, self.dp_movies_id), 2)
+            elif self.itemtype == 'episode':
+                self.dp_episodes = self.itemlist[idx].getLabel()
+                self.dp_episodes_id = self.identifierlist[idx]
+                utils.kodi_log(u'Player -- User selected {}\n{}'.format(self.dp_episodes, self.dp_episodes_id), 2)
+            return idx
+
         for i in range(0, len(self.itemlist)):
             label = self.itemlist[i].getLabel()
             if (
                     (label == self.dp_movies and self.itemtype == 'movie') or
                     (label == self.dp_episodes and self.itemtype == 'episode') or
-                    (label == u'{0} {1}'.format(self.addon.getLocalizedString(32061), 'Kodi'))):
+                    (label == u'{0} {1}'.format(self.addon.getLocalizedString(32061), 'Kodi') and self.dp_local)):
+                utils.kodi_log(u'Player -- Attempting to Play with Default Player:\n {}'.format(label), 2)
                 return i  # Play local or with default player if found
 
         # Check for fallbacks
+        utils.kodi_log(u'Player -- Checking for Fallbacks', 2)
         if self.itemtype == 'movie' and self.dp_movies_id:
             dp_file, dp_action = self.dp_movies_id.split()
             return self.get_fallback(dp_file, dp_action)
@@ -87,10 +104,12 @@ class Player(Plugin):
 
         # User cancelled dialog
         if not playerindex > -1:
+            utils.kodi_log(u'Player -- User cancelled', 2)
             return False
 
         player = self.actions[playerindex]
         if not player or not player[1]:
+            utils.kodi_log(u'Player -- Player not found!', 2)
             return False
 
         # External player has list of actions so let's iterate through them to find our item
@@ -101,7 +120,9 @@ class Player(Plugin):
             for d in actionlist[1:]:
                 if player[0]:
                     break  # Playable item was found in last action so let's break and play it
-                folder = KodiLibrary().get_directory(string_format_map(player[1], self.item))  # Get the next folder from the plugin
+
+                with utils.busy_dialog():
+                    folder = KodiLibrary().get_directory(string_format_map(player[1], self.item))  # Get the next folder from the plugin
 
                 if d.get('dialog'):  # Special option to show dialog of items to select from
                     d_items = []
@@ -148,30 +169,36 @@ class Player(Plugin):
                         return self.play_external(force_dialog=force_dialog, playerindex=playerindex)
 
                 x = 0
+                utils.kodi_log('Player -- Retrieved Folder\n{}'.format(string_format_map(player[1], self.item)), 2)
                 for f in folder:  # Iterate through plugin folder looking for a matching item
                     x += 1  # Keep an index for position matching
                     for k, v in d.items():  # Iterate through our key (infolabel) / value (infolabel must match) pairs of our action
                         if k == 'position':  # We're looking for an item position not an infolabel
                             if utils.try_parse_int(string_format_map(v, self.item)) != x:  # Format our position value
                                 break  # Not the item position we want so let's go to next item in folder
-                        elif not f.get(k) or string_format_map(v, self.item) not in u'{}'.format(f.get(k, '')):  # Format our value and check if it matches the infolabel key
+                        elif not f.get(k) or not re.match(string_format_map(v, self.item), u'{}'.format(f.get(k, ''))):  # Format our value and check if it regex matches the infolabel key
                             break  # Item's key value doesn't match value we are looking for so let's got to next item in folder
                     else:  # Item matched our criteria so let's open it up
+                        utils.kodi_log('Player -- Found Match!\n{}'.format(f), 2)
                         resolve_url = True if f.get('filetype') == 'file' else False  # Set true for files so we can play
                         player = (resolve_url, f.get('file'))  # Get ListItem.FolderPath for item
                         break  # Move onto next action (either open next folder or play file)
                 else:
+                    utils.kodi_log('Player -- Failed to find match!\n{}'.format(d), 2)
                     return self.play_external(force_dialog=force_dialog, playerindex=playerindex)  # Ask user to select a different player
 
         # Play/Search found item
         if player and player[1]:
             action = string_format_map(player[1], self.item)
             if player[0] and action.endswith('.strm'):  # Action is play and is a strm so PlayMedia
+                utils.kodi_log(u'Player -- Found strm.\nAttempting PLAYMEDIA({})'.format(action), 2)
                 xbmc.executebuiltin(utils.try_decode_string(u'PlayMedia({0})'.format(action)))
             elif player[0]:  # Action is play and not a strm so play with player
+                utils.kodi_log(u'Player -- Found file.\nAttempting to PLAY: {}'.format(action), 2)
                 xbmc.Player().play(action, ListItem(library='video', **self.details).set_listitem())
             else:
                 action = u'Container.Update({0})'.format(action) if xbmc.getCondVisibility("Window.IsMedia") else u'ActivateWindow(videos,{0},return)'.format(action)
+                utils.kodi_log(u'Player -- Found folder.\nAttempting to OPEN: {}'.format(action), 2)
                 xbmc.executebuiltin(utils.try_decode_string(action))
             return action
 
@@ -180,23 +207,26 @@ class Player(Plugin):
         if not tmdb_id or not itemtype:
             return
 
-        # Get the details for the item
-        self.itemtype, self.tmdb_id, self.season, self.episode = itemtype, tmdb_id, season, episode
-        self.tmdbtype = 'tv' if self.itemtype in ['episode', 'tv'] else 'movie'
-        self.details = self.tmdb.get_detailed_item(self.tmdbtype, tmdb_id, season=season, episode=episode)
-        self.item['imdb_id'] = self.details.get('infolabels', {}).get('imdbnumber')
-        self.item['originaltitle'] = self.details.get('infolabels', {}).get('originaltitle')
-        self.item['title'] = self.details.get('infolabels', {}).get('tvshowtitle') or self.details.get('infolabels', {}).get('title')
-        self.item['year'] = self.details.get('infolabels', {}).get('year')
+        with utils.busy_dialog():
+            # Get the details for the item
+            self.itemtype, self.tmdb_id, self.season, self.episode = itemtype, tmdb_id, season, episode
+            self.tmdbtype = 'tv' if self.itemtype in ['episode', 'tv'] else 'movie'
+            self.details = self.tmdb.get_detailed_item(self.tmdbtype, tmdb_id, season=season, episode=episode)
+            self.item['tmdb_id'] = self.tmdb_id
+            self.item['imdb_id'] = self.details.get('infoproperties', {}).get('tvshow.imdb_id') or self.details.get('infoproperties', {}).get('imdb_id')
+            self.item['tvdb_id'] = self.details.get('infoproperties', {}).get('tvshow.tvdb_id') or self.details.get('infoproperties', {}).get('tvdb_id')
+            self.item['originaltitle'] = self.details.get('infolabels', {}).get('originaltitle')
+            self.item['title'] = self.details.get('infolabels', {}).get('tvshowtitle') or self.details.get('infolabels', {}).get('title')
+            self.item['year'] = self.details.get('infolabels', {}).get('year')
 
-        # Check if we have a local file
-        # TODO: Add option to auto play local
-        if self.details and self.itemtype == 'movie':
-            self.is_local = self.localmovie()
-        if self.details and self.itemtype == 'episode':
-            self.is_local = self.localepisode()
+            # Check if we have a local file
+            # TODO: Add option to auto play local
+            if self.details and self.itemtype == 'movie':
+                self.is_local = self.localmovie()
+            if self.details and self.itemtype == 'episode':
+                self.is_local = self.localepisode()
 
-        self.setup_players(details=True)
+            self.setup_players(details=True)
 
         if not self.itemlist:
             return False
@@ -224,8 +254,8 @@ class Player(Plugin):
             slug_type = utils.type_convert(self.tmdbtype, 'trakt')
             trakt_details = self.traktapi.get_details(slug_type, self.traktapi.get_traktslug(slug_type, 'tmdb', self.tmdb_id))
             self.item['trakt'] = trakt_details.get('ids', {}).get('trakt')
-            self.item['imdb'] = trakt_details.get('ids', {}).get('imdb')
-            self.item['tvdb'] = trakt_details.get('ids', {}).get('tvdb')
+            self.item['imdb'] = self.details.get('infoproperties', {}).get('tvshow.imdb_id') or trakt_details.get('ids', {}).get('imdb')
+            self.item['tvdb'] = self.details.get('infoproperties', {}).get('tvshow.tvdb_id') or trakt_details.get('ids', {}).get('tvdb')
             self.item['slug'] = trakt_details.get('ids', {}).get('slug')
 
         if self.itemtype == 'episode':  # Do some special episode stuff
@@ -237,19 +267,24 @@ class Player(Plugin):
 
         if self.traktapi and self.itemtype == 'episode':
             trakt_details = self.traktapi.get_details(slug_type, self.item.get('slug'), season=self.season, episode=self.episode)
-            self.item['epid'] = trakt_details.get('ids', {}).get('tvdb')
+            self.item['epid'] = self.details.get('infoproperties', {}).get('tvdb_id') or trakt_details.get('ids', {}).get('tvdb')
             self.item['epimdb'] = trakt_details.get('ids', {}).get('imdb')
-            self.item['eptmdb'] = trakt_details.get('ids', {}).get('tmdb')
+            self.item['eptmdb'] = self.details.get('infoproperties', {}).get('tmdb_id') or trakt_details.get('ids', {}).get('tmdb')
             self.item['eptrakt'] = trakt_details.get('ids', {}).get('trakt')
 
+        utils.kodi_log(u'Player Details - Item:\n{}'.format(self.item), 2)
+
         for k, v in self.item.copy().items():
+            if k not in ['name', 'showname', 'clearname', 'tvshowtitle', 'title', 'thumbnail', 'poster', 'fanart', 'originaltitle']:
+                continue
             v = u'{0}'.format(v)
             self.item[k] = v.replace(',', '')
             self.item[k + '_+'] = v.replace(' ', '+')
             self.item[k + '_-'] = v.replace(' ', '-')
-            self.item[k + '_escaped'] = v.replace(' ', '%2520')
-            self.item[k + '_escaped+'] = v.replace(' ', '%252B')
-            self.item[k + '_url'] = quote_plus(utils.try_encode_string(v))
+            self.item[k + '_escaped'] = quote(quote(utils.try_encode_string(v)))
+            self.item[k + '_escaped+'] = quote(quote_plus(utils.try_encode_string(v)))
+            self.item[k + '_url'] = quote(utils.try_encode_string(v))
+            self.item[k + '_url+'] = quote_plus(utils.try_encode_string(v))
 
     def build_players(self, tmdbtype=None):
         basedirs = ['special://profile/addon_data/plugin.video.themoviedb.helper/players/']
@@ -326,6 +361,8 @@ class Player(Plugin):
             self.build_playeraction(i[0], 'play_episode', assertplayers=assertplayers)
         for i in sorted(self.search_episode, key=lambda x: x[1]):
             self.build_playeraction(i[0], 'search_episode', assertplayers=assertplayers)
+        utils.kodi_log(u'Player -- Built {} Players!\n{}'.format(
+            len(self.itemlist), self.identifierlist), 2)
 
     def localfile(self, file):
         if not file:
@@ -339,11 +376,18 @@ class Player(Plugin):
         return file
 
     def localmovie(self):
-        fuzzy_match = self.addon.getSettingBool('fuzzymatch_movie')
-        return self.localfile(KodiLibrary(dbtype='movie').get_info('file', fuzzy_match=fuzzy_match, **self.item))
+        # fuzzy_match = self.addon.getSettingBool('fuzzymatch_movie')
+        return self.localfile(KodiLibrary(dbtype='movie').get_info(
+            'file', fuzzy_match=False,
+            tmdb_id=self.item.get('tmdb_id'),
+            imdb_id=self.item.get('imdb_id')))
 
     def localepisode(self):
-        fuzzy_match = self.addon.getSettingBool('fuzzymatch_tv')
-        fuzzy_match = True  # TODO: Get tvshow year to match against but for now force fuzzy match
-        dbid = KodiLibrary(dbtype='tvshow').get_info('dbid', fuzzy_match=fuzzy_match, **self.item)
-        return self.localfile(KodiLibrary(dbtype='episode', tvshowid=dbid).get_info('file', season=self.season, episode=self.episode))
+        # fuzzy_match = self.addon.getSettingBool('fuzzymatch_tv')
+        dbid = KodiLibrary(dbtype='tvshow').get_info(
+            'dbid', fuzzy_match=False,
+            tmdb_id=self.item.get('tmdb_id'),
+            tvdb_id=self.item.get('tvdb_id'),
+            imdb_id=self.item.get('imdb_id'))
+        return self.localfile(KodiLibrary(dbtype='episode', tvshowid=dbid).get_info(
+            'file', season=self.season, episode=self.episode))

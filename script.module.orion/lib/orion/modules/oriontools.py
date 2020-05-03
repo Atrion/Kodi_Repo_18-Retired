@@ -380,6 +380,7 @@ class OrionTools:
 			try:
 				fileFrom = xbmcvfs.File(pathFrom)
 				fileTo = xbmcvfs.File(pathTo, 'w')
+				if bytes is True: bytes = self.fileSize(pathFrom)
 				chunk = min(bytes, 1048576) # 1 MB
 				while bytes > 0:
 					size = min(bytes, chunk)
@@ -389,6 +390,10 @@ class OrionTools:
 				fileTo.close()
 				return True
 			except:
+				try: fileFrom.close()
+				except: pass
+				try: fileTo.close()
+				except: pass
 				return False
 
 	@classmethod

@@ -87,6 +87,7 @@ class OrionApi:
 	ModeUser = 'user'
 	ModeTicket = 'ticket'
 	ModeNotification = 'notification'
+	ModePromotion = 'promotion'
 	ModeServer = 'server'
 	ModeAddon = 'addon'
 	ModeCoupon = 'coupon'
@@ -195,7 +196,8 @@ class OrionApi:
 			if not keyApp == None and not keyApp == '': parameters[OrionApi.ParameterKeyApp] = keyApp
 
 			from orion.modules.orionuser import OrionUser
-			keyUser = OrionUser.instance().key()
+			user = OrionUser.instance()
+			keyUser = user.key()
 			if not keyUser == None and not keyUser == '': parameters[OrionApi.ParameterKeyUser] = keyUser
 
 			if not OrionSettings.silent():
@@ -209,6 +211,7 @@ class OrionApi:
 			networker = OrionNetworker(
 				link = OrionTools.linkApi(),
 				parameters = parameters,
+				headers = {'Premium' : 1 if user.subscriptionPackagePremium() else 0},
 				timeout = max(30, OrionSettings.getInteger('general.scraping.timeout')),
 				agent = OrionNetworker.AgentOrion,
 				debug = not OrionSettings.silent()
@@ -218,7 +221,7 @@ class OrionApi:
 			if data == self.DataBoth:
 				if not OrionTools.jsonIs(result): return result
 			elif data == self.DataRaw:
-				return {'status' : networker.status(), 'headers' : networker.headers(), 'body' : result, 'response' : networker.response()}
+				return {'status' : networker.status(), 'headers' : networker.headersResponse(), 'body' : result, 'response' : networker.response()}
 			json = OrionTools.jsonFrom(result)
 
 			result = json[OrionApi.ParameterResult]
@@ -491,6 +494,13 @@ class OrionApi:
 		if not time == None: parameters[OrionApi.ParameterTime] = time
 		if not count == None: parameters[OrionApi.ParameterCount] = count
 		return self._request(mode = OrionApi.ModeNotification, action = OrionApi.ActionRetrieve, parameters = parameters)
+
+	##############################################################################
+	# PROMOTION
+	##############################################################################
+
+	def promotionRetrieve(self):
+		return self._request(mode = OrionApi.ModePromotion, action = OrionApi.ActionRetrieve)
 
 	##############################################################################
 	# SERVER

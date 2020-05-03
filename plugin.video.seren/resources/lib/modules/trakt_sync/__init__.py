@@ -34,7 +34,7 @@ class TraktSyncDatabase:
 
         self.item_list = []
         self.threads = []
-        self.task_queue = ThreadPool(workers=4)
+        self.task_queue = ThreadPool(workers=20)
         self.queue_finished = False
         self.task_len = 0
         self.base_date = '1970-01-01T00:00:00'

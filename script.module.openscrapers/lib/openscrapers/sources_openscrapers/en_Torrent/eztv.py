@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# modified by Venom for Openscrapers
+# modified by Venom for Openscrapers (updated url 4-20-2020)
 
 #  ..#######.########.#######.##....#..######..######.########....###...########.#######.########..######.
 #  .##.....#.##.....#.##......###...#.##....#.##....#.##.....#...##.##..##.....#.##......##.....#.##....##
@@ -29,7 +29,6 @@ import re
 import urllib
 import urlparse
 
-from openscrapers.modules import cleantitle
 from openscrapers.modules import client
 from openscrapers.modules import debrid
 from openscrapers.modules import source_utils
@@ -68,9 +67,8 @@ class source:
 
 
 	def sources(self, url, hostDict, hostprDict):
+		sources = []
 		try:
-			sources = []
-
 			if url is None:
 				return sources
 
@@ -90,9 +88,7 @@ class source:
 			url = self.search_link % (urllib.quote_plus(query).replace('+', '-'))
 			url = urlparse.urljoin(self.base_link, url)
 			# log_utils.log('url = %s' % url, log_utils.LOGDEBUG)
-
 			html = client.request(url)
-
 			try:
 				results = client.parseDOM(html, 'table', attrs={'class': 'forum_header_border'})
 				for result in results:
@@ -103,7 +99,6 @@ class source:
 				return sources
 
 			rows = re.findall('<tr name="hover" class="forum_header_border">(.+?)</tr>', results, re.DOTALL)
-
 			if rows is None:
 				return sources
 
@@ -117,24 +112,25 @@ class source:
 
 					url = 'magnet:%s' % (str(client.replaceHTMLCodes(derka[0]).split('&tr')[0]))
 					url = urllib.unquote(url).decode('utf8')
+					hash = re.compile('btih:(.*?)&').findall(url)[0]
 
 					magnet_title = derka[1]
-					name = urllib.unquote_plus(magnet_title).replace(' ', '.')
+					name = urllib.unquote_plus(magnet_title)
+					name = re.sub('[^A-Za-z0-9]+', '.', name).lstrip('.')
 					if source_utils.remove_lang(name):
 						continue
 
-					t = name.split(hdlr)[0].replace(data['year'], '').replace('(', '').replace(')', '').replace('&', 'and').replace('.US.', '.').replace('.us.', '.')
-					if cleantitle.get(t) != cleantitle.get(title):
-						continue
-
-					if hdlr not in name:
+					match = source_utils.check_title(title, name, hdlr, data['year'])
+					if not match:
 						continue
 
 					try:
-						seeders = int(re.findall('<font color=".+?">(.*?)</font>', columns[5], re.DOTALL)[0].replace(',', ''))
+						seeders = int(re.findall('<font color=".+?">([0-9]+|[0-9]+,[0-9]+)</font>', columns[5], re.DOTALL)[0].replace(',', ''))
 						if self.min_seeders > seeders:
 							continue
 					except:
+						source_utils.scraper_error('EZTV')
+						seeders = 0
 						pass
 
 					quality, info = source_utils.get_release_quality(name, url)
@@ -149,14 +145,12 @@ class source:
 
 					info = ' | '.join(info)
 
-					sources.append({'source': 'torrent', 'quality': quality, 'language': 'en', 'url': url,
-												'info': info, 'direct': False, 'debridonly': True, 'size': dsize})
+					sources.append({'source': 'torrent', 'seeders': seeders, 'hash': hash, 'name': name, 'quality': quality,
+											'language': 'en', 'url': url, 'info': info, 'direct': False, 'debridonly': True, 'size': dsize})
 				except:
 					source_utils.scraper_error('EZTV')
 					continue
-
 			return sources
-
 		except:
 			source_utils.scraper_error('EZTV')
 			return sources

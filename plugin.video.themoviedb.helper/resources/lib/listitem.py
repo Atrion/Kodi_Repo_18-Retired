@@ -1,3 +1,4 @@
+import xbmc
 import xbmcgui
 import xbmcaddon
 import xbmcplugin
@@ -15,7 +16,7 @@ class ListItem(object):
                  cast=None, infolabels=None, infoproperties=None, poster=None, thumb=None, icon=None, fanart=None, nextpage=None,
                  streamdetails=None, clearlogo=None, clearart=None, banner=None, landscape=None, discart=None, extrafanart=None,
                  tvshow_clearlogo=None, tvshow_clearart=None, tvshow_banner=None, tvshow_landscape=None, tvshow_poster=None,
-                 mixed_type=None, url=None, is_folder=True):
+                 tvshow_dbid=None, mixed_type=None, url=None, is_folder=True):
         self.addon = xbmcaddon.Addon()
         self.addonpath = self.addon.getAddonInfo('path')
         self.select_action = self.addon.getSettingInt('select_action')
@@ -38,6 +39,7 @@ class ListItem(object):
         self.infolabels = infolabels or {}  # ListItem.Foobar
         self.infoproperties = infoproperties or {}  # ListItem.Property(Foobar)
         self.dbid = dbid
+        self.tvshow_dbid = tvshow_dbid
         self.nextpage = nextpage
         self.extrafanart = extrafanart or {}
 
@@ -51,7 +53,7 @@ class ListItem(object):
         if self.mixed_type:
             self.url['type'] = self.mixed_type
             self.infolabels['mediatype'] = utils.type_convert(self.mixed_type, 'dbtype')
-        if self.label == 'Next Page':
+        if self.label == xbmc.getLocalizedString(33078):  # Next Page
             self.infolabels.pop('mediatype', None)
         if self.infolabels.get('mediatype') in ['season', 'episode']:
             self.url['season'] = self.infolabels.get('season')
@@ -168,28 +170,37 @@ class ListItem(object):
             self.infoproperties = utils.merge_two_dicts(self.infoproperties, omdb.get_ratings_awards(imdb_id=self.imdb_id, cache_only=True))
 
     def get_kodi_details(self):
-        if not self.dbid:
+        if not self.dbid and not self.tvshow_dbid:
             return
 
         details = {}
-        if self.infolabels.get('mediatype') == 'movie':
+        tvshow_details = {}
+        if self.infolabels.get('mediatype') == 'movie' and self.dbid:
             details = KodiLibrary().get_movie_details(self.dbid)
-        if self.infolabels.get('mediatype') == 'tvshow':
+        elif self.infolabels.get('mediatype') == 'tvshow' and self.dbid:
             details = KodiLibrary().get_tvshow_details(self.dbid)
-        if self.infolabels.get('mediatype') == 'episode':
-            details = KodiLibrary().get_episode_details(self.dbid)
+        elif self.infolabels.get('mediatype') == 'episode':
+            details = KodiLibrary().get_episode_details(self.dbid) if self.dbid else {}
+            tvshow_details = KodiLibrary().get_tvshow_details(self.tvshow_dbid) if self.tvshow_dbid else {}
+
+        if tvshow_details:
+            self.tvshow_poster = tvshow_details.get('poster') or self.tvshow_poster
+            self.tvshow_fanart = tvshow_details.get('fanart') or self.tvshow_fanart
+            self.tvshow_landscape = tvshow_details.get('landscape') or self.tvshow_landscape
+            self.tvshow_clearart = tvshow_details.get('clearart') or self.tvshow_clearart
+            self.tvshow_clearlogo = tvshow_details.get('clearlogo') or self.tvshow_clearlogo
 
         if not details:
             return
 
-        self.icon = self.icon or details.get('icon', '')
-        self.thumb = self.thumb or details.get('thumb', '')
-        self.poster = self.poster or details.get('poster', '')
-        self.fanart = self.fanart or details.get('fanart', '')
-        self.landscape = self.landscape or details.get('landscape', '')
-        self.clearart = self.clearart or details.get('clearart', '')
-        self.clearlogo = self.clearlogo or details.get('clearlogo', '')
-        self.discart = self.discart or details.get('discart', '')
+        self.icon = details.get('icon') or self.icon
+        self.thumb = details.get('thumb') or self.thumb
+        self.poster = details.get('poster') or self.poster
+        self.fanart = details.get('fanart') or self.fanart
+        self.landscape = details.get('landscape') or self.landscape
+        self.clearart = details.get('clearart') or self.clearart
+        self.clearlogo = details.get('clearlogo') or self.clearlogo
+        self.discart = details.get('discart') or self.discart
         self.cast = self.cast or details.get('cast', [])
         self.infolabels = utils.merge_two_dicts(details.get('infolabels', {}), self.infolabels)
         self.infoproperties = utils.merge_two_dicts(details.get('infoproperties', {}), self.infoproperties)
@@ -216,6 +227,16 @@ class ListItem(object):
                 utils.try_parse_int(self.infoproperties.get('watchedepisodes', 0)) > 0):
             self.infoproperties['unwatchedepisodes'] = utils.try_parse_int(self.infolabels.get('episode')) - utils.try_parse_int(self.infoproperties.get('watchedepisodes'))
 
+    def set_url_props(self, url, prefix='Item'):
+        for k, v in url.items():
+            if not k or not v:
+                continue
+            try:
+                self.infoproperties[u'{}.{}'.format(prefix, utils.try_decode_string(k))] = u'{}'.format(utils.try_decode_string(v))
+            except Exception as exc:
+                utils.kodi_log(u'ERROR in ListItem set_url_props\nk:{} v:{}'.format(utils.try_decode_string(k), utils.try_decode_string(v)), 1)
+                utils.kodi_log(exc, 1)
+
     def set_listitem(self, path=None):
         listitem = xbmcgui.ListItem(label=self.label, label2=self.label2, path=path)
         listitem.setLabel2(self.label2)
@@ -223,7 +244,7 @@ class ListItem(object):
         listitem.setInfo(self.library, self.infolabels)
         listitem.setProperties(self.infoproperties)
         listitem.setArt(utils.merge_two_dicts({
-            'thumb': self.thumb, 'icon': self.icon, 'poster': self.poster, 'fanart': self.fanart, 'discart': self.discart,
+            'thumb': self.thumb or self.icon, 'icon': self.icon, 'poster': self.poster, 'fanart': self.fanart, 'discart': self.discart,
             'clearlogo': self.clearlogo, 'clearart': self.clearart, 'landscape': self.landscape, 'banner': self.banner,
             'tvshow.poster': self.tvshow_poster, 'tvshow.clearlogo': self.tvshow_clearlogo,
             'tvshow.clearart': self.tvshow_clearart, 'tvshow.landscape': self.tvshow_landscape,

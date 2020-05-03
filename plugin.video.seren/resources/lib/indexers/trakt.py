@@ -88,7 +88,7 @@ class TraktAPI:
             url = 'https://api.trakt.tv/oauth/device/token'
             response = requests.post(url, data=postData)
 
-            if '200' in str(response):
+            if response.status_code == 200:
                 response = json.loads(response.text)
                 tools.setSetting('trakt.auth', response['access_token'])
                 tools.setSetting('trakt.refresh', response['refresh_token'])
@@ -174,15 +174,23 @@ class TraktAPI:
 
         try:
             response = requests.get(self.ApiUrl + url, headers=self.headers)
+
             self.response_headers = response.headers
 
             if response.status_code == 403:
+                tools.log('Trakt 403: 	Forbidden - invalid API key or unapproved app')
+                tools.log(response.text)
                 if refreshCheck == False:
                     self._handle_re_auth(response)
                     return self.get_request(url, refreshCheck=True)
                 else:
                     tools.log('Failed to perform request even after token refresh', 'error')
 
+            if response.status_code == 401:
+                tools.log('Trakt 401: 	Unauthorized - OAuth must be provided')
+                tools.log(response.text)
+                return
+            
             if response.status_code > 499:
                 if attempts < 5:
                     attempts += 1
@@ -196,8 +204,8 @@ class TraktAPI:
                 tools.log('Trakt returned a 404: {}'.format(url), 'error')
                 return None
 
-            if response.status_code == 502:
-                tools.log('Trakt is currently experiencing Gateway Issues', 'error')
+            # if response.status_code == 502:
+            #     tools.log('Trakt is currently experiencing Gateway Issues', 'error')
 
         except requests.exceptions.ConnectionError:
             return
@@ -215,12 +223,23 @@ class TraktAPI:
             response = requests.post(self.ApiUrl + url, json=postData, headers=self.headers)
             self.response_headers = response.headers
 
+            if response.status_code == 404:
+                tools.log('Trakt returned a 404: {}'.format(url), 'error')
+                return None
+
             if response.status_code == 403:
-                if not refreshCheck:
+                tools.log('Trakt 403: 	Forbidden - invalid API key or unapproved app')
+                tools.log(response.text)
+                if refreshCheck == False:
                     self._handle_re_auth(response)
-                    self.post_request(url, postData, limit=limit, refreshCheck=True)
+                    return self.post_request(url, postData, limit=limit, refreshCheck=True)
                 else:
-                    tools.log('Failed to perform trakt request even after token refresh', 'error')
+                    tools.log('Failed to perform request even after token refresh', 'error')
+
+            if response.status_code == 401:
+                tools.log('Trakt 401: 	Unauthorized - OAuth must be provided')
+                tools.log(response.text)
+                return
 
             if response.status_code > 499:
                 if attempts < 5:

@@ -17,6 +17,7 @@
 		<setting id="internal.api.user" type="text" default="" visible="false" />
 		<setting id="internal.api.apps" type="text" default="" visible="false" />
 		<setting id="internal.api.notification" type="text" default="" visible="false" />
+		<setting id="internal.api.promotion" type="text" default="" visible="false" />
 		<setting id="internal.api.subscription" type="text" default="" visible="false" />
 
 		<setting type="lsep" label="[UPPERCASE][B]$ADDON[script.module.orion 32065][/B][/UPPERCASE]" />

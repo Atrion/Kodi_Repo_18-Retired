@@ -902,11 +902,11 @@ msgid "Days"
 msgstr ""
 
 msgctxt "#32223"
-msgid "Link Multiplier"
+msgid "Link Boost"
 msgstr ""
 
 msgctxt "#32224"
-msgid "Hash Multiplier"
+msgid "Hash Boost"
 msgstr ""
 
 msgctxt "#32225"
@@ -1257,6 +1257,30 @@ msgctxt "#32311"
 msgid "Cache Lookup (Premium)"
 msgstr ""
 
+msgctxt "#32312"
+msgid "Container Boost"
+msgstr ""
+
+msgctxt "#32313"
+msgid "Promotion Boost"
+msgstr ""
+
+msgctxt "#32314"
+msgid "Promotions"
+msgstr ""
+
+msgctxt "#32315"
+msgid "Promotion"
+msgstr ""
+
+msgctxt "#32316"
+msgid "Now"
+msgstr ""
+
+msgctxt "#32317"
+msgid "Indefinitely"
+msgstr ""
+
 ##############################################################################
 # MESSAGES
 ##############################################################################
@@ -1533,6 +1557,14 @@ msgctxt "#33067"
 msgid "Starting playback of link submitted from Orion's website."
 msgstr ""
 
+msgctxt "#33068"
+msgid "The current promotion offers a [B]%dx[/B] limit boost."
+msgstr ""
+
+msgctxt "#33069"
+msgid "There are currently no promotions running."
+msgstr ""
+
 ##############################################################################
 # HELP
 ##############################################################################
@@ -1602,7 +1634,7 @@ msgid "The source the stream comes from. Sources are dynamically added by API re
 msgstr ""
 
 msgctxt "#34017"
-msgid "Show notifications for news updates and maintenance announcements."
+msgid "Show notifications for news updates, promotions, and maintenance announcements."
 msgstr ""
 
 msgctxt "#34018"

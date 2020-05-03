@@ -63,7 +63,7 @@ class OrionNetworker:
 	# CONSTRUCTOR
 	##############################################################################
 
-	def __init__(self, link = None, parameters = None, timeout = Timeout, agent = AgentOrion, debug = True, json = False):
+	def __init__(self, link = None, parameters = None, headers = None, timeout = Timeout, agent = AgentOrion, debug = True, json = False):
 		self.mDebug = debug
 		self.mLink = link if OrionTools.isString(link) else ''
 		self.mParameters = parameters
@@ -74,7 +74,8 @@ class OrionNetworker:
 		self.mJson = json
 		self.mErrorCode = None
 		self.mStatus = None
-		self.mHeaders = None
+		self.mHeadersRequest = headers
+		self.mHeadersResponse = None
 		self.mResponse = None
 
 	##############################################################################
@@ -144,23 +145,27 @@ class OrionNetworker:
 	# HEADERS
 	##############################################################################
 
-	def headers(self):
-		return self.mHeaders
+	def headersRequest(self):
+		return self.mHeadersRequest
+
+	def headersResponse(self):
+		return self.mHeadersResponse
 
 	##############################################################################
 	# REQUEST
 	##############################################################################
 
-	def request(self, link = None, parameters = None, timeout = None, agent = None, json = None):
+	def request(self, link = None, parameters = None, headers = None, timeout = None, agent = None, json = None):
 		try:
 			if link is None: link = self.mLink
 			if parameters is None: parameters = self.mParameters
+			if headers is None: headers = self.mHeadersRequest
 			if timeout is None: timeout = self.mTimeout
 			if json is None: json = self.mJson
 			self.mError = False
 			self.mErrorCode = None
 			self.mResponse = None
-			self.mHeaders = None
+			self.mHeadersResponse = None
 			self.mStatus = None
 			jsonRequest = False
 			if self.mLink:
@@ -189,6 +194,9 @@ class OrionNetworker:
 				if self.mAgent: request.add_header('User-Agent', self.mAgent)
 				if self.mFrom: request.add_header('From', self.mFrom)
 				if jsonRequest: request.add_header('Content-Type', 'application/json')
+				if headers:
+					for key, value in OrionTools.iterator(headers):
+						request.add_header(key, value)
 
 				try:
 					self.mResponse = urlopen(request, timeout = timeout)
@@ -202,7 +210,7 @@ class OrionNetworker:
 					else:
 						raise error
 
-			try: self.mHeaders = self.mResponse.info().dict
+			try: self.mHeadersResponse = self.mResponse.info().dict
 			except: pass
 			try: self.mStatus = self.mResponse.getcode()
 			except: pass

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# modified by Venom for Openscrapers
+# modified by Venom for Openscrapers (updated 4-20-2020)
 
 #  ..#######.########.#######.##....#..######..######.########....###...########.#######.########..######.
 #  .##.....#.##.....#.##......###...#.##....#.##....#.##.....#...##.##..##.....#.##......##.....#.##....##
@@ -29,7 +29,6 @@ import re
 import urllib
 import urlparse
 
-from openscrapers.modules import cleantitle
 from openscrapers.modules import client
 from openscrapers.modules import debrid
 from openscrapers.modules import source_utils
@@ -81,7 +80,6 @@ class source:
 				return sources
 
 			quality_size = client.parseDOM(html, 'p', attrs={'class': 'quality-size'})
-
 			tit = client.parseDOM(html, 'title')[0]
 
 			try:
@@ -96,19 +94,19 @@ class source:
 				for url, ref in link:
 					url = str(client.replaceHTMLCodes(url).split('&tr')[0])
 					url = url.replace(' ', '')
+					hash = re.compile('btih:(.*?)&').findall(url)[0]
+
 					name = url.split('&dn=')[1]
 					name = urllib.unquote_plus(name)
-
+					name = re.sub('[^A-Za-z0-9]+', '.', name).lstrip('.')
 					if source_utils.remove_lang(name):
 						continue
 
-					t = name.split(hdlr)[0].replace('&', 'and').replace('.US.', '.').replace('.us.', '.')
-					if cleantitle.get(t) != cleantitle.get(title):
+					match = source_utils.check_title(title, tit, hdlr, data['year'])
+					if not match:
 						continue
 
-					if hdlr not in tit:
-						continue
-
+					seeders = 0 # not available on yts
 					quality, info = source_utils.get_release_quality(ref, url)
 
 					try:
@@ -122,10 +120,9 @@ class source:
 					p += 1
 					info = ' | '.join(info)
 
-					sources.append({'source': 'torrent', 'quality': quality, 'language': 'en', 'url': url,
-												'info': info, 'direct': False, 'debridonly': True, 'size': dsize})
+					sources.append({'source': 'torrent', 'seeders': seeders, 'hash': hash, 'name': name, 'quality': quality,
+											'language': 'en', 'url': url, 'info': info, 'direct': False, 'debridonly': True, 'size': dsize})
 			return sources
-
 		except:
 			source_utils.scraper_error('YTSWS')
 			return sources

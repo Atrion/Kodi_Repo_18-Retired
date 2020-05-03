@@ -19,7 +19,7 @@ class TraktAPI(RequestAPI):
         self.prev_activities = None
         self.refreshcheck = 0
         self.attempedlogin = False
-        self.dialog_noapikey_header = '{0} {1} {2}'.format(self.addon.getLocalizedString(32007), self.req_api_name, self.addon.getLocalizedString(32011))
+        self.dialog_noapikey_header = u'{0} {1} {2}'.format(self.addon.getLocalizedString(32007), self.req_api_name, self.addon.getLocalizedString(32011))
         self.dialog_noapikey_text = self.addon.getLocalizedString(32012)
         self.client_id = 'e6fde6173adf3c6af8fd1b0694b9b84d7c519cefc24482310e1de06c6abe5467'
         self.client_secret = '15119384341d9a61c751d8d515acbc0dd801001d4ebe85d3eef9885df80ee4d9'
@@ -58,9 +58,9 @@ class TraktAPI(RequestAPI):
         self.expirein = self.code.get('expires_in', 0)
         self.auth_dialog = xbmcgui.DialogProgress()
         self.auth_dialog.create(
-            'Trakt Authentication',
-            'Go to [B]https://trakt.tv/activate[/B]',
-            'Enter the code: [B]' + self.code.get('user_code') + '[/B]')
+            self.addon.getLocalizedString(32097),
+            self.addon.getLocalizedString(32096),
+            self.addon.getLocalizedString(32095) + ': [B]' + self.code.get('user_code') + '[/B]')
         self.poller()
 
     def refresh_token(self):
@@ -96,17 +96,17 @@ class TraktAPI(RequestAPI):
 
     def on_aborted(self):
         """Triggered when device authentication was aborted"""
-        utils.kodi_log('Trakt Authentication Aborted!', 1)
+        utils.kodi_log(u'Trakt Authentication Aborted!', 1)
         self.auth_dialog.close()
 
     def on_expired(self):
         """Triggered when the device authentication code has expired"""
-        utils.kodi_log('Trakt Authentication Expired!', 1)
+        utils.kodi_log(u'Trakt Authentication Expired!', 1)
         self.auth_dialog.close()
 
     def on_authenticated(self, auth_dialog=True):
         """Triggered when device authentication has been completed"""
-        utils.kodi_log('Trakt Authenticated Successfully!', 1)
+        utils.kodi_log(u'Trakt Authenticated Successfully!', 1)
         self.addon.setSettingString('trakt_token', dumps(self.authorization))
         self.headers['Authorization'] = 'Bearer {0}'.format(self.authorization.get('access_token'))
         if auth_dialog:
@@ -142,8 +142,28 @@ class TraktAPI(RequestAPI):
         return self.use_cache(self.get_response_json, *args, **kwargs)
 
     def get_itemlist_sorted(self, *args, **kwargs):
-        response = self.get_response(*args)
+        response = self.get_response(*args, extended='full')
         items = response.json()
+        reverse = True if response.headers.get('X-Sort-How') == 'desc' else False
+        if response.headers.get('X-Sort-By') == 'rank':
+            return sorted(items, key=lambda i: i.get('rank'), reverse=reverse)
+        elif response.headers.get('X-Sort-By') == 'added':
+            return sorted(items, key=lambda i: i['listed_at'], reverse=reverse)
+        elif response.headers.get('X-Sort-By') == 'title':
+            return sorted(items, key=lambda i: i.get(i.get('type'), {}).get('title'), reverse=reverse)
+        elif response.headers.get('X-Sort-By') == 'released':
+            return sorted(items, key=lambda i: i.get(i.get('type'), {}).get('first_aired') if i.get('type') == 'show' else i.get(i.get('type'), {}).get('released'), reverse=reverse)
+        elif response.headers.get('X-Sort-By') == 'runtime':
+            return sorted(items, key=lambda i: i.get(i.get('type'), {}).get('runtime'), reverse=reverse)
+        elif response.headers.get('X-Sort-By') == 'popularity':
+            return sorted(items, key=lambda i: i.get(i.get('type'), {}).get('comment_count'), reverse=reverse)
+        elif response.headers.get('X-Sort-By') == 'percentage':
+            return sorted(items, key=lambda i: i.get(i.get('type'), {}).get('rating'), reverse=reverse)
+        elif response.headers.get('X-Sort-By') == 'votes':
+            return sorted(items, key=lambda i: i.get(i.get('type'), {}).get('votes'), reverse=reverse)
+        elif response.headers.get('X-Sort-By') == 'random':
+            random.shuffle(items)
+            return items
         return sorted(items, key=lambda i: i['listed_at'], reverse=True)
 
     def get_itemlist_ranked(self, *args, **kwargs):
@@ -157,7 +177,8 @@ class TraktAPI(RequestAPI):
     def get_itemlist_sortedcached(self, *args, **kwargs):
         page = kwargs.pop('page', 1)
         limit = kwargs.pop('limit', 10)
-        kwparams = {'cache_name': self.cache_name + '.trakt.sortedlist', 'cache_days': 0.125}
+        cache_refresh = True if page == 1 else False
+        kwparams = {'cache_name': self.cache_name + '.trakt.sortedlist.v3', 'cache_days': 0.125, 'cache_refresh': cache_refresh}
         items = self.use_cache(self.get_itemlist_sorted, *args, **kwparams)
         index_z = page * limit
         index_a = index_z - limit
@@ -227,7 +248,7 @@ class TraktAPI(RequestAPI):
                 n += 1
 
         if next_page:
-            items.append(ListItem(library=self.library, label='Next Page', nextpage=next_page))
+            items.append(ListItem(library=self.library, label=xbmc.getLocalizedString(33078), nextpage=next_page))
 
         return items
 
@@ -275,6 +296,11 @@ class TraktAPI(RequestAPI):
         history = sorted(history, key=lambda i: i['plays'], reverse=True)
         return self.get_limitedlist(history, tmdbtype, limit, islistitem)
 
+    def get_inprogress_movies(self, limit=None, islistitem=True):
+        history = self.get_response_json('sync', 'playback', 'movies', extended='noseasons')
+        history = sorted(history, key=lambda i: i['paused_at'], reverse=True)
+        return self.get_limitedlist(history, 'movie', limit, islistitem)
+
     def get_recentlywatched_shows(self, userslug, limit=None, islistitem=True):
         history = self.get_response_json('users', userslug, 'watched', 'shows', extended='noseasons')
         history = sorted(history, key=lambda i: i['last_watched_at'], reverse=True)
@@ -297,23 +323,28 @@ class TraktAPI(RequestAPI):
             return items
 
         n = 0
-        # utils.kodi_log('Getting In-Progress For Trakt User {0}'.format(userslug), 2)
-        # for i in self.get_recentlywatched(userslug, 'tv', islistitem=False, months=36):
+        # utils.kodi_log(u'Getting In-Progress For Trakt User {0}'.format(userslug), 2)
+        last_updated = self.get_response_json('sync/last_activities')
+        last_updated = last_updated.get('episodes', {}).get('watched_at') if last_updated else None
         for i in self.get_recentlywatched_shows(userslug, islistitem=False):
             if limit and n >= limit:
                 break
-            # utils.kodi_log('In-Progress -- Searching Next Episode For:\n{0}'.format(i), 2)
-            progress = self.get_upnext(i[0], True)
+            # utils.kodi_log(u'In-Progress -- Searching Next Episode For:\n{0}'.format(i), 1)
+            progress = self.get_upnext(i[0], True, last_updated=last_updated)
             if progress and progress.get('next_episode'):
-                # utils.kodi_log('In-Progress -- Found Next Episode:\n{0}'.format(progress.get('next_episode')), 2)
+                if (episodes and
+                        progress.get('next_episode', {}).get('season') == 1 and
+                        progress.get('next_episode', {}).get('number') == 1):
+                    continue
+                # utils.kodi_log(u'In-Progress -- Found Next Episode:\n{0}'.format(progress.get('next_episode')), 2)
                 season = progress.get('next_episode', {}).get('season') if episodes else None
                 episode = progress.get('next_episode', {}).get('number') if episodes else None
                 item = self.tmdb.get_detailed_item('tv', i[1], season=season, episode=episode)
                 item['tmdb_id'] = i[1]
-                # utils.kodi_log('In-Progress -- Got Next Episode Details:\n{0}'.format(item), 2)
+                # utils.kodi_log(u'In-Progress -- Got Next Episode Details:\n{0}'.format(item), 2)
                 items.append(ListItem(library=self.library, **item))
                 n += 1
-        return items
+        return sorted(items, key=lambda i: i.infolabels.get('premiered'), reverse=True) if episodes and self.addon.getSettingString('trakt_nextepisodesort') == 'airdate' else items
 
     def get_airingshows(self, start_date=0, days=1):
         start_date = datetime.date.today() + datetime.timedelta(days=start_date)
@@ -351,13 +382,22 @@ class TraktAPI(RequestAPI):
         if not self.tmdb or not self.authorize():
             return items
 
-        date = datetime.date.today() + datetime.timedelta(days=startdate)
-        response = self.get_calendar('shows', True, start_date=date.strftime('%Y-%m-%d'), days=days)
+        mod_date = startdate - 1
+        mod_days = days + 2  # Broaden date range in case utc conversion bumps into different day
+        date = datetime.date.today() + datetime.timedelta(days=mod_date)
+        response = self.get_calendar('shows', True, start_date=date.strftime('%Y-%m-%d'), days=mod_days)
 
         if not response:
             return items
 
-        for i in response[-limit:]:
+        traktitems = reversed(response) if startdate < -1 else response  # Reverse items for date ranges in past
+
+        count = 0
+        for i in traktitems:
+            if not utils.date_in_range(i.get('first_aired'), utc_convert=True, start_date=startdate, days=days):
+                continue  # Don't add items that aren't in our timezone converted range
+            if count >= limit:
+                break  # Only add the limit
             episode = i.get('episode', {}).get('number')
             season = i.get('episode', {}).get('season')
             tmdb_id = i.get('show', {}).get('ids', {}).get('tmdb')
@@ -366,14 +406,34 @@ class TraktAPI(RequestAPI):
             item.tmdb_id, item.season, item.episode = tmdb_id, season, episode
             item = self.get_calendar_properties(item, i)
             items.append(item)
+            count += 1
         return items
 
-    def get_upnext(self, show_id, response_only=False):
+    def get_upnext_cache_refresh(self, show_id, last_updated):
+        if not last_updated:  # No last Trakt update date so refresh cache
+            # utils.kodi_log(u'Up Next {} Episodes:\nNo last Trakt update date. Refreshing cache...'.format(show_id), 1)
+            return True  # Refresh cache
+
+        cache_name = '{0}.trakt.show.{1}.last_updated'.format(self.cache_name, show_id)
+        prev_updated = self.get_cache(cache_name)
+        if not prev_updated:  # No previous update date so refresh cache
+            # utils.kodi_log(u'Up Next {} Episodes:\nNo previous update date. Refreshing cache...'.format(show_id), 1)
+            return self.set_cache(last_updated, cache_name)  # Set the cache date and refresh cache
+
+        if utils.convert_timestamp(prev_updated) < utils.convert_timestamp(last_updated):  # Changes on Trakt since previous update date so refresh cache
+            # utils.kodi_log(u'Up Next {} Episodes:\nChanges on Trakt since previous update date. Refreshing cache...'.format(show_id), 1)
+            return self.set_cache(last_updated, cache_name)  # Set the cache date and refresh cache
+        # utils.kodi_log(u'Up Next {} Episodes:\nRetrieving cached details...'.format(show_id), 1)
+
+    def get_upnext(self, show_id, response_only=False, last_updated=None):
         items = []
         if not self.authorize():
             return items
+
+        cache_refresh = self.get_upnext_cache_refresh(show_id, last_updated)
+
         request = 'shows/{0}/progress/watched'.format(show_id)
-        response = self.get_response_json(request)
+        response = self.get_request(request, cache_refresh=cache_refresh, cache_days=1)
         reset_at = utils.convert_timestamp(response.get('reset_at')) if response.get('reset_at') else None
         seasons = response.get('seasons', [])
         for season in seasons:
@@ -388,6 +448,7 @@ class TraktAPI(RequestAPI):
                     item = (s_num, e_num)
                 if item:
                     if response_only:
+                        # utils.kodi_log(u'Up Next {} Episodes:\nFound next episode - S{}E{}'.format(show_id, s_num, e_num), 1)
                         return response
                     items.append(item)
         if not response_only:
@@ -436,7 +497,10 @@ class TraktAPI(RequestAPI):
         if not self.authorize(login):
             return
         item = self.get_response_json('users/settings')
-        return item.get('user', {}).get('ids', {}).get('slug')
+        user_slug = item.get('user', {}).get('ids', {}).get('slug')
+        if user_slug:
+            xbmcgui.Window(10000).setProperty('TMDbHelper.TraktUserSlug', user_slug)  # Set a Window Property to Compare
+            return user_slug
 
     def get_details(self, item_type, id_num, season=None, episode=None):
         if not season or not episode:
@@ -464,22 +528,107 @@ class TraktAPI(RequestAPI):
             if item and item.label != 'N/A':
                 items.append(item)
         if items and collection[end_at:]:  # If there's more items add the next page item
-            items.append(ListItem(library=self.library, label='Next Page', nextpage=page + 1))
+            items.append(ListItem(library=self.library, label=xbmc.getLocalizedString(33078), nextpage=page + 1))
         return items
+
+    def get_item_idlookup(self, item_type, tmdb_id=None, tvdb_id=None, imdb_id=None):
+        if not tmdb_id and not tvdb_id and not imdb_id:
+            return
+        item = None
+        if tmdb_id:
+            item = self.get_request('search', 'tmdb', tmdb_id, type=item_type)
+        if not item and tvdb_id:
+            item = self.get_request('search', 'tvdb', tvdb_id, type=item_type)
+        if not item and imdb_id:
+            item = self.get_request('search', 'imdb', imdb_id, type=item_type)
+        if not item:
+            return
+        for i in item:
+            if i.get('type') == item_type:
+                return i.get(item_type)
+
+    def create_userlist(self, user_slug=None, list_name=None, login=True):
+        if not self.authorize(login):  # Method needs authorisation
+            utils.kodi_log('TRAKT CREATE USERLIST - User not authorized')
+            return
+        user_slug = user_slug or self.get_usernameslug()
+        if not user_slug:
+            utils.kodi_log('TRAKT CREATE USERLIST - Unable to retrieve user_slug')
+            return
+        list_name = list_name or xbmcgui.Dialog().input('Enter List Name')
+        if not list_name:
+            utils.kodi_log('TRAKT CREATE USERLIST - No list name entered')
+            return
+        user_list = self.get_api_request('{}/users/{}/lists'.format(self.req_api_url, user_slug), headers=self.headers, postdata=dumps({"name": list_name}))
+        if user_list:
+            return user_list.get('ids', {}).get('slug')
+
+    def sync_userlist(self, item_type, tmdb_id=None, tvdb_id=None, imdb_id=None, login=True, remove_item=False, user_list=None):
+        utils.kodi_log('Adding {} {} {} {} to User List'.format(item_type, tmdb_id, tvdb_id, imdb_id))
+        if not self.authorize(login):  # Method needs authorisation
+            return
+
+        user_slug = self.get_usernameslug()  # Get the user's slug
+        if not user_slug:
+            utils.kodi_log('TRAKT SYNC LIST - Failed to retrieve user_slug')
+            return
+
+        item = self.get_item_idlookup(item_type, tmdb_id=tmdb_id, tvdb_id=tvdb_id, imdb_id=imdb_id)  # Lookup item
+        if not item:
+            utils.kodi_log('TRAKT SYNC LIST - Failed to retrieve item details')
+            return
+
+        if not user_list:
+            user_lists = self.get_response_json('users', user_slug, 'lists')  # Get the user's lists
+            user_list_labels = [i.get('name') for i in user_lists]  # Build select dialog to choose list
+            user_list_labels.append(self.addon.getLocalizedString(32141)) if not remove_item else None  # Add create new list item
+            addremove = xbmc.getLocalizedString(1210) if remove_item else xbmc.getLocalizedString(15019)
+            user_choice = xbmcgui.Dialog().select("{} {}".format(addremove, item.get('title')), user_list_labels)  # Choose the list
+            if user_choice == -1:  # User cancelled
+                utils.kodi_log('TRAKT SYNC LIST - User Cancelled')
+                return
+            if user_list_labels[user_choice] == self.addon.getLocalizedString(32141):
+                user_list = self.create_userlist(user_slug)
+            else:
+                user_list = user_lists[user_choice].get('ids', {}).get('slug')
+            if not user_list:
+                utils.kodi_log('TRAKT SYNC LIST - Failed to retrieve list_slug')
+                return
+
+        items = {item_type + 's': [item]}  # Create postdata for adding item
+        url = '{}/users/{}/lists/{}/items'.format(self.req_api_url, user_slug, user_list)
+        url += '/remove' if remove_item else ''
+        msg_head = self.addon.getLocalizedString(32139) if remove_item else self.addon.getLocalizedString(32140)
+        if self.get_api_request(url, headers=self.headers, postdata=dumps(items)):
+            msg_body = self.addon.getLocalizedString(32135) if remove_item else self.addon.getLocalizedString(32136)
+            msg_body = msg_body.format(item_type, item.get('title'), user_list)
+            utils.kodi_log('TRAKT SYNC LIST - ' + msg_body)
+            xbmcgui.Dialog().ok(msg_head, msg_body)  # Notify user that item added/removed successfully
+            return item
+        msg_body = self.addon.getLocalizedString(32137) if remove_item else self.addon.getLocalizedString(32138)
+        msg_body = msg_body.format(item_type, item.get('title'), user_list)
+        utils.kodi_log('TRAKT SYNC LIST - ' + msg_body)
+        xbmcgui.Dialog().ok(msg_head, msg_body)  # Notify user that we failed to add/remove item
 
     def sync_activities(self, itemtype, listtype):
         """ Checks if itemtype.listtype has been updated since last check """
         if not self.authorize():
             return
-        cache_name = '{0}.trakt.last_activities'.format(self.cache_name)
-        if not self.prev_activities:
-            self.prev_activities = self.get_cache(cache_name)
+        cache_name = '{0}.trakt.last_activities_v2'.format(self.cache_name)
+        self.prev_activities = self.get_cache(cache_name)
+        self.last_activities = self.get_response_json('sync/last_activities')
         if not self.last_activities:
-            self.last_activities = self.set_cache(self.get_response_json('sync/last_activities'), cache_name=cache_name, cache_days=self.cache_long)
-        if not self.prev_activities or not self.last_activities:
-            return
-        if self.prev_activities.get(itemtype, {}).get(listtype) == self.last_activities.get(itemtype, {}).get(listtype):
-            return self.last_activities.get(itemtype, {}).get(listtype)
+            return  # No last activities so refresh item cache
+        if not self.prev_activities:
+            self.set_cache(self.last_activities, cache_name=cache_name, cache_days=self.cache_long)
+            return  # No prev activities so refresh item cache and save last activities as prev activities
+        if not self.prev_activities.get(itemtype, {}).get(listtype) or not self.last_activities.get(itemtype, {}).get(listtype):
+            return  # No activity recorded for that listtype/itemtype combo so refresh item cache
+        if self.prev_activities.get(itemtype, {}).get(listtype) != self.last_activities.get(itemtype, {}).get(listtype):
+            self.prev_activities[itemtype][listtype] = self.last_activities.get(itemtype, {}).get(listtype)
+            self.set_cache(self.prev_activities, cache_name=cache_name, cache_days=self.cache_long)
+            return  # Dates didnt match so refresh item cache and update prev activities with new date
+        return self.last_activities.get(itemtype, {}).get(listtype)  # No updates since last time so dont refresh item cache
 
     def sync_collection(self, itemtype, idtype=None, mode=None, items=None, cache_refresh=False):
         return self.get_sync('collection', 'collected_at', itemtype, idtype, mode, items, cache_refresh)

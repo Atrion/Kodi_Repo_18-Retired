@@ -1,21 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<addon id="vfs.rar" version="2.0.8.1" name="RAR archive support" provider-name="spiff">
+<addon id="vfs.rar" version="2.3.0.1" name="RAR archive support" provider-name="spiff">
   <requires>
     <import addon="kodi.binary.global.main" version="1.0.14"/>
     <import addon="kodi.binary.global.general" version="1.0.3"/>
+    <import addon="kodi.binary.global.gui" version="5.12.0"/>
+    <import addon="kodi.binary.global.filesystem" version="1.0.2"/>
     <import addon="kodi.binary.instance.vfs" version="2.0.0"/>
   </requires>
-  <extension point="kodi.vfs" protocols="rar" extensions=".rar|.001|.cbr" files="true" directories="true" filedirectories="true" encodedhostname="true" library_linux="vfs.rar.so.2.0.8"/>
+  <extension point="kodi.vfs" protocols="rar" extensions=".rar|.001|.cbr" files="true" directories="true" filedirectories="true" encodedhostname="true" library_linux="vfs.rar.so.2.3.0"/>
   <extension point="xbmc.addon.metadata">
-    <summary lang="en">Unarchiver for .rar files</summary>
-    <description lang="en">This addon is an extraction utility for RAR archives.
+    <summary lang="en_GB">Unarchiver for .rar files</summary>
+    <description lang="en_GB">This addon is an extraction utility for RAR archives.
 
 It allows direct reading of uncompressed RAR files, so prior unpacking is not necessary. For all other types, it is temporarily unpacked and passed to Kodi.
 
-Attention: A "Solid RAR" archive type requires complete unpacking to use files within it. Hence access times may be long for larger packages.
-</description>
+Attention: A "Solid RAR" archive type requires complete unpacking to use files within it. Hence access times may be long for larger packages.</description>
+    <disclaimer>This version requires at least Kodi Leia 18.6; please use 2.0.8 for earlier Leia versions</disclaimer>
     <platform/>
-    <license>GPL-2.0</license>
+    <license>GPL-2.0-or-later</license>
     <source>https://github.com/xbmc/vfs.rar</source>
     <assets>
       <icon>resources/icon.png</icon>

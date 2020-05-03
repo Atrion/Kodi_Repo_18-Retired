@@ -119,26 +119,29 @@ class OrionNotification:
 	# DIALOG
 	##############################################################################
 
-	def dialog(self):
+	def dialog(self, title = None):
+		if not title: title = 32157
 		promotion = self.promotion()
 		message = ''
-		message += OrionInterface.font(OrionTools.addonName() + ' ' + OrionTools.translate(32157), bold = True, color = OrionInterface.ColorPrimary, uppercase = True)
+		message += OrionInterface.font(OrionTools.addonName() + ' ' + OrionTools.translate(title), bold = True, color = OrionInterface.ColorPrimary, uppercase = True)
 		message += OrionInterface.fontNewline()
 		message += OrionInterface.font(OrionTools.timeFormat(self.timeAdded(), format = OrionTools.FormatDateTime), bold = True)
 		message += OrionInterface.fontNewline() + OrionInterface.fontNewline()
-		message += OrionInterface.font(self.contentTitle(), bold = True, color = OrionInterface.ColorPrimary)
-		message += OrionInterface.fontNewline() + OrionInterface.fontNewline()
+		if self.contentTitle():
+			message += OrionInterface.font(self.contentTitle(), bold = True, color = OrionInterface.ColorPrimary)
+			message += OrionInterface.fontNewline() + OrionInterface.fontNewline()
 		if promotion:
 			offer = []
 			if promotion.multiplierStreams(): offer.append(str(promotion.multiplierStreams()) + 'x ' + OrionInterface.font(32223))
 			if promotion.multiplierHashes(): offer.append(str(promotion.multiplierHashes()) + 'x ' + OrionInterface.font(32224))
+			if promotion.multiplierContainers(): offer.append(str(promotion.multiplierContainers()) + 'x ' + OrionInterface.font(32312))
 			offer = OrionInterface.fontSeparator().join(offer)
 			message += OrionInterface.font(OrionTools.translate(32197) + ': ', color = OrionInterface.ColorPrimary) + offer + OrionInterface.fontNewline()
-			message += OrionInterface.font(OrionTools.translate(32195) + ': ', color = OrionInterface.ColorPrimary) + OrionInterface.font(OrionTools.timeFormat(promotion.timeStart(), format = OrionTools.FormatDate) if promotion.timeStart() else 32199) + OrionInterface.fontNewline()
-			message += OrionInterface.font(OrionTools.translate(32196) + ': ', color = OrionInterface.ColorPrimary) + OrionInterface.font(OrionTools.timeFormat(promotion.timeEnd(), format = OrionTools.FormatDate) if promotion.timeEnd() else 32199)
+			message += OrionInterface.font(OrionTools.translate(32195) + ': ', color = OrionInterface.ColorPrimary) + OrionInterface.font(OrionTools.timeFormat(promotion.timeStart(), format = OrionTools.FormatDate) if promotion.timeStart() else 32316) + OrionInterface.fontNewline()
+			message += OrionInterface.font(OrionTools.translate(32196) + ': ', color = OrionInterface.ColorPrimary) + OrionInterface.font(OrionTools.timeFormat(promotion.timeEnd(), format = OrionTools.FormatDate) if promotion.timeEnd() else 32317)
 			message += OrionInterface.fontNewline() + OrionInterface.fontNewline()
-		message += self.contentMessage('')
-		OrionInterface.dialogPage(title = 32157, message = message)
+		message += OrionTools.unicodeString(self.contentMessage(''))
+		OrionInterface.dialogPage(title = title, message = message)
 
 	@classmethod
 	def dialogNew(self):

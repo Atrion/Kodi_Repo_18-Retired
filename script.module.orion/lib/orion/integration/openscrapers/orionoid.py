@@ -217,11 +217,14 @@ class source:
 			try: return data['stream']['source']
 			except: return None
 
-	def _size(self, data):
+	def _size(self, data, string = True):
 		size = data['file']['size']
 		if size:
-			if size < source.SizeGigaByte: return '%d MB' % int(size / float(source.SizeMegaByte))
-			else: return '%0.1f GB' % (size / float(source.SizeGigaByte))
+			if string:
+				if size < source.SizeGigaByte: return '%d MB' % int(size / float(source.SizeMegaByte))
+				else: return '%0.1f GB' % (size / float(source.SizeGigaByte))
+			else:
+				return size / float(source.SizeGigaByte)
 		return None
 
 	def _seeds(self, data):
@@ -406,7 +409,8 @@ class source:
 						'url' : self._link(data),
 						'info' : ' | '.join(info) if len(info) > 0 else None,
 						'direct' : data['access']['direct'],
-						'debridonly' : self._debrid(data)
+						'debridonly' : self._debrid(data),
+						'size' : self._size(data, string = False)
 					})
 				except: self._error()
 		except: self._error()

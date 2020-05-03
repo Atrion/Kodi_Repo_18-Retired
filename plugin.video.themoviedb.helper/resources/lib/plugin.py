@@ -49,6 +49,9 @@ class Plugin(object):
     def imageviewer(self, image):
         xbmc.executebuiltin('ShowPicture({0})'.format(image))
 
+    def get_trakt_usernameslug(self, login=False):
+        return TraktAPI().get_usernameslug(login=login)
+
     def get_kodi_person_stats(self, item):
         if item.get('infolabels', {}).get('title'):
             statistics = KodiLibrary().get_person_stats(item.get('infolabels', {}).get('title'))
@@ -87,6 +90,32 @@ class Plugin(object):
             pass
         return item
 
+    def get_kodi_artwork(self, item, dbtype=None, dbid=None):
+        if not dbid:
+            return item
+
+        details = {}
+        if dbtype == 'movies':
+            details = KodiLibrary().get_movie_details(dbid)
+        elif dbtype == 'tvshows':
+            details = KodiLibrary().get_tvshow_details(dbid)
+        elif dbtype == 'episodes':
+            details = KodiLibrary().get_episode_details(dbid)
+
+        if not details:
+            return item
+
+        item['icon'] = details.get('icon') or item.get('icon') or ''
+        item['thumb'] = details.get('thumb') or item.get('thumb') or ''
+        item['poster'] = details.get('poster') or item.get('poster') or ''
+        item['fanart'] = details.get('fanart') or item.get('fanart') or ''
+        item['landscape'] = details.get('landscape') or item.get('landscape') or ''
+        item['clearart'] = details.get('clearart') or item.get('clearart') or ''
+        item['clearlogo'] = details.get('clearlogo') or item.get('clearlogo') or ''
+        item['discart'] = details.get('discart') or item.get('discart') or ''
+
+        return item
+
     def get_fanarttv_artwork(self, item, tmdbtype=None, tmdb_id=None, tvdb_id=None):
         if not self.fanarttv or tmdbtype not in ['movie', 'tv']:
             return item
@@ -115,7 +144,7 @@ class Plugin(object):
             item['extrafanart'] = item.get('extrafanart') or utils.iterate_extraart(artwork.get('extrafanart', [])) or ''
         return item
 
-    def get_db_info(self, info=None, tmdbtype=None, imdb_id=None, originaltitle=None, title=None, year=None, tvshowtitle=None, season=None, episode=None):
+    def get_db_info(self, info=None, tmdbtype=None, imdb_id=None, originaltitle=None, title=None, year=None, tvshowtitle=None, season=None, episode=None, tmdb_id=None, tvdb_id=None):
         dbid = None
         kodidatabase = None
         if tmdbtype == 'movie':
@@ -123,10 +152,10 @@ class Plugin(object):
         if tmdbtype == 'tv':
             kodidatabase = self.koditvshowdb = self.koditvshowdb or KodiLibrary(dbtype='tvshow')
         if kodidatabase and info:
-            return kodidatabase.get_info(info=info, imdb_id=imdb_id, originaltitle=originaltitle, title=title, year=year)
+            return kodidatabase.get_info(info=info, imdb_id=imdb_id, tmdb_id=tmdb_id, tvdb_id=tvdb_id, originaltitle=originaltitle, title=title, year=year)
         if tmdbtype == 'episode':
             kodidatabase = self.koditvshowdb = self.koditvshowdb or KodiLibrary(dbtype='tvshow')
-            dbid = kodidatabase.get_info(info='dbid', imdb_id=imdb_id, title=tvshowtitle, year=year)
+            dbid = kodidatabase.get_info(info='dbid', imdb_id=imdb_id, tmdb_id=tmdb_id, tvdb_id=tvdb_id, title=tvshowtitle, year=year)
             kodidatabase = KodiLibrary(dbtype='episode', tvshowid=dbid)
         if dbid and kodidatabase and season and episode:
             return kodidatabase.get_info('dbid', season=season, episode=episode)

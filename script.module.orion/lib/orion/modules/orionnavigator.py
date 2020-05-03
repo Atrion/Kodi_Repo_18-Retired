@@ -141,6 +141,7 @@ class OrionNavigator:
 		menu = OrionNavigator()
 		menu.buildAdd(label = 32285, action = 'menuTickets', folder = True, icon = 'ticket')
 		menu.buildAdd(label = 32056, action = 'menuNotifications', folder = True, icon = 'notification')
+		menu.buildAdd(label = 32314, action = 'dialogPromotion', folder = False, icon = 'promotion')
 		menu.buildFinish()
 
 	@classmethod

@@ -43,7 +43,7 @@
 
 <addon id="metadata.common.fanart.tv"
        name="fanart.tv Scraper Library"
-       version="3.6.2"
+       version="3.6.3"
        provider-name="Team Kodi">
   <requires>
     <import addon="xbmc.metadata" version="2.1.0"/>
@@ -365,21 +365,24 @@
     </extension>
 </addon>
 
-<addon id="vfs.sftp" version="1.0.5.1" name="SFTP support" provider-name="spiff">
+<addon id="vfs.sftp" version="1.0.6.1" name="SFTP support" provider-name="spiff">
   <requires>
     <import addon="kodi.binary.global.main" version="1.0.14"/>
     <import addon="kodi.binary.global.general" version="1.0.3"/>
     <import addon="kodi.binary.instance.vfs" version="2.0.0"/>
   </requires>
-  <extension point="kodi.vfs" protocols="sftp|ssh" files="true" directories="true" supportDialog="true" supportPath="true" supportUsername="true" supportPassword="true" supportPort="true" supportBrowsing="false" defaultPort="22" type="sftp" label="20260" zeroconf="_sftp-ssh._tcp" library_linux="vfs.sftp.so.1.0.5"/>
+  <extension point="kodi.vfs" protocols="sftp|ssh" files="true" directories="true" supportDialog="true" supportPath="true" supportUsername="true" supportPassword="true" supportPort="true" supportBrowsing="false" defaultPort="22" type="sftp" label="20260" zeroconf="_sftp-ssh._tcp" library_linux="vfs.sftp.so.1.0.6"/>
   <extension point="xbmc.addon.metadata">
-    <summary lang="en">SSH File Transfer Protocol support</summary>
-    <description lang="en">The SSH File Transfer Protocol (also Secure File Transfer Protocol, or SFTP) is a network protocol that provides file access, file transfer, and file management over any reliable data stream.
+    <summary lang="en_GB">SSH File Transfer Protocol support</summary>
+    <description lang="en_GB">The SSH File Transfer Protocol (also Secure File Transfer Protocol, or SFTP) is a network protocol that provides file access, file transfer, and file management over any reliable data stream.
 
 This addon allows file access to data in it.</description>
     <platform/>
-    <license>GPL-2.0</license>
+    <license>GPL-2.0-or-later</license>
     <source>https://github.com/xbmc/vfs.sftp</source>
+    <assets>
+      <icon>icon.png</icon>
+    </assets>
   </extension>
 </addon>
 
@@ -913,7 +916,7 @@ Added Trakt Manager
     </extension>
 </addon>
 
-<addon id="script.embuary.helper" name="Embuary Helper" version="1.4.4" provider-name="sualfred">
+<addon id="script.embuary.helper" name="Embuary Helper" version="1.4.8" provider-name="sualfred">
     <requires>
         <import addon="xbmc.python" version="2.26.0"/>
         <import addon="script.module.pil" version="1.1.7"/>
@@ -1405,7 +1408,7 @@ v5.2.14 (2017-01-23)
   </extension>
 </addon>
 
-<addon id="plugin.video.youtube" name="YouTube" version="6.6.0" provider-name="anxdpanic, bromix">
+<addon id="plugin.video.youtube" name="YouTube" version="6.8.0" provider-name="anxdpanic, bromix">
     <requires>
         <import addon="xbmc.python" version="2.20.0"/>
         <import addon="script.module.six" version="1.11.0"/>
@@ -1419,20 +1422,15 @@ v5.2.14 (2017-01-23)
     <extension point="xbmc.python.module" library="resources/lib/"/>
     <extension point="xbmc.addon.metadata">
         <news>
-[add] 'Play (Ask for quality)' context menu
-[add] search by channel or playlist id
-[add] hide_folders, hide_playlists, hide_search, and hide_live to /channel/&lt;channel_id&gt;/ end-point
-    - ie. plugin://plugin.video.youtube/channel/UC4PooiX37Pld1T8J5SYT-SQ/?hide_folders=true will hide all folders(Playlists, Search, and Live) in the channel listing
-[fix] playback for some videos (ie. music videos)
-[fix] playback of some videos with no adaptive video streams
-[fix] don't update watch history when incognito/screensaver/live |contrib: regseb|
-[fix] search prompting for input after video playback or refresh
+[add] support for video comments, Comments in the More... dialog |contrib: doko-desuka|
+[add] simulate deprecated recommended home API |contrib: hedleyroos|
+[fix] error caused by timestamp formatting
+[fix] fix Premiere's exiting after 5 seconds |contrib: jpfox156|
+[fix] playlists over json-rpc |contrib: JasperE84|
+[lang] de_de strings |contrib: tweimer|
 [lang] el_gr strings |contrib: twilight0|
 [lang] es_es strings |contrib: roliverosc|
-[lang] pt_br strings |contrib: MediaBrasil|
-[lang] cs_cz strings |contrib: llzn.cz|
-[lang] it_it strings |contrib: SebastianoPistore|
-[lang] de_de strings |contrib: tweimer|
+[lang] pt_pt strings |contrib: daniel3x|
         </news>
         <assets>
             <icon>icon.png</icon>
@@ -1450,7 +1448,7 @@ v5.2.14 (2017-01-23)
         <summary lang="hu_HU">YouTube kiegészítő</summary>
         <description lang="hu_HU">A YouTube világ egyik legnagyobb videómegosztó weboldala.</description>
         <summary lang="es_ES">Plugin para YouTube</summary>
-        <description lang="es_ES">YouTube es uno de los sitios web para compartir videos más grande del mundo.</description>
+        <description lang="es_ES">YouTube es uno de los sitios web más grande del mundo para compartir vídeos.</description>
         <disclaimer lang="es_ES">Este add-on no está respaldado por Google</disclaimer>
         <summary lang="es_MX">Plugin para YouTube</summary>
         <description lang="es_MX">YouTube es uno de los más grandes sitios web de intercambio de videos del mundo.</description>
@@ -1479,10 +1477,9 @@ v5.2.14 (2017-01-23)
         <summary lang="tr_TR">YouTube için eklenti</summary>
         <description lang="tr_TR">YouTube, dünya üzerindeki en büyük video paylaşma platformlarından birisidir</description>
         <disclaimer lang="tr_TR">Bu eklenti Google tarafından üretilmemiştir</disclaimer>
-        <language></language>
         <platform>all</platform>
         <license>GPL-2.0-only</license>
-        <forum>https://forum.kodi.tv/showthread.php?tid=348464</forum>
+        <forum>https://ytaddon.page.link/forum</forum>
         <website>https://www.youtube.com</website>
         <email>ytplugin at datanet dot ws</email>
         <source>https://github.com/jdf76/plugin.video.youtube</source>
@@ -1806,7 +1803,7 @@ v5.2.14 (2017-01-23)
   </extension>
 </addon>
 
-<addon id="script.module.orion" version="4.1.1" name="Orion" provider-name="Orion">
+<addon id="script.module.orion" version="4.2.4" name="Orion" provider-name="Orion">
 	<requires>
 		<import addon="xbmc.python" version="2.1.0"/>
 		<import addon="repository.orion" version="1.0.0" optional="true" />
@@ -1839,7 +1836,7 @@ v5.2.14 (2017-01-23)
   <extension-point id="skin" schema="skin.xsd"/>
 </addon>
 
-<addon id="plugin.program.indigo" version="4.0.17" name="Indigo" provider-name="tvaddons">
+<addon id="plugin.program.indigo" version="4.0.18" name="Indigo" provider-name="tvaddons">
 	<requires>
 		<import addon="xbmc.python" version="2.1.0"/>
 	</requires>
@@ -2652,23 +2649,25 @@ v5.2.14 (2017-01-23)
 	</extension>
 </addon>
 
-<addon id="vfs.rar" version="2.0.8.1" name="RAR archive support" provider-name="spiff">
+<addon id="vfs.rar" version="2.3.0.1" name="RAR archive support" provider-name="spiff">
   <requires>
     <import addon="kodi.binary.global.main" version="1.0.14"/>
     <import addon="kodi.binary.global.general" version="1.0.3"/>
+    <import addon="kodi.binary.global.gui" version="5.12.0"/>
+    <import addon="kodi.binary.global.filesystem" version="1.0.2"/>
     <import addon="kodi.binary.instance.vfs" version="2.0.0"/>
   </requires>
-  <extension point="kodi.vfs" protocols="rar" extensions=".rar|.001|.cbr" files="true" directories="true" filedirectories="true" encodedhostname="true" library_linux="vfs.rar.so.2.0.8"/>
+  <extension point="kodi.vfs" protocols="rar" extensions=".rar|.001|.cbr" files="true" directories="true" filedirectories="true" encodedhostname="true" library_linux="vfs.rar.so.2.3.0"/>
   <extension point="xbmc.addon.metadata">
-    <summary lang="en">Unarchiver for .rar files</summary>
-    <description lang="en">This addon is an extraction utility for RAR archives.
+    <summary lang="en_GB">Unarchiver for .rar files</summary>
+    <description lang="en_GB">This addon is an extraction utility for RAR archives.
 
 It allows direct reading of uncompressed RAR files, so prior unpacking is not necessary. For all other types, it is temporarily unpacked and passed to Kodi.
 
-Attention: A "Solid RAR" archive type requires complete unpacking to use files within it. Hence access times may be long for larger packages.
-</description>
+Attention: A "Solid RAR" archive type requires complete unpacking to use files within it. Hence access times may be long for larger packages.</description>
+    <disclaimer>This version requires at least Kodi Leia 18.6; please use 2.0.8 for earlier Leia versions</disclaimer>
     <platform/>
-    <license>GPL-2.0</license>
+    <license>GPL-2.0-or-later</license>
     <source>https://github.com/xbmc/vfs.rar</source>
     <assets>
       <icon>resources/icon.png</icon>
@@ -2814,7 +2813,7 @@ Attention: A "Solid RAR" archive type requires complete unpacking to use files w
   <extension-point id="resource.images" schema="images.xsd"/>
 </addon>
 
-<addon id="script.module.openscrapers" name="OpenScrapers Module" version="0.0.1.106" provider-name="Addons4Kodi">
+<addon id="script.module.openscrapers" name="OpenScrapers Module" version="0.0.1.110" provider-name="Addons4Kodi">
     <requires>
         <import addon="xbmc.python" version="2.25.0" />
         <import addon="script.module.beautifulsoup4" />
@@ -3479,23 +3478,23 @@ Zároveň má nastavenia upravujúce výšku stĺpcov spektra, ich rýchlosť a 
   </requires>
 </addon>
 
-<addon id="vfs.libarchive" version="1.0.6.1" name="Archive support" provider-name="spiff">
+<addon id="vfs.libarchive" version="1.0.7.1" name="Archive support" provider-name="spiff">
   <requires>
     <import addon="kodi.binary.global.main" version="1.0.14"/>
     <import addon="kodi.binary.global.general" version="1.0.3"/>
     <import addon="kodi.binary.global.filesystem" version="1.0.2"/>
     <import addon="kodi.binary.instance.vfs" version="2.0.0"/>
   </requires>
-  <extension point="kodi.vfs" protocols="archive|rar" extensions=".7z|.tar.gz|.tar.bz2|.tar.xz|.zip|.rar|.tgz|.tbz2|.gz|.bz2|.xz|.cbr" files="true" directories="true" filedirectories="true" encodedhostname="true" library_linux="vfs.libarchive.so.1.0.6"/>
+  <extension point="kodi.vfs" protocols="archive|rar" extensions=".7z|.tar.gz|.tar.bz2|.tar.xz|.zip|.rar|.tgz|.tbz2|.gz|.bz2|.xz|.cbr" files="true" directories="true" filedirectories="true" encodedhostname="true" library_linux="vfs.libarchive.so.1.0.7"/>
   <extension point="xbmc.addon.metadata">
-    <summary lang="en">Multi-format archive and compression addon</summary>
-    <description lang="en">This add-on uses the libarchive library to read a variety of archive and compression formats.
+    <summary lang="en_GB">Multi-format archive and compression addon</summary>
+    <description lang="en_GB">This add-on uses the libarchive library to read a variety of archive and compression formats.
 
 Supported formats are:
 7z, tar.gz, tar.bz2, tar.xz, zip, rar, tgz, tbz2, gz, bz2, xz, cbr
 </description>
     <platform/>
-    <license>GPL-2.0</license>
+    <license>GPL-2.0-or-later</license>
     <source>https://github.com/xbmc/vfs.libarchive</source>
     <assets>
       <icon>resources/icon.png</icon>
@@ -3540,7 +3539,7 @@ Supported formats are:
 
 <addon id="metadata.common.imdb.com"
        name="IMDB Scraper Library"
-       version="3.1.4"
+       version="3.1.5"
        provider-name="Team Kodi">
   <requires>
     <import addon="xbmc.metadata" version="2.1.0"/>
@@ -4092,16 +4091,13 @@ Supported formats are:
   </extension>
 </addon>
 
-<addon id="plugin.video.seren" version="1.6.9" name="Seren" provider-name="Nixgates">
+<addon id="plugin.video.seren" version="1.6.16" name="Seren" provider-name="Nixgates">
 	<requires>
 		<import addon="xbmc.python" version="2.25.0" />
 		<import addon="script.module.requests" version="2.19.1" />
 		<import addon="script.module.beautifulsoup4" version="4.5.3"/>
 		<import addon="plugin.video.youtube" version="6.2.0"/>
-		<import addon="script.module.addon.signals" version="0.0.1"/>
 		<import addon="script.module.dateutil" version="2.7.3"/>
-        <import addon="context.seren" version="1.0.3"/>
-<!--		<import addon="script.module.inputstreamhelper" version="0.3.3"/> #### Not yet big boy ####-->
 	</requires>
 	<extension point="xbmc.python.pluginsource" library="seren.py">
 		<provides>video</provides>
@@ -4138,6 +4134,37 @@ Supported formats are:
 			<screenshot>resources/screenshots/screenshot-03.jpg</screenshot>
 		</assets>
 		<news>
+Changelog 1.6.16:
+Fix response.status_code check for Trakt Auth
+
+Changelog 1.6.15:
+Adjsut status code responses for Trakt module
+
+Changelog 1.6.14:
+Remove cleaning of depricated settings as it was causing corrupt settings file
+
+Changelog 1.6.13:
+Add workaround on failure to grab user lists
+
+Changelog 1.6.12:
+Fix endpoint for still watching and playing next windows
+
+Changelog 1.6.11:
+Fix provider list not showing due to theme changes
+
+Changelog 1.6.10:
+Increased concurrent threads for Trakt Sync database to speed up large menu lists
+Fixed movie view by ID setting not displaying
+Fix TypeError when a manual update check is performed and no providers are installed.
+Added monkey patch of requests to allow cancellation of provider requests after we have exited getSources keepalive
+Added support to inform providers to shutdown
+Force lists to sync against trakts dates instead of local
+Fix marking watched on specials if no episodes are present
+Re-factored marking as watched for shows/seasons to speed up process
+Randomize service run time to avoid conflicting schedules
+More py3 compatibility fixes
+Zip file handling fixes due to issues with py3 compat
+Extended logging in RD resolving to allow better identification of issues
 
 Changelog 1.6.9:
 Fixed AllDebrid Cache check mistake during py3 compatibility changes
@@ -4291,7 +4318,7 @@ More minor bugfixes (honestly could not list them all)
   </extension>
 </addon>
 
-<addon id="script.module.resolveurl" name="ResolveURL" version="5.0.38" provider-name="jsergio">
+<addon id="script.module.resolveurl" name="ResolveURL" version="5.0.45" provider-name="jsergio, gujal">
     <requires>
         <import addon="xbmc.python" version="2.1.0" />
         <import addon="plugin.video.youtube" optional="true" />
@@ -4373,14 +4400,14 @@ More minor bugfixes (honestly could not list them all)
   </extension>
 </addon>
 
-<addon id="repository.sandmann79.plugins" name="Sandmann79s Repository" version="1.0.2" provider-name="Sandmann79">
-	<extension point="xbmc.addon.repository" name="Sandmann79s Repository">
+<addon id="repository.sandmann79.plugins" name="Sandmann79s Repository Leia" version="1.0.3" provider-name="Sandmann79">
+	<extension point="xbmc.addon.repository" name="Sandmann79s Repository Leia">
 		<info compressed="false">https://raw.githubusercontent.com/Sandmann79/xbmc/master/packages/addons.xml</info>
 		<checksum>https://raw.githubusercontent.com/Sandmann79/xbmc/master/packages/addons.xml.md5</checksum>
 		<datadir zip="true">https://raw.githubusercontent.com/Sandmann79/xbmc/master/packages/</datadir>
 	</extension>
 	<extension point="xbmc.addon.metadata">
-		<summary>Test Repo</summary>
+		<summary>Various Addons for Kodi 18 and below</summary>
 		<description></description>
 		<disclaimer></disclaimer>
 		<platform>all</platform>
@@ -4697,7 +4724,7 @@ More minor bugfixes (honestly could not list them all)
 	</extension>
 </addon>
 
-<addon id="script.module.urlresolver" name="URLResolver" version="5.0.58" provider-name="tvaddons">
+<addon id="script.module.urlresolver" name="URLResolver" version="5.0.65" provider-name="tvaddons">
     <requires>
         <import addon="xbmc.python" version="2.1.0" />
         <import addon="plugin.video.youtube" optional="true" />
@@ -4891,7 +4918,7 @@ More minor bugfixes (honestly could not list them all)
 	</extension>
 </addon>
 
-<addon id="skin.arctic.zephyr.2" name="Arctic Zephyr 2" provider-name="jurialmunkey" version="0.9.60-alpha1">
+<addon id="skin.arctic.zephyr.2" name="Arctic Zephyr 2" provider-name="jurialmunkey" version="0.9.61">
     <requires>
         <import addon="xbmc.gui" version="5.14.0" />
         <import addon="script.skinshortcuts" version="0.4.0" />
@@ -4942,7 +4969,7 @@ More minor bugfixes (honestly could not list them all)
     </extension>
 </addon>
 
-    <addon id="repository.Atrion18B" name="[COLOR darkgreen]Atrion's Repo for Kodi 18.x Backup[/COLOR]" version="0.4.8" provider-name="Atrion Darnay">
+    <addon id="repository.Atrion18B" name="[COLOR darkgreen]Atrion's Repo for Kodi 18.x Backup[/COLOR]" version="0.4.9" provider-name="Atrion Darnay">
         <requires>
             <import addon="xbmc.addon" version="12.0.0"/>
         </requires>
@@ -4972,13 +4999,14 @@ More minor bugfixes (honestly could not list them all)
 </addon>
 
 <addon id="plugin.video.themoviedb.helper"
-version="2.2.84"
+version="2.4.39"
 name="TheMovieDb Helper"
 provider-name="jurialmunkey">
 <requires>
   <import addon="xbmc.python" version="2.26.0"/>
   <import addon="script.module.simplecache" version="1.0.11" />
   <import addon="script.module.requests" version="2.9.1"/>
+  <import addon="script.module.pil" version="1.1.7"/>
 </requires>
 <extension point="xbmc.python.pluginsource" library="plugin.py">
   <provides>video</provides>
@@ -4987,44 +5015,63 @@ provider-name="jurialmunkey">
 <extension point="xbmc.python.script" library="script.py" />
 <extension point="kodi.context.item">
   <menu id="kodi.core.main">
-    <item library="context-play.py">
-      <label>Play Using</label>
-      <visible>[String.IsEqual(ListItem.dbtype,episode) + !String.IsEmpty(ListItem.Property(tvshow.tmdb_id)) + !String.IsEmpty(ListItem.Season) + !String.IsEmpty(ListItem.Episode)] | [String.IsEqual(ListItem.dbtype,movie) + !String.IsEmpty(ListItem.Property(tmdb_id))] </visible>
-    </item>
-    <item library="context-open.py">
-      <label>Browse Seasons</label>
-      <visible>String.IsEqual(ListItem.dbtype,episode) + !String.IsEmpty(ListItem.Property(tvshow.tmdb_id))</visible>
-    </item>
-    <item library="context-watchlist.py">
-      <label>Add/Remove from Trakt Watchlist</label>
-      <visible>String.StartsWith(ListItem.path,plugin://plugin.video.themoviedb.helper/) + !String.IsEmpty(Window(Home).Property(TMDbHelper.TraktIsAuth)) + !String.IsEmpty(ListItem.Property(tmdb_id)) + [String.IsEqual(ListItem.dbtype,episode) | String.IsEqual(ListItem.dbtype,movie) | String.IsEqual(ListItem.dbtype,tvshow)]</visible>
-    </item>
-    <item library="context-history.py">
-      <label>Add/Remove from Trakt History</label>
-      <visible>String.StartsWith(ListItem.path,plugin://plugin.video.themoviedb.helper/) + !String.IsEmpty(Window(Home).Property(TMDbHelper.TraktIsAuth)) + !String.IsEmpty(ListItem.Property(tmdb_id)) + [String.IsEqual(ListItem.dbtype,episode) | String.IsEqual(ListItem.dbtype,movie) | String.IsEqual(ListItem.dbtype,tvshow)]</visible>
-    </item>
-    <item library="context-collection.py">
-      <label>Add/Remove from Trakt Collection</label>
-      <visible>String.StartsWith(ListItem.path,plugin://plugin.video.themoviedb.helper/) + !String.IsEmpty(Window(Home).Property(TMDbHelper.TraktIsAuth)) + !String.IsEmpty(ListItem.Property(tmdb_id)) + [String.IsEqual(ListItem.dbtype,episode) | String.IsEqual(ListItem.dbtype,movie) | String.IsEqual(ListItem.dbtype,tvshow)]</visible>
-    </item>
-    <item library="context-library.py">
-      <label>Add to Kodi Library</label>
-      <visible>String.StartsWith(ListItem.path,plugin://plugin.video.themoviedb.helper/) + !String.IsEmpty(ListItem.Property(tmdb_id)) + [String.IsEqual(ListItem.dbtype,episode) | String.IsEqual(ListItem.dbtype,movie) | String.IsEqual(ListItem.dbtype,tvshow) | String.IsEqual(ListItem.dbtype,season)]</visible>
-    </item>
+    <menu>
+      <label>$ADDON[plugin.video.themoviedb.helper 32145]</label>
+      <item library="context-play.py">
+        <label>$ADDON[plugin.video.themoviedb.helper 32146]</label>
+        <visible>[String.IsEqual(ListItem.dbtype,episode) + !String.IsEmpty(ListItem.Property(tvshow.tmdb_id)) + !String.IsEmpty(ListItem.Season) + !String.IsEmpty(ListItem.Episode)] | [String.IsEqual(ListItem.dbtype,movie) + !String.IsEmpty(ListItem.Property(tmdb_id))] </visible>
+      </item>
+      <item library="context-open.py">
+        <label>$ADDON[plugin.video.themoviedb.helper 32147]</label>
+        <visible>String.IsEqual(ListItem.dbtype,episode) + !String.IsEmpty(ListItem.Property(tvshow.tmdb_id))</visible>
+      </item>
+      <item library="context-watchlist.py">
+        <label>$ADDON[plugin.video.themoviedb.helper 32148]</label>
+        <visible>!String.IsEmpty(ListItem.Property(Container.Info)) + !String.IsEmpty(Window(Home).Property(TMDbHelper.TraktIsAuth)) + !String.IsEmpty(ListItem.Property(tmdb_id)) + [String.IsEqual(ListItem.dbtype,episode) | String.IsEqual(ListItem.dbtype,movie) | String.IsEqual(ListItem.dbtype,tvshow)]</visible>
+      </item>
+      <item library="context-history.py">
+        <label>$ADDON[plugin.video.themoviedb.helper 32149]</label>
+        <visible>!String.IsEmpty(ListItem.Property(Container.Info)) + !String.IsEmpty(Window(Home).Property(TMDbHelper.TraktIsAuth)) + !String.IsEmpty(ListItem.Property(tmdb_id)) + [String.IsEqual(ListItem.dbtype,episode) | String.IsEqual(ListItem.dbtype,movie) | String.IsEqual(ListItem.dbtype,tvshow)]</visible>
+      </item>
+      <item library="context-collection.py">
+        <label>$ADDON[plugin.video.themoviedb.helper 32150]</label>
+        <visible>!String.IsEmpty(ListItem.Property(Container.Info)) + !String.IsEmpty(Window(Home).Property(TMDbHelper.TraktIsAuth)) + !String.IsEmpty(ListItem.Property(tmdb_id)) + [String.IsEqual(ListItem.dbtype,episode) | String.IsEqual(ListItem.dbtype,movie) | String.IsEqual(ListItem.dbtype,tvshow)]</visible>
+      </item>
+      <item library="context-library.py">
+        <label>$ADDON[plugin.video.themoviedb.helper 32151]</label>
+        <visible>!String.IsEmpty(ListItem.Property(Container.Info)) + !String.IsEmpty(ListItem.Property(tmdb_id)) + [String.IsEqual(ListItem.dbtype,episode) | String.IsEqual(ListItem.dbtype,movie) | String.IsEqual(ListItem.dbtype,tvshow) | String.IsEqual(ListItem.dbtype,season)]</visible>
+      </item>
+      <item library="context-library-userlist.py">
+        <label>$ADDON[plugin.video.themoviedb.helper 32151]</label>
+        <visible>!String.IsEmpty(ListItem.Property(Container.Info)) + String.IsEqual(ListItem.Property(Item.Info),trakt_userlist)</visible>
+      </item>
+      <item library="context-addtouserlist.py">
+        <label>$ADDON[plugin.video.themoviedb.helper 32140]</label>
+        <visible>!String.IsEmpty(Window(Home).Property(TMDbHelper.TraktIsAuth)) + [String.IsEqual(ListItem.dbtype,episode) | String.IsEqual(ListItem.dbtype,movie) | String.IsEqual(ListItem.dbtype,tvshow)] + [!String.IsEmpty(ListItem.Property(tmdb_id)) | !String.IsEmpty(ListItem.DBID)]</visible>
+      </item>
+      <item library="context-removefromuserlist.py">
+        <label>$ADDON[plugin.video.themoviedb.helper 32152]</label>
+        <visible>!String.IsEmpty(Window(Home).Property(TMDbHelper.TraktIsAuth)) + !String.IsEmpty(Window(Home).Property(TMDbHelper.TraktUserSlug)) + !String.IsEmpty(ListItem.Property(Container.User_Slug)) + !String.IsEmpty(ListItem.Property(Container.List_Slug)) + String.IsEqual(Window(Home).Property(TMDbHelper.TraktUserSlug),ListItem.Property(Container.User_Slug))</visible>
+      </item>
+      <item library="context-refresh-item.py">
+        <label>$ADDON[plugin.video.themoviedb.helper 32153]</label>
+        <visible>!String.IsEmpty(ListItem.Property(Container.Info)) + !String.IsEmpty(ListItem.Property(tmdb_id)) + [String.IsEqual(ListItem.dbtype,episode) | String.IsEqual(ListItem.dbtype,movie) | String.IsEqual(ListItem.dbtype,tvshow)]</visible>
+      </item>
+    </menu>
   </menu>
 </extension>
 <extension point="xbmc.addon.metadata">
   <summary lang="en_GB">TheMovieDb Helper - Now With Trakt Support!</summary>
   <description lang="en_GB">TheMovieDb Helper provides details about movies, tvshows and actors from TMDb. Users can access a variety of lists from TMDb and Trakt.</description>
   <disclaimer lang="en_GB">Provided by TheMovieDb and Trakt.</disclaimer>
-  <license>GPL-3.0</license>
+  <license>GPL-3.0-or-later</license>
   <assets>
     <icon>icon.png</icon>
     <fanart>fanart.jpg</fanart>
     <screenshot>resources/screenshot-01.jpg</screenshot>
     <screenshot>resources/screenshot-02.jpg</screenshot>
   </assets>
-  <news>2.2.81 - Update MPAA code[CR]2.2.80 - Fixes[CR]2.2.79 - Improved fallback player code[CR]2.2.78 - Add IMDB Top 250 to Service Monitor and Details[CR]2.2.77 - Add extrafanart[CR]2.2.76 - Fixes for dialog auto play[CR]2.2.75 - Add play with Kodi as player option in dialog[CR]2.2.74 - Various minor changes[CR]2.2.73 - Trakt Error fix[CR]2.2.72 - Some playlist fixes[CR]2.2.71 - Add URL encode options for player values[CR]2.2.70 - NextAired Library Improvements use Trakt[CR]2.2.69 - LMAO - Browse seasons[CR]2.2.68 - Fix trakt context for episodes[CR]2.2.67 - Add day to next aired labels[CR]2.2.66 - Some next aired library tweeks[CR]2.2.65 - Add play using context menu[CR]2.2.64 - Library next aired[CR]2.2.63 - Sort userlists by added date instead of rating[CR]2.2.62 - Add regions for release dates[CR]2.2.61 - Relative release dates in discover[CR]2.2.60 - Add release type selection in discover[CR]2.2.59 - Expose Trakt context addremove function[CR]2.2.58 - Add search history caching[CR]2.2.57 - Add feedback for adding items to watchlist etc.[CR]2.2.56 - Add Videos section to details[CR]2.2.55 - Fix for TraktAPI false positives getting slug[CR]2.2.54 - Potential fix for Trakt management options to only show if auth[CR]2.2.53 - Another fix for resolving url bugs - NOTICE: Users should re-add old strm files[CR]2.2.52 - Add autoupdate on startup option for library added shows[CR]2.2.51 - Flatten seasons option[CR]2.2.50 - Add season and episode numbers to episodes[CR]2.2.49 - Separate unaired movies/episodes option[CR]2.2.48 - Remove TMDB/Fanart develop key expert options as children can't help but get their sticky fingers all over it even after being told not to touch[CR]2.2.47 - Better clearing of service monitor properties[CR]2.2.46 - Fix for fanarttv on episode widgets[CR]2.2.45 - Add option to show next page item on widgets[CR]2.2.44 - Potential fix for both strm and widget player resolve[CR]2.2.43 - Fix for mostwatched shows/movies not reaching limit[CR]2.2.42 - Fix for unwatched episode counts[CR]2.2.41 - Remove resolveurl to prevent crashing bug and add fixes for fanarttv: Episode artwork plus connection error loop[CR]2.2.39/40 - Add role to label2[CR]2.2.38 - Expand Trakt list limit option[CR]2.2.37 - Add throwaway var to attempt fix for _strptime import bug[CR]2.2.36 - Possible fix for old settings format log spam[CR]2.2.35 - Potential fix for datetime bug in py2[CR]2.2.34 - Fix for plugin failed to play error[CR]2.2.33 - Fix for context menu trakt management of tvshows[CR]2.2.32 - Fix for trakt collection url not resolving to details[CR]2.2.31 - Add option to disable folder creation check[CR]2.2.30 - Reattempt create filepath as possible fix for false failure report[CR]2.2.29 - Only skip TMDbHelper .strm files in local library[CR]2.2.28 - Add options for add to library path[CR]2.2.26/27 - Fixes for add to library[CR]2.2.25 - Formatting future episodes fix[CR]2.2.24 - Browse Trakt Collection[CR]2.2.23 - Add to Kodi Library function[CR]2.2.22 - Player now ignores strm files in local library[CR]2.2.21 - Improvements to In-Progress[CR]2.2.20 - Add option to hide unaired episodes/movies. Format unaired episode/movie labels to red italic[CR]2.2.19 - Additional artwork types from kodilibrary[CR]2.2.18 - Cleanup and clear some empty keys[CR]2.2.17 - Add person kodidb stats to service monitor[CR]2.2.16 - Fix service monitor for people[CR]2.2.14/5 - playmedia param for close dialog[CR]2.2.13 - Extra checks to prevent double adding[CR]2.2.11 - Add Rule improvements to Discover[CR]2.2.10 - Move stats to infoproperties[CR]2.2.9 - DB Stats for Person[CR]2.2.8 - Use select dialog instead of container for discover method[CR]2.2.7 - Add discover select boxes[CR]2.2.6 - Fix for unicode error in add_query params[CR]2.2.5 - Expose discover method for users[CR]2.2.4 - Cleanup for window manager service monitor[CR]2.2.3 - Add close dialog option[CR]2.2.2 - Add Gender Field[CR]2.2.1 - Additional Sets Properties[CR]2.2.0 - Call Auto method for handling extendedinfo experience</news>
+  <news>2.4.39 - Manual blur image[CR]2.4.38 - Possible fix for Trakt calendar date range[CR]2.4.37 - Allow splitting blur image source</news>
 </extension>
 </addon>
 
@@ -5228,7 +5275,7 @@ Kodi is a registered trademark of the XBMC Foundation. We are not connected to o
 	</extension>
 </addon>
 
-    <addon id="repository.Atrion18" name="[COLOR darkgreen]Atrion's Repo for Kodi 18.x[/COLOR]" version="0.4.8" provider-name="Atrion Darnay">
+    <addon id="repository.Atrion18" name="[COLOR darkgreen]Atrion's Repo for Kodi 18.x[/COLOR]" version="0.4.9" provider-name="Atrion Darnay">
         <requires>
             <import addon="xbmc.addon" version="12.0.0"/>
         </requires>
@@ -5291,7 +5338,7 @@ Kodi is a registered trademark of the XBMC Foundation. We are not connected to o
 
 <addon id="metadata.album.universal"
        name="Universal Album Scraper"
-       version="3.1.2"
+       version="3.1.3"
        provider-name="Olympia, Team Kodi">
   <requires>
     <import addon="xbmc.metadata" version="2.1.0"/>

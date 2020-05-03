@@ -1,5 +1,5 @@
 # -*- coding: UTF-8 -*-
-# -Cleaned and Checked on 08-24-2019 by JewBMX in Scrubs.
+# modified by Venom for Openscrapers (4-20-2020)
 # Created by Tempest
 
 #  ..#######.########.#######.##....#..######..######.########....###...########.#######.########..######.
@@ -38,9 +38,9 @@ class source:
 		self.language = ['en']
 		self.domains = ['streamdreams.org']
 		self.base_link = 'https://streamdreams.org'
-		self.search_movie = '/movies/lll-%s/'
-		self.search_tv = '/shows/lll-%s/'
-		self.scraper = cfscrape.create_scraper()
+		self.search_movie = '/movies/nnn-%s/'
+		self.search_tv = '/shows/nnn-%s/'
+
 
 	def movie(self, imdb, title, localtitle, aliases, year):
 		try:
@@ -68,13 +68,21 @@ class source:
 			return
 
 	def sources(self, url, hostDict, hostprDict):
+		sources = []
 		try:
+			scraper = cfscrape.create_scraper()
+
 			if url is None:
 				return sources
-			sources = []
+
 			hostDict = hostprDict + hostDict
 			headers = {'Referer': url}
-			r = self.scraper.get(url, headers=headers).content
+
+			# log_utils.log('url = %s' % url, log_utils.LOGDEBUG)
+			r = scraper.get(url).content
+			if r is None:
+				return sources
+
 			u = client.parseDOM(r, "span", attrs={"class": "movie_version_link"})
 			for t in u:
 				match = client.parseDOM(t, 'a', ret='data-href')

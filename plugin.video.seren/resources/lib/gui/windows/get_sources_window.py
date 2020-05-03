@@ -98,7 +98,6 @@ class GetSources(BaseWindow):
 
     def update_properties(self):
 
-        try:
             # Set Resolution count properties
             self.setProperty('4k_sources', str(self.torrents_qual_len[0] + self.hosters_qual_len[0]))
             self.setProperty('1080p_sources', str(self.torrents_qual_len[1] + self.hosters_qual_len[1]))
@@ -115,10 +114,15 @@ class GetSources(BaseWindow):
 
             # Set remaining providers string
             self.setProperty("remaining_providers_count", str((len(self.remainingProviders))))
-            self.setProperty("remaining_providers_list", ' | '.join([tools.colorString(i.upper())
-                                                                     for i in self.remainingProviders]))
-        except:
-            pass
+
+            try:
+                self.remaining_providers_list = self.getControl(2000)
+                self.remaining_providers_list.reset()
+                self.remaining_providers_list.addItems(self.remainingProviders)
+                self.setProperty("remaining_providers_list", tools.colorString(' | ')
+                                 .join([i.upper() for i in self.remainingProviders]))
+            except:
+                pass
 
     def setProgress(self):
         if not self.silent:

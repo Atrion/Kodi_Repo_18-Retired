@@ -1,10 +1,13 @@
+import re
 import sys
 import time
 import xbmc
+import xbmcvfs
 import xbmcgui
 import xbmcaddon
 import unicodedata
 import datetime
+import hashlib
 from copy import copy
 from contextlib import contextmanager
 from resources.lib.constants import TYPE_CONVERSION, VALID_FILECHARS
@@ -34,6 +37,21 @@ def validify_filename(filename):
     return filename
 
 
+def makepath(path):
+        if xbmcvfs.exists(path):
+            return xbmc.translatePath(path)
+        xbmcvfs.mkdirs(path)
+        return xbmc.translatePath(path)
+
+
+def md5hash(value):
+    if sys.version_info.major != 3:
+        return hashlib.md5(str(value)).hexdigest()
+
+    value = str(value).encode()
+    return hashlib.md5(value).hexdigest()
+
+
 def type_convert(original, converted):
     return TYPE_CONVERSION.get(original, {}).get(converted, '')
 
@@ -58,14 +76,28 @@ def try_decode_string(string, encoding='utf-8'):
     """helper to decode strings for PY 2 """
     if sys.version_info.major == 3:
         return string
-    return string.decode(encoding)
+    try:
+        return string.decode(encoding)
+    except Exception:
+        return string
 
 
 def try_encode_string(string, encoding='utf-8'):
     """helper to encode strings for PY 2 """
     if sys.version_info.major == 3:
         return string
-    return string.encode(encoding)
+    try:
+        return string.encode(encoding)
+    except Exception:
+        return string
+
+
+def get_between_strings(string, startswith='', endswith=''):
+    exp = startswith + '(.+?)' + endswith
+    try:
+        return re.search(exp, string).group(1)
+    except AttributeError:
+        return ''
 
 
 def get_timestamp(timestamp=None):
@@ -228,13 +260,20 @@ def date_in_range(date_str, days=1, start_date=0, date_fmt="%Y-%m-%dT%H:%M:%S", 
 
 
 def kodi_log(value, level=0):
-    logvalue = u'{0}{1}'.format(_addonlogname, value) if sys.version_info.major == 3 else u'{0}{1}'.format(_addonlogname, value).encode('utf-8', 'ignore')
-    if level == 2 and _debuglogging:
-        xbmc.log(logvalue, level=xbmc.LOGNOTICE)
-    elif level == 1:
-        xbmc.log(logvalue, level=xbmc.LOGNOTICE)
-    else:
-        xbmc.log(logvalue, level=xbmc.LOGDEBUG)
+    try:
+        if isinstance(value, bytes):
+            value = value.decode('utf-8')
+        logvalue = u'{0}{1}'.format(_addonlogname, value)
+        if sys.version_info < (3, 0):
+            logvalue = logvalue.encode('utf-8', 'ignore')
+        if level == 2 and _debuglogging:
+            xbmc.log(logvalue, level=xbmc.LOGNOTICE)
+        elif level == 1:
+            xbmc.log(logvalue, level=xbmc.LOGNOTICE)
+        else:
+            xbmc.log(logvalue, level=xbmc.LOGDEBUG)
+    except Exception as exc:
+        xbmc.log(u'Logging Error: {}'.format(exc), level=xbmc.LOGNOTICE)
 
 
 def dictify(r, root=True):
@@ -319,6 +358,17 @@ def del_empty_keys(d, values=[]):
 def merge_two_dicts(x, y):
     z = x.copy()   # start with x's keys and values
     z.update(y)    # modifies z with y's keys and values & returns None
+    return z
+
+
+def merge_two_dicts_deep(x, y):
+    """ Deep merge y keys into copy of x """
+    z = x.copy()
+    for k, v in y.items():
+        if isinstance(v, dict):
+            merge_two_dicts_deep(z.setdefault(k, {}), v)
+        elif v:
+            z[k] = v
     return z
 
 

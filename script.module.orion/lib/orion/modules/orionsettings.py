@@ -1067,8 +1067,13 @@ class OrionSettings:
 			'''
 			if version <= 17: pathOriginal = path + '.17'
 			else: pathOriginal = path + '.18'
-			OrionTools.fileCopy(pathFrom = pathOriginal, pathTo = path, overwrite = True)
+			OrionTools.fileCopy(pathFrom = pathOriginal, pathTo = path, overwrite = True, bytes = None)
 			exists = OrionTools.fileExists(path)
+			if not exists:
+				# Try an alternative copy method (file r/w instead of xbmc copy).
+				# Some Android devices seems to have problems copying the settings.xml file.
+				OrionTools.fileCopy(pathFrom = pathOriginal, pathTo = path, overwrite = True, bytes = True)
+				exists = OrionTools.fileExists(path)
 		return exists
 
 	##############################################################################

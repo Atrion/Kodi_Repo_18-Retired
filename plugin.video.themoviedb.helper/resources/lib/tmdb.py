@@ -1,3 +1,4 @@
+import xbmc
 import resources.lib.utils as utils
 from resources.lib.requestapi import RequestAPI
 from resources.lib.listitem import ListItem
@@ -12,7 +13,7 @@ class TMDb(RequestAPI):
     def __init__(self, api_key=None, language=None, cache_long=None, cache_short=None, append_to_response=None, mpaa_prefix=None, filter_key=None, filter_value=None, exclude_key=None, exclude_value=None):
         super(TMDb, self).__init__(
             cache_short=cache_short, cache_long=cache_long,
-            req_api_name='TMDb', req_api_url='https://api.themoviedb.org/3', req_wait_time=0.25,
+            req_api_name='TMDb', req_api_url='https://api.themoviedb.org/3', req_wait_time=0,
             req_api_key='api_key=a07324c669cac4d96789197134ce272b')
         api_key = api_key if api_key else 'a07324c669cac4d96789197134ce272b'
         language = language if language else 'en-US'
@@ -391,7 +392,7 @@ class TMDb(RequestAPI):
 
     def get_detailed_item(self, itemtype, tmdb_id, season=None, episode=None, cache_only=False, cache_refresh=False):
         if not itemtype or not tmdb_id:
-            utils.kodi_log('TMDb Get Details: No Item Type or TMDb ID!\n{} {} {} {}'.format(itemtype, tmdb_id, season, episode), 2)
+            utils.kodi_log(u'TMDb Get Details: No Item Type or TMDb ID!\n{} {} {} {}'.format(itemtype, tmdb_id, season, episode), 2)
             return {}
         extra_request = None
         cache_name = '{0}.TMDb.v2_2_82.{1}.{2}'.format(self.cache_name, itemtype, tmdb_id)
@@ -414,7 +415,7 @@ class TMDb(RequestAPI):
                 extra_request['tvshow.tvdb_id'] = request.get('external_ids', {}).get('tvdb_id')
                 request = utils.merge_two_dicts(request, extra_request)
             itemdict = self.set_cache(self.get_niceitem(request), cache_name, self.cache_long) if request else {}
-            utils.kodi_log('TMDb Get Details: No Item Found!\n{} {} {} {}'.format(itemtype, tmdb_id, season, episode), 2) if not request else None
+            utils.kodi_log(u'TMDb Get Details: No Item Found!\n{} {} {} {}'.format(itemtype, tmdb_id, season, episode), 2) if not request else None
         return itemdict
 
     def get_externalid_item(self, itemtype, external_id, external_source):
@@ -483,5 +484,5 @@ class TMDb(RequestAPI):
         request = func(*args, language=self.req_language, **kwargs)
         items = self.get_nicelist(request.get(key, []))
         if pagination and utils.try_parse_int(request.get('page', 0)) < utils.try_parse_int(request.get('total_pages', 0)):
-            items.append(ListItem(library=self.library, label='Next Page', nextpage=utils.try_parse_int(request.get('page', 0)) + 1))
+            items.append(ListItem(library=self.library, label=xbmc.getLocalizedString(33078), nextpage=utils.try_parse_int(request.get('page', 0)) + 1))
         return items

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# modified by Venom for Openscrapers
+# modified by Venom for Openscrapers (updated url 4-20-2020)
 
 #  ..#######.########.#######.##....#..######..######.########....###...########.#######.########..######.
 #  .##.....#.##.....#.##......###...#.##....#.##....#.##.....#...##.##..##.....#.##......##.....#.##....##
@@ -29,7 +29,6 @@ import re
 import urllib
 import urlparse
 
-from openscrapers.modules import cleantitle
 from openscrapers.modules import client
 from openscrapers.modules import debrid
 from openscrapers.modules import source_utils
@@ -78,9 +77,8 @@ class source:
 
 
 	def sources(self, url, hostDict, hostprDict):
+		self._sources = []
 		try:
-			self._sources = []
-
 			if url is None:
 				return self._sources
 
@@ -106,7 +104,6 @@ class source:
 			# log_utils.log('url = %s' % url, log_utils.LOGDEBUG)
 
 			headers = {'User-Agent': client.agent()}
-
 			_html = client.request(url, headers=headers)
 
 			threads = []
@@ -115,7 +112,6 @@ class source:
 			[i.start() for i in threads]
 			[i.join() for i in threads]
 			return self._sources
-
 		except:
 			source_utils.scraper_error('TORRENTDOWNLOADS')
 			return self._sources
@@ -128,25 +124,23 @@ class source:
 				if seeders < self.min_seeders:
 					return
 			except:
-				source_utils.scraper_error('TORRENTDOWNLOADS')
+				seeders = 0
 				pass
 
 			hash = re.search(r'<info_hash>([a-zA-Z0-9]+)</info_hash>', r).groups()[0]
 			name = re.search(r'<title>(.+?)</title>', r).groups()[0]
-			name = urllib.unquote_plus(name).replace(' ', '.')
+			name = urllib.unquote_plus(name)
+			name = re.sub('[^A-Za-z0-9]+', '.', name).lstrip('.')
 			if source_utils.remove_lang(name):
 				return
 
-			t = name.split(self.hdlr)[0].replace(self.year, '').replace('(', '').replace(')', '').replace('&', 'and').replace('.US.', '.').replace('.us.', '.')
-			if cleantitle.get(t) != cleantitle.get(self.title):
-				return
-
-			if self.hdlr not in name:
+			match = source_utils.check_title(self.title, name, self.hdlr, self.year)
+			if not match:
 				return
 
 			url = 'magnet:?xt=urn:btih:%s&dn=%s' % (hash, name)
 
-			quality, info = source_utils.get_release_quality(name, name)
+			quality, info = source_utils.get_release_quality(name, url)
 
 			try:
 				size = re.search(r'<size>([\d]+)</size>', r).groups()[0]
@@ -158,8 +152,8 @@ class source:
 
 			info = ' | '.join(info)
 
-			self._sources.append({'source': 'torrent', 'quality': quality, 'language': 'en', 'url': url,
-												'info': info, 'direct': False, 'debridonly': True, 'size': dsize})
+			self._sources.append({'source': 'torrent', 'seeders': seeders, 'hash': hash, 'name': name, 'quality': quality,
+												'language': 'en', 'url': url, 'info': info, 'direct': False, 'debridonly': True, 'size': dsize})
 		except:
 			source_utils.scraper_error('TORRENTDOWNLOADS')
 			pass

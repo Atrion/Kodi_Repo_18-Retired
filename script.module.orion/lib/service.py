@@ -47,6 +47,7 @@ while not monitor.abortRequested():
 		OrionSettings.backupExportAutomaticOnline()
 		OrionNotification.dialogVersion()
 		OrionNotification.dialogNew()
+		OrionPromotion.dialogNew()
 		OrionTicket.dialogNew()
 	OrionDatabase.instancesClear() # Very important. Without this, Kodi will fail to update the addon if a new version comes out, due to active database connections causing failures.
 	orion = None # Clear to not keep it in memory while waiting.
