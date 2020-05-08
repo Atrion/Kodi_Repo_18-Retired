@@ -654,7 +654,7 @@ msgstr ""
 
 #: /resources/settings.xml
 msgctxt "#32130"
-msgid "Auto-update library every X hours"
+msgid "Auto-update library at time"
 msgstr ""
 
 #: /resources/settings.xml
@@ -734,12 +734,12 @@ msgstr ""
 
 #: /addon.xml
 msgctxt "#32146"
-msgid "Play Using"
+msgid "Play using (TMDbHelper)"
 msgstr ""
 
 #: /addon.xml
 msgctxt "#32147"
-msgid "Browse Seasons"
+msgid "Browse seasons (TMDbHelper)"
 msgstr ""
 
 #: /addon.xml
@@ -770,6 +770,11 @@ msgstr ""
 #: /addon.xml
 msgctxt "#32153"
 msgid "Refresh cached details"
+msgstr ""
+
+#: /resources/settings.xml
+msgctxt "#32154"
+msgid "Update library now"
 msgstr ""
 
 msgctxt "#30030"

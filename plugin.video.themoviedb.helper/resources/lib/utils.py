@@ -11,6 +11,10 @@ import hashlib
 from copy import copy
 from contextlib import contextmanager
 from resources.lib.constants import TYPE_CONVERSION, VALID_FILECHARS
+try:
+    from urllib.parse import urlencode, unquote_plus  # Py3
+except ImportError:
+    from urllib import urlencode, unquote_plus
 _addonlogname = '[plugin.video.themoviedb.helper]\n'
 _addon = xbmcaddon.Addon()
 _debuglogging = _addon.getSettingBool('debug_logging')
@@ -38,10 +42,10 @@ def validify_filename(filename):
 
 
 def makepath(path):
-        if xbmcvfs.exists(path):
-            return xbmc.translatePath(path)
-        xbmcvfs.mkdirs(path)
+    if xbmcvfs.exists(path):
         return xbmc.translatePath(path)
+    xbmcvfs.mkdirs(path)
+    return xbmc.translatePath(path)
 
 
 def md5hash(value):
@@ -54,6 +58,26 @@ def md5hash(value):
 
 def type_convert(original, converted):
     return TYPE_CONVERSION.get(original, {}).get(converted, '')
+
+
+def parse_paramstring(paramstring):
+    """ helper to assist with difference in urllib modules in PY2/3 """
+    params = {}
+    paramstring = paramstring.replace('&amp;', '&')  # Just in case xml string
+    for param in paramstring.split('&'):
+        if '=' not in param:
+            continue
+        k, v = param.split('=')
+        params[try_decode_string(unquote_plus(k))] = try_decode_string(unquote_plus(v))
+    return params
+
+
+def urlencode_params(kwparams):
+    """ helper to assist with difference in urllib modules in PY2/3 """
+    params = {}
+    for k, v in kwparams.items():
+        params[try_encode_string(k)] = try_encode_string(v)
+    return urlencode(params)
 
 
 def try_parse_int(string):
@@ -72,12 +96,12 @@ def try_parse_float(string):
         return 0
 
 
-def try_decode_string(string, encoding='utf-8'):
+def try_decode_string(string, encoding='utf-8', errors=None):
     """helper to decode strings for PY 2 """
     if sys.version_info.major == 3:
         return string
     try:
-        return string.decode(encoding)
+        return string.decode(encoding, errors) if errors else string.decode(encoding)
     except Exception:
         return string
 
@@ -159,15 +183,15 @@ def rate_limiter(addon_name='plugin.video.themoviedb.helper', wait_time=None, ap
 
 
 def get_property(name, setproperty=None, clearproperty=False, prefix=None, window_id=None):
-        window = xbmcgui.Window(window_id) if window_id else xbmcgui.Window(xbmcgui.getCurrentWindowId())
-        name = '{0}.{1}'.format(prefix, name) if prefix else name
-        if clearproperty:
-            window.clearProperty(name)
-            return
-        elif setproperty:
-            window.setProperty(name, setproperty)
-            return setproperty
-        return window.getProperty(name)
+    window = xbmcgui.Window(window_id) if window_id else xbmcgui.Window(xbmcgui.getCurrentWindowId())
+    name = '{0}.{1}'.format(prefix, name) if prefix else name
+    if clearproperty:
+        window.clearProperty(name)
+        return
+    elif setproperty:
+        window.setProperty(name, setproperty)
+        return setproperty
+    return window.getProperty(name)
 
 
 def dialog_select_item(items=None, details=False, usedetails=True):

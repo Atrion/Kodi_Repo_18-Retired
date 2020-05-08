@@ -32,7 +32,8 @@ class KodiLibrary(object):
             "method": method,
             "id": 1}
         try:
-            response = json.loads(xbmc.executeJSONRPC(json.dumps(query)))
+            jrpc = xbmc.executeJSONRPC(json.dumps(query))
+            response = json.loads(utils.try_decode_string(jrpc, errors='ignore'))
         except Exception as exc:
             utils.kodi_log(u'TMDbHelper - JSONRPC Error:\n{}'.format(exc), 1)
             response = {}
@@ -212,7 +213,8 @@ class KodiLibrary(object):
 
     def get_niceitem(self, item, key):
         label = item.get('label') or ''
-        icon = thumb = item.get('thumbnail') or ''
+        icon = item.get('thumbnail') or ''
+        thumb = item.get('art', {}).get('thumb') or ''
         poster = item.get('art', {}).get('poster') or ''
         fanart = item.get('fanart') or item.get('art', {}).get('fanart') or ''
         landscape = item.get('art', {}).get('landscape') or ''

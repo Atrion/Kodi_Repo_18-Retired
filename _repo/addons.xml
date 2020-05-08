@@ -1680,7 +1680,7 @@ v5.2.14 (2017-01-23)
 
 <addon id="metadata.themoviedb.org"
        name="The Movie Database"
-       version="5.1.10"
+       version="5.1.11"
        provider-name="Team Kodi">
   <requires>
     <import addon="xbmc.metadata" version="2.1.0"/>
@@ -2649,7 +2649,7 @@ v5.2.14 (2017-01-23)
 	</extension>
 </addon>
 
-<addon id="vfs.rar" version="2.3.0.1" name="RAR archive support" provider-name="spiff">
+<addon id="vfs.rar" version="2.3.1.1" name="RAR archive support" provider-name="spiff">
   <requires>
     <import addon="kodi.binary.global.main" version="1.0.14"/>
     <import addon="kodi.binary.global.general" version="1.0.3"/>
@@ -2657,15 +2657,22 @@ v5.2.14 (2017-01-23)
     <import addon="kodi.binary.global.filesystem" version="1.0.2"/>
     <import addon="kodi.binary.instance.vfs" version="2.0.0"/>
   </requires>
-  <extension point="kodi.vfs" protocols="rar" extensions=".rar|.001|.cbr" files="true" directories="true" filedirectories="true" encodedhostname="true" library_linux="vfs.rar.so.2.3.0"/>
+  <extension point="kodi.vfs" protocols="rar" extensions=".rar|.001|.cbr" files="true" directories="true" filedirectories="true" encodedhostname="true" library_linux="vfs.rar.so.2.3.1"/>
   <extension point="xbmc.addon.metadata">
+    <summary lang="de_DE">Entpacker für .rar Dateien</summary>
     <summary lang="en_GB">Unarchiver for .rar files</summary>
+    <description lang="de_DE">Dieses Addon dient zum entpacken von RAR-Archiven.
+
+Es ermöglicht das direkte Lesen nicht komprimierter RAR-Dateien, sodass ein vorheriges Entpacken nicht erforderlich ist. Bei allen anderen Typen wird es vorübergehend entpackt und an Kodi übertragen.
+
+Achtung: Der Archivtyp "Solid RAR" erfordert ein vollständiges Entpacken, um die darin enthaltenen Dateien zu verwenden. Daher können die Zugriffszeiten für größere Pakete länger dauern.</description>
     <description lang="en_GB">This addon is an extraction utility for RAR archives.
 
 It allows direct reading of uncompressed RAR files, so prior unpacking is not necessary. For all other types, it is temporarily unpacked and passed to Kodi.
 
 Attention: A "Solid RAR" archive type requires complete unpacking to use files within it. Hence access times may be long for larger packages.</description>
-    <disclaimer>This version requires at least Kodi Leia 18.6; please use 2.0.8 for earlier Leia versions</disclaimer>
+    <disclaimer lang="de_DE">Diese Version erfordert mindestens Kodi Leia 18.6; Bitte verwenden Sie 2.0.8 für frühere Leia-Versionen</disclaimer>
+    <disclaimer lang="en_GB">This version requires at least Kodi Leia 18.6; please use 2.0.8 for earlier Leia versions</disclaimer>
     <platform/>
     <license>GPL-2.0-or-later</license>
     <source>https://github.com/xbmc/vfs.rar</source>
@@ -4630,21 +4637,20 @@ More minor bugfixes (honestly could not list them all)
   </extension>
 </addon>
 
-<addon
-  id="visualization.goom"
-  version="2.0.0"
-  name="Goom"
-  provider-name="Team XBMC">
+<addon id="visualization.goom" version="2.2.1.1" name="Goom" provider-name="Team Kodi">
   <requires>
-<import addon="kodi.binary.global.main" version="1.0.13"/>
-<import addon="kodi.binary.instance.visualization" version="2.0.1"/></requires>
-  <extension
-    point="xbmc.player.musicviz"
-    library_linux="visualization.goom.so.2.0.0"/>
+    <import addon="kodi.binary.global.main" version="1.0.14"/>
+    <import addon="kodi.binary.global.general" version="1.0.3"/>
+    <import addon="kodi.binary.global.gui" version="5.12.0"/>
+    <import addon="kodi.binary.instance.visualization" version="2.0.1"/>
+  </requires>
+  <extension point="xbmc.player.musicviz" library_linux="visualization.goom.so.2.2.1"/>
   <extension point="xbmc.addon.metadata">
-    <summary lang="en">Goom 2k4 Visualization</summary>
-    <description lang="en">The Goom 2k4 visualization supports effects like Tentacles, Flash, Stars, Fireworks, Waves, Blurs and Glows and includes a large number of trippy hypnotic effects that dance, swirl and pop with the music</description>
-    <platform>linux</platform>
+    <summary lang="en_GB">Goom 2k4 Visualization</summary>
+    <description lang="en_GB">The Goom 2k4 visualization supports effects like Tentacles, Flash, Stars, Fireworks, Waves, Blurs and Glows and includes a large number of trippy hypnotic effects that dance, swirl and pop with the music</description>
+    <platform/>
+    <license>GPL-2.0</license>
+    <source>https://github.com/xbmc/visualization.goom</source>
     <assets>
       <icon>resources/icon.png</icon>
       <fanart>resources/fanart.png</fanart>
@@ -4653,7 +4659,6 @@ More minor bugfixes (honestly could not list them all)
       <screenshot>resources/screenshot-03.png</screenshot>
       <screenshot>resources/screenshot-04.png</screenshot>
       <screenshot>resources/screenshot-05.png</screenshot>
-      <screenshot>resources/screenshot-06.png</screenshot>
     </assets>
   </extension>
 </addon>
@@ -4969,7 +4974,7 @@ More minor bugfixes (honestly could not list them all)
     </extension>
 </addon>
 
-    <addon id="repository.Atrion18B" name="[COLOR darkgreen]Atrion's Repo for Kodi 18.x Backup[/COLOR]" version="0.4.9" provider-name="Atrion Darnay">
+    <addon id="repository.Atrion18B" name="[COLOR darkgreen]Atrion's Repo for Kodi 18.x Backup[/COLOR]" version="0.5.0" provider-name="Atrion Darnay">
         <requires>
             <import addon="xbmc.addon" version="12.0.0"/>
         </requires>
@@ -4999,7 +5004,7 @@ More minor bugfixes (honestly could not list them all)
 </addon>
 
 <addon id="plugin.video.themoviedb.helper"
-version="2.4.39"
+version="2.4.56"
 name="TheMovieDb Helper"
 provider-name="jurialmunkey">
 <requires>
@@ -5015,16 +5020,16 @@ provider-name="jurialmunkey">
 <extension point="xbmc.python.script" library="script.py" />
 <extension point="kodi.context.item">
   <menu id="kodi.core.main">
+    <item library="context-play.py">
+      <label>$ADDON[plugin.video.themoviedb.helper 32146]</label>
+      <visible>[String.IsEqual(ListItem.dbtype,episode) + !String.IsEmpty(ListItem.Property(tvshow.tmdb_id)) + !String.IsEmpty(ListItem.Season) + !String.IsEmpty(ListItem.Episode)] | [String.IsEqual(ListItem.dbtype,movie) + !String.IsEmpty(ListItem.Property(tmdb_id))] </visible>
+    </item>
+    <item library="context-open.py">
+      <label>$ADDON[plugin.video.themoviedb.helper 32147]</label>
+      <visible>String.IsEqual(ListItem.dbtype,episode) + !String.IsEmpty(ListItem.Property(tvshow.tmdb_id))</visible>
+    </item>
     <menu>
       <label>$ADDON[plugin.video.themoviedb.helper 32145]</label>
-      <item library="context-play.py">
-        <label>$ADDON[plugin.video.themoviedb.helper 32146]</label>
-        <visible>[String.IsEqual(ListItem.dbtype,episode) + !String.IsEmpty(ListItem.Property(tvshow.tmdb_id)) + !String.IsEmpty(ListItem.Season) + !String.IsEmpty(ListItem.Episode)] | [String.IsEqual(ListItem.dbtype,movie) + !String.IsEmpty(ListItem.Property(tmdb_id))] </visible>
-      </item>
-      <item library="context-open.py">
-        <label>$ADDON[plugin.video.themoviedb.helper 32147]</label>
-        <visible>String.IsEqual(ListItem.dbtype,episode) + !String.IsEmpty(ListItem.Property(tvshow.tmdb_id))</visible>
-      </item>
       <item library="context-watchlist.py">
         <label>$ADDON[plugin.video.themoviedb.helper 32148]</label>
         <visible>!String.IsEmpty(ListItem.Property(Container.Info)) + !String.IsEmpty(Window(Home).Property(TMDbHelper.TraktIsAuth)) + !String.IsEmpty(ListItem.Property(tmdb_id)) + [String.IsEqual(ListItem.dbtype,episode) | String.IsEqual(ListItem.dbtype,movie) | String.IsEqual(ListItem.dbtype,tvshow)]</visible>
@@ -5071,7 +5076,7 @@ provider-name="jurialmunkey">
     <screenshot>resources/screenshot-01.jpg</screenshot>
     <screenshot>resources/screenshot-02.jpg</screenshot>
   </assets>
-  <news>2.4.39 - Manual blur image[CR]2.4.38 - Possible fix for Trakt calendar date range[CR]2.4.37 - Allow splitting blur image source</news>
+  <news>2.4.55 - Hide hidden shows[CR]2.4.54 - Fixes for scheduled updates</news>
 </extension>
 </addon>
 
@@ -5275,7 +5280,7 @@ Kodi is a registered trademark of the XBMC Foundation. We are not connected to o
 	</extension>
 </addon>
 
-    <addon id="repository.Atrion18" name="[COLOR darkgreen]Atrion's Repo for Kodi 18.x[/COLOR]" version="0.4.9" provider-name="Atrion Darnay">
+    <addon id="repository.Atrion18" name="[COLOR darkgreen]Atrion's Repo for Kodi 18.x[/COLOR]" version="0.5.0" provider-name="Atrion Darnay">
         <requires>
             <import addon="xbmc.addon" version="12.0.0"/>
         </requires>

@@ -95,14 +95,14 @@ class Script(Plugin):
 
         t = 0
         is_property = True if (
-            (not value and not self.home.getProperty(property)) or
-            (value and self.home.getProperty(property) == value)) else False
+            (not value and not self.home.getProperty(property))
+            or (value and self.home.getProperty(property) == value)) else False
 
         while not self.monitor.abortRequested() and t < timeout and not is_property:
             self.monitor.waitForAbort(poll)
             is_property = True if (
-                (not value and not self.home.getProperty(property)) or
-                (value and self.home.getProperty(property) == value)) else False
+                (not value and not self.home.getProperty(property))
+                or (value and self.home.getProperty(property) == value)) else False
             t += poll
 
         return is_property
@@ -122,8 +122,8 @@ class Script(Plugin):
         is_visible = xbmc.getCondVisibility("Window.IsVisible({})".format(window_id))
 
         while (
-                not self.monitor.abortRequested() and t < timeout and is_instance and
-                ((to_close and is_visible) or (not to_close and not is_visible))):
+                not self.monitor.abortRequested() and t < timeout and is_instance
+                and ((to_close and is_visible) or (not to_close and not is_visible))):
             self.monitor.waitForAbort(poll)
             is_instance = self.get_instance(call_id)
             is_visible = xbmc.getCondVisibility("Window.IsVisible({})".format(window_id))
@@ -290,7 +290,7 @@ class Script(Plugin):
             if not tmdb_id:
                 utils.kodi_log(u'Unable to find TMDb ID!\nQuery: {0} Type: {1}'.format(self.params.get('add_query'), self.params.get('type')), 1)
                 return
-            url = 'plugin://plugin.video.themoviedb.helper/?info=details&amp;type={0}&amp;tmdb_id={1}'.format(self.params.get('type'), tmdb_id)
+            url = 'plugin://plugin.video.themoviedb.helper/?info=details&type={0}&tmdb_id={1}'.format(self.params.get('type'), tmdb_id)
             if url == self.home.getProperty(self.prefixcurrent):
                 return  # Already added so let's quit as user probably clicked twice
             self.position = self.get_position() + 1
@@ -391,16 +391,20 @@ class Script(Plugin):
             self.library_autoupdate(list_slug=user_list, user_slug=user_slug)
 
     def library_autoupdate(self, list_slug=None, user_slug=None):
+        busy_dialog = True if self.params.get('busy_dialog') else False
         utils.kodi_log(u'UPDATING TV SHOWS LIBRARY', 1)
+        xbmcgui.Dialog().notification('TMDbHelper', 'Auto-Updating Library...')
         basedir_tv = self.addon.getSettingString('tvshows_library') or 'special://profile/addon_data/plugin.video.themoviedb.helper/tvshows/'
         list_slug = list_slug or self.addon.getSettingString('monitor_userlist')
         if list_slug:
             user_slug = user_slug or TraktAPI().get_usernameslug()
             if user_slug:
-                context.library_userlist(user_slug=user_slug, list_slug=list_slug, confirmation_dialog=False, allow_update=False)
+                context.library_userlist(user_slug=user_slug, list_slug=list_slug, confirmation_dialog=False, allow_update=False, busy_dialog=busy_dialog)
             list_slug_2 = self.addon.getSettingString('monitor_userlist_2')
             if list_slug_2 and list_slug_2 != list_slug:
-                context.library_userlist(user_slug=user_slug, list_slug=list_slug_2, confirmation_dialog=False, allow_update=False)
+                context.library_userlist(user_slug=user_slug, list_slug=list_slug_2, confirmation_dialog=False, allow_update=False, busy_dialog=busy_dialog)
+        p_dialog = xbmcgui.DialogProgressBG() if busy_dialog else None
+        p_dialog.create('TMDbHelper', 'Adding items to library...') if p_dialog else None
         for f in xbmcvfs.listdir(basedir_tv)[0]:
             try:
                 folder = basedir_tv + f + '/'
@@ -426,9 +430,10 @@ class Script(Plugin):
 
                 # Get the tvshow
                 url = 'plugin://plugin.video.themoviedb.helper/?info=seasons&tmdb_id={}&type=tv'.format(tmdb_id)
-                context.library_addtvshow(basedir=basedir_tv, folder=f, url=url, tmdb_id=tmdb_id)
+                context.library_addtvshow(basedir=basedir_tv, folder=f, url=url, tmdb_id=tmdb_id, p_dialog=p_dialog)
             except Exception as exc:
                 utils.kodi_log(u'LIBRARY AUTO UPDATE ERROR:\n{}'.format(exc))
+        p_dialog.close() if p_dialog else None
         if self.addon.getSettingBool('auto_update'):
             xbmc.executebuiltin('UpdateLibrary(video)')
 

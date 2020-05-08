@@ -1,7 +1,10 @@
 import xbmc
+import datetime
 import resources.lib.utils as utils
+from json import loads
 from resources.lib.requestapi import RequestAPI
 from resources.lib.listitem import ListItem
+from resources.lib.downloader import Downloader
 _genreids = {
     "Action": 28, "Adventure": 12, "Animation": 16, "Comedy": 35, "Crime": 80, "Documentary": 99, "Drama": 18,
     "Family": 10751, "Fantasy": 14, "History": 36, "Horror": 27, "Kids": 10762, "Music": 10402, "Mystery": 9648,
@@ -360,8 +363,8 @@ class TMDb(RequestAPI):
     def get_nicelist(self, items):
         return [
             ListItem(library=self.library, **self.get_niceitem(i)) for i in items if
-            not utils.filtered_item(i, self.filter_key, self.filter_value) and
-            not utils.filtered_item(i, self.exclude_key, self.exclude_value, True)]
+            not utils.filtered_item(i, self.filter_key, self.filter_value)
+            and not utils.filtered_item(i, self.exclude_key, self.exclude_value, True)]
 
     def get_translated_list(self, items, itemtype=None, separator=None):
         """
@@ -389,6 +392,20 @@ class TMDb(RequestAPI):
             return '%2C'
         else:
             return False
+
+    def get_downloaded_list(self, export_list=None, sorting=False):
+        if not export_list:
+            return
+        date = datetime.datetime.now() - datetime.timedelta(days=2)
+        download_url = 'https://files.tmdb.org/p/exports/{}_ids_{}.json.gz'.format(export_list, date.strftime("%m_%d_%Y"))
+        raw_list = [loads(i) for i in Downloader(download_url=download_url).get_gzip_text().splitlines()]
+        return sorted(raw_list, key=lambda k: k.get('name', '')) if sorting else raw_list
+
+    def get_daily_list(self, export_list=None, sorting=False):
+        if not export_list:
+            return
+        cache_name = u'{}.TMDb.Downloader.v4'.format(self.cache_name)
+        return self.use_cache(self.get_downloaded_list, cache_name=cache_name, cache_days=self.cache_long, export_list=export_list, sorting=sorting)
 
     def get_detailed_item(self, itemtype, tmdb_id, season=None, episode=None, cache_only=False, cache_refresh=False):
         if not itemtype or not tmdb_id:

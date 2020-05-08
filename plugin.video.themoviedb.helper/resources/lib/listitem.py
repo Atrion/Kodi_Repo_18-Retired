@@ -5,18 +5,13 @@ import xbmcplugin
 import resources.lib.utils as utils
 from resources.lib.kodilibrary import KodiLibrary
 
-try:
-    from urllib.parse import urlencode  # Py3
-except ImportError:
-    from urllib import urlencode  # Py2
-
 
 class ListItem(object):
     def __init__(self, label=None, label2=None, dbtype=None, library=None, tmdb_id=None, imdb_id=None, dbid=None, tvdb_id=None,
                  cast=None, infolabels=None, infoproperties=None, poster=None, thumb=None, icon=None, fanart=None, nextpage=None,
                  streamdetails=None, clearlogo=None, clearart=None, banner=None, landscape=None, discart=None, extrafanart=None,
                  tvshow_clearlogo=None, tvshow_clearart=None, tvshow_banner=None, tvshow_landscape=None, tvshow_poster=None,
-                 tvshow_dbid=None, mixed_type=None, url=None, is_folder=True):
+                 tvshow_fanart=None, tvshow_dbid=None, mixed_type=None, url=None, is_folder=True):
         self.addon = xbmcaddon.Addon()
         self.addonpath = self.addon.getAddonInfo('path')
         self.select_action = self.addon.getSettingInt('select_action')
@@ -28,7 +23,7 @@ class ListItem(object):
         self.tvdb_id = tvdb_id or ''  # IMDb ID for item
         self.poster, self.thumb = poster, thumb
         self.clearlogo, self.clearart, self.banner, self.landscape, self.discart = clearlogo, clearart, banner, landscape, discart
-        self.tvshow_clearlogo, self.tvshow_clearart, self.tvshow_banner, self.tvshow_landscape, self.tvshow_poster = tvshow_clearlogo, tvshow_clearart, tvshow_banner, tvshow_landscape, tvshow_poster
+        self.tvshow_clearlogo, self.tvshow_clearart, self.tvshow_banner, self.tvshow_landscape, self.tvshow_poster, self.tvshow_fanart = tvshow_clearlogo, tvshow_clearart, tvshow_banner, tvshow_landscape, tvshow_poster, tvshow_fanart
         self.url = url or {}
         self.mixed_type = mixed_type or ''
         self.streamdetails = streamdetails or {}
@@ -44,12 +39,16 @@ class ListItem(object):
         self.extrafanart = extrafanart or {}
 
     def set_url(self, **kwargs):
-        url = kwargs.pop('url', 'plugin://plugin.video.themoviedb.helper/?')
-        return u'{0}{1}'.format(url, urlencode(kwargs))
+        url = kwargs.pop('url', u'plugin://plugin.video.themoviedb.helper/?')
+        return u'{0}{1}'.format(url, utils.urlencode_params(kwargs))
 
     def get_url(self, url, url_tmdb_id=None, widget=None, fanarttv=None, nextpage=None, extended=None):
         self.url = self.url or url.copy()
         self.url['tmdb_id'] = self.tmdb_id = url_tmdb_id or self.tmdb_id or self.url.get('tmdb_id')
+        if self.url.get('info') == 'discover':  # Special handling of discover url to pass tmdb_id
+            for k, v in self.url.items():
+                if isinstance(v, str):
+                    self.url[k] = v.format(tmdb_id=self.url.get('tmdb_id'))
         if self.mixed_type:
             self.url['type'] = self.mixed_type
             self.infolabels['mediatype'] = utils.type_convert(self.mixed_type, 'dbtype')
@@ -194,7 +193,6 @@ class ListItem(object):
             return
 
         self.icon = details.get('icon') or self.icon
-        self.thumb = details.get('thumb') or self.thumb
         self.poster = details.get('poster') or self.poster
         self.fanart = details.get('fanart') or self.fanart
         self.landscape = details.get('landscape') or self.landscape
@@ -221,10 +219,10 @@ class ListItem(object):
 
         if (
                 (
-                    not self.addon.getSettingBool('trakt_unwatchedcounts') or
-                    not self.addon.getSettingBool('trakt_watchedindicators')) and
-                self.infolabels.get('mediatype') == 'tvshow' and
-                utils.try_parse_int(self.infoproperties.get('watchedepisodes', 0)) > 0):
+                    not self.addon.getSettingBool('trakt_unwatchedcounts')
+                    or not self.addon.getSettingBool('trakt_watchedindicators'))
+                and self.infolabels.get('mediatype') == 'tvshow'
+                and utils.try_parse_int(self.infoproperties.get('watchedepisodes', 0)) > 0):
             self.infoproperties['unwatchedepisodes'] = utils.try_parse_int(self.infolabels.get('episode')) - utils.try_parse_int(self.infoproperties.get('watchedepisodes'))
 
     def set_url_props(self, url, prefix='Item'):
@@ -244,9 +242,9 @@ class ListItem(object):
         listitem.setInfo(self.library, self.infolabels)
         listitem.setProperties(self.infoproperties)
         listitem.setArt(utils.merge_two_dicts({
-            'thumb': self.thumb or self.icon, 'icon': self.icon, 'poster': self.poster, 'fanart': self.fanart, 'discart': self.discart,
+            'thumb': self.thumb or self.icon or self.fanart, 'icon': self.icon, 'poster': self.poster, 'fanart': self.fanart, 'discart': self.discart,
             'clearlogo': self.clearlogo, 'clearart': self.clearart, 'landscape': self.landscape, 'banner': self.banner,
-            'tvshow.poster': self.tvshow_poster, 'tvshow.clearlogo': self.tvshow_clearlogo,
+            'tvshow.poster': self.tvshow_poster, 'tvshow.fanart': self.tvshow_fanart, 'tvshow.clearlogo': self.tvshow_clearlogo,
             'tvshow.clearart': self.tvshow_clearart, 'tvshow.landscape': self.tvshow_landscape,
             'tvshow.banner': self.tvshow_banner}, self.extrafanart))
         listitem.setCast(self.cast)
@@ -263,4 +261,5 @@ class ListItem(object):
         return listitem
 
     def create_listitem(self, handle=None, **kwargs):
-        xbmcplugin.addDirectoryItem(handle, self.set_url(**kwargs), self.set_listitem(), self.is_folder)
+        self.infolabels['path'] = self.set_url(**kwargs)
+        xbmcplugin.addDirectoryItem(handle, self.infolabels.get('path'), self.set_listitem(), self.is_folder)

@@ -11,11 +11,6 @@ from resources.lib.traktapi import TraktAPI
 from resources.lib.listitem import ListItem
 from resources.lib.kodilibrary import KodiLibrary
 from resources.lib.plugin import Plugin
-try:
-    from urllib.parse import parse_qsl, urlencode  # Py3
-except ImportError:
-    from urlparse import parse_qsl  # Py2
-    from urllib import urlencode
 
 
 class Container(Plugin):
@@ -23,7 +18,7 @@ class Container(Plugin):
         super(Container, self).__init__()
         self.handle = int(sys.argv[1])
         self.paramstring = utils.try_decode_string(sys.argv[2][1:])
-        self.params = dict(parse_qsl(self.paramstring))
+        self.params = utils.parse_paramstring(sys.argv[2][1:])
         self.item_tmdbtype = None
         self.item_dbtype = None
         self.url = {}
@@ -247,11 +242,11 @@ class Container(Plugin):
                 i.infolabels['season'] = season_num
 
             # Format Episode Labels
-            if (not self.params.get('info') == 'details' and self.item_tmdbtype == 'episode' and
-                    i.infolabels.get('season') and i.infolabels.get('episode')):
-                i.label = u'{:02d}. {}'.format(utils.try_parse_int(i.infolabels.get('episode')), i.label)
-                if self.params.get('info') in constants.EPISODE_WIDGETS or self.addon.getSettingBool('flatten_seasons'):
-                    i.label = u'{}x{}'.format(utils.try_parse_int(i.infolabels.get('season')), i.label)
+            if not self.params.get('info') == 'details' and self.item_tmdbtype == 'episode':
+                if i.infolabels.get('season') and i.infolabels.get('episode'):
+                    i.label = u'{:02d}. {}'.format(utils.try_parse_int(i.infolabels.get('episode')), i.label)
+                    if self.params.get('info') in constants.EPISODE_WIDGETS or self.addon.getSettingBool('flatten_seasons'):
+                        i.label = u'{}x{}'.format(utils.try_parse_int(i.infolabels.get('season')), i.label)
 
             # Format label for future eps/movies but not plugin methods specifically about the future or details/seasons
             if i.infolabels.get('premiered') and self.params.get('info') not in constants.NO_LABEL_FORMATTING:
@@ -277,7 +272,7 @@ class Container(Plugin):
 
             # Get TVSHOW DBID for episodes / seasons
             if self.item_tmdbtype in ['season', 'episode']:
-                i.tvshow_dbid = self.get_db_info(
+                i.infoproperties['tvshow.dbid'] = i.tvshow_dbid = self.get_db_info(
                     info='dbid', tmdbtype='tv',
                     imdb_id=i.infoproperties.get('tvshow.imdb_id'),
                     tmdb_id=i.infoproperties.get('tvshow.tmdb_id'),
@@ -358,7 +353,7 @@ class Container(Plugin):
             self.new_property_label = old_label
             self.new_property_value = old_value
 
-        new_label = xbmcgui.Dialog().input(header)
+        new_label = utils.try_decode_string(xbmcgui.Dialog().input(header))
         if not new_label:
             return
 
@@ -457,8 +452,8 @@ class Container(Plugin):
         elif 'with_runtime' not in method and 'with_networks' not in method and any(i in method for i in ['with_', 'without_']):
             self.add_userdiscover_method_property(header, tmdbtype, usedetails, old_label=old_label, old_value=old_value)
         else:
-            self.new_property_label = self.new_property_value = xbmcgui.Dialog().input(
-                header, type=inputtype, defaultt=old_value)
+            self.new_property_label = self.new_property_value = utils.try_decode_string(
+                xbmcgui.Dialog().input(header, type=inputtype, defaultt=old_value))
 
     def set_userdiscover_sortby_property(self):
         sort_method_list = self.get_userdiscover_sortmethods()
@@ -727,6 +722,82 @@ class Container(Plugin):
         xbmcgui.Dialog().ok(dialog_header, dialog_text)
         self.updatelisting = True
 
+    def list_complete(self):
+        self.item_tmdbtype = self.params.get('type')
+
+        limit = 20
+        daily_list_type = None
+        sorting = False
+        if self.item_tmdbtype == 'movie':
+            daily_list_type = 'movie'
+        elif self.item_tmdbtype == 'tv':
+            daily_list_type = 'tv_series'
+        elif self.item_tmdbtype == 'person':
+            daily_list_type = 'person'
+        elif self.item_tmdbtype == 'collection':
+            daily_list_type = 'collection'
+        elif self.item_tmdbtype == 'network':
+            daily_list_type = 'tv_network'
+            sorting = True
+            limit = 250
+        elif self.item_tmdbtype == 'keyword':
+            daily_list_type = 'keyword'
+            sorting = True
+            limit = 250
+        elif self.item_tmdbtype == 'studio':
+            daily_list_type = 'production_company'
+            sorting = True
+            limit = 250
+        if not daily_list_type:
+            return
+        daily_list = self.tmdb.get_daily_list(export_list=daily_list_type, sorting=False)
+
+        items = []
+        pos_z = utils.try_parse_int(self.params.get('page', 1)) * limit
+        pos_a = pos_z - limit
+        for i in daily_list[pos_a:pos_z]:
+            if not i.get('id'):
+                continue
+
+            if self.item_tmdbtype in ['keyword', 'network', 'studio']:
+                details = {}
+                details['label'] = i.get('name')
+                details['tmdb_id'] = i.get('id')
+            else:
+                details = self.tmdb.get_detailed_item(self.item_tmdbtype, i.get('id'))
+
+            item = ListItem(library=self.library, **details)
+
+            if not item:
+                continue
+
+            items.append(item)
+
+        if not items:
+            return
+
+        items = sorted(items, key=lambda k: k.label) if sorting else items
+
+        if len(daily_list) > pos_z:  # Long list so paginate
+            items.append(ListItem(
+                library=self.library, label=xbmc.getLocalizedString(33078),
+                nextpage=utils.try_parse_int(self.params.get('page', 1)) + 1))
+
+        if self.item_tmdbtype == 'collection':
+            url = {'info': 'collection', 'type': 'movie'}
+        elif self.item_tmdbtype == 'keyword':
+            url = {'info': 'keyword_movies', 'type': 'movie'}
+        elif self.item_tmdbtype == 'studio':
+            url = {'info': 'discover', 'type': 'movie', 'with_companies': '{tmdb_id}', 'with_id': True}
+        elif self.item_tmdbtype == 'network':
+            url = {'info': 'discover', 'type': 'tv', 'with_networks': '{tmdb_id}', 'with_id': True}
+        else:
+            url = {'info': 'details', 'type': self.item_tmdbtype}
+
+        self.plugincategory = self.params.get('plugincategory') or self.plugincategory
+        self.dbid_sorting = False
+        self.list_items(items=items, url=url)
+
     def list_becauseyouwatched(self, mostwatched=False):
         traktapi = TraktAPI(tmdb=self.tmdb, login=True)
         userslug = traktapi.get_usernameslug()
@@ -816,14 +887,20 @@ class Container(Plugin):
         return query
 
     def list_search(self):
+        self.updatelisting = True if self.params.pop('updatelisting', False) else False
+        org_query = self.params.get('query')
         if not self.params.get('query'):
             self.params['query'] = self.set_searchhistory(
-                query=xbmcgui.Dialog().input(self.addon.getLocalizedString(32044), type=xbmcgui.INPUT_ALPHANUM),
+                query=utils.try_decode_string(xbmcgui.Dialog().input(self.addon.getLocalizedString(32044), type=xbmcgui.INPUT_ALPHANUM)),
                 itemtype=self.params.get('type'))
         elif self.params.get('history', '').lower() == 'true':  # Param to force history save
             self.set_searchhistory(query=self.params.get('query'), itemtype=self.params.get('type'))
         if self.params.get('query'):
             self.list_tmdb(query=self.params.get('query'), year=self.params.get('year'))
+            if not org_query:
+                self.params['updatelisting'] = 'True'
+                container_url = u'plugin://plugin.video.themoviedb.helper/?{}'.format(utils.urlencode_params(self.params))
+                xbmc.executebuiltin('Container.Update({})'.format(container_url))
 
     def list_searchdir(self):
         # Clear the cache if asked
@@ -833,7 +910,7 @@ class Container(Plugin):
             self.params.pop('clearcache', '')
             self.set_searchhistory(itemtype=self.params.get('type'), clearcache=True)
             container_url = 'plugin://plugin.video.themoviedb.helper/?'
-            container_url = u'{0}{1}'.format(container_url, urlencode(self.params))
+            container_url = u'{0}{1}'.format(container_url, utils.urlencode_params(self.params))
 
         self.start_container()
         # Set our icon
@@ -920,7 +997,7 @@ class Container(Plugin):
         # Construct request
         cat = constants.TMDB_LISTS.get(self.params.get('info'), {})
         kwparams = utils.merge_two_dicts(utils.make_kwparams(self.params), kwargs)
-        kwparams = utils.merge_two_dicts(kwparams, dict(parse_qsl(cat.get('url_ext', '').format(**self.params))))
+        kwparams = utils.merge_two_dicts(kwparams, utils.parse_paramstring(cat.get('url_ext', '').format(**self.params)))
         kwparams.setdefault('key', cat.get('key'))
         path = cat.get('path', '').format(**self.params)
 
@@ -1093,7 +1170,13 @@ class Container(Plugin):
                     if xbmc.getCondVisibility("Window.IsMedia"):
                         url['nextpage'] = 'True'
 
-                    label = i.get('name').format('', '') if self.params.get('info') in ['dir_movie', 'dir_tv', 'dir_person'] else i.get('name').format(utils.type_convert(t, 'plural'), ' ')
+                    # Format label of items
+                    if i.get('info') == 'all_items':  # Special format info=all_items even if in specific type category
+                        label = i.get('name').format(utils.type_convert(t, 'plural'), ' ')
+                    elif self.params.get('info') in ['dir_movie', 'dir_tv', 'dir_person']:
+                        label = i.get('name').format('', '')
+                    else:
+                        label = i.get('name').format(utils.type_convert(t, 'plural'), ' ')
 
                     listitem = ListItem(label=label, icon=i.get('icon', '').format(self.addonpath))
                     listitem.set_url_props(self.params, 'container')
@@ -1144,6 +1227,8 @@ class Container(Plugin):
             self.list_becauseyouwatched()
         elif self.params.get('info') == 'trakt_becausemostwatched':
             self.list_becauseyouwatched(mostwatched=True)
+        elif self.params.get('info') == 'all_items':
+            self.list_complete()
         elif self.params.get('info') in constants.TMDB_LISTS:
             self.list_getid()
             self.list_tmdb()
