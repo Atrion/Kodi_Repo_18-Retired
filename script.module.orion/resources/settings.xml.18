@@ -47,7 +47,7 @@
 
 		<setting type="lsep" label="[UPPERCASE][B]$ADDON[script.module.orion 32049][/B][/UPPERCASE]" />
 		<setting type="sep" />
-		<setting id="general.scraping.timeout" label="32051" type="slider" range="20,300" option="int" default="40" />
+		<setting id="general.scraping.timeout" label="32051" type="slider" range="20,300" option="int" default="90" />
 			<setting id="help.general.scraping.timeout" type="action" default="[B][COLOR FF47CAE9]$ADDON[script.module.orion 32066][/COLOR][/B]" label="  [B][COLOR FF47CAE9]•[/COLOR][/B] [LIGHT]$ADDON[script.module.orion 34004]  [/LIGHT]" visible="eq(-23,true)" />
 		<setting id="general.scraping.mode" label="32050" type="enum" lvalues="32053|32054|32055" default="2" />
 			<setting id="help.general.scraping.mode" type="action" default="[B][COLOR FF47CAE9]$ADDON[script.module.orion 32066][/COLOR][/B]" label="  [B][COLOR FF47CAE9]•[/COLOR][/B] [LIGHT]$ADDON[script.module.orion 34005]  [/LIGHT]" visible="eq(-25,true)" />

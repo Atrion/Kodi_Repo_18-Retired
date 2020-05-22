@@ -41,13 +41,12 @@ from openscrapers.modules import workers
 
 class source:
 	def __init__(self):
-		self.priority = 1
+		self.priority = 29
 		self.language = ['en']
-		# self.domains = ['rmz.cr']
-		# self.base_link = 'http://rmz.cr/' # reCaptcha
-		self.domains = ['rapidmoviez.cr']
-		self.base_link = 'http://rapidmoviez.cr/' # cloudflare IUAM challenge 
-		self.search_link = 'search/%s/titles'
+		self.domains = ['rapidmoviez.cr', 'rmz.cr']
+		self.base_link = 'http://rmz.cr/'
+		self.search_link = 'search/%s'
+		# self.base_link = 'http://rapidmoviez.cr/' # cloudflare IUAM challenge failure
 		self.scraper = cfscrape.create_scraper()
 
 
@@ -73,7 +72,6 @@ class source:
 		try:
 			if url is None:
 				return
-
 			url = urlparse.parse_qs(url)
 			url = dict([(i, url[i][0]) if url[i] else (i, '') for i in url])
 			url['title'], url['premiered'], url['season'], url['episode'] = title, premiered, season, episode
@@ -96,7 +94,6 @@ class source:
 			r = [(dom_parser.parse_dom(i, 'a', {'class': 'title'})) for i in r]
 			r = [(i[0].attrs['href'], i[0].content) for i in r]
 			r = [(urlparse.urljoin(self.base_link, i[0])) for i in r if cleantitle.get(title) in cleantitle.get(i[1]) and year in i[1]]
-
 			if r:
 				return r[0]
 			else:
@@ -114,7 +111,7 @@ class source:
 				return self.sources
 
 			if debrid.status() is False:
-				raise Exception()
+				return self.sources
 
 			self.hostDict = hostDict + hostprDict
 
@@ -129,8 +126,12 @@ class source:
 			imdb = data['imdb']
 
 			url = self.search(title, hdlr)
+			if url is None:
+				return self.sources
 			headers = {'User-Agent': client.agent()}
 			r = self.scraper.get(url, headers=headers).content
+			if r is None:
+				return self.sources
 
 			if hdlr2 == '':
 				r = dom_parser.parse_dom(r, 'ul', {'id': 'releases'})[0]
@@ -163,7 +164,6 @@ class source:
 		try:
 			headers = {'User-Agent': client.agent()}
 			r = self.scraper.get(url, headers=headers).content
-
 			name = client.replaceHTMLCodes(name)
 			if name.startswith('['):
 				name = name.split(']')[1]
@@ -207,6 +207,7 @@ class source:
 		except:
 			source_utils.scraper_error('RAPIDMOVIEZ')
 			pass
+
 
 	def resolve(self, url):
 		return url

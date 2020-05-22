@@ -1054,26 +1054,74 @@ class OrionSettings:
 	##############################################################################
 
 	@classmethod
-	def adapt(self):
+	def adapt(self, retries = 1):
 		path = OrionTools.pathJoin(OrionTools.addonPath(), 'resources', 'settings.xml')
 		exists = OrionTools.fileExists(path)
+
+		version = OrionTools.kodiVersion(major = True)
+		# orionremove
+		'''
+		if version <= 17: pathOriginal = path + '.17'
+		elif version == 18: pathOriginal = path + '.18'
+		elif version >= 19: pathOriginal = path + '.19'
+		'''
+		if version <= 17: pathOriginal = path + '.17'
+		else: pathOriginal = path + '.18'
+
+		# The XML changed between versions.
+		if exists:
+			dataOriginal = OrionTools.fileRead(pathOriginal)
+			dataCurrent = OrionTools.fileRead(path)
+			if dataOriginal and dataCurrent:
+				tag = 'UNIVERSAL END'
+				dataOriginal = dataOriginal[:dataOriginal.find(tag)]
+				dataCurrent = dataCurrent[:dataCurrent.find(tag)]
+				dataOriginal = re.sub('\s', '', dataOriginal)
+				dataCurrent = re.sub('\s', '', dataCurrent)
+				if dataOriginal == dataCurrent:
+					OrionTools.log('The settings file exists and has not changed since the previous version. Keeping the current file.')
+				else:
+					OrionTools.log('The settings file exists, but has changed since the previous version. Making a new copy.')
+					exists = False
+		else:
+			OrionTools.log('The settings file does not exist. Making a new copy.')
+
 		if not exists:
-			version = OrionTools.kodiVersion(major = True)
-			# orionremove
-			'''
-			if version <= 17: pathOriginal = path + '.17'
-			elif version == 18: pathOriginal = path + '.18'
-			elif version >= 19: pathOriginal = path + '.19'
-			'''
-			if version <= 17: pathOriginal = path + '.17'
-			else: pathOriginal = path + '.18'
-			OrionTools.fileCopy(pathFrom = pathOriginal, pathTo = path, overwrite = True, bytes = None)
-			exists = OrionTools.fileExists(path)
-			if not exists:
-				# Try an alternative copy method (file r/w instead of xbmc copy).
-				# Some Android devices seems to have problems copying the settings.xml file.
-				OrionTools.fileCopy(pathFrom = pathOriginal, pathTo = path, overwrite = True, bytes = True)
+			# Try alternative copy methods (XBMC vs native Python, copy vs file r/w).
+			# Some Android devices seem to have problems copying the settings.xml file.
+			count = 0
+			while count < retries:
+				count += 1
+				if count > 1 and count < retries: OrionTools.sleep(2)
+
+				# Use XBMC copy functions.
+				OrionTools.fileCopy(pathFrom = pathOriginal, pathTo = path, overwrite = True, native = False, copy = True)
 				exists = OrionTools.fileExists(path)
+				if exists: break
+				OrionTools.log('The XBMC file copy mechanism failed. Retry: ' + str(count))
+				OrionTools.sleep(1)
+
+				# Use XBMC file r/w functions.
+				OrionTools.fileCopy(pathFrom = pathOriginal, pathTo = path, overwrite = True, native = False, copy = False)
+				exists = OrionTools.fileExists(path)
+				if exists: break
+				OrionTools.log('The XBMC file read/write mechanism failed. Retry: ' + str(count))
+				OrionTools.sleep(1)
+
+				# Use Python copy functions.
+				OrionTools.fileCopy(pathFrom = pathOriginal, pathTo = path, overwrite = True, native = True, copy = True)
+				exists = OrionTools.fileExists(path)
+				if exists: break
+				OrionTools.log('The Python file copy mechanism failed. Retry: ' + str(count))
+				OrionTools.sleep(1)
+
+				# Use Python file r/w functions.
+				OrionTools.fileCopy(pathFrom = pathOriginal, pathTo = path, overwrite = True, native = True, copy = False)
+				exists = OrionTools.fileExists(path)
+				if exists: break
+				OrionTools.log('The Python file read/write mechanism failed. Retry: ' + str(count))
+				OrionTools.sleep(1)
+
 		return exists
 
 	##############################################################################

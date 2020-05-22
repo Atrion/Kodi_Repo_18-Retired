@@ -25,8 +25,8 @@ import urlparse
 
 from openscrapers.modules import cleantitle
 from openscrapers.modules import client
-from openscrapers.modules import log_utils
 from openscrapers.modules import directstream
+from openscrapers.modules import log_utils
 from openscrapers.modules import pyaes
 
 
@@ -245,9 +245,9 @@ def check_url(url):
 
 
 def check_title(title, name, hdlr, year):
-	# from openscrapers.modules import log_utils
 	try:
 		match = True
+		title = title.replace('!', '')
 		n = name.lower()
 		h = hdlr.lower()
 		t = n.split(h)[0].replace(year, '').replace('(', '').replace(')', '').replace('&', 'and').replace('.us.', '.')
@@ -457,6 +457,16 @@ def remove_lang(name):
 
 def scraper_error(provider):
 	import traceback
-	from openscrapers.modules import log_utils
 	failure = traceback.format_exc()
 	log_utils.log(provider.upper() + ' - Exception: \n' + str(failure), log_utils.LOGDEBUG)
+
+
+def timeIt(func):
+	import time
+	fnc_name = func.__name__
+	def wrap(*args, **kwargs):
+		started_at = time.time()
+		result = func(*args, **kwargs)
+		log_utils.log('%s.%s = %s' % (__name__ , fnc_name, time.time() - started_at), log_utils.LOGDEBUG)
+		return result
+	return wrap

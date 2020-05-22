@@ -1,4 +1,14 @@
 
+[B]4.2.7 (2020.05.09)[/B]
+- Changed notification popups.
+
+[B]4.2.6 (2020.05.09)[/B]
+- Increased the default scraping timeout.
+
+[B]4.2.5 (2020.05.07)[/B]
+- Added alternative file copy mechanisms.
+- Improved settings file adaption.
+
 [B]4.2.4 (2020.05.02)[/B]
 - Fixed NanScrapers integration.
 - Possible fix for settings file copy.

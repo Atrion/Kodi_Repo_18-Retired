@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# created by Venom for Openscrapers (updated url 4-20-2020)
+# created by Venom for Openscrapers (updated url 5-14-2020)
 
 #  ..#######.########.#######.##....#..######..######.########....###...########.#######.########..######.
 #  .##.....#.##.....#.##......###...#.##....#.##....#.##.....#...##.##..##.....#.##......##.....#.##....##
@@ -37,10 +37,10 @@ from openscrapers.modules import workers
 
 class source:
 	def __init__(self):
-		self.priority = 1
+		self.priority = 8
 		self.language = ['en']
 		self.domain = ['ettvdl.com', 'ettv.to']
-		self.base_link = 'https://ettvdl.com'
+		self.base_link = 'https://www.ettvdl.com'
 		self.search_link = '/torrents-search.php?search=%s'
 		self.min_seeders = 1
 

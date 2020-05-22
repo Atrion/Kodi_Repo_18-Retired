@@ -36,21 +36,30 @@ from orion.modules.oriondatabase import *
 monitor = xbmc.Monitor()
 while not monitor.abortRequested():
 	OrionTools.log('Orion Service Started')
-	OrionSettings.adapt()
+
+	# On some Android devices the copying of settings.xml does not work for some reason.
+	# This might also happen right after the addon is updated, maybe Kodi has a temporarily file lock during updates.
+	# Retry multiple times, sleeping in between, waiting for any locks to be released.
+	OrionSettings.adapt(retries = 5)
+
 	orion = Orion(OrionApi._keyInternal())
 	user = OrionUser.instance()
 	if user.enabled() and (user.valid() or user.empty()):
 		OrionSettings.externalClean()
 		OrionIntegration.check(silent = True)
+		
 		user.update()
 		user.subscriptionCheck()
 		OrionSettings.backupExportAutomaticOnline()
+
 		OrionNotification.dialogVersion()
 		OrionNotification.dialogNew()
 		OrionPromotion.dialogNew()
 		OrionTicket.dialogNew()
+
 	OrionDatabase.instancesClear() # Very important. Without this, Kodi will fail to update the addon if a new version comes out, due to active database connections causing failures.
 	orion = None # Clear to not keep it in memory while waiting.
 	user = None # Clear to not keep it in memory while waiting.
+
 	OrionTools.log('Orion Service Finished')
 	if monitor.waitForAbort(86400): break # 24 hours

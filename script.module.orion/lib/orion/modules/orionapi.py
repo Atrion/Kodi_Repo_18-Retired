@@ -186,6 +186,9 @@ class OrionApi:
 		result = None
 		networker = None
 
+		debug = not OrionSettings.silent()
+		identifier = ''
+
 		try:
 			if not mode == None: parameters[OrionApi.ParameterMode] = mode
 			if not action == None: parameters[OrionApi.ParameterAction] = action
@@ -200,13 +203,15 @@ class OrionApi:
 			keyUser = user.key()
 			if not keyUser == None and not keyUser == '': parameters[OrionApi.ParameterKeyUser] = keyUser
 
-			if not OrionSettings.silent():
+			if debug:
 				query = copy.deepcopy(parameters)
 				if query:
 					truncate = [OrionApi.ParameterId, OrionApi.ParameterPassword, OrionApi.ParameterKey, OrionApi.ParameterKeyApp, OrionApi.ParameterKeyUser, OrionApi.ParameterData, OrionApi.ParameterLink, OrionApi.ParameterLinks, OrionApi.ParameterFiles]
 					for key, value in OrionTools.iterator(query):
 						if key in truncate: query[key] = '-- truncated --'
-				OrionTools.log('ORION API REQUEST: ' + OrionTools.jsonTo(query))
+				queryString = OrionTools.jsonTo(query)
+				identifier = ' [' + OrionTools.hash(queryString)[:5] + ']'
+				OrionTools.log('Orion API Request' + identifier + ': ' + queryString)
 
 			networker = OrionNetworker(
 				link = OrionTools.linkApi(),
@@ -214,7 +219,7 @@ class OrionApi:
 				headers = {'Premium' : 1 if user.subscriptionPackagePremium() else 0},
 				timeout = max(30, OrionSettings.getInteger('general.scraping.timeout')),
 				agent = OrionNetworker.AgentOrion,
-				debug = not OrionSettings.silent()
+				debug = debug
 			)
 
 			result = networker.request()
@@ -233,13 +238,13 @@ class OrionApi:
 			if OrionApi.ParameterData in json: self.mData = json[OrionApi.ParameterData]
 
 			if self.mStatus == OrionApi.StatusError:
-				if not OrionSettings.silent():
-					OrionTools.log('ORION API ERROR: ' + self._logMessage())
+				if debug:
+					OrionTools.log('Orion API Error' + identifier + ': ' + self._logMessage())
 				if not silent and OrionSettings.silentAllow(self.mType):
 					OrionInterface.dialogNotification(title = 32048, message = self.mDescription, icon = OrionInterface.IconError)
 			elif self.mStatus == OrionApi.StatusSuccess:
-				if not OrionSettings.silent():
-					OrionTools.log('ORION API SUCCESS: ' + self._logMessage())
+				if debug:
+					OrionTools.log('Orion API Success' + identifier + ': ' + self._logMessage())
 				if not silent and OrionSettings.silentAllow(self.mStatus):
 					if mode == OrionApi.ModeStream:
 						if action == OrionApi.ActionVote:
@@ -249,7 +254,7 @@ class OrionApi:
 						elif action == OrionApi.ActionRetrieve:
 							count = self.mData[OrionApi.ParameterCount]
 							message = OrionTools.translate(32062) + ': ' + str(count[OrionApi.ParameterTotal]) + ' • ' + OrionTools.translate(32063) + ': ' + str(count[OrionApi.ParameterRetrieved])
-							OrionTools.log('ORION STREAMS FOUND: ' + message)
+							OrionTools.log('Orion Streams Found' + identifier + ': ' + message)
 							notifications = []
 							if self.mDescription: notifications.append({'title' : self.mDescription, 'message' : self.mMessage, 'icon' : OrionInterface.IconInformation})
 							notifications.append({'title' : 32060, 'message' : message, 'icon' : OrionInterface.IconSuccess})
@@ -259,27 +264,27 @@ class OrionApi:
 						if action == OrionApi.ActionRetrieve:
 							count = self.mData[OrionApi.ParameterCount]
 							message = OrionTools.translate(32232) + ': ' + str(count[OrionApi.ParameterRequested]) + ' • ' + OrionTools.translate(32233) + ': ' + str(count[OrionApi.ParameterRetrieved])
-							OrionTools.log('ORION CONTAINERS FOUND: ' + message)
+							OrionTools.log('Orion Containers Found' + identifier + ': ' + message)
 						elif action == OrionApi.ActionHash:
 							count = self.mData[OrionApi.ParameterCount]
 							message = OrionTools.translate(32228) + ': ' + str(count[OrionApi.ParameterRequested]) + ' • ' + OrionTools.translate(32229) + ': ' + str(count[OrionApi.ParameterRetrieved])
-							OrionTools.log('ORION HASHES FOUND: ' + message)
+							OrionTools.log('Orion Hashes Found' + identifier + ': ' + message)
 							# Do not show a notification if hashes are found, especailly if they are requested in chunks, too many popups.
 							#OrionInterface.dialogNotification(title = 32227, message = message, icon = OrionInterface.IconSuccess)
 		except:
 			try:
 				self.mStatus = OrionApi.StatusError
-				if not networker == None and networker.error() and not silent and not OrionSettings.silent():
+				if not networker == None and networker.error() and not silent and debug:
 					if not(mode == OrionApi.ModeStream and action == OrionApi.ActionUpdate):
 						OrionInterface.dialogNotification(title = 32064, message = 33007, icon = OrionInterface.IconError)
 				else:
-					if not OrionSettings.silent():
-						OrionTools.error('ORION API EXCEPTION')
-						OrionTools.log('ORION API DATA: ' + str(result))
+					if debug:
+						OrionTools.error('Orion API Exception' + identifier + '')
+						OrionTools.log('Orion API Data' + identifier + ': ' + str(result))
 					if not silent and OrionSettings.silentAllow('exception'):
 						OrionInterface.dialogNotification(title = 32061, message = 33006, icon = OrionInterface.IconError)
 			except:
-				OrionTools.error('ORION UNKNOWN API EXCEPTION')
+				OrionTools.error('Orion Unknown API Exception' + identifier)
 
 		return self.statusSuccess()
 

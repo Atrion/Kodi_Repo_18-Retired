@@ -4,6 +4,7 @@ import xbmcgui
 import xbmcvfs
 import datetime
 import resources.lib.utils as utils
+import resources.lib.constants as constants
 from json import loads
 from string import Formatter
 from collections import defaultdict
@@ -35,6 +36,7 @@ class Player(Plugin):
         self.item = defaultdict(lambda: '+')
         self.itemlist, self.actions, self.players, self.identifierlist = [], [], {}, []
         self.is_local = None
+        self.autoplay_single = self.addon.getSettingBool('autoplay_single')
         self.dp_local = self.addon.getSettingBool('default_player_local')
         self.dp_movies = self.addon.getSettingString('default_player_movies')
         self.dp_episodes = self.addon.getSettingString('default_player_episodes')
@@ -61,6 +63,9 @@ class Player(Plugin):
         return self.get_fallback(fb_file, fb_action)  # Fallback not in list so let's check fallback's fallback
 
     def get_playerindex(self, force_dialog=False):
+        if not self.itemlist:
+            return -1  # No players left so cancel
+
         if force_dialog or (self.itemtype == 'movie' and not self.dp_movies) or (self.itemtype == 'episode' and not self.dp_episodes):
             idx = xbmcgui.Dialog().select(self.addon.getLocalizedString(32042), self.itemlist)  # Ask user to select player
             if self.itemtype == 'movie':
@@ -76,9 +81,9 @@ class Player(Plugin):
         for i in range(0, len(self.itemlist)):
             label = self.itemlist[i].getLabel()
             if (
-                    (label == self.dp_movies and self.itemtype == 'movie') or
-                    (label == self.dp_episodes and self.itemtype == 'episode') or
-                    (label == u'{0} {1}'.format(self.addon.getLocalizedString(32061), 'Kodi') and self.dp_local)):
+                    (label == self.dp_movies and self.itemtype == 'movie')
+                    or (label == self.dp_episodes and self.itemtype == 'episode')
+                    or (label == u'{0} {1}'.format(self.addon.getLocalizedString(32061), 'Kodi') and self.dp_local)):
                 utils.kodi_log(u'Player -- Attempting to Play with Default Player:\n {}'.format(label), 2)
                 return i  # Play local or with default player if found
 
@@ -100,7 +105,7 @@ class Player(Plugin):
             del self.itemlist[playerindex]  # Item not found so remove the player's select dialog entry
             del self.identifierlist[playerindex]  # Item not found so remove the player's index
 
-        playerindex = self.get_playerindex(force_dialog=force_dialog)
+        playerindex = 0 if len(self.itemlist) == 1 and self.autoplay_single else self.get_playerindex(force_dialog=force_dialog)
 
         # User cancelled dialog
         if not playerindex > -1:
@@ -190,8 +195,8 @@ class Player(Plugin):
         # Play/Search found item
         if player and player[1]:
             action = string_format_map(player[1], self.item)
-            if player[0] and action.endswith('.strm'):  # Action is play and is a strm so PlayMedia
-                utils.kodi_log(u'Player -- Found strm.\nAttempting PLAYMEDIA({})'.format(action), 2)
+            if player[0] and (action.endswith('.strm') or self.identifierlist[playerindex] == 'play_kodi'):  # Action is play and is a strm/local so PlayMedia
+                utils.kodi_log(u'Player -- Found strm or local.\nAttempting PLAYMEDIA({})'.format(action), 1)
                 xbmc.executebuiltin(utils.try_decode_string(u'PlayMedia({0})'.format(action)))
             elif player[0]:  # Action is play and not a strm so play with player
                 utils.kodi_log(u'Player -- Found file.\nAttempting to PLAY: {}'.format(action), 2)
@@ -238,13 +243,10 @@ class Player(Plugin):
         self.item['tmdb'] = self.tmdb_id
         self.item['imdb'] = self.details.get('infolabels', {}).get('imdbnumber')
         self.item['name'] = u'{0} ({1})'.format(self.item.get('title'), self.item.get('year'))
-        self.item['firstaired'] = self.details.get('infolabels', {}).get('premiered')
-        self.item['premiered'] = self.details.get('infolabels', {}).get('premiered')
-        self.item['released'] = self.details.get('infolabels', {}).get('premiered')
-        self.item['showname'] = self.item.get('title')
-        self.item['clearname'] = self.item.get('title')
-        self.item['tvshowtitle'] = self.item.get('title')
-        self.item['title'] = self.item.get('title')
+        self.item['premiered'] = self.item['firstaired'] = self.item['released'] = self.details.get('infolabels', {}).get('premiered')
+        self.item['plot'] = self.details.get('infolabels', {}).get('plot')
+        self.item['cast'] = self.item['actors'] = " / ".join([i.get('name') for i in self.details.get('cast', []) if i.get('name')])
+        self.item['showname'] = self.item['clearname'] = self.item['tvshowtitle'] = self.item['title'] = self.item.get('title')
         self.item['thumbnail'] = self.details.get('thumb')
         self.item['poster'] = self.details.get('poster')
         self.item['fanart'] = self.details.get('fanart')
@@ -275,7 +277,7 @@ class Player(Plugin):
         utils.kodi_log(u'Player Details - Item:\n{}'.format(self.item), 2)
 
         for k, v in self.item.copy().items():
-            if k not in ['name', 'showname', 'clearname', 'tvshowtitle', 'title', 'thumbnail', 'poster', 'fanart', 'originaltitle']:
+            if k not in constants.PLAYER_URLENCODE:
                 continue
             v = u'{0}'.format(v)
             self.item[k] = v.replace(',', '')

@@ -221,7 +221,7 @@
 
 <addon id="metadata.tvdb.com"
        name="The TVDB"
-       version="3.2.4"
+       version="3.2.7"
        provider-name="Team Kodi">
   <requires>
     <import addon="xbmc.metadata" version="2.1.0"/>
@@ -794,15 +794,14 @@ Added Trakt Manager
   </extension>
 </addon>
 
-<addon id="service.xbmc.versioncheck" name="Version Check" version="0.5.4" provider-name="Team Kodi">
+<addon id="service.xbmc.versioncheck" name="Version Check" version="0.5.5" provider-name="Team Kodi">
     <requires>
         <import addon="xbmc.python" version="2.14.0"/>
     </requires>
     <extension point="xbmc.service" library="resources/lib/runner.py" start="login"/>
     <extension point="xbmc.addon.metadata">
         <news>
-- add Kodi 18.6 stable release
-- include distro package for Python >= v3.8 where platform.linux_distribution is removed
+- add Kodi 18.7 stable release
         </news>
         <assets>
             <icon>icon.png</icon>
@@ -1408,7 +1407,7 @@ v5.2.14 (2017-01-23)
   </extension>
 </addon>
 
-<addon id="plugin.video.youtube" name="YouTube" version="6.8.0" provider-name="anxdpanic, bromix">
+<addon id="plugin.video.youtube" name="YouTube" version="6.8.2" provider-name="anxdpanic, bromix">
     <requires>
         <import addon="xbmc.python" version="2.20.0"/>
         <import addon="script.module.six" version="1.11.0"/>
@@ -1422,15 +1421,15 @@ v5.2.14 (2017-01-23)
     <extension point="xbmc.python.module" library="resources/lib/"/>
     <extension point="xbmc.addon.metadata">
         <news>
-[add] support for video comments, Comments in the More... dialog |contrib: doko-desuka|
-[add] simulate deprecated recommended home API |contrib: hedleyroos|
-[fix] error caused by timestamp formatting
-[fix] fix Premiere's exiting after 5 seconds |contrib: jpfox156|
-[fix] playlists over json-rpc |contrib: JasperE84|
-[lang] de_de strings |contrib: tweimer|
-[lang] el_gr strings |contrib: twilight0|
-[lang] es_es strings |contrib: roliverosc|
-[lang] pt_pt strings |contrib: daniel3x|
+[fix] playback failing
+[fix] viewing comments when logged in
+[fix] intermittent issue with Subscriptions
+[fix] encoding of video unavailable messages
+[upd] updates to recommendations
+[upd] update logging for Kodi 19
+[lang] fr_fr strings |contrib: alan7000|
+[lang] pl_pl strings |contrib: drrak|
+[lang] nl_nl strings |contrib: Markman-B|
         </news>
         <assets>
             <icon>icon.png</icon>
@@ -1680,12 +1679,12 @@ v5.2.14 (2017-01-23)
 
 <addon id="metadata.themoviedb.org"
        name="The Movie Database"
-       version="5.1.11"
+       version="5.2.0"
        provider-name="Team Kodi">
   <requires>
     <import addon="xbmc.metadata" version="2.1.0"/>
     <import addon="metadata.common.imdb.com" version="2.9.2"/>
-    <import addon="metadata.common.themoviedb.org" version="3.1.0"/>
+    <import addon="metadata.common.themoviedb.org" version="3.2.0"/>
     <import addon="plugin.video.youtube" version="4.4.10" optional="true"/>
   </requires>
   <extension point="xbmc.metadata.scraper.movies"
@@ -1803,7 +1802,7 @@ v5.2.14 (2017-01-23)
   </extension>
 </addon>
 
-<addon id="script.module.orion" version="4.2.4" name="Orion" provider-name="Orion">
+<addon id="script.module.orion" version="4.2.7" name="Orion" provider-name="Orion">
 	<requires>
 		<import addon="xbmc.python" version="2.1.0"/>
 		<import addon="repository.orion" version="1.0.0" optional="true" />
@@ -2820,7 +2819,7 @@ Attention: A "Solid RAR" archive type requires complete unpacking to use files w
   <extension-point id="resource.images" schema="images.xsd"/>
 </addon>
 
-<addon id="script.module.openscrapers" name="OpenScrapers Module" version="0.0.1.110" provider-name="Addons4Kodi">
+<addon id="script.module.openscrapers" name="OpenScrapers Module" version="0.0.2.001" provider-name="Addons4Kodi">
     <requires>
         <import addon="xbmc.python" version="2.25.0" />
         <import addon="script.module.beautifulsoup4" />
@@ -4003,7 +4002,7 @@ Supported formats are:
 
 <addon id="metadata.tvshows.themoviedb.org"
        name="The Movie Database"
-       version="3.5.2"
+       version="3.5.3"
        provider-name="Team Kodi">
   <requires>
     <import addon="xbmc.metadata" version="2.1.0"/>
@@ -4098,7 +4097,7 @@ Supported formats are:
   </extension>
 </addon>
 
-<addon id="plugin.video.seren" version="1.6.16" name="Seren" provider-name="Nixgates">
+<addon id="plugin.video.seren" version="1.6.19" name="Seren" provider-name="Nixgates">
 	<requires>
 		<import addon="xbmc.python" version="2.25.0" />
 		<import addon="script.module.requests" version="2.19.1" />
@@ -4141,6 +4140,15 @@ Supported formats are:
 			<screenshot>resources/screenshots/screenshot-03.jpg</screenshot>
 		</assets>
 		<news>
+Changelog 1.6.19:
+Actually fixed alldebrid this time, promise
+
+Changelog 1.6.18:
+Fixed extraction of magnet ID in AllDebrid module when resolving single file items
+
+Changelog 1.6.17:
+Update AllDebrid module for new API version
+
 Changelog 1.6.16:
 Fix response.status_code check for Trakt Auth
 
@@ -4285,7 +4293,7 @@ More minor bugfixes (honestly could not list them all)
 
 <addon id="metadata.common.musicbrainz.org"
        name="MusicBrainz Scraper Library"
-        version="2.2.1"
+        version="2.2.2"
        provider-name="Team Kodi">
   <requires>
     <import addon="xbmc.metadata" version="2.1.0"/>
@@ -4325,7 +4333,7 @@ More minor bugfixes (honestly could not list them all)
   </extension>
 </addon>
 
-<addon id="script.module.resolveurl" name="ResolveURL" version="5.0.45" provider-name="jsergio, gujal">
+<addon id="script.module.resolveurl" name="ResolveURL" version="5.0.47" provider-name="jsergio, gujal">
     <requires>
         <import addon="xbmc.python" version="2.1.0" />
         <import addon="plugin.video.youtube" optional="true" />
@@ -4369,7 +4377,7 @@ More minor bugfixes (honestly could not list them all)
 
 <addon id="metadata.common.themoviedb.org"
        name="The Movie Database Scraper Library"
-       version="3.1.10"
+       version="3.2.1"
        provider-name="Team Kodi">
   <requires>
     <import addon="xbmc.metadata" version="2.1.0"/>
@@ -4729,14 +4737,13 @@ More minor bugfixes (honestly could not list them all)
 	</extension>
 </addon>
 
-<addon id="script.module.urlresolver" name="URLResolver" version="5.0.65" provider-name="tvaddons">
+<addon id="script.module.urlresolver" name="URLResolver" version="5.0.67" provider-name="tvaddons">
     <requires>
         <import addon="xbmc.python" version="2.1.0" />
         <import addon="plugin.video.youtube" optional="true" />
         <import addon="script.module.python.twitch" optional="true" />
         <import addon="script.module.cryptopy" version="1.2.6" optional="true" />
         <import addon="plugin.video.gdrive" optional="true" />
-        <import addon="plugin.program.indigo" />
     </requires>
     <extension point="xbmc.python.module" library="lib" />
     <extension point="xbmc.python.pluginsource" library="lib/default.py" />
@@ -4974,7 +4981,7 @@ More minor bugfixes (honestly could not list them all)
     </extension>
 </addon>
 
-    <addon id="repository.Atrion18B" name="[COLOR darkgreen]Atrion's Repo for Kodi 18.x Backup[/COLOR]" version="0.5.0" provider-name="Atrion Darnay">
+    <addon id="repository.Atrion18B" name="[COLOR darkgreen]Atrion's Repo for Kodi 18.x Backup[/COLOR]" version="0.5.1" provider-name="Atrion Darnay">
         <requires>
             <import addon="xbmc.addon" version="12.0.0"/>
         </requires>
@@ -5004,7 +5011,7 @@ More minor bugfixes (honestly could not list them all)
 </addon>
 
 <addon id="plugin.video.themoviedb.helper"
-version="2.4.56"
+version="2.4.73"
 name="TheMovieDb Helper"
 provider-name="jurialmunkey">
 <requires>
@@ -5022,7 +5029,7 @@ provider-name="jurialmunkey">
   <menu id="kodi.core.main">
     <item library="context-play.py">
       <label>$ADDON[plugin.video.themoviedb.helper 32146]</label>
-      <visible>[String.IsEqual(ListItem.dbtype,episode) + !String.IsEmpty(ListItem.Property(tvshow.tmdb_id)) + !String.IsEmpty(ListItem.Season) + !String.IsEmpty(ListItem.Episode)] | [String.IsEqual(ListItem.dbtype,movie) + !String.IsEmpty(ListItem.Property(tmdb_id))] </visible>
+      <visible>[String.IsEqual(ListItem.dbtype,episode) + !String.IsEmpty(ListItem.Season) + !String.IsEmpty(ListItem.Episode)] | [String.IsEqual(ListItem.dbtype,movie)]</visible>
     </item>
     <item library="context-open.py">
       <label>$ADDON[plugin.video.themoviedb.helper 32147]</label>
@@ -5067,16 +5074,21 @@ provider-name="jurialmunkey">
 </extension>
 <extension point="xbmc.addon.metadata">
   <summary lang="en_GB">TheMovieDb Helper - Now With Trakt Support!</summary>
+  <summary lang="es_ES">TheMovieDb Helper - ¡Ahora con soporte para Trakt!</summary>
   <description lang="en_GB">TheMovieDb Helper provides details about movies, tvshows and actors from TMDb. Users can access a variety of lists from TMDb and Trakt.</description>
+  <description lang="es_ES">TheMovieDb Helper proporciona detalles sobre películas, programas de televisión y actores de TMDb. Los usuarios pueden acceder a una variedad de listas desde TMDb y Trakt.</description>
   <disclaimer lang="en_GB">Provided by TheMovieDb and Trakt.</disclaimer>
+  <disclaimer lang="es_ES">Proporcionado por TheMovieDb y Trakt</disclaimer>
   <license>GPL-3.0-or-later</license>
+  <website>https://github.com/jurialmunkey/plugin.video.themoviedb.helper</website>
+  <forum>https://forum.kodi.tv/showthread.php?tid=345847</forum>
   <assets>
     <icon>icon.png</icon>
     <fanart>fanart.jpg</fanart>
     <screenshot>resources/screenshot-01.jpg</screenshot>
     <screenshot>resources/screenshot-02.jpg</screenshot>
   </assets>
-  <news>2.4.55 - Hide hidden shows[CR]2.4.54 - Fixes for scheduled updates</news>
+  <news>2.4.73 - Add multiple monitor lists and ask to update if adding to monitored list</news>
 </extension>
 </addon>
 
@@ -5280,7 +5292,7 @@ Kodi is a registered trademark of the XBMC Foundation. We are not connected to o
 	</extension>
 </addon>
 
-    <addon id="repository.Atrion18" name="[COLOR darkgreen]Atrion's Repo for Kodi 18.x[/COLOR]" version="0.5.0" provider-name="Atrion Darnay">
+    <addon id="repository.Atrion18" name="[COLOR darkgreen]Atrion's Repo for Kodi 18.x[/COLOR]" version="0.5.1" provider-name="Atrion Darnay">
         <requires>
             <import addon="xbmc.addon" version="12.0.0"/>
         </requires>

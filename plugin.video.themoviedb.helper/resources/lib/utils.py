@@ -8,6 +8,7 @@ import xbmcaddon
 import unicodedata
 import datetime
 import hashlib
+import json
 from copy import copy
 from contextlib import contextmanager
 from resources.lib.constants import TYPE_CONVERSION, VALID_FILECHARS
@@ -38,6 +39,7 @@ def validify_filename(filename):
         pass
     filename = str(unicodedata.normalize('NFD', filename).encode('ascii', 'ignore').decode("utf-8"))
     filename = ''.join(c for c in filename if c in VALID_FILECHARS)
+    filename = filename[:-1] if filename.endswith('.') else filename
     return filename
 
 
@@ -298,6 +300,23 @@ def kodi_log(value, level=0):
             xbmc.log(logvalue, level=xbmc.LOGDEBUG)
     except Exception as exc:
         xbmc.log(u'Logging Error: {}'.format(exc), level=xbmc.LOGNOTICE)
+
+
+def get_jsonrpc(method=None, params=None):
+    if not method or not params:
+        return {}
+    query = {
+        "jsonrpc": "2.0",
+        "params": params,
+        "method": method,
+        "id": 1}
+    try:
+        jrpc = xbmc.executeJSONRPC(json.dumps(query))
+        response = json.loads(try_decode_string(jrpc, errors='ignore'))
+    except Exception as exc:
+        kodi_log(u'TMDbHelper - JSONRPC Error:\n{}'.format(exc), 1)
+        response = {}
+    return response
 
 
 def dictify(r, root=True):

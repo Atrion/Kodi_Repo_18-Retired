@@ -183,7 +183,7 @@ msgstr ""
 
 #: /resources/settings.xml
 msgctxt "#32037"
-msgid "Use bundled Netflix and YouTube players"
+msgid "Use bundled players"
 msgstr ""
 
 #: /resources/settings.xml
@@ -659,17 +659,17 @@ msgstr ""
 
 #: /resources/settings.xml
 msgctxt "#32131"
-msgid "Auto-update library from Trakt list"
+msgid "Auto-update library from Trakt list(s)"
 msgstr ""
 
 #: /resources/lib/script.py
 msgctxt "#32132"
-msgid "Do you wish to update the library using this Trakt list now?"
+msgid "Do you wish to update the library from the Trakt list(s) now?"
 msgstr ""
 
 #: /resources/lib/script.py
 msgctxt "#32133"
-msgid "Select List"
+msgid "Select List(s)"
 msgstr ""
 
 #: /resources/settings.xml
@@ -775,6 +775,41 @@ msgstr ""
 #: /resources/settings.xml
 msgctxt "#32154"
 msgid "Update library now"
+msgstr ""
+
+#: /resources/settings.xml
+msgctxt "#32155"
+msgid "Next Aired (Library)"
+msgstr ""
+
+#: /resources/settings.xml
+msgctxt "#32156"
+msgid "Next aired library calendar links to local tvshow"
+msgstr ""
+
+#: /resources/lib/context.py
+msgctxt "#32157"
+msgid "Unable to find TMDb ID for item."
+msgstr ""
+
+#: /resources/settings.xml
+msgctxt "#32158"
+msgid "Automatically use player if only one available"
+msgstr ""
+
+#: /resources/lib/container.py
+msgctxt "#32159"
+msgid "Select Original Language"
+msgstr ""
+
+#: /resources/lib/context.py
+msgctxt "#32160"
+msgid "Adding {} - {} to library..."
+msgstr ""
+
+#: /resources/lib/traktapi.py
+msgctxt "#32161"
+msgid "Do you wish to update the library with this list now?"
 msgstr ""
 
 msgctxt "#30030"

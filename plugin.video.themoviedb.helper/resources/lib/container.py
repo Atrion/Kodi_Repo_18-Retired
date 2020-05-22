@@ -50,6 +50,7 @@ class Container(Plugin):
             except Exception as exc:
                 utils.kodi_log(u'Error: {}\nUnable to set Param.{} to {}'.format(exc, k, v), 1)
         xbmcplugin.addSortMethod(self.handle, xbmcplugin.SORT_METHOD_UNSORTED)
+        xbmcplugin.addSortMethod(self.handle, xbmcplugin.SORT_METHOD_EPISODE) if self.item_dbtype == 'episode' else None
         xbmcplugin.addSortMethod(self.handle, xbmcplugin.SORT_METHOD_TITLE_IGNORE_THE)
         xbmcplugin.addSortMethod(self.handle, xbmcplugin.SORT_METHOD_LASTPLAYED)
         xbmcplugin.addSortMethod(self.handle, xbmcplugin.SORT_METHOD_PLAYCOUNT)
@@ -449,6 +450,8 @@ class Container(Plugin):
             self.set_userdiscover_selectlist_properties(constants.USER_DISCOVER_RELEASETYPES, header=self.addon.getLocalizedString(32119))
         elif 'region' in method:
             self.set_userdiscover_selectlist_properties(constants.USER_DISCOVER_REGIONS, header=self.addon.getLocalizedString(32120), multiselect=False)
+        elif 'with_original_language' in method:
+            self.set_userdiscover_selectlist_properties(constants.USER_DISCOVER_LANGUAGES, header=self.addon.getLocalizedString(32159), multiselect=False)
         elif 'with_runtime' not in method and 'with_networks' not in method and any(i in method for i in ['with_', 'without_']):
             self.add_userdiscover_method_property(header, tmdbtype, usedetails, old_label=old_label, old_value=old_value)
         else:
@@ -594,6 +597,9 @@ class Container(Plugin):
                 season=i.get('episode', {}).get('season'),
                 episode=i.get('episode', {}).get('number')))
             li.tmdb_id = i.get('show', {}).get('ids', {}).get('tmdb')  # Set TVSHOW ID
+            li.infoproperties['tvshow.imdb_id'] = i.get('show', {}).get('ids', {}).get('imdb') or li.infoproperties.get('tvshow.imdb_id')
+            li.infoproperties['tvshow.tmdb_id'] = i.get('show', {}).get('ids', {}).get('tmdb') or li.infoproperties.get('tvshow.tmdb_id')
+            li.infoproperties['tvshow.tvdb_id'] = i.get('show', {}).get('ids', {}).get('tvdb') or li.infoproperties.get('tvshow.tvdb_id')
 
             # Get some additional properties and add our item
             items.append(trakt.get_calendar_properties(li, i))
@@ -603,6 +609,7 @@ class Container(Plugin):
         self.plugincategory = date.strftime('%A')
 
         # Create our list
+        self.params['linklibrary'] = self.addon.getSettingBool('nextaired_linklibrary')
         self.item_tmdbtype = 'episode'
         self.list_items(items=items, url={'info': 'details', 'type': 'episode'})
 
@@ -979,7 +986,9 @@ class Container(Plugin):
             i.infoproperties['numitems.tmdb'] = self.numitems_tmdb
             i.infoproperties['dbtype'] = self.item_dbtype
             i.get_details(self.item_dbtype, self.tmdb, self.omdb, self.params.get('localdb'))
-            i.get_url(url, url_tmdb_id, self.params.get('widget'), self.params.get('fanarttv'), self.params.get('nextpage'), self.params.get('extended'))
+            i.get_url(
+                url, url_tmdb_id=url_tmdb_id, widget=self.params.get('widget'), fanarttv=self.params.get('fanarttv'),
+                nextpage=self.params.get('nextpage'), extended=self.params.get('extended'), linklibrary=self.params.get('linklibrary'))
             i.get_extra_artwork(self.tmdb, self.fanarttv) if len(items) < 22 and self.exp_fanarttv() else None
             i.get_trakt_watched(trakt_watched) if x == 0 or self.params.get('info') != 'details' else None
             i.get_trakt_unwatched(trakt=TraktAPI(tmdb=self.tmdb), request=trakt_unwatched, check_sync=self.check_sync) if x == 0 or self.params.get('info') != 'details' else None

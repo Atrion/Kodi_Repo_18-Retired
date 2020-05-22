@@ -152,9 +152,10 @@ class OrionNotification:
 			if not result or not api.data(): return False
 			notification = OrionNotification(data = api.data())
 			last = OrionSettings.getString('internal.api.notification')
-			if not last == notification.id():
+			last = OrionTools.toInteger(last) # Do not use the ID anymore, since old notifications will pop up again if the current notification expired.
+			if not last or notification.timeAdded() > last:
 				notification.dialog()
-				OrionSettings.set('internal.api.notification', notification.id())
+				OrionSettings.set('internal.api.notification', notification.timeAdded())
 				return True
 		return False
 

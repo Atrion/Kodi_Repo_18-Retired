@@ -21,6 +21,8 @@
         <setting label="$ADDON[plugin.video.themoviedb.helper 32092]" type="lsep"/>
         <setting label="$ADDON[plugin.video.themoviedb.helper 32081]" type="bool" id="widgets_nextpage" default="false" />
         <setting label="$ADDON[plugin.video.themoviedb.helper 32142]" type="bool" id="widgets_hidewatched" default="false" />
+        <setting label="$ADDON[plugin.video.themoviedb.helper 32155]" type="lsep"/>
+        <setting label="$ADDON[plugin.video.themoviedb.helper 32156]" type="bool" id="nextaired_linklibrary" default="true" />
     </category>
     <category label="$LOCALIZE[14022]">
         <setting label="$ADDON[plugin.video.themoviedb.helper 32074]" type="lsep"/>
@@ -29,9 +31,8 @@
         <setting label="$ADDON[plugin.video.themoviedb.helper 32076]" type="bool" id="auto_update" default="true" />
         <setting label="$ADDON[plugin.video.themoviedb.helper 32086]" type="bool" id="library_autoupdate" default="false" />
         <setting label="$ADDON[plugin.video.themoviedb.helper 32130]" subsetting="true" type="enum" values="$HOURS" id="library_autoupdate_hour" enable="eq(-1,True)" />
-        <setting label="$ADDON[plugin.video.themoviedb.helper 32131]" subsetting="true" type="action" action="RunScript(plugin.video.themoviedb.helper,monitor_userlist=monitor_userlist)" id="monitor_userlist"  enable="eq(-2,True)"/>
-        <setting label="$ADDON[plugin.video.themoviedb.helper 32131]" subsetting="true" type="action" action="RunScript(plugin.video.themoviedb.helper,monitor_userlist=monitor_userlist_2)" id="monitor_userlist_2" visible="!eq(-1,)|!eq(0,)"  enable="eq(-3,True)"/>
-        <setting label="$ADDON[plugin.video.themoviedb.helper 32154]" subsetting="true" type="action" action="RunScript(plugin.video.themoviedb.helper,library_autoupdate,busy_dialog)" enable="eq(-4,True)"/>
+        <setting label="$ADDON[plugin.video.themoviedb.helper 32131]" subsetting="true" type="action" action="RunScript(plugin.video.themoviedb.helper,monitor_userlist)" id="monitor_userlist"  enable="eq(-2,True)"/>
+        <setting label="$ADDON[plugin.video.themoviedb.helper 32154]" subsetting="true" type="action" action="RunScript(plugin.video.themoviedb.helper,library_autoupdate,busy_dialog)" enable="eq(-3,True)"/>
         <setting label="$LOCALIZE[10039]" type="lsep"/>
         <setting label="$ADDON[plugin.video.themoviedb.helper 32077]" type="bool" id="ignore_folderchecking" default="false" />
     </category>
@@ -59,6 +60,7 @@
         <setting label="$ADDON[plugin.video.themoviedb.helper 32025]" type="action" action="RunScript(plugin.video.themoviedb.helper, set_defaultplayer=tv)" id="default_player_episodes" />
         <setting label="$ADDON[plugin.video.themoviedb.helper 32027]" type="action" action="RunScript(plugin.video.themoviedb.helper, clear_defaultplayers)" visible="False"/>
         <setting label="$ADDON[plugin.video.themoviedb.helper 32094]" type="bool" id="default_player_local" default="True" />
+        <setting label="$ADDON[plugin.video.themoviedb.helper 32158]" type="bool" id="autoplay_single" default="False" />
         <setting label="$ADDON[plugin.video.themoviedb.helper 32036]" type="lsep"/>
         <setting label="$ADDON[plugin.video.themoviedb.helper 32037]" type="bool" id="bundled_players" default="True" />
         <setting label="$ADDON[plugin.video.themoviedb.helper 32016]" type="action" action="RunScript(plugin.video.themoviedb.helper, update_players)" id="players_url" />

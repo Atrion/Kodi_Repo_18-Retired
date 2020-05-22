@@ -107,17 +107,17 @@ class OrionTools:
 		if message4: message += divider + self.unicodeString(message4)
 		if message5: message += divider + self.unicodeString(message5)
 		if name:
-			nameValue = self.addonName().upper()
+			nameValue = '[' + self.addonName().upper()
 			if not name == True:
 				nameValue += ' ' + name
-			nameValue += ' ' + self.addonVersion()
+			nameValue += ' ' + self.addonVersion() + ']'
 			if parameters:
-				nameValue += ' ['
+				nameValue += ' ('
 				if self.isString(parameters):
 					nameValue += parameters
 				else:
 					nameValue += ', '.join([self.unicodeString(parameter) for parameter in parameters])
-				nameValue += ']'
+				nameValue += ')'
 			nameValue += ': '
 			message = nameValue + message
 		xbmc.log(message, level)
@@ -366,35 +366,62 @@ class OrionTools:
 			return True
 		except: return False
 
+	# native == False: copy with xbmc functions, native == True: copy with Python functions.
+	# copy == True: use copy functions, copy == False: use File reead/write to make a copy.
 	@classmethod
-	def fileCopy(self, pathFrom, pathTo, bytes = None, overwrite = False):
-		if not xbmcvfs.exists(pathFrom):
-			return False
-		if overwrite and xbmcvfs.exists(pathTo):
-			try: xbmcvfs.delete(pathTo)
-			except: pass
-		if bytes == None:
-			xbmcvfs.copy(pathFrom, pathTo)
-			return xbmcvfs.exists(pathTo)
-		else:
-			try:
-				fileFrom = xbmcvfs.File(pathFrom)
-				fileTo = xbmcvfs.File(pathTo, 'w')
-				if bytes is True: bytes = self.fileSize(pathFrom)
-				chunk = min(bytes, 1048576) # 1 MB
-				while bytes > 0:
-					size = min(bytes, chunk)
-					fileTo.write(fileFrom.read(size))
-					bytes -= size
-				fileFrom.close()
-				fileTo.close()
-				return True
-			except:
-				try: fileFrom.close()
-				except: pass
-				try: fileTo.close()
-				except: pass
+	def fileCopy(self, pathFrom, pathTo, overwrite = False, native = False, copy = True):
+		if native:
+			pathFrom = self.pathResolve(pathFrom)
+			pathTo = self.pathResolve(pathTo)
+			if not os.path.isfile(pathFrom):
 				return False
+			if overwrite and os.path.isfile(pathTo):
+				try:
+					os.chmod(pathTo, stat.S_IWRITE)
+					os.remove(pathTo)
+				except: pass
+			if copy:
+				try: shutil.copy2(pathFrom, pathTo)
+				except: pass
+				return os.path.isfile(pathTo)
+			else:
+				try:
+					with open(pathFrom, 'rb') as fileFrom, open(pathTo, 'wb+') as fileTo:
+						while True:
+							data = fileFrom.read(262144) # 256KB
+							if not data: break
+							fileTo.write(data)
+					return True
+				except:
+					return False
+		else:
+			if not xbmcvfs.exists(pathFrom):
+				return False
+			if overwrite and xbmcvfs.exists(pathTo):
+				try: xbmcvfs.delete(pathTo)
+				except: pass
+			if copy:
+				xbmcvfs.copy(pathFrom, pathTo)
+				return xbmcvfs.exists(pathTo)
+			else:
+				try:
+					fileFrom = xbmcvfs.File(pathFrom)
+					fileTo = xbmcvfs.File(pathTo, 'w')
+					bytes = self.fileSize(pathFrom)
+					chunk = min(bytes, 262144) # 256KB
+					while bytes > 0:
+						size = min(bytes, chunk)
+						fileTo.write(fileFrom.read(size))
+						bytes -= size
+					fileFrom.close()
+					fileTo.close()
+					return True
+				except:
+					try: fileFrom.close()
+					except: pass
+					try: fileTo.close()
+					except: pass
+					return False
 
 	@classmethod
 	def fileRead(self, path, binary = False):
@@ -913,6 +940,11 @@ class OrionTools:
 				return value == 'true' or value == 'yes' or value == 't' or value == 'y' or value == '1'
 			else:
 				return False
+
+	@classmethod
+	def toInteger(self, value, default = None):
+		try: return int(value)
+		except: return default
 
 	##############################################################################
 	# IS
