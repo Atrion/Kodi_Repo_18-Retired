@@ -138,7 +138,7 @@ msgstr ""
 
 #: /resources/settings.xml
 msgctxt "#32028"
-msgid "Use fanart.tv for widget artwork"
+msgid "Use fanart.tv for widget artwork (increases load times)"
 msgstr ""
 
 #: /resources/settings.xml
@@ -474,7 +474,7 @@ msgstr ""
 
 #: /resources/settings.xml
 msgctxt "#32094"
-msgid "Prioritise local files"
+msgid "Prioritise local files over default player"
 msgstr ""
 
 #: /resources/lib/traktapi.py
@@ -812,6 +812,16 @@ msgctxt "#32161"
 msgid "Do you wish to update the library with this list now?"
 msgstr ""
 
+#: /resources/settings.xml
+msgctxt "#32162"
+msgid "Automatically play local files"
+msgstr ""
+
+#: /resources/settings.xml
+msgctxt "#32163"
+msgid "Use fanart.tv for service monitor artwork"
+msgstr ""
+
 msgctxt "#30030"
 msgid "Hindi (India)"
 msgstr ""
@@ -1071,7 +1081,7 @@ msgstr ""
 
 #: /resources/settings.xml
 msgctxt "#32021"
-msgid "Use fanart.tv for additional artwork (increases load times)"
+msgid "Use fanart.tv for plugin artwork (increases load times)"
 msgstr ""
 
 #: /resources/settings.xml
