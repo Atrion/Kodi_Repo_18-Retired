@@ -4,6 +4,7 @@ import xbmcvfs
 import xbmcgui
 import xbmcaddon
 import datetime
+from json import loads
 from threading import Thread
 from PIL import ImageFilter, Image
 from resources.lib.plugin import Plugin
@@ -28,6 +29,7 @@ _setprop_ratings = {
     'rottentomatoes_reviewtotal', 'rottentomatoes_reviewsfresh', 'rottentomatoes_reviewsrotten',
     'rottentomatoes_consensus', 'rottentomatoes_usermeter', 'rottentomatoes_userreviews', 'trakt_rating', 'trakt_votes',
     'oscar_wins', 'oscar_nominations', 'award_wins', 'award_nominations', 'tmdb_rating', 'tmdb_votes'}
+_homewindow = xbmcgui.Window(10000)
 
 
 class CronJob(Thread):
@@ -61,16 +63,15 @@ class BlurImage(Thread):
         Thread.__init__(self)
         self.radius = 20
         self.addon_path = utils.makepath('special://profile/addon_data/plugin.video.themoviedb.helper/blur/')
-        self.home = xbmcgui.Window(10000)
         self.image = artwork
 
     def run(self):
         if not self.image:
-            self.home.clearProperty('TMDbHelper.ListItem.BlurImage')
+            _homewindow.clearProperty('TMDbHelper.ListItem.BlurImage')
             return
         filename = '{}{}.png'.format(utils.md5hash(self.image), self.radius)
         blurname = self.blur(self.image, filename)
-        self.home.setProperty('TMDbHelper.ListItem.BlurImage', blurname)
+        _homewindow.setProperty('TMDbHelper.ListItem.BlurImage', blurname)
 
     def blur(self, source, filename):
         destination = self.addon_path + filename
@@ -146,9 +147,232 @@ class BlurImage(Thread):
         return ''
 
 
-class ServiceMonitor(Plugin):
+class CommonMonitorFunctions(Plugin):
+    def __init__(self):
+        super(CommonMonitorFunctions, self).__init__()
+        self.property_basename = 'TMDbHelper'
+
+    def set_property(self, key, value):
+        try:
+            if value is None:
+                _homewindow.clearProperty('{}.{}'.format(self.property_basename, key))
+            else:
+                _homewindow.setProperty('{}.{}'.format(self.property_basename, key), u'{0}'.format(value))
+        except Exception as exc:
+            utils.kodi_log(u'{0}{1}'.format(key, exc), 1)
+
+    def set_iter_properties(self, dictionary, keys):
+        if not isinstance(dictionary, dict):
+            return
+        for k in keys:
+            try:
+                v = dictionary.get(k, '')
+                if isinstance(v, list):
+                    try:
+                        v = ' / '.join(v)
+                    except Exception as exc:
+                        utils.kodi_log(u'Func: set_iter_properties - list\n{0}'.format(exc), 1)
+                self.properties.add(k)
+                self.set_property(k, v)
+            except Exception as exc:
+                'k: {0} e: {1}'.format(k, exc)
+
+    def set_indx_properties(self, dictionary):
+        if not isinstance(dictionary, dict):
+            return
+
+        indxprops = set()
+        for k, v in dictionary.items():
+            if k in self.properties or k in _setprop_ratings or k in _setmain_artwork:
+                continue
+            try:
+                v = v or ''
+                self.set_property(k, v)
+                indxprops.add(k)
+            except Exception as exc:
+                utils.kodi_log(u'k: {0} v: {1} e: {2}'.format(k, v, exc), 1)
+
+        for k in (self.indxproperties - indxprops):
+            self.clear_property(k)
+        self.indxproperties = indxprops.copy()
+
+    def set_list_properties(self, items, key, prop):
+        if not isinstance(items, list):
+            return
+        try:
+            joinlist = [i.get(key) for i in items[:10] if i.get(key)]
+            joinlist = ' / '.join(joinlist)
+            self.properties.add(prop)
+            self.set_property(prop, joinlist)
+        except Exception as exc:
+            utils.kodi_log(u'Func: set_list_properties\n{0}'.format(exc), 1)
+
+    def set_time_properties(self, duration):
+        try:
+            minutes = duration // 60 % 60
+            hours = duration // 60 // 60
+            totalmin = duration // 60
+            self.set_property('Duration', totalmin)
+            self.set_property('Duration_H', hours)
+            self.set_property('Duration_M', minutes)
+            self.set_property('Duration_HHMM', '{0:02d}:{1:02d}'.format(hours, minutes))
+            self.properties.update(['Duration', 'Duration_H', 'Duration_M', 'Duration_HHMM'])
+        except Exception as exc:
+            'Func: set_time_properties\n{0}'.format(exc)
+
+    def set_properties(self, item):
+        self.set_iter_properties(item, _setmain)
+        self.set_iter_properties(item.get('infolabels', {}), _setinfo)
+        self.set_iter_properties(item.get('infoproperties', {}), _setprop)
+        self.set_time_properties(item.get('infolabels', {}).get('duration', 0))
+        self.set_list_properties(item.get('cast', []), 'name', 'cast')
+        if xbmc.getCondVisibility("!Skin.HasSetting(TMDbHelper.DisableExtendedProperties)"):
+            self.set_indx_properties(item.get('infoproperties', {}))
+        _homewindow.clearProperty('TMDbHelper.IsUpdating')
+
+    def get_tmdb_id(self, itemtype, imdb_id=None, query=None, year=None):
+        try:
+            if imdb_id and imdb_id.startswith('tt'):
+                return self.tmdb.get_tmdb_id(itemtype=itemtype, imdb_id=imdb_id)
+            return self.tmdb.get_tmdb_id(itemtype=itemtype, query=query, year=year)
+        except Exception as exc:
+            utils.kodi_log(u'Func: get_tmdb_id\n{0}'.format(exc), 1)
+            return
+
+    def clear_properties(self, ignorekeys=None):
+        ignorekeys = ignorekeys or set()
+        for k in self.properties - ignorekeys:
+            self.clear_property(k)
+        self.properties = set()
+        for k in self.indxproperties:
+            self.clear_property(k)
+        self.indxproperties = set()
+        self.pre_item = None
+
+    def clear_property_list(self, properties):
+        for k in properties:
+            self.clear_property(k)
+
+    def clear_property(self, key):
+        try:
+            _homewindow.clearProperty('{}.{}'.format(self.property_basename, key))
+        except Exception as exc:
+            utils.kodi_log(u'Func: clear_property\n{0}{1}'.format(key, exc), 1)
+
+
+class PlayerMonitor(xbmc.Player, CommonMonitorFunctions):
+    def __init__(self):
+        xbmc.Player.__init__(self)
+        CommonMonitorFunctions.__init__(self)
+        self.property_basename = 'TMDbHelper.Player'
+        self.properties = set()
+        self.indxproperties = set()
+        self.playerstring = None
+        self.exit = False
+        self.reset_properties()
+
+    def onAVStarted(self):
+        self.reset_properties()
+        self.get_playingitem()
+
+    def onPlayBackEnded(self):
+        self.set_dbidwatched()
+        self.reset_properties()
+
+    def onPlayBackStopped(self):
+        self.set_dbidwatched()
+        self.reset_properties()
+
+    def set_dbidwatched_rpc(self, dbid=None, dbtype=None):
+        if not dbid or not dbtype:
+            return
+        method = "VideoLibrary.Get{}Details".format(dbtype.capitalize())
+        params = {"{}id".format(dbtype): dbid, "properties": ["playcount"]}
+        json_info = utils.get_jsonrpc(method=method, params=params)
+        playcount = json_info.get('result', {}).get('{}details'.format(dbtype), {}).get('playcount', 0)
+        playcount = utils.try_parse_int(playcount) + 1
+        method = "VideoLibrary.Set{}Details".format(dbtype.capitalize())
+        params = {"{}id".format(dbtype): dbid, "playcount": playcount}
+        return utils.get_jsonrpc(method=method, params=params)
+
+    def set_dbidwatched(self):
+        if not self.playerstring or not self.playerstring.get('tmdb_id'):
+            return
+        if not self.currenttime or not self.totaltime:
+            return  # No time set so skip
+        if '{}'.format(self.playerstring.get('tmdb_id')) != '{}'.format(self.details.get('tmdb_id')):
+            return  # Item in the player doesn't match so don't mark as watched
+        dbid = self.get_db_info(info='dbid', **self.playerstring)
+        if not dbid:
+            return
+        progress = ((self.currenttime / self.totaltime) * 100)
+        if progress < 75:
+            return  # Only update if progress is 75% or more
+        if self.playerstring.get('tmdbtype') == 'episode':
+            self.set_dbidwatched_rpc(dbid=dbid, dbtype='episode')
+        elif self.playerstring.get('tmdbtype') == 'movie':
+            self.set_dbidwatched_rpc(dbid=dbid, dbtype='movie')
+
+    def get_playingitem(self):
+        if not self.isPlayingVideo():
+            return  # Not a video so don't get info
+        if self.getVideoInfoTag().getMediaType() not in ['movie', 'episode']:
+            return  # Not a movie or episode so don't get info TODO Maybe get PVR details also?
+        self.playerstring = _homewindow.getProperty('TMDbHelper.PlayerInfoString')
+        self.playerstring = loads(self.playerstring) if self.playerstring else None
+
+        self.totaltime = self.getTotalTime()
+        self.dbtype = self.getVideoInfoTag().getMediaType()
+        self.dbid = self.getVideoInfoTag().getDbId()
+        self.imdb_id = self.getVideoInfoTag().getIMDBNumber()
+        self.query = self.getVideoInfoTag().getTVShowTitle() if self.dbtype == 'episode' else self.getVideoInfoTag().getTitle()
+        self.year = self.getVideoInfoTag().getYear() if self.dbtype == 'movie' else None
+        self.season = self.getVideoInfoTag().getSeason() if self.dbtype == 'episodes' else None
+        self.episode = self.getVideoInfoTag().getEpisode() if self.dbtype == 'episodes' else None
+        self.query = utils.try_decode_string(self.query)
+
+        self.tmdbtype = 'movie' if self.dbtype == 'movie' else 'tv'
+        self.tmdb_id = self.get_tmdb_id(self.tmdbtype, self.imdb_id, self.query, self.year)
+        self.details = self.tmdb.get_detailed_item(self.tmdbtype, self.tmdb_id, season=self.season, episode=self.episode)
+
+        if not self.details:
+            return self.reset_properties()  # No self.details so lets clear everything
+
+        if xbmc.getCondVisibility("!Skin.HasSetting(TMDbHelper.DisableRatings)"):
+            self.details = self.get_omdb_ratings(self.details) if self.tmdbtype == 'movie' else self.details
+            self.details = self.get_top250_rank(self.details) if self.tmdbtype == 'movie' else self.details
+            self.details = self.get_trakt_ratings(self.details, self.tmdbtype, self.tmdb_id, self.season, self.episode) if self.tmdbtype in ['movie', 'tv'] else self.details
+            self.set_iter_properties(self.details.get('infoproperties', {}), _setprop_ratings)
+
+        if xbmc.getCondVisibility("!Skin.HasSetting(TMDbHelper.DisableArtwork)"):
+            self.details = self.get_fanarttv_artwork(self.details, self.tmdbtype) if self.addon.getSettingBool('service_fanarttv_lookup') else self.details
+            self.details = self.get_kodi_artwork(self.details, self.dbtype, self.dbid) if self.addon.getSettingBool('local_db') else self.details
+            self.set_iter_properties(self.details, _setmain_artwork)
+
+        self.set_properties(self.details)
+
+    def reset_properties(self):
+        self.clear_properties()
+        self.properties = set()
+        self.indxproperties = set()
+        self.totaltime = 0
+        self.currenttime = 0
+        self.dbtype = None
+        self.imdb_id = None
+        self.query = None
+        self.year = None
+        self.season = None
+        self.episode = None
+        self.dbid = None
+        self.tmdb_id = None
+        self.details = {}
+        self.tmdbtype = None
+
+
+class ServiceMonitor(CommonMonitorFunctions):
     def __init__(self):
         super(ServiceMonitor, self).__init__()
+        self.property_basename = 'TMDbHelper.ListItem'
         self.kodimonitor = xbmc.Monitor()
         self.container = 'Container.'
         self.containeritem = 'ListItem.'
@@ -159,26 +383,37 @@ class ServiceMonitor(Plugin):
         self.cur_folder = None
         self.properties = set()
         self.indxproperties = set()
-        self.home = xbmcgui.Window(10000)
         self.cron_job = CronJob(self.addon.getSettingInt('library_autoupdate_hour'))
         self.cron_job.setName('Cron Thread')
+        self.playermonitor = None
         self.run_monitor()
 
     def run_monitor(self):
-        self.home.setProperty('TMDbHelper.ServiceStarted', 'True')
+        _homewindow.setProperty('TMDbHelper.ServiceStarted', 'True')
 
         if self.addon.getSettingString('trakt_token'):
-            self.home.setProperty('TMDbHelper.TraktIsAuth', 'True')
+            _homewindow.setProperty('TMDbHelper.TraktIsAuth', 'True')
             self.get_trakt_usernameslug()
 
         self.cron_job.start()
 
         while not self.kodimonitor.abortRequested() and not self.exit:
-            if self.home.getProperty('TMDbHelper.ServiceStop'):
+            if _homewindow.getProperty('TMDbHelper.ServiceStop'):
                 self.cron_job.exit = True
                 self.exit = True
 
-            elif xbmc.getCondVisibility("!Skin.HasSetting(TMDbHelper.Service)"):
+            # Startup our playmonitor if we haven't already
+            elif not self.playermonitor:
+                self.playermonitor = PlayerMonitor()
+                self.kodimonitor.waitForAbort(1)
+
+            # If we're in fullscreen video then we should update the playermonitor time
+            elif xbmc.getCondVisibility("Window.IsVisible(fullscreenvideo)") and self.playermonitor.isPlayingVideo():
+                self.playermonitor.currenttime = self.playermonitor.getTime()
+                self.kodimonitor.waitForAbort(1)
+
+            # Sit idle in a holding pattern if the skin doesn't need the service monitor yet
+            elif xbmc.getCondVisibility("!Skin.HasSetting(TMDbHelper.Service) | System.ScreenSaverActive"):
                 self.kodimonitor.waitForAbort(30)
 
             # skip when modal dialogs are opened (e.g. textviewer in musicinfo dialog)
@@ -193,7 +428,7 @@ class ServiceMonitor(Plugin):
                 if (self.properties or self.indxproperties) and self.get_cur_item() != self.pre_item:
                     ignorekeys = _setmain_artwork if self.dbtype in ['episodes', 'seasons'] else None
                     self.clear_properties(ignorekeys=ignorekeys)
-                self.kodimonitor.waitForAbort(1)  # Maybe clear props here too
+                self.kodimonitor.waitForAbort(1)
 
             # media window is opened or widgetcontainer set - start listitem monitoring!
             elif xbmc.getCondVisibility(
@@ -206,6 +441,7 @@ class ServiceMonitor(Plugin):
             elif self.properties or self.indxproperties:
                 self.clear_properties()
 
+            # Otherwise just sit here and wait
             else:
                 self.kodimonitor.waitForAbort(1)
 
@@ -213,9 +449,11 @@ class ServiceMonitor(Plugin):
         self.exit_monitor()
 
     def exit_monitor(self):
+        self.playermonitor.exit = True
+        del self.playermonitor
         self.clear_properties()
-        self.home.clearProperty('TMDbHelper.ServiceStarted')
-        self.home.clearProperty('TMDbHelper.ServiceStop')
+        _homewindow.clearProperty('TMDbHelper.ServiceStarted')
+        _homewindow.clearProperty('TMDbHelper.ServiceStop')
 
     def get_cur_item(self):
         self.dbtype = self.get_dbtype()
@@ -237,7 +475,7 @@ class ServiceMonitor(Plugin):
             self.pre_item = self.cur_item
 
     def get_artwork(self, source=''):
-        source = source or self.home.getProperty('TMDbHelper.Blur.SourceImage')
+        source = source or _homewindow.getProperty('TMDbHelper.Blur.SourceImage')
         source = source.lower()
         infolabels = ['Art(thumb)']
         if source == 'poster':
@@ -248,7 +486,7 @@ class ServiceMonitor(Plugin):
             infolabels = ['Art(landscape)', 'Art(fanart)', 'Art(thumb)']
         elif source and source != 'thumb':
             infolabels = source.split("|")
-        fallback = self.home.getProperty('TMDbHelper.Blur.Fallback')
+        fallback = _homewindow.getProperty('TMDbHelper.Blur.Fallback')
         for i in infolabels:
             artwork = self.get_infolabel(i)
             if artwork:
@@ -288,7 +526,7 @@ class ServiceMonitor(Plugin):
             else:
                 return
 
-            self.home.setProperty('TMDbHelper.IsUpdating', 'True')
+            _homewindow.setProperty('TMDbHelper.IsUpdating', 'True')
 
             if self.dbtype not in ['episodes', 'seasons']:
                 self.clear_property_list(_setmain_artwork)
@@ -341,7 +579,7 @@ class ServiceMonitor(Plugin):
             if self.dbtype not in ['movies', 'tvshows', 'episodes'] and tmdbtype not in ['movie', 'tv']:
                 return
             pre_item = self.pre_item
-            details = self.get_fanarttv_artwork(details, tmdbtype) if self.addon.getSettingBool('fanarttv_lookup') else details
+            details = self.get_fanarttv_artwork(details, tmdbtype) if self.addon.getSettingBool('service_fanarttv_lookup') else details
             details = self.get_kodi_artwork(details, self.dbtype, self.dbid) if self.addon.getSettingBool('local_db') else details
             if not self.is_same_item(update=False, pre_item=pre_item):
                 return
@@ -349,103 +587,8 @@ class ServiceMonitor(Plugin):
         except Exception as exc:
             utils.kodi_log(u'Func: process_ratings\n{}'.format(exc), 1)
 
-    def clear_property(self, key):
-        try:
-            self.home.clearProperty('TMDbHelper.ListItem.{0}'.format(key))
-        except Exception as exc:
-            utils.kodi_log(u'Func: clear_property\n{0}{1}'.format(key, exc), 1)
-
-    def clear_property_list(self, properties):
-        for k in properties:
-            self.clear_property(k)
-
-    def clear_properties(self, ignorekeys=None):
-        ignorekeys = ignorekeys or set()
-        for k in self.properties - ignorekeys:
-            self.clear_property(k)
-        self.properties = set()
-        for k in self.indxproperties:
-            self.clear_property(k)
-        self.indxproperties = set()
-        self.pre_item = None
-
-    def set_property(self, key, value):
-        try:
-            self.home.setProperty('TMDbHelper.ListItem.{0}'.format(key), u'{0}'.format(value))
-        except Exception as exc:
-            utils.kodi_log(u'{0}{1}'.format(key, exc), 1)
-
-    def set_indx_properties(self, dictionary):
-        if not isinstance(dictionary, dict):
-            return
-
-        indxprops = set()
-        for k, v in dictionary.items():
-            if k in self.properties or k in _setprop_ratings or k in _setmain_artwork:
-                continue
-            try:
-                v = v or ''
-                self.set_property(k, v)
-                indxprops.add(k)
-            except Exception as exc:
-                utils.kodi_log(u'k: {0} v: {1} e: {2}'.format(k, v, exc), 1)
-
-        for k in (self.indxproperties - indxprops):
-            self.clear_property(k)
-        self.indxproperties = indxprops.copy()
-
-    def set_iter_properties(self, dictionary, keys):
-        if not isinstance(dictionary, dict):
-            return
-        for k in keys:
-            try:
-                v = dictionary.get(k, '')
-                if isinstance(v, list):
-                    try:
-                        v = ' / '.join(v)
-                    except Exception as exc:
-                        utils.kodi_log(u'Func: set_iter_properties - list\n{0}'.format(exc), 1)
-                self.properties.add(k)
-                self.set_property(k, v)
-            except Exception as exc:
-                'k: {0} e: {1}'.format(k, exc)
-
-    def set_list_properties(self, items, key, prop):
-        if not isinstance(items, list):
-            return
-        try:
-            joinlist = [i.get(key) for i in items[:10] if i.get(key)]
-            joinlist = ' / '.join(joinlist)
-            self.properties.add(prop)
-            self.set_property(prop, joinlist)
-        except Exception as exc:
-            utils.kodi_log(u'Func: set_list_properties\n{0}'.format(exc), 1)
-
-    def set_time_properties(self, duration):
-        try:
-            minutes = duration // 60 % 60
-            hours = duration // 60 // 60
-            totalmin = duration // 60
-            self.set_property('Duration', totalmin)
-            self.set_property('Duration_H', hours)
-            self.set_property('Duration_M', minutes)
-            self.set_property('Duration_HHMM', '{0:02d}:{1:02d}'.format(hours, minutes))
-            self.properties.update(['Duration', 'Duration_H', 'Duration_M', 'Duration_HHMM'])
-        except Exception as exc:
-            'Func: set_time_properties\n{0}'.format(exc)
-
-    def set_properties(self, item):
-        self.set_iter_properties(item, _setmain)
-        self.set_iter_properties(item.get('infolabels', {}), _setinfo)
-        self.set_iter_properties(item.get('infoproperties', {}), _setprop)
-        self.set_time_properties(item.get('infolabels', {}).get('duration', 0))
-        self.set_list_properties(item.get('cast', []), 'name', 'cast')
-        if xbmc.getCondVisibility("!Skin.HasSetting(TMDbHelper.DisableExtendedProperties)"):
-            self.set_indx_properties(item.get('infoproperties', {}))
-        self.home.clearProperty('TMDbHelper.IsUpdating')
-
     def get_container(self):
-        widgetid = utils.try_parse_int(self.home.getProperty('TMDbHelper.WidgetContainer'))
+        widgetid = utils.try_parse_int(_homewindow.getProperty('TMDbHelper.WidgetContainer'))
         self.container = 'Container({0}).'.format(widgetid) if widgetid else 'Container.'
         self.containeritem = '{0}ListItem.'.format(self.container)
         if xbmc.getCondVisibility("Window.IsVisible(DialogPVRInfo.xml) | Window.IsVisible(movieinformation)"):
@@ -464,12 +607,3 @@ class ServiceMonitor(Plugin):
 
     def get_position(self):
         return xbmc.getInfoLabel('{0}CurrentItem'.format(self.container))
-
-    def get_tmdb_id(self, itemtype, imdb_id=None, query=None, year=None):
-        try:
-            if imdb_id and imdb_id.startswith('tt'):
-                return self.tmdb.get_tmdb_id(itemtype=itemtype, imdb_id=imdb_id)
-            return self.tmdb.get_tmdb_id(itemtype=itemtype, query=query, year=year)
-        except Exception as exc:
-            utils.kodi_log(u'Func: get_tmdb_id\n{0}'.format(exc), 1)
-            return

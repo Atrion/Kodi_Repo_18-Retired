@@ -84,6 +84,8 @@ class OrionTools:
 	VersionMain = 1000
 	VersionDev = 100 # Cannot divide by more than 100.
 
+	KodiVersion = {}
+
 	ArchiveExtension = 'zip'
 
 	SizeUnits = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
@@ -814,13 +816,22 @@ class OrionTools:
 
 	@classmethod
 	def kodiVersion(self, full = False, major = False):
+		if major and 'major' in OrionTools.KodiVersion: return OrionTools.KodiVersion['major']
+		elif full and 'full' in OrionTools.KodiVersion: return OrionTools.KodiVersion['full']
+		elif not full and 'short' in OrionTools.KodiVersion: return OrionTools.KodiVersion['short']
+
 		version = self.kodiInfo('System.BuildVersion')
+		OrionTools.KodiVersion['full'] = version
 		if not full or major:
-			try: version = float(re.search('^\d+\.?\d+', version).group(0))
+			try:
+				version = float(re.search('^\d+\.?\d+', version).group(0))
+				OrionTools.KodiVersion['short'] = version
 			except: pass
 		if major:
-			import math
-			try: version = int(math.floor(version))
+			try:
+				import math
+				version = int(math.floor(version))
+				OrionTools.KodiVersion['major'] = version
 			except: pass
 		return version
 

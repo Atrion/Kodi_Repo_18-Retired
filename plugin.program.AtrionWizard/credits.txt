@@ -1,6 +1,0 @@
-Credits to all developers that some of the code came from
-Xunity      :  deleteCacheFiles() & deletePackages()
-WHUFCLEE    :  killxbmc() & uploadLog.py
-TVAddons.ag :  Splash Code
-OpenEleq    :  skinSwitch.py
-Surfacingx  :  Creator of the Wizard

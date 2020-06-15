@@ -15,9 +15,10 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
-from __generic_resolver__ import GenericResolver
+from urlresolver.plugins.__generic_resolver__ import GenericResolver
+
 
 class AniStreamResolver(GenericResolver):
     name = "ani-stream"
     domains = ["ani-stream.com"]
-    pattern = '(?://|\.)(ani-stream\.com)/(?:embed-)?([0-9a-zA-Z-]+)'
+    pattern = r'(?://|\.)(ani-stream\.com)/(?:embed-)?([0-9a-zA-Z-]+)'

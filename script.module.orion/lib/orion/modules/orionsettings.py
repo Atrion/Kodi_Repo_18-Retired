@@ -212,12 +212,12 @@ class OrionSettings:
 	def cacheGet(self, id, raw, database = False, obfuscate = False):
 		cache = self.cache()
 		if raw:
-			if cache['static']['data'] == None: cache['static']['data'] = OrionTools.fileRead(self.pathAddon())
+			if cache['static']['data'] is None: cache['static']['data'] = OrionTools.fileRead(self.pathAddon())
 			data = cache['static']['data']
 			values = cache['static']['values']
 			parameter = OrionSettings.ParameterDefault
 		else:
-			if cache['dynamic']['data'] == None: cache['dynamic']['data'] = OrionTools.fileRead(self.pathProfile())
+			if cache['dynamic']['data'] is None: cache['dynamic']['data'] = OrionTools.fileRead(self.pathProfile())
 			data = cache['dynamic']['data']
 			values = cache['dynamic']['values']
 			parameter = OrionSettings.ParameterValue
@@ -286,21 +286,14 @@ class OrionSettings:
 	def getRaw(self, id, parameter = ParameterDefault, data = None, obfuscate = False):
 		try:
 			id = OrionTools.unicodeString(id)
+			if parameter == OrionSettings.ParameterValue and OrionTools.kodiVersionNew(): expression = 'id\s*=\s*"' + id + '".*?>(.*?)<'
+			else: expression = 'id\s*=\s*"' + id + '".*?' + parameter + '\s*=\s*"(.*?)"'
 			if data == None: data = self.data()
-			indexStart = data.find(id)
-			if indexStart < 0: return None
-			indexStart = data.find('"', indexStart)
-			if indexStart < 0: return None
-			indexEnd = data.find('/>', indexStart)
-			if indexEnd < 0: return None
-			data = data[indexStart : indexEnd]
-			indexStart = data.find(parameter)
-			if indexStart < 0: return None
-			indexStart = data.find('"', indexStart) + 1
-			indexEnd = data.find('"', indexStart)
-			data = data[indexStart : indexEnd]
-			if obfuscate: data = OrionTools.obfuscate(data)
-			return data
+			match = re.search(expression, data, re.IGNORECASE)
+			if match:
+				data = match.group(1)
+				if obfuscate: data = OrionTools.obfuscate(data)
+				return data
 		except:
 			OrionTools.error()
 			return None
@@ -702,6 +695,7 @@ class OrionSettings:
 				data = OrionTools.fileRead(path)
 				pattern = re.compile('id\s*=\s*"(.*?)"')
 				ids = [id for id in re.findall(pattern, data)]
+
 				for id in ids:
 					if not id in settings:
 						settings[id] = self.get(id)

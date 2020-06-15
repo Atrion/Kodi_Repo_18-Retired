@@ -40,13 +40,10 @@ class source:
 	def __init__(self):
 		self.priority = 15
 		self.language = ['en']
-		self.domains = ['btdb.io', 'btdb.eu']
-		# self.base_link = 'https://btdb.eu'
-		# self.search_link = '/?s=%s' # still works but may become deprecated
-		self.base_link = 'https://btdb.io'
-		self.search_link = '/search/%s/?sort=popular'
-		self.min_seeders = 1
-
+		self.domains = ['btdb.eu']
+		self.base_link = 'https://btdb.eu'
+		self.search_link = '/search/%s/0/?sort=popular'
+		self.min_seeders = 0 # to many items with no value but cached links
 
 	def movie(self, imdb, title, localtitle, aliases, year):
 		try:
@@ -101,11 +98,12 @@ class source:
 			query = re.sub('(\\\|/| -|:|;|\*|\?|"|\'|<|>|\|)', '', query)
 
 			urls = []
-			url = self.search_link % urllib.quote_plus(query)
+			# url = self.search_link % urllib.quote_plus(query)
+			url = self.search_link % urllib.quote(query + ' -soundtrack')
 			url = urlparse.urljoin(self.base_link, url)
 			urls.append(url)
 			urls.append(url + '&page=2')
-			# log_utils.log('urls = %s' % urls, log_utils.LOGDEBUG)
+			# log_utils.log('urls = %s' % urls, __name__, log_utils.LOGDEBUG)
 
 			threads = []
 			for url in urls:
@@ -123,8 +121,9 @@ class source:
 		try:
 			scraper = cfscrape.create_scraper()
 			r = scraper.get(url).content
+			if not r:
+				return
 			posts = client.parseDOM(r, 'div', attrs={'class': 'media'})
-
 			for post in posts:
 				# file_name = client.parseDOM(post, 'span', attrs={'class': 'file-name'}) # file_name and &dn= differ 25% of the time.  May add check
 				try:
@@ -136,7 +135,6 @@ class source:
 					pass
 
 				link = re.findall('<a href="(magnet:.+?)"', post, re.DOTALL)
-
 				for url in link:
 					url = urllib.unquote_plus(url).replace('&amp;', '&').replace(' ', '.')
 					url = url.split('&tr')[0]

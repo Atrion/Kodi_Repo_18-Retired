@@ -41,21 +41,38 @@ while not monitor.abortRequested():
 	# This might also happen right after the addon is updated, maybe Kodi has a temporarily file lock during updates.
 	# Retry multiple times, sleeping in between, waiting for any locks to be released.
 	OrionSettings.adapt(retries = 5)
+	if monitor.abortRequested(): break
 
 	orion = Orion(OrionApi._keyInternal())
 	user = OrionUser.instance()
+
 	if user.enabled() and (user.valid() or user.empty()):
 		OrionSettings.externalClean()
+		if monitor.abortRequested(): break
+
 		OrionIntegration.check(silent = True)
-		
+		if monitor.abortRequested(): break
+
 		user.update()
+		if monitor.abortRequested(): break
+
 		user.subscriptionCheck()
+		if monitor.abortRequested(): break
+
 		OrionSettings.backupExportAutomaticOnline()
+		if monitor.abortRequested(): break
 
 		OrionNotification.dialogVersion()
+		if monitor.abortRequested(): break
+
 		OrionNotification.dialogNew()
+		if monitor.abortRequested(): break
+
 		OrionPromotion.dialogNew()
+		if monitor.abortRequested(): break
+
 		OrionTicket.dialogNew()
+		if monitor.abortRequested(): break
 
 	OrionDatabase.instancesClear() # Very important. Without this, Kodi will fail to update the addon if a new version comes out, due to active database connections causing failures.
 	orion = None # Clear to not keep it in memory while waiting.

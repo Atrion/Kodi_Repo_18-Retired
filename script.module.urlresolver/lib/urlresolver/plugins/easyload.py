@@ -1,5 +1,5 @@
 """
-    plugin for URLResolver
+    Plugin for URLResolver
     Copyright (C) 2020 gujal
 
     This program is free software: you can redistribute it and/or modify
@@ -15,9 +15,10 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
+
 import re
 import json
-from lib import helpers
+from urlresolver.plugins.lib import helpers
 from urlresolver import common
 from urlresolver.resolver import UrlResolver, ResolverError
 
@@ -26,9 +27,6 @@ class EasyLoadResolver(UrlResolver):
     name = "easyload"
     domains = ['easyload.io']
     pattern = r'(?://|\.)(easyload\.io)/e/([0-9a-zA-Z]+)'
-
-    def __init__(self):
-        self.net = common.Net()
 
     def get_media_url(self, host, media_id):
         web_url = self.get_url(host, media_id)

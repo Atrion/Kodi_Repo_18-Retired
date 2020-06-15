@@ -140,6 +140,7 @@ class Plugin(object):
             item['banner'] = item.get('banner') or artwork.get('banner') or ''
             item['fanart'] = item.get('fanart') or artwork.get('fanart') or ''
             item['extrafanart'] = item.get('extrafanart') or utils.iterate_extraart(artwork.get('extrafanart', [])) or ''
+
         return item
 
     def get_db_info(self, info=None, tmdbtype=None, imdb_id=None, originaltitle=None, title=None, year=None, tvshowtitle=None, season=None, episode=None, tmdb_id=None, tvdb_id=None):

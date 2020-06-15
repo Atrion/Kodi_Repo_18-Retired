@@ -16,8 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 '''
 import re
-from lib import helpers
-from lib import captcha_lib
+from urlresolver.plugins.lib import helpers
+from urlresolver.plugins.lib import captcha_lib
 from urlresolver import common
 from urlresolver.resolver import UrlResolver, ResolverError
 
@@ -28,9 +28,6 @@ class ClickNUploadResolver(UrlResolver):
     name = "clicknupload"
     domains = ['clicknupload.co', 'clicknupload.com', 'clicknupload.me', 'clicknupload.link', 'clicknupload.org']
     pattern = r'(?://|\.)(clicknupload\.(?:com?|me|link|org))/(?:f/)?([0-9A-Za-z]+)'
-
-    def __init__(self):
-        self.net = common.Net()
 
     def get_media_url(self, host, media_id):
         web_url = self.get_url(host, media_id)

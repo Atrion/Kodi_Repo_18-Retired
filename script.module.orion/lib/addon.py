@@ -206,6 +206,9 @@ elif action == 'integrationMagicality':
 elif action == 'integrationTheoath':
 	OrionIntegration.executeTheOath()
 
+elif action == 'integrationApocalypse720':
+	OrionIntegration.executeApocalypse720()
+
 elif action == 'integrationYoda':
 	OrionIntegration.executeYoda()
 

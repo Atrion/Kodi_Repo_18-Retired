@@ -41,6 +41,7 @@ class OrionIntegration:
 	AddonCovenant = 'Covenant'
 	AddonMagicality = 'Magicality'
 	AddonTheOath = 'TheOath'
+	AddonApocalypse720 = 'Apocalypse 720'
 	AddonYoda = 'Yoda'
 	AddonBodie = 'Bodie'
 	AddonNymeria = 'Nymeria'
@@ -66,7 +67,7 @@ class OrionIntegration:
 	AddonNanScrapers = 'NaN Scrapers'
 	AddonElementum = 'Elementum'
 	AddonQuasar = 'Quasar'
-	Addons = [AddonGaia, AddonSeren, AddonIncursion, AddonPlacenta, AddonCovenant, AddonMagicality, AddonTheOath, AddonYoda, AddonBodie, AddonNymeria, AddonVenom, AddonScrubs, AddonMedusa, AddonMercury, AddonDeceit, AddonFen, AddonGenesis, AddonExodus, AddonExodusRedux, AddonNeptuneRising, AddonDeathStreams, AddonBoomMovies, AddonContinuum, AddonMarauder, AddonAsguard, AddonTheCrew, AddonOpenScrapers, AddonLambdaScrapers, AddonUniversalScrapers, AddonNanScrapers, AddonElementum, AddonQuasar]
+	Addons = [AddonGaia, AddonSeren, AddonIncursion, AddonPlacenta, AddonCovenant, AddonMagicality, AddonTheOath, AddonApocalypse720, AddonYoda, AddonBodie, AddonNymeria, AddonVenom, AddonScrubs, AddonMedusa, AddonMercury, AddonDeceit, AddonFen, AddonGenesis, AddonExodus, AddonExodusRedux, AddonNeptuneRising, AddonDeathStreams, AddonBoomMovies, AddonContinuum, AddonMarauder, AddonAsguard, AddonTheCrew, AddonOpenScrapers, AddonLambdaScrapers, AddonUniversalScrapers, AddonNanScrapers, AddonElementum, AddonQuasar]
 
 	LanguageXml = 'xml'
 	LanguagePython = 'python'
@@ -168,6 +169,7 @@ class OrionIntegration:
 			elif addon == OrionIntegration.AddonCovenant: integration._covenantInitialize()
 			elif addon == OrionIntegration.AddonMagicality: integration._magicalityInitialize()
 			elif addon == OrionIntegration.AddonTheOath: integration._theOathInitialize()
+			elif addon == OrionIntegration.AddonApocalypse720: integration._apocalypse720Initialize()
 			elif addon == OrionIntegration.AddonYoda: integration._yodaInitialize()
 			elif addon == OrionIntegration.AddonBodie: integration._bodieInitialize()
 			elif addon == OrionIntegration.AddonNymeria: integration._nymeriaInitialize()
@@ -333,6 +335,7 @@ class OrionIntegration:
 		elif addon == OrionIntegration.AddonCovenant: result = self._covenantIntegrate()
 		elif addon == OrionIntegration.AddonMagicality: result = self._magicalityIntegrate()
 		elif addon == OrionIntegration.AddonTheOath: result = True
+		elif addon == OrionIntegration.AddonApocalypse720: result = True
 		elif addon == OrionIntegration.AddonYoda: result = self._yodaIntegrate()
 		elif addon == OrionIntegration.AddonDeathStreams: result = self._deathStreamsIntegrate()
 		elif addon == OrionIntegration.AddonBoomMovies: result = self._boomMoviesIntegrate()
@@ -490,6 +493,10 @@ class OrionIntegration:
 	@classmethod
 	def executeTheOath(self):
 		return self.execute(OrionIntegration.AddonTheOath)
+
+	@classmethod
+	def executeApocalypse720(self):
+		return self.execute(OrionIntegration.AddonApocalypse720)
 
 	@classmethod
 	def executeYoda(self):
@@ -861,6 +868,20 @@ class OrionIntegration:
 		self.name = OrionIntegration.AddonTheOath
 		self.id = self.id(self.name)
 		self.idPlugin = 'plugin.video.theoath'
+		self.idSettings = self.idPlugin
+		self.version = self._version(self.idPlugin)
+		self.native = True
+		self.files = []
+		self.deletes = []
+
+	##############################################################################
+	# APOCALYPSE720
+	##############################################################################
+
+	def _apocalypse720Initialize(self):
+		self.name = OrionIntegration.AddonApocalypse720
+		self.id = self.id(self.name)
+		self.idPlugin = 'plugin.video.apocalypse720'
 		self.idSettings = self.idPlugin
 		self.version = self._version(self.idPlugin)
 		self.native = True

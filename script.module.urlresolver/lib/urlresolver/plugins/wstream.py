@@ -15,14 +15,14 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-from __generic_resolver__ import GenericResolver
-from lib import helpers
+from urlresolver.plugins.__generic_resolver__ import GenericResolver
+from urlresolver.plugins.lib import helpers
 
 
 class WstreamResolver(GenericResolver):
     name = "wstream"
     domains = ['wstream.video']
-    pattern = r'(?://|\.)(wstream\.video)/(?:video6zvimpy52/)?([0-9a-zA-Z]+)'
+    pattern = r'(?://|\.)(wstream\.video)/(?:video6zvimpy52/|video.php\?file_code=)?([0-9a-zA-Z]+)'
 
     def get_media_url(self, host, media_id):
         return helpers.get_media_url(self.get_url(host, media_id),

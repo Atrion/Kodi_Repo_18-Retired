@@ -1,6 +1,7 @@
 """
-    Kodi urlresolver plugin
-    Copyright (C) 2019
+    Plugin for URLResolver
+    Copyright (C) 2019 gujal
+
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
@@ -12,19 +13,17 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
+
 import re
 from urlresolver import common
 from urlresolver.resolver import UrlResolver, ResolverError
-from lib import helpers
+from urlresolver.plugins.lib import helpers
 
 
 class MixdropResolver(UrlResolver):
     name = "mixdrop"
     domains = ["mixdrop.co", "mixdrop.to"]
     pattern = r'(?://|\.)(mixdrop\.[ct]o)/(?:f|e)/(\w+)'
-
-    def __init__(self):
-        self.net = common.Net()
 
     def get_media_url(self, host, media_id):
         web_url = self.get_url(host, media_id)

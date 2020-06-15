@@ -1,5 +1,5 @@
 """
-    plugin for UrlResolver
+    Plugin for UrlResolver
     Copyright (C) 2020 gujal
 
     This program is free software: you can redistribute it and/or modify
@@ -15,8 +15,9 @@
     You should have received a copy of the GNU General Public License
     along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
+
 import json
-from lib import helpers
+from urlresolver.plugins.lib import helpers
 from urlresolver import common
 from urlresolver.common import i18n
 from urlresolver.resolver import UrlResolver, ResolverError
@@ -28,7 +29,6 @@ class JetloadResolver(UrlResolver):
     pattern = r'(?://|\.)(jetload\.(?:net|tv|to))/(?:[a-zA-Z]/|.*?embed\.php\?u=)?([0-9a-zA-Z]+)'
 
     def __init__(self):
-        self.net = common.Net()
         self.headers = {'User-Agent': common.SMU_USER_AGENT}
 
     def get_media_url(self, host, media_id):

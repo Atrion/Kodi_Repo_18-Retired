@@ -14,33 +14,31 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""
-'''
+
 This module provides the main API for accessing the urlresolver features.
 
 For most cases you probably want to use :func:`urlresolver.resolve` or
 :func:`urlresolver.choose_source`.
 
 .. seealso::
-    
+
     :class:`HostedMediaFile`
 
 
-'''
+"""
 import re
-import urlparse
+from six.moves import urllib_parse
+import six
 import sys
-import os
-import xbmc
 import xbmcvfs
 import xbmcgui
-import common
-from hmf import HostedMediaFile
+from urlresolver import common
+from urlresolver.hmf import HostedMediaFile
 from urlresolver.resolver import UrlResolver
 from urlresolver.plugins.__generic_resolver__ import GenericResolver
-from plugins import *
+from urlresolver.plugins import *
 
-common.logger.log_notice('Initializing URLResolver version: %s' % common.addon_version)
+common.logger.log_debug('Initializing URLResolver version: %s' % common.addon_version)
 MAX_SETTINGS = 75
 
 PLUGIN_DIRS = []
@@ -49,7 +47,7 @@ host_cache = {}
 
 def add_plugin_dirs(dirs):
     global PLUGIN_DIRS
-    if isinstance(dirs, basestring):
+    if isinstance(dirs, six.string_types):
         PLUGIN_DIRS.append(dirs)
     else:
         PLUGIN_DIRS += dirs
@@ -59,7 +57,7 @@ def load_external_plugins():
     for d in PLUGIN_DIRS:
         common.logger.log_debug('Adding plugin path: %s' % d)
         sys.path.insert(0, d)
-        for filename in os.listdir(d):
+        for filename in xbmcvfs.listdir(d)[1]:
             if not filename.startswith('__') and filename.endswith('.py'):
                 mod_name = filename[:-3]
                 imp = __import__(mod_name, globals(), locals())
@@ -70,8 +68,8 @@ def load_external_plugins():
 def relevant_resolvers(domain=None, include_universal=None, include_popups=None, include_external=False, include_disabled=False, order_matters=False):
     if include_external:
         load_external_plugins()
-    
-    if isinstance(domain, basestring):
+
+    if isinstance(domain, six.string_types):
         domain = domain.lower()
 
     if include_universal is None:
@@ -81,7 +79,7 @@ def relevant_resolvers(domain=None, include_universal=None, include_popups=None,
         include_popups = common.get_setting('allow_popups') == "true"
     if include_popups is False:
         common.logger.log_debug('Resolvers that require popups have been disabled')
-        
+
     classes = UrlResolver.__class__.__subclasses__(UrlResolver) + UrlResolver.__class__.__subclasses__(GenericResolver)
     relevant = []
     for resolver in classes:
@@ -199,22 +197,23 @@ def scrape_supported(html, regex=None, host_only=False):
 
     args:
         html: the html to be scraped
-        regex: an optional argument to override the default regex which is: href\s*=\s*["']([^'"]+
+        regex: an optional argument to override the default regex which is: href *= *["']([^'"]+
         host_only: an optional argument if true to do only host validation vs full url validation (default False)
 
     Returns:
         a list of links scraped from the html that passed validation
 
     """
-    if regex is None: regex = '''href\s*=\s*['"]([^'"]+)'''
+    if regex is None:
+        regex = r'''href\s*=\s*['"]([^'"]+)'''
     links = []
     for match in re.finditer(regex, html):
         stream_url = match.group(1)
-        host = urlparse.urlparse(stream_url).hostname
+        host = urllib_parse.urlparse(stream_url).hostname
         if host_only:
             if host is None:
                 continue
-            
+
             if host in host_cache:
                 if host_cache[host]:
                     links.append(stream_url)
@@ -223,7 +222,7 @@ def scrape_supported(html, regex=None, host_only=False):
                 hmf = HostedMediaFile(host=host, media_id='dummy')  # use dummy media_id to allow host validation
         else:
             hmf = HostedMediaFile(url=stream_url)
-        
+
         is_valid = hmf.valid_url()
         host_cache[host] = is_valid
         if is_valid:
@@ -254,7 +253,7 @@ def _update_settings_xml():
     all settings for this addon and its plugins.
     """
     try:
-        os.makedirs(os.path.dirname(common.settings_file))
+        xbmcvfs.mkdirs(common.settings_path)
     except OSError:
         pass
 

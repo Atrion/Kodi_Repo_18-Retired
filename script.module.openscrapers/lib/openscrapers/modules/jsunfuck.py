@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
 """
-    OpenScrapers Module
+	OpenScrapers Module
 
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+	You should have received a copy of the GNU General Public License
+	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 # Addon Name: OpenScrapers Module
@@ -23,7 +23,8 @@
 import re
 import string
 import sys
-import urllib
+try: from urllib import quote, unquote
+except ImportError: from urllib.parse import quote, unquote
 
 
 class JSUnfuck(object):
@@ -141,7 +142,7 @@ class JSUnfuck(object):
 			offset = self.js.find(key) + len(key)
 			if self.js[offset] == '(' and self.js[offset + 2] == ')':
 				c = self.js[offset + 1]
-				self.js = self.js.replace('%s(%s)' % (key, c), urllib.quote(c))
+				self.js = self.js.replace('%s(%s)' % (key, c), quote(c))
 
 			if start_js == self.js:
 				break
@@ -170,7 +171,7 @@ class JSUnfuck(object):
 				last_c = c
 
 			if not abort:
-				self.js = self.js.replace(key + extra, urllib.unquote(expr))
+				self.js = self.js.replace(key + extra, unquote(expr))
 
 				if start_js == self.js:
 					break
@@ -179,13 +180,13 @@ class JSUnfuck(object):
 
 	def __gen_numbers(self):
 		n = {'!+[]+!![]+!![]+!![]+!![]+!![]+!![]+!![]+!![]': '9',
-		     '!+[]+!![]+!![]+!![]+!![]': '5', '!+[]+!![]+!![]+!![]': '4',
-		     '!+[]+!![]+!![]+!![]+!![]+!![]': '6', '!+[]+!![]': '2',
-		     '!+[]+!![]+!![]': '3', '(+![]+([]+[]))': '0', '(+[]+[])': '0', '+[]': '0',
-		     '(+!![]+[])': '1', '!+[]+!![]+!![]+!![]+!![]+!![]+!![]': '7',
-		     '!+[]+!![]+!![]+!![]+!![]+!![]+!![]+!![]': '8', '+!![]': '1',
-		     '[+[]]': '[0]', '!+[]+!+[]': '2', '[+!+[]]': '[1]', '(+20)': '20',
-		     '[+!![]]': '[1]', '[+!+[]+[+[]]]': '[10]', '+(1+1)': '11'}
+			 '!+[]+!![]+!![]+!![]+!![]': '5', '!+[]+!![]+!![]+!![]': '4',
+			 '!+[]+!![]+!![]+!![]+!![]+!![]': '6', '!+[]+!![]': '2',
+			 '!+[]+!![]+!![]': '3', '(+![]+([]+[]))': '0', '(+[]+[])': '0', '+[]': '0',
+			 '(+!![]+[])': '1', '!+[]+!![]+!![]+!![]+!![]+!![]+!![]': '7',
+			 '!+[]+!![]+!![]+!![]+!![]+!![]+!![]+!![]': '8', '+!![]': '1',
+			 '[+[]]': '[0]', '!+[]+!+[]': '2', '[+!+[]]': '[1]', '(+20)': '20',
+			 '[+!![]]': '[1]', '[+!+[]+[+[]]]': '[10]', '+(1+1)': '11'}
 
 		for i in xrange(2, 20):
 			key = '+!![]' * (i - 1)

@@ -5,7 +5,7 @@ import xbmcvfs
 import datetime
 import resources.lib.utils as utils
 import resources.lib.constants as constants
-from json import loads
+from json import loads, dumps
 from string import Formatter
 from threading import Thread
 from collections import defaultdict
@@ -62,6 +62,7 @@ class Player(Plugin):
         self.dp_movies_id = None
         self.dp_episodes_id = None
         self.fallbacks = {}
+        self.playerstring = None
 
     def setup_players(self, tmdbtype=None, details=False, clearsetting=False, assertplayers=True):
         self.build_players(tmdbtype)
@@ -225,6 +226,8 @@ class Player(Plugin):
             # Get the next folder from the plugin
             with utils.busy_dialog():
                 folder = KodiLibrary().get_directory(string_format_map(player[1], self.item))
+            # utils.kodi_log('JSON RPC Files.GetDirectory\n' + string_format_map(player[1], self.item), 1)
+            # utils.kodi_log(folder, 1)
 
             # Kill our keyboard inputter thread
             if keyboard_input:
@@ -240,6 +243,9 @@ class Player(Plugin):
 
             # Iterate through plugin folder looking for item that matches rules
             player = self.player_applyrules(folder, action) or player
+
+            if player == -1:
+                break
 
         return player
 
@@ -266,6 +272,7 @@ class Player(Plugin):
                 xbmc.executebuiltin(utils.try_decode_string(u'PlayMedia({0})'.format(action)))
             elif player[0]:  # Action is play and not a strm so play with player
                 utils.kodi_log(u'Player -- Found file.\nAttempting to PLAY: {}'.format(action), 2)
+                xbmcgui.Window(10000).setProperty('TMDbHelper.PlayerInfoString', self.playerstring) if self.playerstring else None
                 xbmc.Player().play(action, ListItem(library='video', **self.details).set_listitem())
             else:
                 action = u'Container.Update({0})'.format(action) if xbmc.getCondVisibility("Window.IsMedia") else u'ActivateWindow(videos,{0},return)'.format(action)
@@ -273,10 +280,12 @@ class Player(Plugin):
                 xbmc.executebuiltin(utils.try_decode_string(action))
             return action
 
-    def play(self, itemtype, tmdb_id, season=None, episode=None, force_dialog=False):
+    def play(self, itemtype, tmdb_id, season=None, episode=None, force_dialog=False, kodi_db=False):
         """ Entry point for player method """
         if not tmdb_id or not itemtype:
             return
+
+        xbmcgui.Window(10000).clearProperty('TMDbHelper.PlayerInfoString')
 
         with utils.busy_dialog():
             # Get the details for the item
@@ -301,6 +310,12 @@ class Player(Plugin):
 
         if not self.itemlist:
             return False
+
+        if kodi_db:
+            self.playerstring = dumps({
+                'tmdbtype': 'episode' if itemtype in ['episode', 'tv'] else 'movie',
+                'season': season, 'episode': episode, 'tmdb_id': self.tmdb_id,
+                'tvdb_id': self.item.get('tvdb_id'), 'imdb_id': self.item.get('imdb_id')})
 
         return self.play_external(force_dialog=force_dialog)
 
