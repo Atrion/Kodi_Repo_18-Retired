@@ -1,8 +1,53 @@
-OpenScrapers Module Changelog:
+0.0.2.008
+- Torrent scrapers updated for pack scraping support.
+    Please read help in settings, requires addon support!!
+- New setting added to Torrent scrapers to filter undesirables
+    Please read help in settings
+- New setting added to filter identified Foreign single audio sources
+
+0.0.2.007
+- More work for Py3 compatibility
+- changed settings.xml, moved foreign scrapers 
+- fixed and brought back ULTRAHDINDIR
+- fixed MYVIDEOLINK, again
+- fixed encode issue in 5MOVIES
+- changed YOURBITTORENT default to 'false'.  Server timeout issues of late
+- changed MKVHUB default to 'false'.  Cloudflare v2 challenge, may be removed if persists
+- changed YESMOVIESGG default to 'false'.  Cloudflare v2 challenge, may be removed if persists
+- fixed client module redundant error logging
+
+0.0.2.006
+- Small fix to client module for Referer link
+- Added new free hoster WATCHSERIESTV
+- fixed and brought back CARTOONHD
+- small fix for SHOWBOX vid quality
+- Added new free hoster MYPUTLOCKERS
+
+0.0.2.005
+- Update cfscrape to 1.2.41
+- Added option to Settings "Show Changelog"
+- Added option to Settings "Notify Me About Available Updates"
+- Removed SEEHD, v2 cloudflare challenge
+- Added new free hoster WATCHEPISODESERIES1
+- fixed and brought back 5MOVIES
+
+0.0.2.004
+- PR # 141 fix for py3 compatibility - tikipete
+
 0.0.2.003
 - PR # 139 begin work for py3 compatibility - tikipete
 - BTDB fix for domain change
-- torrents updates
+- Torrents update
+- update cfscrape to 1.2.40
+- removed 123MOVIES, v2 cloudflare challenge
+- removed 123MOVIESHUBZ, v2 cloudflare challenge
+- removed FMOVIES, (.ag) v2 cloudflare challenge
+- removed GOMOVIESONL, v2 cloudflare challenge
+- removed TIMEWATCH, v2 cloudflare challenge
+- removed RAPIDMOVIEZ, v2 cloudflare challenge
+- removed TVDOWNLOADS, v2 cloudflare challenge
+- removed MVRLS, dead site
+- removed TORRENTZ, v2 cloudflare challenge
 
 0.0.1.99
 - Updated torrent scrapers, fixed meta info and much more! (Ty 123Venom!)

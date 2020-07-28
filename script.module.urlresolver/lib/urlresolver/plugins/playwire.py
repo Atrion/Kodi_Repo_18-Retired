@@ -21,7 +21,6 @@
 
 import re
 import json
-import six
 from urlresolver.plugins.lib import helpers
 from urlresolver.resolver import UrlResolver, ResolverError
 
@@ -52,7 +51,7 @@ class PlayWireResolver(UrlResolver):
             media.sort(key=lambda x: x[1], reverse=True)
             sources = [(i[1], '{0}/{1}'.format(baseURL, i[0])) for i in media]
             source = helpers.pick_source(sources)
-            source = source.encode('utf-8') if six.PY2 else source
+            source = source.encode('utf-8') if helpers.PY2 else source
             return source
 
         except:

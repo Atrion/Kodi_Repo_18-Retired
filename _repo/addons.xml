@@ -450,7 +450,7 @@
   </extension>
 </addon>
 
-<addon id="script.globalsearch" name="Global Search" version="8.0.11" provider-name="ronie">
+<addon id="script.globalsearch" name="Global Search" version="8.0.13" provider-name="ronie">
 	<requires>
 		<import addon="xbmc.python" version="2.26.0"/>
 	</requires>
@@ -516,15 +516,15 @@
 		<description lang="sv_SE">Detta tillägg kan hitta vilket objekt som helst i ditt video och musikbibliotek.</description>
 		<description lang="tr_TR">Bu eklenti video ve müzik kitaplığınızdaki herhangi bir öğeyi bulabilir.</description>
 		<description lang="zh_CN">此插件搜索你的视频和音乐资料库项目。</description>
-		<language></language>
 		<platform>all</platform>
-		<license>GNU GENERAL PUBLIC LICENSE Version 2</license>
+		<license>GPL-2.0-only</license>
 		<forum>https://forum.kodi.tv/showthread.php?tid=109301</forum>
 		<source>https://gitlab.com/ronie/script.globalsearch/</source>
 		<assets>
 			<icon>resources/icon.png</icon>
 			<fanart>resources/fanart.jpg</fanart>
 		</assets>
+		<news>- fix issue with unneeded seeking</news>
 	</extension>
 </addon>
 
@@ -1111,7 +1111,7 @@ Attention: A "Solid RAR" archive type requires complete unpacking to use files w
 
 <addon id="metadata.common.musicbrainz.org"
        name="MusicBrainz Scraper Library"
-        version="2.2.2"
+        version="2.2.4"
        provider-name="Team Kodi">
   <requires>
     <import addon="xbmc.metadata" version="2.1.0"/>
@@ -1683,7 +1683,7 @@ Added Trakt Manager
   </requires>
 </addon>
 
-<addon id="repository.jurialmunkey" name="jurialmunkey Alpha Repository" version="1.2" provider-name="jurialmunkey">
+<addon id="repository.jurialmunkey" name="jurialmunkey Alpha Repository" version="1.4-leia" provider-name="jurialmunkey">
     <extension point="xbmc.addon.repository" name="jurialmunkey Alpha Repository">
         <dir>
             <info compressed="false">https://raw.githubusercontent.com/jurialmunkey/repository.jurialmunkey/master/zips/addons.xml</info>
@@ -1764,7 +1764,7 @@ This addon allows file access to data in it.</description>
   <extension-point id="resource.images" schema="images.xsd"/>
 </addon>
 
-<addon id="script.module.openscrapers" name="OpenScrapers Module" version="0.0.2.004" provider-name="Addons4Kodi">
+<addon id="script.module.openscrapers" name="OpenScrapers Module" version="0.0.2.008" provider-name="Addons4Kodi">
 	<requires>
 		<import addon="xbmc.python" version="2.25.0" />
 		<import addon="script.module.beautifulsoup4" />
@@ -1773,6 +1773,7 @@ This addon allows file access to data in it.</description>
 	<extension point="xbmc.python.pluginsource" library="lib/default.py">
 		<provides>executable</provides>
 	</extension>
+	<extension point="xbmc.service" library="lib/service.py" start="startup" />
 	<extension point="xbmc.python.module" library="lib" />
 	<extension point="xbmc.addon.metadata">
 		<platform>all</platform>
@@ -1787,12 +1788,15 @@ This addon allows file access to data in it.</description>
 		<assets>
 			<icon>icon.png</icon>
 			<fanart></fanart>
+			<screenshot></screenshot>
 		</assets>
 		<news>
-0.0.2.003
-- PR # 139 begin work for py3 compatibility - tikipete
-- BTDB fix for domain change
-- torrents updates
+0.0.2.008
+- Torrent scrapers updated for pack scraping support.
+    Please read help in settings, requires addon support!!
+- New setting added to Torrent scrapers to filter undesirables
+    Please read help in settings
+- New setting added to filter identified Foreign single audio sources
 		</news>
 	</extension>
 </addon>
@@ -2592,7 +2596,7 @@ Zároveň má nastavenia upravujúce výšku stĺpcov spektra, ich rýchlosť a 
   </extension>
 </addon>
 
-<addon id="script.module.resolveurl" name="ResolveURL" version="5.1.0" provider-name="gujal">
+<addon id="script.module.resolveurl" name="ResolveURL" version="5.1.4" provider-name="gujal">
     <requires>
         <!-- <import addon="xbmc.python" version="3.0.0" /> -->
         <import addon="script.module.six" version="0.0.1"/>
@@ -2605,12 +2609,12 @@ Zároveň má nastavenia upravujúce výšku stĺpcov spektra, ich rýchlosť a 
     <extension point="xbmc.python.pluginsource" library="lib/default.py" />
     <extension point="xbmc.addon.metadata">
         <platform>all</platform>
-        <summary lang="en">Resolve common video host URL's to be playable in XBMC/Kodi.</summary>
-        <summary lang="es">Resolver enlaces a videos de sitios populares para poder reproducirlos en XBMC/Kodi.</summary>
-        <summary lang="hr">Prilagodi najčešće URL-ove video izvora kako bi radili u XBMC/Kodiju.</summary>
-        <summary lang="el">Επίλυση συνδέσμων κοινών εξυπηρετητών σε μορφή βίντεο ικανό για αναπαραγωγή στο XBMC/Kodi.</summary>
-        <description lang="en">Resolve common video host URL's to be playable in XBMC/Kodi, simplify addon development of video plugins requiring multi video hosts.</description>
-        <description lang="hr">Prilagodi najčešće URL-ove video izvora kako bi radili u XBMC/Kodiju, pojednostavnjuje razvoj priključaka za video dodatke koji zahtjevaju višestruke video izvore.</description>
+        <summary lang="en_GB">Resolve common video host URL's to be playable in XBMC/Kodi.</summary>
+        <summary lang="es_ES">Resolver enlaces a videos de sitios populares para poder reproducirlos en XBMC/Kodi.</summary>
+        <summary lang="hr_HR">Prilagodi najčešće URL-ove video izvora kako bi radili u XBMC/Kodiju.</summary>
+        <summary lang="el_GR">Επίλυση συνδέσμων κοινών εξυπηρετητών σε μορφή βίντεο ικανό για αναπαραγωγή στο XBMC/Kodi.</summary>
+        <description lang="en_GB">Resolve common video host URL's to be playable in XBMC/Kodi, simplify addon development of video plugins requiring multi video hosts.</description>
+        <description lang="hr_HR">Prilagodi najčešće URL-ove video izvora kako bi radili u XBMC/Kodiju, pojednostavnjuje razvoj priključaka za video dodatke koji zahtjevaju višestruke video izvore.</description>
         <assets>
             <icon>icon.png</icon>
             <fanart>fanart.jpg</fanart>
@@ -2779,7 +2783,7 @@ Zároveň má nastavenia upravujúce výšku stĺpcov spektra, ich rýchlosť a 
 </addon>
 
 <addon id="plugin.video.themoviedb.helper"
-version="3.1.1"
+version="3.2.7"
 name="TheMovieDb Helper"
 provider-name="jurialmunkey">
 <requires>
@@ -2856,7 +2860,7 @@ provider-name="jurialmunkey">
     <screenshot>resources/screenshot-01.jpg</screenshot>
     <screenshot>resources/screenshot-02.jpg</screenshot>
   </assets>
-  <news>Library strm mark as watched</news>
+  <news>Save discover settings</news>
 </extension>
 </addon>
 
@@ -3031,7 +3035,7 @@ provider-name="jurialmunkey">
 
 <addon id="metadata.common.allmusic.com"
        name="AllMusic Scraper Library"
-        version="3.2.1"
+        version="3.2.2"
        provider-name="Team Kodi">
   <requires>
     <import addon="xbmc.metadata" version="2.1.0"/>
@@ -3301,12 +3305,12 @@ Supported formats are:
   </requires>
 </addon>
 
-<addon id="repository.openwizard" name="[COLOR limegreen][B]Open[/B][/COLOR]Wizard Repository" version="1.1" provider-name="drinfernoo">
+<addon id="repository.openwizard" name="[COLOR limegreen][B]Open[/B][/COLOR]Wizard Repository" version="1.2" provider-name="drinfernoo">
     <extension point="xbmc.addon.repository" name="[COLOR limegreen][B]Open[/B][/COLOR]Wizard Repository">
         <dir>
-            <info compressed="false">https://raw.githubusercontent.com/drinfernoo/repository.openwizard/master/zips/addons.xml</info>
-            <checksum>https://raw.githubusercontent.com/drinfernoo/repository.openwizard/master/zips/addons.xml.md5</checksum>
-            <datadir zip="true">https://raw.githubusercontent.com/drinfernoo/repository.openwizard/master/zips/</datadir>
+            <info compressed="false">https://raw.githubusercontent.com/a4k-openproject/repository.openwizard/master/zips/addons.xml</info>
+            <checksum>https://raw.githubusercontent.com/a4k-openproject/repository.openwizard/master/zips/addons.xml.md5</checksum>
+            <datadir zip="true">https://raw.githubusercontent.com/a4k-openproject/repository.openwizard/master/zips/</datadir>
         </dir>
     </extension>
 
@@ -3319,7 +3323,7 @@ Supported formats are:
             <icon>icon.png</icon>
             <fanart>fanart.jpg</fanart>
         </assets>
-        <source>https://www.github.com/drinfernoo/repository.openwizard/</source>
+        <source>https://www.github.com/a4k-openproject/repository.openwizard/</source>
     </extension>
 </addon>
 
@@ -3803,7 +3807,7 @@ More minor bugfixes (honestly could not list them all)
 
 <addon id="script.module.trakt"
        name="trakt.py"
-       version="4.1.0"
+       version="4.2.0"
        provider-name="Dean Gardiner, Razzeee">
   <requires>
     <import addon="xbmc.python" version="2.14.0"/>
@@ -3814,15 +3818,15 @@ More minor bugfixes (honestly could not list them all)
   <extension point="xbmc.python.module"
              library="lib" />
   <extension point="xbmc.addon.metadata">
-    <summary lang="en">Python interface for the trakt.tv API</summary>
-    <description lang="en">Packed for Kodi from https://github.com/fuzeman/trakt.py</description>
+    <summary lang="en_GB">Python interface for the trakt.tv API</summary>
+    <description lang="en_GB">Packed for Kodi from https://github.com/fuzeman/trakt.py</description>
     <platform>all</platform>
-    <language></language>
     <license>MIT</license>
-    <forum></forum>
     <website>https://github.com/fuzeman/trakt.py</website>
     <source>https://github.com/Razzeee/script.module.trakt</source>
-    <email></email>
+    <assets>
+      <icon>icon.png</icon>
+    </assets>
   </extension>
 </addon>
 
@@ -3852,9 +3856,10 @@ More minor bugfixes (honestly could not list them all)
 	</extension>
 </addon>
 
-<addon id="script.module.urlresolver" name="URLResolver" version="5.1.0" provider-name="tvaddons">
+<addon id="script.module.urlresolver" name="URLResolver" version="5.1.3" provider-name="tvaddons">
     <requires>
-        <import addon="xbmc.python" version="2.1.0" />
+        <!-- <import addon="xbmc.python" version="3.0.0" /> -->
+        <import addon="script.module.six" version="0.0.1"/>
         <import addon="plugin.video.youtube" optional="true" />
         <import addon="script.module.python.twitch" optional="true" />
         <import addon="script.module.cryptopy" version="1.2.6" optional="true" />
@@ -4544,7 +4549,7 @@ More minor bugfixes (honestly could not list them all)
 
 <addon id="metadata.artists.universal"
        name="Universal Artist Scraper"
-       version="4.3.2"
+       version="4.3.3"
        provider-name="Olympia, Team Kodi">
   <requires>
     <import addon="xbmc.metadata" version="2.1.0"/>
@@ -4770,7 +4775,7 @@ More minor bugfixes (honestly could not list them all)
 
 <addon id="metadata.common.themoviedb.org"
        name="The Movie Database Scraper Library"
-       version="3.2.1"
+       version="3.2.3"
        provider-name="Team Kodi">
   <requires>
     <import addon="xbmc.metadata" version="2.1.0"/>
@@ -4984,7 +4989,7 @@ More minor bugfixes (honestly could not list them all)
 	</extension>
 </addon>
 
-    <addon id="repository.Atrion18B" name="[COLOR darkgreen]Atrion's Repo for Kodi 18.x Backup[/COLOR]" version="0.5.3" provider-name="Atrion Darnay">
+    <addon id="repository.Atrion18B" name="[COLOR darkgreen]Atrion's Repo for Kodi 18.x Backup[/COLOR]" version="0.5.4" provider-name="Atrion Darnay">
         <requires>
             <import addon="xbmc.addon" version="12.0.0"/>
         </requires>
@@ -5375,7 +5380,7 @@ More minor bugfixes (honestly could not list them all)
   </extension>
 </addon>
 
-    <addon id="repository.Atrion18" name="[COLOR darkgreen]Atrion's Repo for Kodi 18.x[/COLOR]" version="0.5.3" provider-name="Atrion Darnay">
+    <addon id="repository.Atrion18" name="[COLOR darkgreen]Atrion's Repo for Kodi 18.x[/COLOR]" version="0.5.4" provider-name="Atrion Darnay">
         <requires>
             <import addon="xbmc.addon" version="12.0.0"/>
         </requires>

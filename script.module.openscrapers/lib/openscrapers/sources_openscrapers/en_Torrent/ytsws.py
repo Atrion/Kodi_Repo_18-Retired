@@ -26,8 +26,11 @@
 '''
 
 import re
-import urllib
-import urlparse
+
+try: from urlparse import parse_qs, urljoin
+except ImportError: from urllib.parse import parse_qs, urljoin
+try: from urllib import urlencode, quote, unquote_plus
+except ImportError: from urllib.parse import urlencode, quote, unquote_plus
 
 from openscrapers.modules import client
 from openscrapers.modules import debrid
@@ -45,8 +48,8 @@ class source:
 
 	def movie(self, imdb, title, localtitle, aliases, year):
 		try:
-			url = {'imdb': imdb, 'title': title, 'year': year}
-			url = urllib.urlencode(url)
+			url = {'imdb': imdb, 'title': title, 'aliases': aliases, 'year': year}
+			url = urlencode(url)
 			return url
 		except:
 			return
@@ -62,17 +65,19 @@ class source:
 			if debrid.status() is False:
 				return sources
 
-			data = urlparse.parse_qs(url)
+			data = parse_qs(url)
 			data = dict([(i, data[i][0]) if data[i] else (i, '') for i in data])
 
 			title = data['title'].replace('&', 'and')
+			episode_title = data['title'] if 'tvshowtitle' in data else None
 			hdlr = data['year']
+			aliases = data['aliases']
 
 			query = '%s %s' % (title, hdlr)
-			query = re.sub('(\\\|/| -|:|;|\*|\?|"|\'|<|>|\|)', '', query)
+			query = re.sub('[^A-Za-z0-9\s\.-]+', '', query)
 
-			url = self.search_link % urllib.quote(query)
-			url = urlparse.urljoin(self.base_link, url).replace('%20', '-')
+			url = self.search_link % quote(query)
+			url = urljoin(self.base_link, url).replace('%20', '-')
 			# log_utils.log('url = %s' % url, log_utils.LOGDEBUG)
 
 			html = client.request(url)
@@ -97,14 +102,18 @@ class source:
 					hash = re.compile('btih:(.*?)&').findall(url)[0]
 
 					name = url.split('&dn=')[1]
-					name = urllib.unquote_plus(name)
-					name = re.sub('[^A-Za-z0-9]+', '.', name).lstrip('.')
-					if source_utils.remove_lang(name):
+					name = unquote_plus(name)
+					name = source_utils.clean_name(title, name)
+					if source_utils.remove_lang(name, episode_title):
 						continue
 
-					match = source_utils.check_title(title, tit, hdlr, data['year'])
-					if not match:
+					if not source_utils.check_title(title, aliases, tit, hdlr, data['year']):
 						continue
+
+					# filter for episode multi packs (ex. S01E01-E17 is also returned in query)
+					if episode_title:
+						if not source_utils.filter_single_episodes(hdlr, name):
+							continue
 
 					seeders = 0 # not available on yts
 					quality, info = source_utils.get_release_quality(ref, url)

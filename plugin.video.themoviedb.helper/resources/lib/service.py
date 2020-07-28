@@ -4,6 +4,7 @@ import xbmcvfs
 import xbmcgui
 import xbmcaddon
 import datetime
+import colorsys
 from json import loads
 from threading import Thread
 from PIL import ImageFilter, Image
@@ -28,8 +29,65 @@ _setprop_ratings = {
     'awards', 'metacritic_rating', 'imdb_rating', 'imdb_votes', 'rottentomatoes_rating', 'rottentomatoes_image',
     'rottentomatoes_reviewtotal', 'rottentomatoes_reviewsfresh', 'rottentomatoes_reviewsrotten',
     'rottentomatoes_consensus', 'rottentomatoes_usermeter', 'rottentomatoes_userreviews', 'trakt_rating', 'trakt_votes',
-    'oscar_wins', 'oscar_nominations', 'award_wins', 'award_nominations', 'tmdb_rating', 'tmdb_votes'}
+    'goldenglobe_wins', 'goldenglobe_nominations', 'oscar_wins', 'oscar_nominations', 'award_wins', 'award_nominations',
+    'tmdb_rating', 'tmdb_votes'}
 _homewindow = xbmcgui.Window(10000)
+
+
+def _openimage(image, targetpath, filename):
+    """ Open image helper with thanks to sualfred """
+    # some paths require unquoting to get a valid cached thumb hash
+    cached_image_path = urllib.unquote(image.replace('image://', ''))
+    if cached_image_path.endswith('/'):
+        cached_image_path = cached_image_path[:-1]
+
+    cached_files = []
+    for path in [xbmc.getCacheThumbName(cached_image_path), xbmc.getCacheThumbName(image)]:
+        cached_files.append(os.path.join('special://profile/Thumbnails/', path[0], path[:-4] + '.jpg'))
+        cached_files.append(os.path.join('special://profile/Thumbnails/', path[0], path[:-4] + '.png'))
+        cached_files.append(os.path.join('special://profile/Thumbnails/Video/', path[0], path))
+
+    for i in range(1, 4):
+        try:
+            ''' Try to get cached image at first
+            '''
+            for cache in cached_files:
+                if xbmcvfs.exists(cache):
+                    try:
+                        img = Image.open(xbmc.translatePath(cache))
+                        return img
+
+                    except Exception as error:
+                        utils.kodi_log('Image error: Could not open cached image --> %s' % error, 2)
+
+            ''' Skin images will be tried to be accessed directly. For all other ones
+                the source will be copied to the addon_data folder to get access.
+            '''
+            if xbmc.skinHasImage(image):
+                if not image.startswith('special://skin'):
+                    image = os.path.join('special://skin/media/', image)
+
+                try:  # in case image is packed in textures.xbt
+                    img = Image.open(xbmc.translatePath(image))
+                    return img
+
+                except Exception:
+                    return ''
+
+            else:
+                targetfile = os.path.join(targetpath, filename)
+                if not xbmcvfs.exists(targetfile):
+                    xbmcvfs.copy(image, targetfile)
+
+                img = Image.open(targetfile)
+                return img
+
+        except Exception as error:
+            utils.kodi_log('Image error: Could not get image for %s (try %d) -> %s' % (image, i, error), 2)
+            xbmc.sleep(500)
+            pass
+
+    return ''
 
 
 class CronJob(Thread):
@@ -58,31 +116,50 @@ class CronJob(Thread):
             self.kodimonitor.waitForAbort(self.poll_time)
 
 
-class BlurImage(Thread):
-    def __init__(self, artwork=None):
+class ImageFunctions(Thread):
+    def __init__(self, method=None, artwork=None):
         Thread.__init__(self)
-        self.radius = 20
-        self.addon_path = utils.makepath('special://profile/addon_data/plugin.video.themoviedb.helper/blur/')
         self.image = artwork
+        self.func = None
+        self.save_prop = None
+        self.save_path = 'special://profile/addon_data/plugin.video.themoviedb.helper/{}/'
+        if method == 'blur':
+            self.func = self.blur
+            self.save_path = utils.makepath(self.save_path.format('blur'))
+            self.save_prop = 'TMDbHelper.ListItem.BlurImage'
+        elif method == 'crop':
+            self.func = self.crop
+            self.save_path = utils.makepath(self.save_path.format('crop'))
+            self.save_prop = 'TMDbHelper.ListItem.CropImage'
+        elif method == 'desaturate':
+            self.func = self.desaturate
+            self.save_path = utils.makepath(self.save_path.format('desaturate'))
+            self.save_prop = 'TMDbHelper.ListItem.DesaturateImage'
+        elif method == 'colors':
+            self.func = self.colors
+            self.save_path = utils.makepath(self.save_path.format('colors'))
+            self.save_prop = 'TMDbHelper.ListItem.Colors'
 
     def run(self):
-        if not self.image:
-            _homewindow.clearProperty('TMDbHelper.ListItem.BlurImage')
+        if not self.save_prop or not self.func:
             return
-        filename = '{}{}.png'.format(utils.md5hash(self.image), self.radius)
-        blurname = self.blur(self.image, filename)
-        _homewindow.setProperty('TMDbHelper.ListItem.BlurImage', blurname)
+        if not self.image:
+            _homewindow.clearProperty(self.save_prop)
+            return
+        _homewindow.setProperty(self.save_prop, self.func(self.image))
 
-    def blur(self, source, filename):
-        destination = self.addon_path + filename
+    def clamp(self, x):
+        return max(0, min(x, 255))
+
+    def crop(self, source):
+        filename = 'cropped-{}.png'.format(utils.md5hash(source))
+        destination = self.save_path + filename
         try:
             if xbmcvfs.exists(destination):
                 os.utime(destination, None)
             else:
-                img = self.openimage(source, self.addon_path, filename)
-                img.thumbnail((256, 256))
-                img = img.convert('RGB')
-                img = img.filter(ImageFilter.GaussianBlur(self.radius))
+                img = _openimage(source, self.save_path, filename)
+                img = img.crop(img.convert('RGBa').getbbox())
                 img.save(destination)
                 img.close()
 
@@ -91,60 +168,156 @@ class BlurImage(Thread):
         except Exception:
             return ''
 
-    def openimage(self, image, targetpath, filename):
-        """ Open image helper with thanks to sualfred """
-        # some paths require unquoting to get a valid cached thumb hash
-        cached_image_path = urllib.unquote(image.replace('image://', ''))
-        if cached_image_path.endswith('/'):
-            cached_image_path = cached_image_path[:-1]
+    def blur(self, source, radius=20):
+        filename = '{}{}.png'.format(utils.md5hash(source), radius)
+        destination = self.save_path + filename
+        try:
+            if xbmcvfs.exists(destination):
+                os.utime(destination, None)
+            else:
+                img = _openimage(source, self.save_path, filename)
+                img.thumbnail((256, 256))
+                img = img.convert('RGB')
+                img = img.filter(ImageFilter.GaussianBlur(radius))
+                img.save(destination)
+                img.close()
 
-        cached_files = []
-        for path in [xbmc.getCacheThumbName(cached_image_path), xbmc.getCacheThumbName(image)]:
-            cached_files.append(os.path.join('special://profile/Thumbnails/', path[0], path[:-4] + '.jpg'))
-            cached_files.append(os.path.join('special://profile/Thumbnails/', path[0], path[:-4] + '.png'))
-            cached_files.append(os.path.join('special://profile/Thumbnails/Video/', path[0], path))
+            return destination
 
-        for i in range(1, 4):
-            try:
-                ''' Try to get cached image at first
-                '''
-                for cache in cached_files:
-                    if xbmcvfs.exists(cache):
-                        try:
-                            img = Image.open(xbmc.translatePath(cache))
-                            return img
+        except Exception:
+            return ''
 
-                        except Exception as error:
-                            utils.kodi_log('Image error: Could not open cached image --> %s' % error, 2)
+    def desaturate(self, source):
+        filename = '{}.png'.format(utils.md5hash(source))
+        destination = self.save_path + filename
+        try:
+            if xbmcvfs.exists(destination):
+                os.utime(destination, None)
+            else:
+                img = _openimage(source, self.save_path, filename)
+                img = img.convert('LA')
+                img.save(destination)
+                img.close()
 
-                ''' Skin images will be tried to be accessed directly. For all other ones
-                    the source will be copied to the addon_data folder to get access.
-                '''
-                if xbmc.skinHasImage(image):
-                    if not image.startswith('special://skin'):
-                        image = os.path.join('special://skin/media/', image)
+            return destination
 
-                    try:  # in case image is packed in textures.xbt
-                        img = Image.open(xbmc.translatePath(image))
-                        return img
+        except Exception:
+            return ''
 
-                    except Exception:
-                        return ''
+    def get_maincolor(self, img):
+        """Returns main color of image as list of rgb values 0:255"""
+        rgb_list = [None, None, None]
+        for channel in range(3):
+            pixels = img.getdata(band=channel)
+            values = [pixel for pixel in pixels]
+            rgb_list[channel] = self.clamp(sum(values) / len(values))
+        return rgb_list
 
-                else:
-                    targetfile = os.path.join(targetpath, filename)
-                    if not xbmcvfs.exists(targetfile):
-                        xbmcvfs.copy(image, targetfile)
+    def get_compcolor(self, r, g, b, shift=0.33):
+        """
+        Changes hue of color by shift value (percentage float)
+        Takes RGB as 0:255 values and returns RGB as 0:255 values
+        """
+        hls_tuple = colorsys.rgb_to_hls(r / 255.0, g / 255.0, b / 255.0)
+        rgb_tuple = colorsys.hls_to_rgb(abs(hls_tuple[0] - shift), hls_tuple[1], hls_tuple[2])
+        return self.rgb_to_int(*rgb_tuple)
 
-                    img = Image.open(targetfile)
-                    return img
+    def get_color_lumsat(self, r, g, b):
+        hls_tuple = colorsys.rgb_to_hls(r / 255.0, g / 255.0, b / 255.0)
+        hue = hls_tuple[0]
+        lum = utils.try_parse_float(xbmc.getInfoLabel('Skin.String(TMDbHelper.Colors.Luminance)')) or hls_tuple[1]
+        sat = utils.try_parse_float(xbmc.getInfoLabel('Skin.String(TMDbHelper.Colors.Saturation)')) or hls_tuple[2]
+        return self.rgb_to_int(*colorsys.hls_to_rgb(hue, lum, sat))
 
-            except Exception as error:
-                utils.kodi_log('Image error: Could not get image for %s (try %d) -> %s' % (image, i, error), 2)
-                xbmc.sleep(500)
-                pass
+    def rgb_to_int(self, r, g, b):
+        return [utils.try_parse_int(self.clamp(i * 255)) for i in [r, g, b]]
 
-        return ''
+    def rgb_to_hex(self, r, g, b):
+        return 'FF{:02x}{:02x}{:02x}'.format(r, g, b)
+
+    def hex_to_rgb(self, colorhex):
+        r = utils.try_parse_int(colorhex[2:4], 16)
+        g = utils.try_parse_int(colorhex[4:6], 16)
+        b = utils.try_parse_int(colorhex[6:8], 16)
+        return [r, g, b]
+
+    def set_prop_colorgradient(self, propname, start_hex, end_hex, checkprop):
+        if not start_hex or not end_hex:
+            return
+
+        steps = 20
+
+        rgb_a = self.hex_to_rgb(start_hex)
+        rgb_z = self.hex_to_rgb(end_hex)
+
+        inc_r = (rgb_z[0] - rgb_a[0]) // steps
+        inc_g = (rgb_z[1] - rgb_a[1]) // steps
+        inc_b = (rgb_z[2] - rgb_a[2]) // steps
+
+        val_r = rgb_a[0]
+        val_g = rgb_a[1]
+        val_b = rgb_a[2]
+
+        for i in range(steps):
+            if _homewindow.getProperty(checkprop) != start_hex:
+                return
+            hex_value = self.rgb_to_hex(val_r, val_g, val_b)
+            _homewindow.setProperty(propname, hex_value)
+            val_r = val_r + inc_r
+            val_g = val_g + inc_g
+            val_b = val_b + inc_b
+            xbmc.Monitor().waitForAbort(0.05)
+
+        _homewindow.setProperty(propname, end_hex)
+        return end_hex
+
+    def colors(self, source):
+        filename = '{}.png'.format(utils.md5hash(source))
+        destination = self.save_path + filename
+
+        try:
+            if xbmcvfs.exists(destination):
+                os.utime(destination, None)
+                img = Image.open(xbmc.translatePath(destination))
+            else:
+                img = _openimage(source, self.save_path, filename)
+                img.thumbnail((256, 256))
+                img = img.convert('RGB')
+                img.save(destination)
+
+            maincolor_rgb = self.get_maincolor(img)
+            maincolor_hex = self.rgb_to_hex(*self.get_color_lumsat(*maincolor_rgb))
+            compcolor_rgb = self.get_compcolor(*maincolor_rgb)
+            compcolor_hex = self.rgb_to_hex(*self.get_color_lumsat(*compcolor_rgb))
+
+            maincolor_propname = self.save_prop + '.Main'
+            maincolor_propchek = self.save_prop + '.MainCheck'
+            maincolor_propvalu = _homewindow.getProperty(maincolor_propname)
+            if not maincolor_propvalu:
+                _homewindow.setProperty(maincolor_propname, maincolor_hex)
+            else:
+                _homewindow.setProperty(maincolor_propchek, maincolor_propvalu)
+                thread_maincolor = Thread(target=self.set_prop_colorgradient, args=[
+                    maincolor_propname, maincolor_propvalu, maincolor_hex, maincolor_propchek])
+                thread_maincolor.start()
+
+            compcolor_propname = self.save_prop + '.Comp'
+            compcolor_propchek = self.save_prop + '.CompCheck'
+            compcolor_propvalu = _homewindow.getProperty(compcolor_propname)
+            if not compcolor_propvalu:
+                _homewindow.setProperty(compcolor_propname, compcolor_hex)
+            else:
+                _homewindow.setProperty(compcolor_propchek, compcolor_propvalu)
+                thread_compcolor = Thread(target=self.set_prop_colorgradient, args=[
+                    compcolor_propname, compcolor_propvalu, compcolor_hex, compcolor_propchek])
+                thread_compcolor.start()
+
+            img.close()
+            return maincolor_hex
+
+        except Exception as exc:
+            utils.kodi_log(exc, 1)
+            return ''
 
 
 class CommonMonitorFunctions(Plugin):
@@ -339,7 +512,7 @@ class PlayerMonitor(xbmc.Player, CommonMonitorFunctions):
             return self.reset_properties()  # No self.details so lets clear everything
 
         if xbmc.getCondVisibility("!Skin.HasSetting(TMDbHelper.DisableRatings)"):
-            self.details = self.get_omdb_ratings(self.details) if self.tmdbtype == 'movie' else self.details
+            self.details = self.get_omdb_ratings(self.details)
             self.details = self.get_top250_rank(self.details) if self.tmdbtype == 'movie' else self.details
             self.details = self.get_trakt_ratings(self.details, self.tmdbtype, self.tmdb_id, self.season, self.episode) if self.tmdbtype in ['movie', 'tv'] else self.details
             self.set_iter_properties(self.details.get('infoproperties', {}), _setprop_ratings)
@@ -449,8 +622,9 @@ class ServiceMonitor(CommonMonitorFunctions):
         self.exit_monitor()
 
     def exit_monitor(self):
-        self.playermonitor.exit = True
-        del self.playermonitor
+        if self.playermonitor:
+            self.playermonitor.exit = True
+            del self.playermonitor
         self.clear_properties()
         _homewindow.clearProperty('TMDbHelper.ServiceStarted')
         _homewindow.clearProperty('TMDbHelper.ServiceStop')
@@ -474,8 +648,7 @@ class ServiceMonitor(CommonMonitorFunctions):
         if update:
             self.pre_item = self.cur_item
 
-    def get_artwork(self, source=''):
-        source = source or _homewindow.getProperty('TMDbHelper.Blur.SourceImage')
+    def get_artwork(self, source='', fallback=''):
         source = source.lower()
         infolabels = ['Art(thumb)']
         if source == 'poster':
@@ -486,7 +659,6 @@ class ServiceMonitor(CommonMonitorFunctions):
             infolabels = ['Art(landscape)', 'Art(fanart)', 'Art(thumb)']
         elif source and source != 'thumb':
             infolabels = source.split("|")
-        fallback = _homewindow.getProperty('TMDbHelper.Blur.Fallback')
         for i in infolabels:
             artwork = self.get_infolabel(i)
             if artwork:
@@ -511,9 +683,27 @@ class ServiceMonitor(CommonMonitorFunctions):
 
             # Blur Image
             if xbmc.getCondVisibility("Skin.HasSetting(TMDbHelper.EnableBlur)"):
-                self.blur_img = BlurImage(artwork=self.get_artwork())
+                self.blur_img = ImageFunctions(method='blur', artwork=self.get_artwork(
+                    source=_homewindow.getProperty('TMDbHelper.Blur.SourceImage'),
+                    fallback=_homewindow.getProperty('TMDbHelper.Blur.Fallback')))
                 self.blur_img.setName('blur_img')
                 self.blur_img.start()
+
+            # Desaturate Image
+            if xbmc.getCondVisibility("Skin.HasSetting(TMDbHelper.EnableDesaturate)"):
+                self.desaturate_img = ImageFunctions(method='desaturate', artwork=self.get_artwork(
+                    source=_homewindow.getProperty('TMDbHelper.Desaturate.SourceImage'),
+                    fallback=_homewindow.getProperty('TMDbHelper.Desaturate.Fallback')))
+                self.desaturate_img.setName('desaturate_img')
+                self.desaturate_img.start()
+
+            # CompColors
+            if xbmc.getCondVisibility("Skin.HasSetting(TMDbHelper.EnableColors)"):
+                self.colors_img = ImageFunctions(method='colors', artwork=self.get_artwork(
+                    source=_homewindow.getProperty('TMDbHelper.Colors.SourceImage'),
+                    fallback=_homewindow.getProperty('TMDbHelper.Colors.Fallback')))
+                self.colors_img.setName('colors_img')
+                self.colors_img.start()
 
             if self.dbtype in ['tvshows', 'seasons', 'episodes']:
                 tmdbtype = 'tv'
@@ -538,6 +728,9 @@ class ServiceMonitor(CommonMonitorFunctions):
             if not details:
                 self.clear_properties()  # No details so lets clear everything
                 return
+
+            if tmdbtype == 'tv' and details.get('infoproperties'):  # Update tvshow next aired info with 24hr refresh
+                details['infoproperties'].update(self.tmdb.get_tvshow_nextaired(tmdb_id))
 
             if xbmc.getCondVisibility("!Skin.HasSetting(TMDbHelper.DisableArtwork)"):
                 thread_artwork = Thread(target=self.process_artwork, args=[details, tmdbtype])
@@ -565,7 +758,7 @@ class ServiceMonitor(CommonMonitorFunctions):
             if tmdbtype not in ['movie', 'tv']:
                 return
             pre_item = self.pre_item
-            details = self.get_omdb_ratings(details) if tmdbtype == 'movie' else details
+            details = self.get_omdb_ratings(details)
             details = self.get_top250_rank(details) if tmdbtype == 'movie' else details
             details = self.get_trakt_ratings(details, tmdbtype, tmdb_id, self.season, self.episode) if tmdbtype in ['movie', 'tv'] else details
             if not self.is_same_item(update=False, pre_item=pre_item):
@@ -584,6 +777,13 @@ class ServiceMonitor(CommonMonitorFunctions):
             if not self.is_same_item(update=False, pre_item=pre_item):
                 return
             self.set_iter_properties(details, _setmain_artwork)
+
+            # Crop Image
+            if details.get('clearlogo') and xbmc.getCondVisibility("Skin.HasSetting(TMDbHelper.EnableCrop)"):
+                self.crop_img = ImageFunctions(method='crop', artwork=details.get('clearlogo'))
+                self.crop_img.setName('crop_img')
+                self.crop_img.start()
+
         except Exception as exc:
             utils.kodi_log(u'Func: process_ratings\n{}'.format(exc), 1)
 

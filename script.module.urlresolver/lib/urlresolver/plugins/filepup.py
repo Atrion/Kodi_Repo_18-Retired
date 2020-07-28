@@ -18,7 +18,7 @@
 
 import re
 from urlresolver import common
-from urlresolver.resolver import UrlResolver, ResolverError  # @UnusedImport
+from urlresolver.resolver import UrlResolver, ResolverError
 from urlresolver.plugins.lib import helpers
 
 
@@ -47,6 +47,8 @@ class FilePupResolver(UrlResolver):
             except:
                 pass
             return helpers.pick_source(sources)
+
+        raise ResolverError('Video not found')
 
     def __get_def_source(self, html):
         default_url = ''

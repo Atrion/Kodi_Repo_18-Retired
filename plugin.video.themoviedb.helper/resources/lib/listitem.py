@@ -11,10 +11,12 @@ class ListItem(object):
                  cast=None, infolabels=None, infoproperties=None, poster=None, thumb=None, icon=None, fanart=None, nextpage=None,
                  streamdetails=None, clearlogo=None, clearart=None, banner=None, landscape=None, discart=None, extrafanart=None,
                  tvshow_clearlogo=None, tvshow_clearart=None, tvshow_banner=None, tvshow_landscape=None, tvshow_poster=None,
-                 tvshow_fanart=None, tvshow_dbid=None, mixed_type=None, url=None, is_folder=True):
+                 tvshow_fanart=None, tvshow_dbid=None, contextmenu=None, mixed_type=None, url=None, is_folder=True):
         self.addon = xbmcaddon.Addon()
         self.addonpath = self.addon.getAddonInfo('path')
         self.select_action = self.addon.getSettingInt('select_action')
+        self.fallback_icon = '{0}/resources/poster.png'.format(self.addonpath)
+        self.fallback_fanart = '{0}/fanart.jpg'.format(self.addonpath)
         self.label = label or 'N/A'
         self.label2 = label2 or ''
         self.library = library or ''  # <content target= video, music, pictures, none>
@@ -27,8 +29,8 @@ class ListItem(object):
         self.url = url or {}
         self.mixed_type = mixed_type or ''
         self.streamdetails = streamdetails or {}
-        self.icon = icon or '{0}/resources/poster.png'.format(self.addonpath)
-        self.fanart = fanart or '{0}/fanart.jpg'.format(self.addonpath)
+        self.icon = icon
+        self.fanart = fanart
         self.cast = cast or []  # Cast list
         self.is_folder = is_folder
         self.infolabels = infolabels or {}  # ListItem.Foobar
@@ -38,6 +40,7 @@ class ListItem(object):
         self.nextpage = nextpage
         self.extrafanart = extrafanart or {}
         self.local_path = ''
+        self.contextmenu = contextmenu or []
 
     def set_url(self, **kwargs):
         url = kwargs.pop('url', u'plugin://plugin.video.themoviedb.helper/?')
@@ -244,6 +247,14 @@ class ListItem(object):
                 utils.kodi_log(u'ERROR in ListItem set_url_props\nk:{} v:{}'.format(utils.try_decode_string(k), utils.try_decode_string(v)), 1)
                 utils.kodi_log(exc, 1)
 
+    def set_contextmenu(self, contextmenu, extend=True):
+        if not contextmenu or not isinstance(contextmenu, list):
+            return
+        if not extend:
+            self.contextmenu = []
+        self.contextmenu.extend(contextmenu)
+        return self.contextmenu
+
     def set_listitem(self, path=None):
         listitem = xbmcgui.ListItem(label=self.label, label2=self.label2, path=path)
         listitem.setLabel2(self.label2)
@@ -251,12 +262,16 @@ class ListItem(object):
         listitem.setInfo(self.library, self.infolabels)
         listitem.setProperties(self.infoproperties)
         listitem.setArt(utils.merge_two_dicts({
-            'thumb': self.thumb or self.icon or self.fanart, 'icon': self.icon, 'poster': self.poster, 'fanart': self.fanart, 'discart': self.discart,
-            'clearlogo': self.clearlogo, 'clearart': self.clearart, 'landscape': self.landscape, 'banner': self.banner,
-            'tvshow.poster': self.tvshow_poster, 'tvshow.fanart': self.tvshow_fanart, 'tvshow.clearlogo': self.tvshow_clearlogo,
-            'tvshow.clearart': self.tvshow_clearart, 'tvshow.landscape': self.tvshow_landscape,
-            'tvshow.banner': self.tvshow_banner}, self.extrafanart))
+            'thumb': self.thumb or self.icon or self.fanart or self.fallback_icon, 'icon': self.icon or self.fallback_icon,
+            'fanart': self.fanart or self.tvshow_fanart or self.fallback_fanart, 'tvshow.fanart': self.tvshow_fanart,
+            'poster': self.poster or self.tvshow_poster, 'tvshow.poster': self.tvshow_poster,
+            'landscape': self.landscape or self.tvshow_landscape, 'tvshow.landscape': self.tvshow_landscape,
+            'banner': self.banner or self.tvshow_banner, 'tvshow.banner': self.tvshow_banner,
+            'clearlogo': self.clearlogo or self.tvshow_clearlogo, 'tvshow.clearlogo': self.tvshow_clearlogo,
+            'clearart': self.clearart or self.tvshow_clearart, 'tvshow.clearart': self.tvshow_clearart,
+            'discart': self.discart}, self.extrafanart))
         listitem.setCast(self.cast)
+        listitem.addContextMenuItems(self.contextmenu)
 
         if self.streamdetails:
             for k, v in self.streamdetails.items():

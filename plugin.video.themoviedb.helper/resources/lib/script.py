@@ -13,7 +13,7 @@ from resources.lib.downloader import Downloader
 from resources.lib.traktapi import TraktAPI
 from resources.lib.plugin import Plugin
 from resources.lib.player import Player
-from resources.lib.service import ServiceMonitor, BlurImage
+from resources.lib.service import ServiceMonitor, ImageFunctions
 
 
 ID_VIDEOINFO = 12003
@@ -76,9 +76,14 @@ class Script(Plugin):
         self.home.clearProperty(self.prefixlock)
 
     def blur_image(self):
-        blur_img = BlurImage(artwork=self.params.get('blur_image'))
+        blur_img = ImageFunctions(method='blur', artwork=self.params.get('blur_image'))
         blur_img.setName('blur_img')
         blur_img.start()
+
+    def image_colors(self):
+        image_colors = ImageFunctions(method='colors', artwork=self.params.get('image_colors'))
+        image_colors.setName('image_colors')
+        image_colors.start()
 
     def get_instance(self, call_id=None):
         return False if call_id and not xbmc.getCondVisibility("Window.IsVisible({})".format(call_id)) else True
@@ -486,6 +491,51 @@ class Script(Plugin):
         response = utils.get_jsonrpc(method, params)
         self.home.setProperty(self.params.get('property', 'TMDbHelper.KodiSetting'), u'{}'.format(response.get('result', {}).get('value', '')))
 
+    def discover_modify(self, method=None):
+        if not method:
+            return
+
+        idx = utils.try_parse_int(self.params.get(method))
+        item = utils.get_searchhistory('discover')[idx]
+
+        if not isinstance(item, dict):
+            return
+
+        elif method == 'discover_delete':
+            utils.set_searchhistory(itemtype='discover', replace=idx)
+
+        elif method == 'discover_rename':
+            name = xbmcgui.Dialog().input('Enter New Name', defaultt=item.get('name'))
+            if not name:
+                return
+            item['name'] = name
+            utils.set_searchhistory(itemtype='discover', replace=idx, query=item)
+
+        elif method == 'discover_edit':
+            url = item.get('url', {})
+
+            for k, v in url.items():
+                if k in ['info', 'type']:
+                    continue
+                utils.get_property(k, prefix='TMDbHelper.UserDiscover', setproperty=v)
+                utils.get_property(k, prefix='TMDbHelper.UserDiscover.Label', setproperty=item.get('labels', {}).get(k, v))
+
+            new_url = {'info': 'user_discover', 'type': url.get('type', ''), 'method': 'edit'}
+
+            # Some standard url formatting stuff
+            if not xbmc.getCondVisibility("Window.IsMedia"):
+                new_url['widget'] = 'True'
+            if self.addon.getSettingBool('fanarttv_lookup') and xbmc.getCondVisibility("Window.IsMedia"):
+                new_url['fanarttv'] = 'True'
+            if xbmc.getCondVisibility("Window.IsMedia"):
+                new_url['nextpage'] = 'True'
+
+            url_string = u'{0}{1}'.format(u'plugin://plugin.video.themoviedb.helper/?', utils.urlencode_params(new_url))
+            xbmc.executebuiltin('Container.Update({})'.format(url_string))
+            return  # Dont refresh container since we updated it instead
+
+        xbmc.executebuiltin('Container.Refresh')
+
     def router(self):
         if not self.params:
             """ If no params assume user wants to run plugin """
@@ -495,10 +545,18 @@ class Script(Plugin):
             TraktAPI(force=True)
         elif self.params.get('split_value'):
             self.split_value()
+        elif self.params.get('discover_rename'):
+            self.discover_modify('discover_rename')
+        elif self.params.get('discover_delete'):
+            self.discover_modify('discover_delete')
+        elif self.params.get('discover_edit'):
+            self.discover_modify('discover_edit')
         elif self.params.get('kodi_setting'):
             self.kodi_setting()
         elif self.params.get('blur_image'):
             self.blur_image()
+        elif self.params.get('image_colors'):
+            self.image_colors()
         elif self.params.get('monitor_userlist'):
             self.monitor_userlist()
         elif self.params.get('library_userlist'):

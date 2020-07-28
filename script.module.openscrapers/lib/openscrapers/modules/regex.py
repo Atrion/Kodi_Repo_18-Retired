@@ -1,23 +1,7 @@
 # -*- coding: UTF-8 -*-
 """
 	OpenScrapers Module
-
-	This program is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
-
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-
-	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-
-# Addon Name: OpenScrapers Module
-# Addon id: script.module.openscrapers
 
 import cookielib
 import os
@@ -31,19 +15,22 @@ except ImportError:
 	from urllib.request import HTTPErrorProcessor, ProxyHandler, Request, getproxies, build_opener, install_opener, \
 						HTTPCookieProcessor, HTTPBasicAuthHandler, HTTPHandler, urlopen
 
-try: from urllib import urlencode, quote_plus, unquote, unquote_plus
-except ImportError: from urllib.parse import urlencode, quote_plus, unquote, unquote_plus
+try:
+	from urllib import urlencode, quote_plus, unquote, unquote_plus
+except ImportError:
+	from urllib.parse import urlencode, quote_plus, unquote, unquote_plus
 
 import xbmc
 import xbmcaddon
 
-profile = functions_dir = xbmc.translatePath(xbmcaddon.Addon().getAddonInfo('profile').decode('utf-8'))
+profile = functions_dir = xbmc.translatePath(xbmcaddon.Addon().getAddonInfo('profile'))
 
 try:
 	from sqlite3 import dbapi2 as database
 except:
 	from pysqlite2 import dbapi2 as database
 
+from openscrapers.modules.utils import byteify
 from openscrapers.modules import client
 from openscrapers.modules import control
 
@@ -107,7 +94,7 @@ def resolve(regex):
 
 		url = regex.split('<regex>', 1)[0].strip()
 		url = client.replaceHTMLCodes(url)
-		url = url.encode('utf-8')
+		url = byteify(url)
 
 		r = getRegexParsed(regexs, url)
 

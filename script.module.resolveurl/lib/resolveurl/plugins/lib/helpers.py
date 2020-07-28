@@ -23,6 +23,9 @@ from six.moves import urllib_parse
 from resolveurl import common
 from resolveurl.resolver import ResolverError
 
+PY2 = six.PY2
+PY3 = six.PY3
+
 
 def get_hidden(html, form_id=None, index=None, include_submit=True):
     hidden = {}
@@ -185,7 +188,7 @@ def scrape_sources(html, result_blacklist=None, scheme='http', patterns=None, ge
     return source_list
 
 
-def get_media_url(url, result_blacklist=None, patterns=None, generic_patterns=True):
+def get_media_url(url, result_blacklist=None, patterns=None, generic_patterns=True, referer=True):
     if patterns is None:
         patterns = []
     scheme = urllib_parse.urlparse(url).scheme
@@ -197,7 +200,8 @@ def get_media_url(url, result_blacklist=None, patterns=None, generic_patterns=Tr
     result_blacklist = list(set(result_blacklist + ['.smil']))  # smil(not playable) contains potential sources, only blacklist when called from here
     net = common.Net()
     headers = {'User-Agent': common.RAND_UA}
-    headers.update({'Referer': url})
+    if referer:
+        headers.update({'Referer': url})
     response = net.http_GET(url, headers=headers)
     response_headers = response.get_headers(as_dict=True)
     cookie = response_headers.get('Set-Cookie', None)
@@ -250,3 +254,44 @@ def get_dom(html, tag):
         html = html[start + len(start_str):]
 
     return results
+
+
+def fun_decode(vu, lc, hr='16'):
+    import time
+
+    def calcseed(lc, hr):
+        f = lc.replace('$', '').replace('0', '1')
+        j = int(len(f) / 2)
+        k = int(f[0:j + 1])
+        el = int(f[j:])
+        fi = abs(el - k) * 4
+        s = str(fi)
+        i = int(int(hr) / 2) + 2
+        m = ''
+        for g2 in range(j + 1):
+            for h in range(1, 5):
+                n = int(lc[g2 + h]) + int(s[g2])
+                if n >= i:
+                    n -= i
+                m += str(n)
+        return m
+
+    if vu.startswith('function/'):
+        vup = vu.split('/')
+        uhash = vup[7][0: 2 * int(hr)]
+        nchash = vup[7][2 * int(hr):]
+        seed = calcseed(lc, hr)
+        if seed and uhash:
+            for k in range(len(uhash) - 1, -1, -1):
+                el = k
+                for m in range(k, len(seed)):
+                    el += int(seed[m])
+                while el >= len(uhash):
+                    el -= len(uhash)
+                n = ''
+                for o in range(len(uhash)):
+                    n += uhash[el] if o == k else uhash[k] if o == el else uhash[o]
+                uhash = n
+            vup[7] = uhash + nchash
+        vu = '/'.join(vup[2:]) + '&rnd={}'.format(int(time.time() * 1000))
+    return vu

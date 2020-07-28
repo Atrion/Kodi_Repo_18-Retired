@@ -26,8 +26,11 @@
 '''
 
 import re
-import urllib
-import urlparse
+
+try: from urlparse import parse_qs, urljoin
+except ImportError: from urllib.parse import parse_qs, urljoin
+try: from urllib import urlencode, quote_plus, unquote_plus
+except ImportError: from urllib.parse import urlencode, quote_plus, unquote_plus
 
 from openscrapers.modules import cleantitle
 from openscrapers.modules import client
@@ -48,8 +51,8 @@ class source:
 
 	def movie(self, imdb, title, localtitle, aliases, year):
 		try:
-			url = {'imdb': imdb, 'title': title, 'year': year}
-			url = urllib.urlencode(url)
+			url = {'imdb': imdb, 'title': title, 'aliases': aliases, 'year': year}
+			url = urlencode(url)
 			return url
 		except:
 			return
@@ -57,8 +60,8 @@ class source:
 
 	def tvshow(self, imdb, tvdb, tvshowtitle, localtvshowtitle, aliases, year):
 		try:
-			url = {'imdb': imdb, 'tvdb': tvdb, 'tvshowtitle': tvshowtitle, 'year': year}
-			url = urllib.urlencode(url)
+			url = {'imdb': imdb, 'tvdb': tvdb, 'tvshowtitle': tvshowtitle, 'aliases': aliases, 'year': year}
+			url = urlencode(url)
 			return url
 		except:
 			return
@@ -68,10 +71,10 @@ class source:
 		try:
 			if url is None:
 				return
-			url = urlparse.parse_qs(url)
+			url = parse_qs(url)
 			url = dict([(i, url[i][0]) if url[i] else (i, '') for i in url])
 			url['title'], url['premiered'], url['season'], url['episode'] = title, premiered, season, episode
-			url = urllib.urlencode(url)
+			url = urlencode(url)
 			return url
 		except:
 			return
@@ -86,20 +89,21 @@ class source:
 			if debrid.status() is False:
 				return self.sources
 
-			data = urlparse.parse_qs(url)
+			data = parse_qs(url)
 			data = dict([(i, data[i][0]) if data[i] else (i, '') for i in data])
 
 			self.title = data['tvshowtitle'] if 'tvshowtitle' in data else data['title']
 			self.title = self.title.replace('&', 'and').replace('Special Victims Unit', 'SVU')
-
+			self.aliases = data['aliases']
+			self.episode_title = data['title'] if 'tvshowtitle' in data else None
 			self.hdlr = 'S%02dE%02d' % (int(data['season']), int(data['episode'])) if 'tvshowtitle' in data else data['year']
 			self.year = data['year']
 
 			query = '%s %s' % (self.title, self.hdlr)
-			query = re.sub('(\\\|/| -|:|;|\*|\?|"|\'|<|>|\|)', '', query)
+			query = re.sub('[^A-Za-z0-9\s\.-]+', '', query)
 
-			url = self.search_link % urllib.quote_plus(query)
-			url = urlparse.urljoin(self.base_link, url)
+			url = self.search_link % quote_plus(query)
+			url = urljoin(self.base_link, url)
 			# log_utils.log('url = %s' % url, log_utils.LOGDEBUG)
 
 			r = client.request(url)
@@ -124,22 +128,24 @@ class source:
 				return
 
 			url = re.findall('href="(magnet:.+?)"', row, re.DOTALL)[0]
-			url = urllib.unquote_plus(url).replace('&amp;', '&').replace(' ', '.')
+			url = unquote_plus(url).replace('&amp;', '&').replace(' ', '.')
 			url = url.split('&tr')[0]
-			url = url.encode('ascii', errors='ignore').decode('ascii', errors='ignore')
 			hash = re.compile('btih:(.*?)&').findall(url)[0]
-
 			name = url.split('&dn=')[1]
-			name = re.sub('[^A-Za-z0-9]+', '.', name).lstrip('.')
-			if source_utils.remove_lang(name):
+			name = source_utils.clean_name(self.title, name)
+			if source_utils.remove_lang(name, self.episode_title):
 				return
 
-			match = source_utils.check_title(self.title, name, self.hdlr, self.year)
-			if not match:
+			if not source_utils.check_title(self.title, self.aliases, name, self.hdlr, self.year):
 				return
 
 			if url in str(self.sources):
 				return
+
+			# filter for episode multi packs (ex. S01E01-E17 is also returned in query)
+			if self.episode_title:
+				if not source_utils.filter_single_episodes(self.hdlr, name):
+					return
 
 			try:
 				seeders = int(re.findall('<span style="color:#008000"><strong>\s*([0-9]+)\s*</strong>', row, re.DOTALL)[0].replace(',', ''))

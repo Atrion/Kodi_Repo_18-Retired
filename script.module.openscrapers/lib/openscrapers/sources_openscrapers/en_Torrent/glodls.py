@@ -26,8 +26,11 @@
 '''
 
 import re
-import urllib
-import urlparse
+
+try: from urlparse import parse_qs, urljoin
+except ImportError: from urllib.parse import parse_qs, urljoin
+try: from urllib import urlencode, quote_plus, unquote_plus
+except ImportError: from urllib.parse import urlencode, quote_plus, unquote_plus
 
 from openscrapers.modules import client
 from openscrapers.modules import debrid
@@ -47,8 +50,8 @@ class source:
 
 	def movie(self, imdb, title, localtitle, aliases, year):
 		try:
-			url = {'imdb': imdb, 'title': title, 'year': year}
-			url = urllib.urlencode(url)
+			url = {'imdb': imdb, 'title': title, 'aliases': aliases, 'year': year}
+			url = urlencode(url)
 			return url
 		except:
 			return
@@ -56,8 +59,8 @@ class source:
 
 	def tvshow(self, imdb, tvdb, tvshowtitle, localtvshowtitle, aliases, year):
 		try:
-			url = {'imdb': imdb, 'tvdb': tvdb, 'tvshowtitle': tvshowtitle, 'year': year}
-			url = urllib.urlencode(url)
+			url = {'imdb': imdb, 'tvdb': tvdb, 'tvshowtitle': tvshowtitle, 'aliases': aliases, 'year': year}
+			url = urlencode(url)
 			return url
 		except:
 			return
@@ -67,10 +70,10 @@ class source:
 		try:
 			if url is None:
 				return
-			url = urlparse.parse_qs(url)
+			url = parse_qs(url)
 			url = dict([(i, url[i][0]) if url[i] else (i, '') for i in url])
 			url['title'], url['premiered'], url['season'], url['episode'] = title, premiered, season, episode
-			url = urllib.urlencode(url)
+			url = urlencode(url)
 			return url
 		except:
 			return
@@ -86,32 +89,33 @@ class source:
 			if debrid.status() is False:
 				return sources
 
-			data = urlparse.parse_qs(url)
+			data = parse_qs(url)
 			data = dict([(i, data[i][0]) if data[i] else (i, '') for i in data])
 
 			self.title = data['tvshowtitle'] if 'tvshowtitle' in data else data['title']
 			self.title = self.title.replace('&', 'and').replace('Special Victims Unit', 'SVU')
-
+			self.aliases = data['aliases']
+			self.episode_title = data['title'] if 'tvshowtitle' in data else None
 			self.hdlr = 'S%02dE%02d' % (int(data['season']), int(data['episode'])) if 'tvshowtitle' in data else data['year']
 			self.year = data['year']
 
 			query = '%s %s' % (self.title, self.hdlr)
-			query = re.sub('(\\\|/| -|:|;|\*|\?|"|\'|<|>|\|)', '', query)
+			query = re.sub('[^A-Za-z0-9\s\.-]+', '', query)
 
 			if 'tvshowtitle' in data:
-				url = self.tvsearch.format(urllib.quote_plus(query))
+				url = self.tvsearch.format(quote_plus(query))
 			else:
-				url = self.moviesearch.format(urllib.quote_plus(query))
-			url = urlparse.urljoin(self.base_link, url)
+				url = self.moviesearch.format(quote_plus(query))
+			url = urljoin(self.base_link, url)
 			# log_utils.log('url = %s' % url, log_utils.LOGDEBUG)
 
-			items = self._get_items(url)
+			items = self.get_sources(url)
 
 			for item in items:
 				try:
 					name = item[0]
 
-					url = urllib.unquote_plus(item[1]).replace('&amp;', '&').replace(' ', '.')
+					url = unquote_plus(item[1]).replace('&amp;', '&').replace(' ', '.')
 					url = url.split('&tr')[0]
 
 					hash = re.compile('btih:(.*?)&').findall(url)[0].lower()
@@ -133,7 +137,7 @@ class source:
 			return sources
 
 
-	def _get_items(self, url):
+	def get_sources(self, url):
 		items = []
 		try:
 			headers = {'User-Agent': client.agent()}
@@ -146,14 +150,18 @@ class source:
 				url = [i for i in ref if 'magnet:' in i][0]
 
 				name = client.parseDOM(post, 'a', ret='title')[0]
-				name = urllib.unquote_plus(name)
-				name = re.sub('[^A-Za-z0-9]+', '.', name).lstrip('.')
-				if source_utils.remove_lang(name):
+				name = unquote_plus(name)
+				name = source_utils.clean_name(self.title, name)
+				if source_utils.remove_lang(name, self.episode_title):
 					continue
 
-				match = source_utils.check_title(self.title, name, self.hdlr, self.year)
-				if not match:
+				if not source_utils.check_title(self.title, self.aliases, name, self.hdlr, self.year):
 					continue
+
+				# filter for episode multi packs (ex. S01E01-E17 is also returned in query)
+				if self.episode_title:
+					if not source_utils.filter_single_episodes(self.hdlr, name):
+						continue
 
 				try:
 					seeders = int(re.findall("<td.*?<font color='green'><b>([0-9]+|[0-9]+,[0-9]+)</b>", post)[0].replace(',', ''))

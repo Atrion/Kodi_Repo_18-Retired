@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# modified by Venom for Openscrapers (updated 6-27-20)
 
 #  ..#######.########.#######.##....#..######..######.########....###...########.#######.########..######.
 #  .##.....#.##.....#.##......###...#.##....#.##....#.##.....#...##.##..##.....#.##......##.....#.##....##
@@ -25,8 +26,12 @@
 '''
 
 import re
-import urllib
-import urlparse
+try:
+	from urllib import urlencode, quote_plus
+	from urlparse import parse_qs, urljoin
+except ImportError:
+	from urllib.parse import urlencode, quote_plus
+	from urllib.parse import parse_qs, urljoin
 
 from openscrapers.modules import client
 from openscrapers.modules import debrid
@@ -46,7 +51,7 @@ class source:
 	def movie(self, imdb, title, localtitle, aliases, year):
 		try:
 			url = {'imdb': imdb, 'title': title, 'year': year}
-			url = urllib.urlencode(url)
+			url = urlencode(url)
 			return url
 		except:
 			return
@@ -62,7 +67,7 @@ class source:
 			if debrid.status() is False:
 				return sources
 
-			data = urlparse.parse_qs(url)
+			data = parse_qs(url)
 			data = dict([(i, data[i][0]) if data[i] else (i, '') for i in data])
 
 			title = data['title'].replace(':','').lower()
@@ -71,10 +76,10 @@ class source:
 			query = '%s %s' % (data['title'], data['year'])
 			query = re.sub('(\\\|/| -|:|;|\*|\?|"|\'|<|>|\|)', ' ', query)
 
-			url = urlparse.urljoin(self.base_link, self.post_link)
+			url = urljoin(self.base_link, self.post_link)
 			# log_utils.log('url = %s' % url, log_utils.LOGDEBUG)
 
-			post = 'do=search&subaction=search&search_start=0&full_search=0&result_from=1&story=%s' % urllib.quote_plus(query)
+			post = 'do=search&subaction=search&search_start=0&full_search=0&result_from=1&story=%s' % quote_plus(query)
 
 			r = client.request(url, post=post)
 			r = client.parseDOM(r, 'div', attrs={'class': 'box-out margin'})
@@ -110,7 +115,7 @@ class source:
 							qual = client.request(url)
 							quals = re.findall('span class="file-title" id="file-title">(.+?)</span', qual)
 							for quals in quals:
-								quality = source_utils.check_sd_url(quals)
+								quality = source_utils.check_url(quals)
 
 							info = []
 							if '3D' in name or '.3D.' in quals:
@@ -120,19 +125,17 @@ class source:
 								info.append('HEVC')
 
 							info = ' | '.join(info)
+							dsize = 0
 
-							sources.append({'source': host, 'quality': quality, 'language': 'en', 'url': url, 'info': info, 'direct': True, 'debridonly': False})
+							sources.append({'source': host, 'quality': quality, 'language': 'en', 'url': url, 'info': info, 'direct': True, 'debridonly': False, 'size': dsize})
 						except:
 							source_utils.scraper_error('ULTRAHDINDIR')
 							pass
-
 				except:
 					source_utils.scraper_error('ULTRAHDINDIR')
 					pass
-
 			return sources
-
-		except Exception:
+		except:
 			source_utils.scraper_error('ULTRAHDINDIR')
 			return sources
 

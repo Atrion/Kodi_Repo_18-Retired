@@ -25,8 +25,9 @@
 '''
 
 import re
-import urllib
-import urlparse
+
+try: from urlparse import urljoin
+except ImportError: from urllib.parse import urljoin
 
 from openscrapers.modules import cleantitle
 from openscrapers.modules import client
@@ -39,7 +40,7 @@ class source:
 		self.priority = 31
 		self.language = ['en']
 		self.domains = ['watchseries.movie', 'watch-series.co']
-		self.base_link = 'https://www5.watchseries.movie'
+		self.base_link = 'https://www6.watchseries.movie'
 		self.search_link = '/series/%s-season-%s-episode-%s'
 
 
@@ -54,7 +55,7 @@ class source:
 
 	def episode(self, url, imdb, tvdb, title, premiered, season, episode):
 		try:
-			url = urlparse.urljoin(self.base_link, self.search_link % (url, season, episode))
+			url = urljoin(self.base_link, self.search_link % (url, season, episode))
 			return url
 		except:
 			source_utils.scraper_error('WATCHSERIES')
@@ -78,7 +79,10 @@ class source:
 				if not valid:
 					continue
 				try:
-					url.decode('utf-8')
+					try:
+						url.decode('utf-8')
+					except:
+						pass
 					sources.append({'source': hoster, 'quality': 'SD', 'info': '', 'language': 'en', 'url': url, 'direct': False, 'debridonly': False})
 				except:
 					source_utils.scraper_error('WATCHSERIES')

@@ -300,17 +300,25 @@ def _update_settings_xml():
     new_xml.append('</settings>')
 
     try:
-        with open(common.settings_file, 'r') as f:
-            old_xml = f.read()
+        if six.PY3:
+            with open(common.settings_file, 'r', encoding='utf-8') as f:
+                old_xml = f.read()
+        else:
+            with open(common.settings_file, 'r') as f:
+                old_xml = f.read()
     except:
-        old_xml = ''
+        old_xml = u''
 
-    new_xml = '\n'.join(new_xml)
+    new_xml = six.u('\n'.join(new_xml))
     if old_xml != new_xml:
         common.logger.log_debug('Updating Settings XML')
         try:
-            with open(common.settings_file, 'w') as f:
-                f.write(new_xml)
+            if six.PY3:
+                with open(common.settings_file, 'w', encoding='utf-8') as f:
+                    f.write(new_xml)
+            else:
+                with open(common.settings_file, 'w') as f:
+                    f.write(new_xml.encode('utf8'))
         except:
             raise
     else:
