@@ -47,8 +47,11 @@ def validify_filename(filename):
 def makepath(path):
     if xbmcvfs.exists(path):
         return xbmc.translatePath(path)
-    xbmcvfs.mkdirs(path)
-    return xbmc.translatePath(path)
+    if xbmcvfs.mkdirs(path):
+        return xbmc.translatePath(path)
+    if _addon.getSettingBool('ignore_folderchecking'):
+        kodi_log(u'Ignored xbmcvfs folder check error\n{}'.format(path), 2)
+        return xbmc.translatePath(path)
 
 
 def md5hash(value):
@@ -127,6 +130,10 @@ def get_between_strings(string, startswith='', endswith=''):
         return ''
 
 
+def get_currentdatetime(str_fmt='%Y-%m-%d %H:%M'):
+    return datetime.datetime.now().strftime(str_fmt)
+
+
 def get_timestamp(timestamp=None):
     if not timestamp:
         return
@@ -153,6 +160,39 @@ def normalise_filesize(filesize):
             return '{:.2f} {}'.format(filesize, i)
         filesize = filesize / i_flt
     return '{:.2f} {}'.format(filesize, 'PB')
+
+
+def get_files_in_folder(folder, regex):
+    return [x for x in xbmcvfs.listdir(folder)[1] if re.match(regex, x)]
+
+
+def read_file(filepath):
+    vfs_file = xbmcvfs.File(filepath)
+    content = ''
+    try:
+        content = vfs_file.read()
+    finally:
+        vfs_file.close()
+    return content
+
+
+def get_tmdbid_nfo(basedir, foldername, tmdbtype='tv'):
+    try:
+        folder = basedir + foldername + '/'
+
+        # Get files ending with .nfo in folder
+        nfo_list = get_files_in_folder(folder, regex=r".*\.nfo$")
+
+        # Check our nfo files for TMDb ID
+        for nfo in nfo_list:
+            content = read_file(folder + nfo)  # Get contents of .nfo file
+            tmdb_id = content.replace('https://www.themoviedb.org/{}/'.format(tmdbtype), '')  # Clean content to retrieve tmdb_id
+            tmdb_id = tmdb_id.replace('&islocal=True', '')
+            if tmdb_id:
+                return tmdb_id
+
+    except Exception as exc:
+        kodi_log(u'ERROR GETTING TMDBID FROM NFO:\n{}'.format(exc))
 
 
 def rate_limiter(addon_name='plugin.video.themoviedb.helper', wait_time=None, api_name=None):

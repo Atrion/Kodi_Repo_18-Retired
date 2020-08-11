@@ -741,6 +741,13 @@ LIBRARY_CALENDAR = [
     ('Next {0}', 7, 1), ('Next {0}', 8, 1), ('Next {0}', 9, 1), ('Next {0}', 10, 1), ('Next {0}', 11, 1),
     ('Next {0}', 12, 1), ('Next {0}', 13, 1), ('This Week', 0, 7), ('This Fornight', 0, 14), ('All Items', 0, 365)]
 
+"""
+IMPORTANT: These limits are set to prevent excessive API data usage.
+Please respect the APIs that provide this data for free.
+"""
+LIBRARY_ADD_LIMIT_TVSHOWS = 500
+LIBRARY_ADD_LIMIT_MOVIES = 2500
+
 USER_DISCOVER_LISTITEMS_BASEDIR = [
     {'label': 'Discover {0} w/ Below Settings', 'url': {'info': 'user_discover', 'method': 'open'}},
     {'label': 'Match Method', 'url': {'info': 'user_discover', 'method': 'with_separator'}},

@@ -347,6 +347,8 @@ class Player(Plugin):
             self.item['name'] = u'{0} S{1:02d}E{2:02d}'.format(self.item.get('showname'), int(utils.try_parse_int(self.season)), int(utils.try_parse_int(self.episode)))
             self.item['season'] = self.season
             self.item['episode'] = self.episode
+            self.item['showpremiered'] = self.details.get('infoproperties', {}).get('tvshow.premiered')
+            self.item['showyear'] = self.details.get('infoproperties', {}).get('tvshow.year')
 
         if self.traktapi and self.itemtype == 'episode':
             trakt_details = self.traktapi.get_details(slug_type, self.item.get('slug'), season=self.season, episode=self.episode)
@@ -361,13 +363,14 @@ class Player(Plugin):
             if k not in constants.PLAYER_URLENCODE:
                 continue
             v = u'{0}'.format(v)
-            self.item[k] = v.replace(',', '')
-            self.item[k + '_+'] = v.replace(' ', '+')
-            self.item[k + '_-'] = v.replace(' ', '-')
-            self.item[k + '_escaped'] = quote(quote(utils.try_encode_string(v)))
-            self.item[k + '_escaped+'] = quote(quote_plus(utils.try_encode_string(v)))
-            self.item[k + '_url'] = quote(utils.try_encode_string(v))
-            self.item[k + '_url+'] = quote_plus(utils.try_encode_string(v))
+            for key, value in {k: v, '{}_meta'.format(k): dumps(v)}.items():
+                self.item[key] = value.replace(',', '')
+                self.item[key + '_+'] = value.replace(',', '').replace(' ', '+')
+                self.item[key + '_-'] = value.replace(',', '').replace(' ', '-')
+                self.item[key + '_escaped'] = quote(quote(utils.try_encode_string(value)))
+                self.item[key + '_escaped+'] = quote(quote_plus(utils.try_encode_string(value)))
+                self.item[key + '_url'] = quote(utils.try_encode_string(value))
+                self.item[key + '_url+'] = quote_plus(utils.try_encode_string(value))
 
     def build_players(self, tmdbtype=None):
         basedirs = ['special://profile/addon_data/plugin.video.themoviedb.helper/players/']
@@ -376,12 +379,7 @@ class Player(Plugin):
         for basedir in basedirs:
             files = [x for x in xbmcvfs.listdir(basedir)[1] if x.endswith('.json')]
             for file in files:
-                vfs_file = xbmcvfs.File(basedir + file)
-                try:
-                    content = vfs_file.read()
-                    meta = loads(content) or {}
-                finally:
-                    vfs_file.close()
+                meta = loads(utils.read_file(basedir + file)) or {}
 
                 self.players[file] = meta
 
