@@ -1765,7 +1765,7 @@ This addon allows file access to data in it.</description>
   <extension-point id="resource.images" schema="images.xsd"/>
 </addon>
 
-<addon id="script.module.openscrapers" name="OpenScrapers Module" version="0.0.2.009" provider-name="Addons4Kodi">
+<addon id="script.module.openscrapers" name="OpenScrapers Module" version="0.0.2.010" provider-name="Addons4Kodi">
 	<requires>
 		<import addon="xbmc.python" version="2.25.0" />
 		<import addon="script.module.beautifulsoup4" />
@@ -1792,12 +1792,9 @@ This addon allows file access to data in it.</description>
 			<screenshot></screenshot>
 		</assets>
 		<news>
-0.0.2.008
-- Torrent scrapers updated for pack scraping support.
-    Please read help in settings, requires addon support!!
-- New setting added to Torrent scrapers to filter undesirables
-    Please read help in settings
-- New setting added to filter identified Foreign single audio sources
+- Fixed some hosters broken by previous pack file support inclusion.
+- Few pack file filter tweaks.
+- Removed a few new cloudflare v2 challenge scrapers
 		</news>
 	</extension>
 </addon>
@@ -2595,7 +2592,7 @@ Zároveň má nastavenia upravujúce výšku stĺpcov spektra, ich rýchlosť a 
   </extension>
 </addon>
 
-<addon id="script.module.resolveurl" name="ResolveURL" version="5.1.4" provider-name="gujal">
+<addon id="script.module.resolveurl" name="ResolveURL" version="5.1.5" provider-name="gujal">
     <requires>
         <!-- <import addon="xbmc.python" version="3.0.0" /> -->
         <import addon="script.module.six" version="0.0.1"/>
@@ -2782,7 +2779,7 @@ Zároveň má nastavenia upravujúce výšku stĺpcov spektra, ich rýchlosť a 
 </addon>
 
 <addon id="plugin.video.themoviedb.helper"
-version="3.3.11"
+version="3.3.13"
 name="TheMovieDb Helper"
 provider-name="jurialmunkey">
 <requires>
@@ -2859,7 +2856,7 @@ provider-name="jurialmunkey">
     <screenshot>resources/screenshot-01.jpg</screenshot>
     <screenshot>resources/screenshot-02.jpg</screenshot>
   </assets>
-  <news>Better handling of auto updates</news>
+  <news>Add some additional dbid checking based on title/year combo</news>
 </extension>
 </addon>
 
@@ -3855,7 +3852,7 @@ More minor bugfixes (honestly could not list them all)
 	</extension>
 </addon>
 
-<addon id="script.module.urlresolver" name="URLResolver" version="5.1.4" provider-name="tvaddons">
+<addon id="script.module.urlresolver" name="URLResolver" version="5.1.5" provider-name="tvaddons">
     <requires>
         <!-- <import addon="xbmc.python" version="3.0.0" /> -->
         <import addon="script.module.six" version="0.0.1"/>
@@ -4951,7 +4948,7 @@ More minor bugfixes (honestly could not list them all)
 	</extension>
 </addon>
 
-<addon id="resource.images.studios.white" name="Studio Icons - White" version="0.0.24" provider-name="Team Kodi">
+<addon id="resource.images.studios.white" name="Studio Icons - White" version="0.0.25" provider-name="Team Kodi">
 	<extension point="kodi.resource.images" compile="true" type="studios" />
 	<requires>
 		<import addon="kodi.resource" version="1.0.0"/>
@@ -4989,7 +4986,7 @@ More minor bugfixes (honestly could not list them all)
 	</extension>
 </addon>
 
-    <addon id="repository.Atrion18B" name="[COLOR darkgreen]Atrion's Repo for Kodi 18.x Backup[/COLOR]" version="0.5.5" provider-name="Atrion Darnay">
+    <addon id="repository.Atrion18B" name="[COLOR darkgreen]Atrion's Repo for Kodi 18.x Backup[/COLOR]" version="0.5.6" provider-name="Atrion Darnay">
         <requires>
             <import addon="xbmc.addon" version="12.0.0"/>
         </requires>
@@ -5380,7 +5377,7 @@ More minor bugfixes (honestly could not list them all)
   </extension>
 </addon>
 
-    <addon id="repository.Atrion18" name="[COLOR darkgreen]Atrion's Repo for Kodi 18.x[/COLOR]" version="0.5.5" provider-name="Atrion Darnay">
+    <addon id="repository.Atrion18" name="[COLOR darkgreen]Atrion's Repo for Kodi 18.x[/COLOR]" version="0.5.6" provider-name="Atrion Darnay">
         <requires>
             <import addon="xbmc.addon" version="12.0.0"/>
         </requires>
