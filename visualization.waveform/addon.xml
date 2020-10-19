@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<addon id="visualization.waveform" version="3.1.1.1" name="Waveform" provider-name="MrC">
+<addon id="visualization.waveform" version="3.1.2.1" name="Waveform" provider-name="MrC">
   <requires>
     <import addon="kodi.binary.global.main" version="1.0.14"/>
     <import addon="kodi.binary.global.gui" version="5.12.0"/>
     <import addon="kodi.binary.global.gui" version="5.12.0"/>
     <import addon="kodi.binary.instance.visualization" version="2.0.1"/>
   </requires>
-  <extension point="xbmc.player.musicviz" library_linux="visualization.waveform.so.3.1.1"/>
+  <extension point="xbmc.player.musicviz" library_linux="visualization.waveform.so.3.1.2"/>
   <extension point="xbmc.addon.metadata">
     <summary lang="af">Visualisering wat 2 golfvorm grafieke op die skerm vertoon</summary>
     <summary lang="ar">التصوير يظهر2 رسم بياني موجي على الشاشة</summary>

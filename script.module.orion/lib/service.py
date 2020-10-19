@@ -43,7 +43,8 @@ while not monitor.abortRequested():
 	OrionSettings.adapt(retries = 5)
 	if monitor.abortRequested(): break
 
-	orion = Orion(OrionApi._keyInternal())
+	# Do not show unreachable errors in the service.
+	orion = Orion(key = OrionApi._keyInternal(), silent = True)
 	user = OrionUser.instance()
 
 	if user.enabled() and (user.valid() or user.empty()):

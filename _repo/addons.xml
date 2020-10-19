@@ -80,15 +80,17 @@
   </extension>
 </addon>
 
-<addon id="service.xbmc.versioncheck" name="Version Check" version="0.5.6" provider-name="Team Kodi">
+<addon id="service.xbmc.versioncheck" name="Version Check" version="0.5.8" provider-name="Team Kodi">
     <requires>
         <import addon="xbmc.python" version="2.14.0"/>
     </requires>
     <extension point="xbmc.service" library="resources/lib/runner.py" start="login"/>
     <extension point="xbmc.addon.metadata">
         <news>
-- add Kodi 18.8 stable release
-- add Kodi 19.0 alpha1 release
+- add Kodi 19.0 alpha2 release
+- use xbmcvfs for translatePath for matrix
+- fix platforms where subprocess is not available
+- fix dialogs on Kodi 19
         </news>
         <assets>
             <icon>icon.png</icon>
@@ -263,14 +265,14 @@
 	</extension>
 </addon>
 
-<addon id="visualization.waveform" version="3.1.1.1" name="Waveform" provider-name="MrC">
+<addon id="visualization.waveform" version="3.1.2.1" name="Waveform" provider-name="MrC">
   <requires>
     <import addon="kodi.binary.global.main" version="1.0.14"/>
     <import addon="kodi.binary.global.gui" version="5.12.0"/>
     <import addon="kodi.binary.global.gui" version="5.12.0"/>
     <import addon="kodi.binary.instance.visualization" version="2.0.1"/>
   </requires>
-  <extension point="xbmc.player.musicviz" library_linux="visualization.waveform.so.3.1.1"/>
+  <extension point="xbmc.player.musicviz" library_linux="visualization.waveform.so.3.1.2"/>
   <extension point="xbmc.addon.metadata">
     <summary lang="af">Visualisering wat 2 golfvorm grafieke op die skerm vertoon</summary>
     <summary lang="ar">التصوير يظهر2 رسم بياني موجي على الشاشة</summary>
@@ -800,18 +802,21 @@ Kodi is a registered trademark of the XBMC Foundation. We are not connected to o
 
 <addon id="script.module.addon.signals"
     name="Addon Signals"
-    version="0.0.5"
+    version="0.0.6"
     provider-name="Rick Phillips (ruuk)">
     <requires>
         <import addon="xbmc.python" version="2.14.0" />
     </requires>
     <extension point="xbmc.python.module" library="lib" />
     <extension point="xbmc.addon.metadata">
-        <summary lang="en">Inter-addon signalling</summary>
-        <description lang="en">Provides signal/slot mechanism for inter-addon communication</description>
+        <summary lang="en_GB">Inter-addon signalling</summary>
+        <description lang="en_GB">Provides signal/slot mechanism for inter-addon communication</description>
         <platform>all</platform>
         <license>LGPL-2.1-only</license>
         <source>https://github.com/ruuk/script.module.addon.signals</source>
+        <assets>
+            <icon>icon.png</icon>
+        </assets>
     </extension>
 </addon>
 
@@ -1076,7 +1081,7 @@ Kodi is a registered trademark of the XBMC Foundation. We are not connected to o
     </extension>
 </addon>
 
-<addon id="vfs.rar" version="2.3.1.1" name="RAR archive support" provider-name="spiff">
+<addon id="vfs.rar" version="2.3.2.1" name="RAR archive support" provider-name="spiff">
   <requires>
     <import addon="kodi.binary.global.main" version="1.0.14"/>
     <import addon="kodi.binary.global.general" version="1.0.3"/>
@@ -1084,10 +1089,11 @@ Kodi is a registered trademark of the XBMC Foundation. We are not connected to o
     <import addon="kodi.binary.global.filesystem" version="1.0.2"/>
     <import addon="kodi.binary.instance.vfs" version="2.0.0"/>
   </requires>
-  <extension point="kodi.vfs" protocols="rar" extensions=".rar|.001|.cbr" files="true" directories="true" filedirectories="true" encodedhostname="true" library_linux="vfs.rar.so.2.3.1"/>
+  <extension point="kodi.vfs" protocols="rar" extensions=".rar|.001|.cbr" files="true" directories="true" filedirectories="true" encodedhostname="true" library_linux="vfs.rar.so.2.3.2"/>
   <extension point="xbmc.addon.metadata">
     <summary lang="de_DE">Entpacker für .rar Dateien</summary>
     <summary lang="en_GB">Unarchiver for .rar files</summary>
+    <summary lang="sv_SE">Uppackare för .rar-filer</summary>
     <description lang="de_DE">Dieses Addon dient zum entpacken von RAR-Archiven.
 
 Es ermöglicht das direkte Lesen nicht komprimierter RAR-Dateien, sodass ein vorheriges Entpacken nicht erforderlich ist. Bei allen anderen Typen wird es vorübergehend entpackt und an Kodi übertragen.
@@ -1098,6 +1104,11 @@ Achtung: Der Archivtyp "Solid RAR" erfordert ein vollständiges Entpacken, um di
 It allows direct reading of uncompressed RAR files, so prior unpacking is not necessary. For all other types, it is temporarily unpacked and passed to Kodi.
 
 Attention: A "Solid RAR" archive type requires complete unpacking to use files within it. Hence access times may be long for larger packages.</description>
+    <description lang="sv_SE">Detta tillägg är ett uppackningsverktyg för RAR-arkiv.
+
+Detta gör det möjligt att spela upp okomprimerade RAR-filer utan att de först packas upp. För alla andra typer, packas den upp tillfälligt och skickas sedan till Kodi.
+
+Observera: Ett "Fast" arkiv kräver en komplett uppackning av arkivet. Därför kan uppstartstiden ta lång tid om det är ett stort arkiv.</description>
     <disclaimer lang="de_DE">Diese Version erfordert mindestens Kodi Leia 18.6; Bitte verwenden Sie 2.0.8 für frühere Leia-Versionen</disclaimer>
     <disclaimer lang="en_GB">This version requires at least Kodi Leia 18.6; please use 2.0.8 for earlier Leia versions</disclaimer>
     <platform/>
@@ -1253,12 +1264,12 @@ Added Trakt Manager
 
 <addon id="metadata.themoviedb.org"
        name="The Movie Database"
-       version="5.2.1"
+       version="5.2.2"
        provider-name="Team Kodi">
   <requires>
     <import addon="xbmc.metadata" version="2.1.0"/>
     <import addon="metadata.common.imdb.com" version="2.9.2"/>
-    <import addon="metadata.common.themoviedb.org" version="3.2.0"/>
+    <import addon="metadata.common.themoviedb.org" version="3.2.6"/>
     <import addon="plugin.video.youtube" version="4.4.10" optional="true"/>
   </requires>
   <extension point="xbmc.metadata.scraper.movies"
@@ -1765,7 +1776,7 @@ This addon allows file access to data in it.</description>
   <extension-point id="resource.images" schema="images.xsd"/>
 </addon>
 
-<addon id="script.module.openscrapers" name="OpenScrapers Module" version="0.0.2.010" provider-name="Addons4Kodi">
+<addon id="script.module.openscrapers" name="OpenScrapers Module" version="0.0.2.012" provider-name="Addons4Kodi">
 	<requires>
 		<import addon="xbmc.python" version="2.25.0" />
 		<import addon="script.module.beautifulsoup4" />
@@ -1777,6 +1788,7 @@ This addon allows file access to data in it.</description>
 	<extension point="xbmc.service" library="lib/service.py" start="startup" />
 	<extension point="xbmc.python.module" library="lib" />
 	<extension point="xbmc.addon.metadata">
+		<reuselanguageinvoker>false</reuselanguageinvoker>
 		<platform>all</platform>
 		<summary lang="en">OpenScrapers Module</summary>
 		<description>Scrape common video host for URL's to be playable in Kodi, simplifying addon development of video plugins requiring multi video hosts.</description>
@@ -1792,9 +1804,8 @@ This addon allows file access to data in it.</description>
 			<screenshot></screenshot>
 		</assets>
 		<news>
-- Fixed some hosters broken by previous pack file support inclusion.
-- Few pack file filter tweaks.
-- Removed a few new cloudflare v2 challenge scrapers
+0.0.2.011
+- Torrent scraper fixes.
 		</news>
 	</extension>
 </addon>
@@ -1933,28 +1944,30 @@ This addon allows file access to data in it.</description>
     </extension>
 </addon>
 
-<addon id="visualization.goom" version="2.2.1.1" name="Goom" provider-name="Team Kodi">
+<addon id="visualization.goom" version="2.2.3.1" name="Goom" provider-name="Team Kodi">
   <requires>
     <import addon="kodi.binary.global.main" version="1.0.14"/>
     <import addon="kodi.binary.global.general" version="1.0.3"/>
     <import addon="kodi.binary.global.gui" version="5.12.0"/>
     <import addon="kodi.binary.instance.visualization" version="2.0.1"/>
   </requires>
-  <extension point="xbmc.player.musicviz" library_linux="visualization.goom.so.2.2.1"/>
+  <extension point="xbmc.player.musicviz" library_linux="visualization.goom.so.2.2.3"/>
   <extension point="xbmc.addon.metadata">
+    <summary lang="de_DE">Goom 2k4 Visualisierung</summary>
     <summary lang="en_GB">Goom 2k4 Visualization</summary>
-    <description lang="en_GB">The Goom 2k4 visualization supports effects like Tentacles, Flash, Stars, Fireworks, Waves, Blurs and Glows and includes a large number of trippy hypnotic effects that dance, swirl and pop with the music</description>
+    <description lang="de_DE">Die Goom 2k4-Visualisierung unterstützt Effekte wie Tentakel, Blitz, Sterne, Feuerwerk, Wellen, Unschärfen und Glühen und enthält eine große Anzahl trippiger hypnotischer Effekte, die mit der Musik tanzen, wirbeln und knallen.</description>
+    <description lang="en_GB">The Goom 2k4 visualization supports effects like Tentacles, Flash, Stars, Fireworks, Waves, Blurs and Glows and includes a large number of trippy hypnotic effects that dance, swirl and pop with the music,</description>
     <platform/>
     <license>GPL-2.0</license>
     <source>https://github.com/xbmc/visualization.goom</source>
     <assets>
       <icon>resources/icon.png</icon>
       <fanart>resources/fanart.png</fanart>
-      <screenshot>resources/screenshot-01.png</screenshot>
-      <screenshot>resources/screenshot-02.png</screenshot>
-      <screenshot>resources/screenshot-03.png</screenshot>
-      <screenshot>resources/screenshot-04.png</screenshot>
-      <screenshot>resources/screenshot-05.png</screenshot>
+      <screenshot>resources/screenshot-01.jpg</screenshot>
+      <screenshot>resources/screenshot-02.jpg</screenshot>
+      <screenshot>resources/screenshot-03.jpg</screenshot>
+      <screenshot>resources/screenshot-04.jpg</screenshot>
+      <screenshot>resources/screenshot-05.jpg</screenshot>
     </assets>
   </extension>
 </addon>
@@ -2187,7 +2200,7 @@ This addon allows file access to data in it.</description>
     </extension>
 </addon>
 
-<addon id="plugin.video.youtube" name="YouTube" version="6.8.3" provider-name="anxdpanic, bromix">
+<addon id="plugin.video.youtube" name="YouTube" version="6.8.5" provider-name="anxdpanic, bromix">
     <requires>
         <import addon="xbmc.python" version="2.20.0"/>
         <import addon="script.module.six" version="1.11.0"/>
@@ -2201,13 +2214,12 @@ This addon allows file access to data in it.</description>
     <extension point="xbmc.python.module" library="resources/lib/"/>
     <extension point="xbmc.addon.metadata">
         <news>
-[fix] playback of some videos
-[fix] notifications for some languages |contrib: Mutronics|
-[fix] fix rating videos causing and error even though it succeeded
-[upd] cache javascript player url for 4 hours, reduces http requests per play by 1
-[upd] use new settings format on Kodi 19
-[lang] el_gr strings |contrib: twilight0|
-[lang] hu_hu strings |contrib: thelacesz|
+[fix] playback of purchased movies |contrib: MisterD81|
+[fix] notifications for some languages on Kodi 19
+[fix] searching for some languages
+[fix] loading on some versions of python 3
+[fix] some videos failing to play with an Invalid URL exception
+[upd] use xbmcvfs.translatePath if available, clean up for Kodi 19
         </news>
         <assets>
             <icon>icon.png</icon>
@@ -2258,8 +2270,7 @@ This addon allows file access to data in it.</description>
         <license>GPL-2.0-only</license>
         <forum>https://ytaddon.page.link/forum</forum>
         <website>https://www.youtube.com</website>
-        <email>ytplugin at datanet dot ws</email>
-        <source>https://github.com/jdf76/plugin.video.youtube</source>
+        <source>https://github.com/anxdpanic/plugin.video.youtube</source>
         <reuselanguageinvoker>true</reuselanguageinvoker>
     </extension>
 </addon>
@@ -2334,14 +2345,14 @@ This addon allows file access to data in it.</description>
     </extension>
 </addon>
 
-<addon id="visualization.spectrum" version="3.0.3.1" name="Spectrum" provider-name="Team Kodi">
+<addon id="visualization.spectrum" version="3.0.4.1" name="Spectrum" provider-name="Team Kodi">
   <requires>
     <import addon="kodi.binary.global.main" version="1.0.14"/>
     <import addon="kodi.binary.global.gui" version="5.12.0"/>
     <import addon="kodi.binary.global.gui" version="5.12.0"/>
     <import addon="kodi.binary.instance.visualization" version="2.0.1"/>
   </requires>
-  <extension point="xbmc.player.musicviz" library_linux="visualization.spectrum.so.3.0.3"/>
+  <extension point="xbmc.player.musicviz" library_linux="visualization.spectrum.so.3.0.4"/>
   <extension point="xbmc.addon.metadata">
     <summary lang="af_ZA">Visualisering wys a roterende 3D Spektrum Analiseerder</summary>
     <summary lang="ar_SA">عارض يظهر طيف محلل دوري ثلاثي الأبعاد</summary>
@@ -2592,7 +2603,7 @@ Zároveň má nastavenia upravujúce výšku stĺpcov spektra, ich rýchlosť a 
   </extension>
 </addon>
 
-<addon id="script.module.resolveurl" name="ResolveURL" version="5.1.5" provider-name="gujal">
+<addon id="script.module.resolveurl" name="ResolveURL" version="5.1.10" provider-name="gujal">
     <requires>
         <!-- <import addon="xbmc.python" version="3.0.0" /> -->
         <import addon="script.module.six" version="0.0.1"/>
@@ -2610,7 +2621,10 @@ Zároveň má nastavenia upravujúce výšku stĺpcov spektra, ich rýchlosť a 
         <summary lang="hr_HR">Prilagodi najčešće URL-ove video izvora kako bi radili u XBMC/Kodiju.</summary>
         <summary lang="el_GR">Επίλυση συνδέσμων κοινών εξυπηρετητών σε μορφή βίντεο ικανό για αναπαραγωγή στο XBMC/Kodi.</summary>
         <description lang="en_GB">Resolve common video host URL's to be playable in XBMC/Kodi, simplify addon development of video plugins requiring multi video hosts.</description>
+        <description lang="el_GR">Επίλυση συνδέσμων κοινών εξυπηρετητών σε μορφή βίντεο ικανό για αναπαραγωγή στο XBMC/Kodi, απλοποίηση της ανάπτυξης των προσθέτων που χρησιμοποιούν πολλαπλούς εξυπηρετητές για υλικό βίντεο</description>
         <description lang="hr_HR">Prilagodi najčešće URL-ove video izvora kako bi radili u XBMC/Kodiju, pojednostavnjuje razvoj priključaka za video dodatke koji zahtjevaju višestruke video izvore.</description>
+        <disclaimer lang="en_GB">This script only resolves video content from legitimate file lockers without prejudice. If this script is being used by 3rd parties to resolve content that you feel infringes upon your Intellectual Property then please take your complaints to the actual website or developer linking to such content and not here. This script in no way searches for any content whatsoever.</disclaimer>
+        <disclaimer lang="el_GR">Το ανωτέρο σενάριο το μόνο που κάνει είναι να επιλύει οπτικοακουστικό περιεχόμενο από νόμιμες πηγές χωρίς προκατάληψη. Εάν το ανωτέρο σενάριο χρησιμοποιηθεί από τρίτους ώστε να επιλύσει περιεχόμενο το οποίο σας προκαλεί αντίδραση ότι παραβιάζει την πνευματική σας ιδιοκτησία παρακαλώ μεταφέρετε τα παραπονά σας στον ιστότοπο τον οποίο βρίσκεται το εν λόγω περιεχόμενο η τον δημιουργό ο οποίος πραγματοποιεί την σύνδεση και όχι εδω. Το σενάριο αυτό ουδεμία περίπτωση πραγματοποιεί αναζήτηση περιεχομένου.</disclaimer>
         <assets>
             <icon>icon.png</icon>
             <fanart>fanart.jpg</fanart>
@@ -2779,7 +2793,7 @@ Zároveň má nastavenia upravujúce výšku stĺpcov spektra, ich rýchlosť a 
 </addon>
 
 <addon id="plugin.video.themoviedb.helper"
-version="3.3.13"
+version="3.3.21"
 name="TheMovieDb Helper"
 provider-name="jurialmunkey">
 <requires>
@@ -3085,13 +3099,13 @@ provider-name="jurialmunkey">
 	</extension>
 </addon>
 
-<addon id="visualization.shadertoy" version="1.2.3.1" name="Shadertoy" provider-name="Team Kodi">
+<addon id="visualization.shadertoy" version="1.2.4.1" name="Shadertoy" provider-name="Team Kodi">
   <requires>
     <import addon="kodi.binary.global.main" version="1.0.14"/>
     <import addon="kodi.binary.global.gui" version="5.12.0"/>
     <import addon="kodi.binary.instance.visualization" version="2.0.1"/>
   </requires>
-  <extension point="xbmc.player.musicviz" library_linux="visualization.shadertoy.so.1.2.3"/>
+  <extension point="xbmc.player.musicviz" library_linux="visualization.shadertoy.so.1.2.4"/>
   <extension point="xbmc.addon.metadata">
     <summary lang="en">Visualisations from Shadertoy</summary>
     <description lang="en">This music visualization is based on Shadertoy based GPU programs.</description>
@@ -3145,20 +3159,30 @@ provider-name="jurialmunkey">
     </extension>
 </addon>
 
-<addon id="repository.rector.stuff" name="Rector Stuff" version="1.0.0" provider-name="rmrector">
+<addon id="repository.rector.stuff" name="Rector Stuff" version="1.0.2" provider-name="rmrector">
 	<requires>
 		<import addon="xbmc.addon" version="12.0.0"/>
 	</requires>
 	<extension point="xbmc.addon.repository" name="Rector Repository">
-		<info>https://raw.githubusercontent.com/rmrector/repository.rector.stuff/master/addons.xml</info>
-		<checksum>https://raw.githubusercontent.com/rmrector/repository.rector.stuff/master/addons.xml.md5</checksum>
-		<datadir zip="true">https://raw.githubusercontent.com/rmrector/repository.rector.stuff/master/</datadir>
+		<dir maxversion="18.9.0">
+			<info>https://raw.githubusercontent.com/rmrector/repository.rector.stuff/python2/addons.xml</info>
+			<checksum>https://raw.githubusercontent.com/rmrector/repository.rector.stuff/python2/addons.xml.md5</checksum>
+			<datadir zip="true">https://raw.githubusercontent.com/rmrector/repository.rector.stuff/python2/</datadir>
+		</dir>
+		<dir minversion="19.0.0">
+			<info>https://raw.githubusercontent.com/rmrector/repository.rector.stuff/python3/addons.xml</info>
+			<checksum>https://raw.githubusercontent.com/rmrector/repository.rector.stuff/python3/addons.xml.md5</checksum>
+			<datadir zip="true">https://raw.githubusercontent.com/rmrector/repository.rector.stuff/python2/</datadir>
+		</dir>
 	</extension>
 	<extension point="xbmc.addon.metadata">
 		<summary lang="en">A little place for my stuff.</summary>
 		<description lang="en">I'm Rector, I do stuff, I put it here.</description>
 		<platform>all</platform>
 		<disclaimer />
+		<assets>
+			<icon>icon.png</icon>
+		</assets>
 	</extension>
 </addon>
 
@@ -3852,7 +3876,7 @@ More minor bugfixes (honestly could not list them all)
 	</extension>
 </addon>
 
-<addon id="script.module.urlresolver" name="URLResolver" version="5.1.5" provider-name="tvaddons">
+<addon id="script.module.urlresolver" name="URLResolver" version="5.1.10" provider-name="tvaddons">
     <requires>
         <!-- <import addon="xbmc.python" version="3.0.0" /> -->
         <import addon="script.module.six" version="0.0.1"/>
@@ -3866,12 +3890,15 @@ More minor bugfixes (honestly could not list them all)
     <extension point="xbmc.python.pluginsource" library="lib/default.py" />
     <extension point="xbmc.addon.metadata">
         <platform>all</platform>
-        <summary lang="en">Resolve common video host URL's to be playable in XBMC/Kodi.</summary>
-        <summary lang="es">Resolver enlaces a videos de sitios populares para poder reproducirlos en XBMC/Kodi.</summary>
-        <summary lang="hr">Prilagodi najčešće URL-ove video izvora kako bi radili u XBMC/Kodiju.</summary>
-        <summary lang="el">Επίλυση συνδέσμων κοινών εξυπηρετητών σε μορφή βίντεο ικανό για αναπαραγωγή στο XBMC/Kodi.</summary>
-        <description lang="en">Resolve common video host URL's to be playable in XBMC/Kodi, simplify addon development of video plugins requiring multi video hosts.</description>
-        <description lang="hr">Prilagodi najčešće URL-ove video izvora kako bi radili u XBMC/Kodiju, pojednostavnjuje razvoj priključaka za video dodatke koji zahtjevaju višestruke video izvore.</description>
+        <summary lang="en_GB">Resolve common video host URL's to be playable in XBMC/Kodi.</summary>
+        <summary lang="es_ES">Resolver enlaces a videos de sitios populares para poder reproducirlos en XBMC/Kodi.</summary>
+        <summary lang="hr_HR">Prilagodi najčešće URL-ove video izvora kako bi radili u XBMC/Kodiju.</summary>
+        <summary lang="el_GR">Επίλυση συνδέσμων κοινών εξυπηρετητών σε μορφή βίντεο ικανό για αναπαραγωγή στο XBMC/Kodi.</summary>
+        <description lang="en_GB">Resolve common video host URL's to be playable in XBMC/Kodi, simplify addon development of video plugins requiring multi video hosts.</description>
+        <description lang="el_GR">Επίλυση συνδέσμων κοινών εξυπηρετητών σε μορφή βίντεο ικανό για αναπαραγωγή στο XBMC/Kodi, απλοποίηση της ανάπτυξης των προσθέτων που χρησιμοποιούν πολλαπλούς εξυπηρετητές για υλικό βίντεο</description>
+        <description lang="hr_HR">Prilagodi najčešće URL-ove video izvora kako bi radili u XBMC/Kodiju, pojednostavnjuje razvoj priključaka za video dodatke koji zahtjevaju višestruke video izvore.</description>
+        <disclaimer lang="en_GB">This script only resolves video content from legitimate file lockers without prejudice. If this script is being used by 3rd parties to resolve content that you feel infringes upon your Intellectual Property then please take your complaints to the actual website or developer linking to such content and not here. This script in no way searches for any content whatsoever.</disclaimer>
+        <disclaimer lang="el_GR">Το ανωτέρο σενάριο το μόνο που κάνει είναι να επιλύει οπτικοακουστικό περιεχόμενο από νόμιμες πηγές χωρίς προκατάληψη. Εάν το ανωτέρο σενάριο χρησιμοποιηθεί από τρίτους ώστε να επιλύσει περιεχόμενο το οποίο σας προκαλεί αντίδραση ότι παραβιάζει την πνευματική σας ιδιοκτησία παρακαλώ μεταφέρετε τα παραπονά σας στον ιστότοπο τον οποίο βρίσκεται το εν λόγω περιεχόμενο η τον δημιουργό ο οποίος πραγματοποιεί την σύνδεση και όχι εδω. Το σενάριο αυτό ουδεμία περίπτωση πραγματοποιεί αναζήτηση περιεχομένου.</disclaimer>
         <forum>https://www.tvaddons.co/forums</forum>
         <website>https://www.tvaddons.co</website>
     </extension>
@@ -4169,7 +4196,7 @@ More minor bugfixes (honestly could not list them all)
 
 <addon id="metadata.common.imdb.com"
        name="IMDB Scraper Library"
-       version="3.1.5"
+       version="3.1.6"
        provider-name="Team Kodi">
   <requires>
     <import addon="xbmc.metadata" version="2.1.0"/>
@@ -4388,7 +4415,7 @@ More minor bugfixes (honestly could not list them all)
 
 <addon id="metadata.tvshows.themoviedb.org"
        name="The Movie Database"
-       version="3.5.3"
+       version="3.5.4"
        provider-name="Team Kodi">
   <requires>
     <import addon="xbmc.metadata" version="2.1.0"/>
@@ -4772,7 +4799,7 @@ More minor bugfixes (honestly could not list them all)
 
 <addon id="metadata.common.themoviedb.org"
        name="The Movie Database Scraper Library"
-       version="3.2.3"
+       version="3.2.6"
        provider-name="Team Kodi">
   <requires>
     <import addon="xbmc.metadata" version="2.1.0"/>
@@ -4961,7 +4988,7 @@ More minor bugfixes (honestly could not list them all)
 	</extension>
 </addon>
 
-<addon id="script.module.orion" version="4.3.0" name="Orion" provider-name="Orion">
+<addon id="script.module.orion" version="4.3.1" name="Orion" provider-name="Orion">
 	<requires>
 		<import addon="xbmc.python" version="2.1.0"/>
 		<import addon="repository.orion" version="1.0.0" optional="true" />
@@ -4986,7 +5013,7 @@ More minor bugfixes (honestly could not list them all)
 	</extension>
 </addon>
 
-    <addon id="repository.Atrion18B" name="[COLOR darkgreen]Atrion's Repo for Kodi 18.x Backup[/COLOR]" version="0.5.6" provider-name="Atrion Darnay">
+    <addon id="repository.Atrion18B" name="[COLOR darkgreen]Atrion's Repo for Kodi 18.x Backup[/COLOR]" version="0.5.7" provider-name="Atrion Darnay">
         <requires>
             <import addon="xbmc.addon" version="12.0.0"/>
         </requires>
@@ -5377,7 +5404,7 @@ More minor bugfixes (honestly could not list them all)
   </extension>
 </addon>
 
-    <addon id="repository.Atrion18" name="[COLOR darkgreen]Atrion's Repo for Kodi 18.x[/COLOR]" version="0.5.6" provider-name="Atrion Darnay">
+    <addon id="repository.Atrion18" name="[COLOR darkgreen]Atrion's Repo for Kodi 18.x[/COLOR]" version="0.5.7" provider-name="Atrion Darnay">
         <requires>
             <import addon="xbmc.addon" version="12.0.0"/>
         </requires>

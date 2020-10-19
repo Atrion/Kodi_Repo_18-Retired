@@ -26,7 +26,7 @@ class BaseItem(object):
 
         try:
             self._name = html_parser.HTMLParser().unescape(name)
-        except html_parser.HTMLParseError as _:
+        except:
             self._name = name
 
         self._uri = uri
@@ -38,6 +38,8 @@ class BaseItem(object):
         self._context_menu = None
         self._replace_context_menu = False
         self._date = None
+
+        self._next_page = False
 
     def __str__(self):
         name = self._name
@@ -111,3 +113,11 @@ class BaseItem(object):
 
     def get_date(self):
         return self._date
+
+    @property
+    def next_page(self):
+        return self._next_page
+
+    @next_page.setter
+    def next_page(self, value):
+        self._next_page = bool(value)

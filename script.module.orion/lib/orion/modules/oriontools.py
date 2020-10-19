@@ -201,13 +201,10 @@ class OrionTools:
 	def unicode(self, string):
 		try:
 			if string == None: return string
-			return unidecode(self.unicodeDecode(string))
+			return self.unicodeDecode(string)
 		except:
-			try:
-				return self.unicodeDecode(string)
-			except:
-				try: return string.encode('ascii', 'ignore')
-				except: return string
+			try: return string.encode('ascii', 'ignore')
+			except: return string
 
 	##############################################################################
 	# RANDOM

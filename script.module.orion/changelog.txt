@@ -1,4 +1,7 @@
 
+[B]4.3.1 (2020.09.03)[/B]
+- Fixed bugs for Kodi 19.
+
 [B]4.3.0 (2020.06.09)[/B]
 - Added Apocalypse 720 integration.
 - Better abort detection in service.

@@ -18,8 +18,8 @@
 import os
 import hashlib
 from urlresolver.lib import log_utils
-from urlresolver.lib.net import Net, get_ua  # @UnusedImport
-from urlresolver.lib import cache  # @UnusedImport
+from urlresolver.lib.net import Net, get_ua  # @UnusedImport  # NOQA
+from urlresolver.lib import cache  # @UnusedImport  # NOQA
 from urlresolver.lib import kodi
 from urlresolver.lib import pyaes
 from random import choice

@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<addon id="visualization.spectrum" version="3.0.3.1" name="Spectrum" provider-name="Team Kodi">
+<addon id="visualization.spectrum" version="3.0.4.1" name="Spectrum" provider-name="Team Kodi">
   <requires>
     <import addon="kodi.binary.global.main" version="1.0.14"/>
     <import addon="kodi.binary.global.gui" version="5.12.0"/>
     <import addon="kodi.binary.global.gui" version="5.12.0"/>
     <import addon="kodi.binary.instance.visualization" version="2.0.1"/>
   </requires>
-  <extension point="xbmc.player.musicviz" library_linux="visualization.spectrum.so.3.0.3"/>
+  <extension point="xbmc.player.musicviz" library_linux="visualization.spectrum.so.3.0.4"/>
   <extension point="xbmc.addon.metadata">
     <summary lang="af_ZA">Visualisering wys a roterende 3D Spektrum Analiseerder</summary>
     <summary lang="ar_SA">عارض يظهر طيف محلل دوري ثلاثي الأبعاد</summary>

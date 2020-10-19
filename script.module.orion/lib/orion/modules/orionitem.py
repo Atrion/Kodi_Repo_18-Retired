@@ -447,7 +447,7 @@ class OrionItem:
 				if limitRetry > 5000: limitRetry == 5000
 			if sortValue is OrionItem.FilterNone:
 				sortOrder = OrionItem.FilterNone
-			elif sortValue <= 0:
+			elif sortValue == OrionItem.SortNone:
 				sortValue = OrionItem.SortNone
 				sortOrder = OrionItem.FilterNone
 			if not popularityPercent is OrionItem.FilterNone:

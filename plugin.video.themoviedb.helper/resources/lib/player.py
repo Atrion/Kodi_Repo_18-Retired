@@ -30,20 +30,23 @@ def string_format_map(fmt, d):
 
 
 class KeyboardInputter(Thread):
-    def __init__(self, text=None, timeout=300):
+    def __init__(self, action=None, text=None, timeout=300):
         Thread.__init__(self)
         self.text = text
+        self.action = action
         self.exit = False
         self.poll = 0.5
         self.timeout = timeout
-        self.kodimonitor = xbmc.Monitor()
 
     def run(self):
-        while not self.kodimonitor.abortRequested() and not self.exit and self.timeout > 0:
-            self.kodimonitor.waitForAbort(self.poll)
+        while not xbmc.Monitor().abortRequested() and not self.exit and self.timeout > 0:
+            xbmc.Monitor().waitForAbort(self.poll)
             self.timeout -= self.poll
-            if xbmc.getCondVisibility("Window.IsVisible(DialogKeyboard.xml)"):
+            if self.text and xbmc.getCondVisibility("Window.IsVisible(DialogKeyboard.xml)"):
                 utils.get_jsonrpc("Input.SendText", {"text": self.text, "done": True})
+                self.exit = True
+            elif self.action and xbmc.getCondVisibility("Window.IsVisible(DialogSelect.xml) | Window.IsVisible(DialogConfirm.xml)"):
+                utils.get_jsonrpc(self.action)
                 self.exit = True
 
 
@@ -102,8 +105,7 @@ class Player(Plugin):
 
         for i in range(0, len(self.itemlist)):
             label = self.itemlist[i].getLabel()
-            if (
-                    (label == self.dp_movies and self.itemtype == 'movie')
+            if ((label == self.dp_movies and self.itemtype == 'movie')
                     or (label == self.dp_episodes and self.itemtype == 'episode')
                     or (label == u'{0} {1}'.format(self.addon.getLocalizedString(32061), 'Kodi') and self.dp_local)):
                 utils.kodi_log(u'Player -- Attempting to Play with Default Player:\n {}'.format(label), 2)
@@ -206,9 +208,8 @@ class Player(Plugin):
             return player  # No player configured or not a list of actions so return
 
         keyboard_input = None
-        player_resolve = False  # Player has actions so hasn't resolved yet
         player_actions = player[1]
-        player = (player_resolve, player_actions[0])
+        player = (False, player_actions[0])  # player tuple is: isPlayable flag; path URI to call.
 
         for action in player_actions[1:]:
 
@@ -218,7 +219,10 @@ class Player(Plugin):
 
             # Start thread with keyboard inputter if needed
             if action.get('keyboard'):
-                keyboard_input = KeyboardInputter(text=string_format_map(action.get('keyboard', ''), self.item))
+                if action.get('keyboard') in ['Up', 'Down', 'Left', 'Right', 'Select']:
+                    keyboard_input = KeyboardInputter(action="Input.{}".format(action.get('keyboard')))
+                else:
+                    keyboard_input = KeyboardInputter(text=string_format_map(action.get('keyboard', ''), self.item))
                 keyboard_input.setName('keyboard_input')
                 keyboard_input.start()
                 continue  # Go to next action
@@ -226,8 +230,6 @@ class Player(Plugin):
             # Get the next folder from the plugin
             with utils.busy_dialog():
                 folder = KodiLibrary().get_directory(string_format_map(player[1], self.item))
-            # utils.kodi_log('JSON RPC Files.GetDirectory\n' + string_format_map(player[1], self.item), 1)
-            # utils.kodi_log(folder, 1)
 
             # Kill our keyboard inputter thread
             if keyboard_input:

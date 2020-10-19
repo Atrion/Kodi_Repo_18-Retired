@@ -93,27 +93,29 @@ def _openimage(image, targetpath, filename):
 class CronJob(Thread):
     def __init__(self, update_hour=0):
         Thread.__init__(self)
-        self.kodimonitor = xbmc.Monitor()
         self.exit = False
         self.poll_time = 1800  # Poll every 30 mins since we don't need to get exact time for update
         self.addon = xbmcaddon.Addon('plugin.video.themoviedb.helper')
         self.update_hour = update_hour
 
     def run(self):
-        self.kodimonitor.waitForAbort(450)  # Delay start-up to give time for datetime python module
+        xbmc.Monitor().waitForAbort(120)
+        if self.addon.getSettingString('trakt_token'):
+            _homewindow.setProperty('TMDbHelper.TraktIsAuth', 'True')
+        xbmc.Monitor().waitForAbort(540)  # Wait a bit before updating
         self.nexttime = datetime.datetime.combine(datetime.datetime.today(), datetime.time(utils.try_parse_int(self.update_hour)))  # Get today at hour
         self.lasttime = xbmc.getInfoLabel('Skin.String(TMDbHelper.AutoUpdate.LastTime)')  # Get last update
         self.lasttime = utils.convert_timestamp(self.lasttime) if self.lasttime else None
         if self.lasttime and self.lasttime > self.nexttime:
             self.nexttime += datetime.timedelta(hours=24)  # Already updated today so set for tomorrow
 
-        while not self.kodimonitor.abortRequested() and not self.exit and self.poll_time:
+        while not xbmc.Monitor().abortRequested() and not self.exit and self.poll_time:
             if self.addon.getSettingBool('library_autoupdate'):
                 if datetime.datetime.now() > self.nexttime:  # Scheduled time has past so lets update
                     xbmc.executebuiltin('RunScript(plugin.video.themoviedb.helper,library_autoupdate)')
                     xbmc.executebuiltin('Skin.SetString(TMDbHelper.AutoUpdate.LastTime,{})'.format(datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S")))
                     self.nexttime += datetime.timedelta(hours=24)  # Set next update for tomorrow
-            self.kodimonitor.waitForAbort(self.poll_time)
+            xbmc.Monitor().waitForAbort(self.poll_time)
 
 
 class ImageFunctions(Thread):
@@ -139,6 +141,14 @@ class ImageFunctions(Thread):
             self.func = self.colors
             self.save_path = utils.makepath(self.save_path.format('colors'))
             self.save_prop = 'TMDbHelper.ListItem.Colors'
+            self.colors_lum = xbmc.getInfoLabel('Skin.String(TMDbHelper.Colors.Luminance)')
+            self.colors_lum = utils.try_parse_float(self.colors_lum) if self.colors_lum else None
+            self.colors_sat = xbmc.getInfoLabel('Skin.String(TMDbHelper.Colors.Saturation)')
+            self.colors_sat = utils.try_parse_float(self.colors_sat) if self.colors_sat else None
+            self.colors_cmp = xbmc.getInfoLabel('Skin.String(TMDbHelper.Colors.CompShift)')
+            self.colors_cmp = utils.try_parse_float(self.colors_cmp) if self.colors_cmp else None
+            self.colors_hue = xbmc.getInfoLabel('Skin.String(TMDbHelper.Colors.MainShift)')
+            self.colors_hue = utils.try_parse_float(self.colors_hue) if self.colors_hue else None
 
     def run(self):
         if not self.save_prop or not self.func:
@@ -204,7 +214,7 @@ class ImageFunctions(Thread):
         except Exception:
             return ''
 
-    def get_maincolor(self, img):
+    def get_avg_color(self, img):
         """Returns main color of image as list of rgb values 0:255"""
         rgb_list = [None, None, None]
         for channel in range(3):
@@ -213,7 +223,7 @@ class ImageFunctions(Thread):
             rgb_list[channel] = self.clamp(sum(values) / len(values))
         return rgb_list
 
-    def get_compcolor(self, r, g, b, shift=0.33):
+    def get_shiftcolor(self, r, g, b, shift=0):
         """
         Changes hue of color by shift value (percentage float)
         Takes RGB as 0:255 values and returns RGB as 0:255 values
@@ -222,11 +232,17 @@ class ImageFunctions(Thread):
         rgb_tuple = colorsys.hls_to_rgb(abs(hls_tuple[0] - shift), hls_tuple[1], hls_tuple[2])
         return self.rgb_to_int(*rgb_tuple)
 
+    def get_compcolor(self, r, g, b):
+        return self.get_shiftcolor(r, g, b, self.colors_cmp or 0.33)
+
+    def get_maincolor(self, r, g, b):
+        return self.get_shiftcolor(r, g, b, self.colors_hue or 0)
+
     def get_color_lumsat(self, r, g, b):
         hls_tuple = colorsys.rgb_to_hls(r / 255.0, g / 255.0, b / 255.0)
         hue = hls_tuple[0]
-        lum = utils.try_parse_float(xbmc.getInfoLabel('Skin.String(TMDbHelper.Colors.Luminance)')) or hls_tuple[1]
-        sat = utils.try_parse_float(xbmc.getInfoLabel('Skin.String(TMDbHelper.Colors.Saturation)')) or hls_tuple[2]
+        lum = self.colors_lum or hls_tuple[1]
+        sat = self.colors_sat or hls_tuple[2]
         return self.rgb_to_int(*colorsys.hls_to_rgb(hue, lum, sat))
 
     def rgb_to_int(self, r, g, b):
@@ -285,9 +301,10 @@ class ImageFunctions(Thread):
                 img = img.convert('RGB')
                 img.save(destination)
 
-            maincolor_rgb = self.get_maincolor(img)
+            avg_rgb = self.get_avg_color(img)
+            maincolor_rgb = self.get_maincolor(*avg_rgb)
             maincolor_hex = self.rgb_to_hex(*self.get_color_lumsat(*maincolor_rgb))
-            compcolor_rgb = self.get_compcolor(*maincolor_rgb)
+            compcolor_rgb = self.get_compcolor(*avg_rgb)
             compcolor_hex = self.rgb_to_hex(*self.get_color_lumsat(*compcolor_rgb))
 
             maincolor_propname = self.save_prop + '.Main'
@@ -403,11 +420,11 @@ class CommonMonitorFunctions(Plugin):
             self.set_indx_properties(item.get('infoproperties', {}))
         _homewindow.clearProperty('TMDbHelper.IsUpdating')
 
-    def get_tmdb_id(self, itemtype, imdb_id=None, query=None, year=None):
+    def get_tmdb_id(self, itemtype, imdb_id=None, query=None, year=None, epyear=None):
         try:
             if imdb_id and imdb_id.startswith('tt'):
                 return self.tmdb.get_tmdb_id(itemtype=itemtype, imdb_id=imdb_id)
-            return self.tmdb.get_tmdb_id(itemtype=itemtype, query=query, year=year)
+            return self.tmdb.get_tmdb_id(itemtype=itemtype, query=query, year=year, epyear=epyear)
         except Exception as exc:
             utils.kodi_log(u'Func: get_tmdb_id\n{0}'.format(exc), 1)
             return
@@ -500,12 +517,13 @@ class PlayerMonitor(xbmc.Player, CommonMonitorFunctions):
         self.imdb_id = self.getVideoInfoTag().getIMDBNumber()
         self.query = self.getVideoInfoTag().getTVShowTitle() if self.dbtype == 'episode' else self.getVideoInfoTag().getTitle()
         self.year = self.getVideoInfoTag().getYear() if self.dbtype == 'movie' else None
+        self.epyear = self.getVideoInfoTag().getYear() if self.dbtype == 'episodes' else None
         self.season = self.getVideoInfoTag().getSeason() if self.dbtype == 'episodes' else None
         self.episode = self.getVideoInfoTag().getEpisode() if self.dbtype == 'episodes' else None
         self.query = utils.try_decode_string(self.query)
 
         self.tmdbtype = 'movie' if self.dbtype == 'movie' else 'tv'
-        self.tmdb_id = self.get_tmdb_id(self.tmdbtype, self.imdb_id, self.query, self.year)
+        self.tmdb_id = self.get_tmdb_id(self.tmdbtype, self.imdb_id, self.query, self.year, self.epyear)
         self.details = self.tmdb.get_detailed_item(self.tmdbtype, self.tmdb_id, season=self.season, episode=self.episode)
 
         if not self.details:
@@ -546,7 +564,6 @@ class ServiceMonitor(CommonMonitorFunctions):
     def __init__(self):
         super(ServiceMonitor, self).__init__()
         self.property_basename = 'TMDbHelper.ListItem'
-        self.kodimonitor = xbmc.Monitor()
         self.container = 'Container.'
         self.containeritem = 'ListItem.'
         self.exit = False
@@ -564,13 +581,9 @@ class ServiceMonitor(CommonMonitorFunctions):
     def run_monitor(self):
         _homewindow.setProperty('TMDbHelper.ServiceStarted', 'True')
 
-        if self.addon.getSettingString('trakt_token'):
-            _homewindow.setProperty('TMDbHelper.TraktIsAuth', 'True')
-            self.get_trakt_usernameslug()
-
         self.cron_job.start()
 
-        while not self.kodimonitor.abortRequested() and not self.exit:
+        while not xbmc.Monitor().abortRequested() and not self.exit:
             if _homewindow.getProperty('TMDbHelper.ServiceStop'):
                 self.cron_job.exit = True
                 self.exit = True
@@ -578,22 +591,22 @@ class ServiceMonitor(CommonMonitorFunctions):
             # Startup our playmonitor if we haven't already
             elif not self.playermonitor:
                 self.playermonitor = PlayerMonitor()
-                self.kodimonitor.waitForAbort(1)
+                xbmc.Monitor().waitForAbort(1)
 
             # If we're in fullscreen video then we should update the playermonitor time
             elif xbmc.getCondVisibility("Window.IsVisible(fullscreenvideo)") and self.playermonitor.isPlayingVideo():
                 self.playermonitor.currenttime = self.playermonitor.getTime()
-                self.kodimonitor.waitForAbort(1)
+                xbmc.Monitor().waitForAbort(1)
 
             # Sit idle in a holding pattern if the skin doesn't need the service monitor yet
             elif xbmc.getCondVisibility("System.ScreenSaverActive | [!Skin.HasSetting(TMDbHelper.Service) + !Skin.HasSetting(TMDbHelper.EnableBlur) + !Skin.HasSetting(TMDbHelper.EnableDesaturate) + !Skin.HasSetting(TMDbHelper.EnableColors)]"):
-                self.kodimonitor.waitForAbort(30)
+                xbmc.Monitor().waitForAbort(30)
 
             # skip when modal dialogs are opened (e.g. textviewer in musicinfo dialog)
             elif xbmc.getCondVisibility(
                     "Window.IsActive(DialogSelect.xml) | Window.IsActive(progressdialog) | "
                     "Window.IsActive(contextmenu) | Window.IsActive(busydialog) | Window.IsActive(shutdownmenu)"):
-                self.kodimonitor.waitForAbort(2)
+                xbmc.Monitor().waitForAbort(2)
 
             # skip when container scrolling
             elif xbmc.getCondVisibility(
@@ -601,14 +614,14 @@ class ServiceMonitor(CommonMonitorFunctions):
                 if (self.properties or self.indxproperties) and self.get_cur_item() != self.pre_item:
                     ignorekeys = _setmain_artwork if self.dbtype in ['episodes', 'seasons'] else None
                     self.clear_properties(ignorekeys=ignorekeys)
-                self.kodimonitor.waitForAbort(1)
+                xbmc.Monitor().waitForAbort(1)
 
             # media window is opened or widgetcontainer set - start listitem monitoring!
             elif xbmc.getCondVisibility(
                     "Window.IsMedia | Window.IsVisible(MyPVRChannels.xml) | Window.IsVisible(MyPVRGuide.xml) | Window.IsVisible(DialogPVRInfo.xml) | "
                     "!String.IsEmpty(Window(Home).Property(TMDbHelper.WidgetContainer)) | Window.IsVisible(movieinformation)"):
                 self.get_listitem()
-                self.kodimonitor.waitForAbort(0.3)
+                xbmc.Monitor().waitForAbort(0.3)
 
             # clear window props
             elif self.properties or self.indxproperties:
@@ -616,7 +629,7 @@ class ServiceMonitor(CommonMonitorFunctions):
 
             # Otherwise just sit here and wait
             else:
-                self.kodimonitor.waitForAbort(1)
+                xbmc.Monitor().waitForAbort(1)
 
         # Some clean-up once service exits
         self.exit_monitor()
@@ -726,7 +739,10 @@ class ServiceMonitor(CommonMonitorFunctions):
                 self.clear_property_list(_setmain_artwork)
             self.clear_property_list(_setprop_ratings)
 
-            tmdb_id = self.get_tmdb_id(tmdbtype, self.imdb_id, self.query, self.year if tmdbtype == 'movie' else None)
+            tmdb_id = self.get_tmdb_id(
+                tmdbtype, self.imdb_id, self.query,
+                self.year if tmdbtype == 'movie' else None,
+                self.year if tmdbtype == 'tv' else None)
             details = self.tmdb.get_detailed_item(tmdbtype, tmdb_id, season=self.season, episode=self.episode)
 
             if not details:

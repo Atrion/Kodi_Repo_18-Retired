@@ -36,7 +36,7 @@ from urlresolver import common
 from urlresolver.hmf import HostedMediaFile
 from urlresolver.resolver import UrlResolver
 from urlresolver.plugins.__generic_resolver__ import GenericResolver
-from urlresolver.plugins import *
+from urlresolver.plugins import *  # NOQA
 
 common.logger.log_debug('Initializing URLResolver version: %s' % common.addon_version)
 MAX_SETTINGS = 75
