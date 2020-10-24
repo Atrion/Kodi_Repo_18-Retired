@@ -32,7 +32,7 @@ Skin Shortcuts will automatically add visibility conditions to shortcuts in the 
 | `suspend()` | `System.CanSuspend` |
 | `hibernate()` | `System.CanHibernate` |
 | `reset()` | `System.CanReboot` |
-| `system.logoff` | `[System.HasLoginScreen | IntegerGreaterThan(System.ProfileCount,1)] + System.Loggedon` |
+| `system.logoff` | `[System.HasLoginScreen | Integer.IsGreater(System.ProfileCount,1)] + System.Loggedon` |
 | `mastermode` | `System.HasLocks` |
 | `inhibitidleshutdown(true)` | `System.HasShutdown +!System.IsInhibit` |
 | `inhibitidleshutdown(false)` | `System.HasShutdown + System.IsInhibit` |

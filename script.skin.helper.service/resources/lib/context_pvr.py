@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 
-'''
+"""
     script.skin.helper.service
     Contextmenu for Pvr art
-'''
+"""
 
 import xbmc
 import xbmcgui
 from metadatautils import MetadataUtils
+from utils import busyDialog
 
 # pylint: disable-msg=invalid-constant-name
 
@@ -17,7 +18,7 @@ if __name__ == '__main__':
     ##### PVR Artwork ########
     win = xbmcgui.Window(10000)
     win.setProperty("SkinHelper.Artwork.ManualLookup", "busy")
-    xbmc.executebuiltin("ActivateWindow(busydialog)")
+    busyDialog("activate")
     title = xbmc.getInfoLabel("ListItem.Title").decode('utf-8')
     if not title:
         title = xbmc.getInfoLabel("ListItem.Label").decode('utf-8')
@@ -25,7 +26,7 @@ if __name__ == '__main__':
     genre = xbmc.getInfoLabel("ListItem.Genre").decode('utf-8')
     metadatautils = MetadataUtils()
     metadatautils.pvr_artwork_options(title, channel, genre)
-    xbmc.executebuiltin("Dialog.Close(busydialog)")
+    busyDialog("close")
     win.clearProperty("SkinHelper.Artwork.ManualLookup")
     metadatautils.close()
     del win

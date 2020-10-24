@@ -360,7 +360,14 @@ class NodeFunctions():
             paths.append( "PlayMedia(%s)" %( path ) )
 
         allMenuItems = [ xbmcgui.ListItem(label=LANGUAGE( 32112 )) ] # Main menu
-        allLabelIDs = [ "mainmenu" ]
+        allMenuItems.append( xbmcgui.ListItem(label=LANGUAGE( 32120 )) ) # Movie List 1 
+        allMenuItems.append( xbmcgui.ListItem(label=LANGUAGE( 32121 )) ) # Movie List 2
+        allMenuItems.append( xbmcgui.ListItem(label=LANGUAGE( 32122 )) ) # TV List 1 
+        allMenuItems.append( xbmcgui.ListItem(label=LANGUAGE( 32123 )) ) # TV List 2
+        allMenuItems.append( xbmcgui.ListItem(label=LANGUAGE( 32124 )) ) # My List 1 
+        allMenuItems.append( xbmcgui.ListItem(label=LANGUAGE( 32125 )) ) # My List 2
+        allMenuItems.append( xbmcgui.ListItem(label=LANGUAGE( 32126 )) ) # My List 3 
+        allLabelIDs = [ "mainmenu", "x1101", "x1102", "x1103", "x1104", "x1105", "x1106", "x1107" ]
         if isNode:
             allMenuItems.append( xbmcgui.ListItem(label=LANGUAGE( 32113 ) ) ) # Main menu + autofill submenu
             allLabelIDs.append( "mainmenu" )

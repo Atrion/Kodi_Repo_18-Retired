@@ -1,12 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-'''
+"""
     script.skin.helper.service
     Helper service and scripts for Kodi skins
     plugin_content.py
     Hidden plugin entry point providing some helper features
-'''
+"""
 
 import xbmc
 import xbmcplugin
@@ -21,7 +21,7 @@ import os
 
 
 class PluginContent:
-    '''Hidden plugin entry point providing some helper features'''
+    """Hidden plugin entry point providing some helper features"""
     params = {}
     win = None
 
@@ -41,14 +41,14 @@ class PluginContent:
         self.close()
 
     def close(self):
-        '''Cleanup Kodi Cpython instances'''
+        """Cleanup Kodi Cpython instances"""
         self.cache.close()
         self.mutils.close()
         del self.mutils
         del self.win
 
     def main(self):
-        '''main action, load correct function'''
+        """main action, load correct function"""
         action = self.params.get("action", "")
         if self.win.getProperty("SkinHelperShutdownRequested"):
             # do not proceed if kodi wants to exit
@@ -66,11 +66,11 @@ class PluginContent:
                 log_exception(__name__, exc)
 
     def load_widget(self):
-        '''legacy entrypoint called (widgets are moved to seperate addon), start redirect...'''
+        """legacy entrypoint called (widgets are moved to seperate addon), start redirect..."""
         action = self.params.get("action", "")
         newaddon = "script.skin.helper.widgets"
         log_msg("Deprecated method: %s. Please reassign your widgets to get rid of this message. -"
-                "This automatic redirect will be removed in the future" % (action), xbmc.LOGWARNING)
+                "This automatic redirect will be removed in the future" % action, xbmc.LOGWARNING)
         paramstring = ""
         for key, value in self.params.iteritems():
             paramstring += ",%s=%s" % (key, value)
@@ -91,12 +91,12 @@ class PluginContent:
                 xbmc.executebuiltin("RunPlugin(plugin://%s)" % newaddon)
 
     def playchannel(self):
-        '''play channel from widget helper'''
+        """play channel from widget helper"""
         params = {"item": {"channelid": int(self.params["channelid"])}}
         self.mutils.kodidb.set_json("Player.Open", params)
 
     def playrecording(self):
-        '''retrieve the recording and play to get resume working'''
+        """retrieve the recording and play to get resume working"""
         recording = self.mutils.kodidb.recording(self.params["recordingid"])
         params = {"item": {"recordingid": recording["recordingid"]}}
         self.mutils.kodidb.set_json("Player.Open", params)
@@ -109,35 +109,35 @@ class PluginContent:
             xbmc.Player().seekTime(recording["resume"].get("position"))
 
     def launch(self):
-        '''launch any builtin action using a plugin listitem'''
+        """launch any builtin action using a plugin listitem"""
         if "runscript" in self.params["path"]:
             self.params["path"] = self.params["path"].replace("?", ",")
         xbmc.executebuiltin(self.params["path"])
 
     def playalbum(self):
-        '''helper to play an entire album'''
+        """helper to play an entire album"""
         xbmc.executeJSONRPC(
             '{ "jsonrpc": "2.0", "method": "Player.Open", "params": { "item": { "albumid": %d } }, "id": 1 }' %
             int(self.params["albumid"]))
 
     def smartshortcuts(self):
-        '''called from skinshortcuts to retrieve listing of all smart shortcuts'''
+        """called from skinshortcuts to retrieve listing of all smart shortcuts"""
         import skinshortcuts
         skinshortcuts.get_smartshortcuts(self.params.get("path", ""))
 
     @staticmethod
     def backgrounds():
-        '''called from skinshortcuts to retrieve listing of all backgrounds'''
+        """called from skinshortcuts to retrieve listing of all backgrounds"""
         import skinshortcuts
         skinshortcuts.get_backgrounds()
 
     def widgets(self):
-        '''called from skinshortcuts to retrieve listing of all widgetss'''
+        """called from skinshortcuts to retrieve listing of all widgetss"""
         import skinshortcuts
         skinshortcuts.get_widgets(self.params.get("path", ""), self.params.get("sublevel", ""))
 
     def resourceimages(self):
-        '''retrieve listing of specific resource addon images'''
+        """retrieve listing of specific resource addon images"""
         from resourceaddons import get_resourceimages
         addontype = self.params.get("addontype", "")
         for item in get_resourceimages(addontype, True):
@@ -147,7 +147,7 @@ class PluginContent:
         xbmcplugin.endOfDirectory(handle=int(sys.argv[1]))
 
     def extrafanart(self):
-        '''helper to display extrafanart in multiimage control in the skin'''
+        """helper to display extrafanart in multiimage control in the skin"""
         fanarts = eval(self.params["fanarts"])
         # process extrafanarts
         for count, item in enumerate(fanarts):
@@ -157,7 +157,7 @@ class PluginContent:
         xbmcplugin.endOfDirectory(handle=int(sys.argv[1]))
 
     def extraposter(self):
-        '''helper to display extraposter in multiimage control in the skin'''
+        """helper to display extraposter in multiimage control in the skin"""
         posters = eval(self.params["posters"])
         # process extraposters
         for count, item in enumerate(posters):
@@ -167,7 +167,7 @@ class PluginContent:
         xbmcplugin.endOfDirectory(handle=int(sys.argv[1]))
 
     def genrebackground(self):
-        '''helper to display images for a specific genre in multiimage control in the skin'''
+        """helper to display images for a specific genre in multiimage control in the skin"""
         genre = self.params.get("genre").split(".")[0]
         arttype = self.params.get("arttype", "fanart")
         randomize = self.params.get("random", "false") == "true"
@@ -191,7 +191,7 @@ class PluginContent:
         xbmcplugin.endOfDirectory(handle=int(sys.argv[1]))
 
     def getcastmedia(self):
-        '''helper to display get all media for a specific actor'''
+        """helper to display get all media for a specific actor"""
         name = self.params.get("name")
         if name:
             all_items = self.mutils.kodidb.castmedia(name)
@@ -201,7 +201,7 @@ class PluginContent:
         xbmcplugin.endOfDirectory(handle=int(sys.argv[1]))
 
     def getcast(self):
-        '''helper to get all cast for a given media item'''
+        """helper to get all cast for a given media item"""
         db_id = None
         all_cast = []
         all_cast_names = list()
@@ -304,13 +304,13 @@ class PluginContent:
 
     @staticmethod
     def alphabet():
-        '''display an alphabet scrollbar in listings'''
+        """display an alphabet scrollbar in listings"""
         all_letters = []
         if xbmc.getInfoLabel("Container.NumItems"):
             for i in range(int(xbmc.getInfoLabel("Container.NumItems"))):
                 all_letters.append(xbmc.getInfoLabel("Listitem(%s).SortLetter" % i).upper())
             start_number = ""
-            for number in ["2", "3", "4", "5", "6", "7", "8", "9"]:
+            for number in ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]:
                 if number in all_letters:
                     start_number = number
                     break
@@ -330,32 +330,34 @@ class PluginContent:
         xbmcplugin.endOfDirectory(handle=int(sys.argv[1]))
 
     def alphabetletter(self):
-        '''used with the alphabet scrollbar to jump to a letter'''
+        """used with the alphabet scrollbar to jump to a letter"""
         if KODI_VERSION > 16:
             xbmcplugin.setResolvedUrl(handle=int(sys.argv[1]), succeeded=False, listitem=xbmcgui.ListItem())
         letter = self.params.get("letter", "").upper()
         jumpcmd = ""
-        if letter in ["A", "B", "C", "2"]:
-            jumpcmd = "2"
-        elif letter in ["D", "E", "F", "3"]:
-            jumpcmd = "3"
-        elif letter in ["G", "H", "I", "4"]:
-            jumpcmd = "4"
-        elif letter in ["J", "K", "L", "5"]:
-            jumpcmd = "5"
-        elif letter in ["M", "N", "O", "6"]:
-            jumpcmd = "6"
-        elif letter in ["P", "Q", "R", "S", "7"]:
-            jumpcmd = "7"
-        elif letter in ["T", "U", "V", "8"]:
-            jumpcmd = "8"
-        elif letter in ["W", "X", "Y", "Z", "9"]:
-            jumpcmd = "9"
+        if letter in ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]:
+            jumpcmd = "firstpage"
+        elif letter in ["A", "B", "C"]:
+            jumpcmd = "jumpsms2"
+        elif letter in ["D", "E", "F"]:
+            jumpcmd = "jumpsms3"
+        elif letter in ["G", "H", "I"]:
+            jumpcmd = "jumpsms4"
+        elif letter in ["J", "K", "L"]:
+            jumpcmd = "jumpsms5"
+        elif letter in ["M", "N", "O"]:
+            jumpcmd = "jumpsms6"
+        elif letter in ["P", "Q", "R", "S"]:
+            jumpcmd = "jumpsms7"
+        elif letter in ["T", "U", "V"]:
+            jumpcmd = "jumpsms8"
+        elif letter in ["W", "X", "Y", "Z"]:
+            jumpcmd = "jumpsms9"
         if jumpcmd:
             xbmc.executebuiltin("SetFocus(50)")
             for i in range(40):
                 xbmc.executeJSONRPC('{ "jsonrpc": "2.0", "method": "Input.ExecuteAction",\
-                    "params": { "action": "jumpsms%s" }, "id": 1 }' % (jumpcmd))
+                    "params": { "action": "%s" }, "id": 1 }' % jumpcmd)
                 xbmc.sleep(50)
                 if xbmc.getInfoLabel("ListItem.Sortletter").upper() == letter:
                     break

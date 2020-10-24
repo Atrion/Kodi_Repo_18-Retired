@@ -862,7 +862,7 @@ class DataFunctions():
         elif action == "reset()" or action == "reset":
             return "System.CanReboot"
         elif action == "system.logoff":
-            return "[System.HasLoginScreen | IntegerGreaterThan(System.ProfileCount,1)] + System.Loggedon"
+            return "[System.HasLoginScreen | Integer.IsGreater(System.ProfileCount,1)] + System.Loggedon"
         elif action == "mastermode":
             return "System.HasLocks"
         elif action == "inhibitidleshutdown(true)":

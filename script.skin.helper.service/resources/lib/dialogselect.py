@@ -1,18 +1,18 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-'''
+"""
     script.skin.helper.service
     dialogselect.py
     Wrapper around Kodi's dialogselect
-'''
+"""
 
 import xbmcgui
 import xbmc
 from utils import getCondVisibility
 
 class DialogSelect(xbmcgui.WindowXMLDialog):
-    '''Wrapper around Kodi dialogselect to use for the custom skin settings etc.'''
+    """Wrapper around Kodi dialogselect to use for the custom skin settings etc."""
 
     def __init__(self, *args, **kwargs):
         xbmcgui.WindowXMLDialog.__init__(self)
@@ -27,7 +27,7 @@ class DialogSelect(xbmcgui.WindowXMLDialog):
         self.result = None
 
     def close_dialog(self, cancelled=False):
-        '''close dialog and return value'''
+        """close dialog and return value"""
         if cancelled:
             self.result = False
         elif self.multiselect:
@@ -43,7 +43,7 @@ class DialogSelect(xbmcgui.WindowXMLDialog):
         self.close()
 
     def onInit(self):
-        '''Initialization when the window is loaded'''
+        """Initialization when the window is loaded"""
 
         # set correct list
         self.set_list_control()
@@ -57,7 +57,7 @@ class DialogSelect(xbmcgui.WindowXMLDialog):
         self.autofocus_listitem()
 
     def autofocus_listitem(self):
-        '''select initial item in the list'''
+        """select initial item in the list"""
         if self.autofocus_id:
             try:
                 self.list_control.selectItem(self.autofocus_id)
@@ -72,7 +72,7 @@ class DialogSelect(xbmcgui.WindowXMLDialog):
                 self.list_control.selectItem(0)
 
     def onAction(self, action):
-        '''Respond to Kodi actions e.g. exit'''
+        """Respond to Kodi actions e.g. exit"""
         if action.getId() in (9, 10, 92, 216, 247, 257, 275, 61467, 61448, ):
             self.close_dialog(True)
 
@@ -91,7 +91,7 @@ class DialogSelect(xbmcgui.WindowXMLDialog):
                 self.close_dialog()
 
     def onClick(self, controlID):
-        '''Fires if user clicks the dialog'''
+        """Fires if user clicks the dialog"""
 
         if controlID == 6 and self.multiselect:
             pass
@@ -111,7 +111,7 @@ class DialogSelect(xbmcgui.WindowXMLDialog):
             self.close_dialog(True)
 
     def set_list_control(self):
-        '''select correct list (3=small, 6=big with icons)'''
+        """select correct list (3=small, 6=big with icons)"""
 
         # set list id 6 if available for rich dialog
         if self.richlayout:
@@ -135,7 +135,7 @@ class DialogSelect(xbmcgui.WindowXMLDialog):
             self.getControl(5).setVisible(False)
 
     def set_cancel_button(self):
-        '''set cancel button if exists'''
+        """set cancel button if exists"""
         try:
             self.getControl(7).setLabel(xbmc.getLocalizedString(222))
             self.getControl(7).setVisible(True)

@@ -1,12 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-'''
+"""
     script.skin.helper.service
     Helper service and scripts for Kodi skins
     webservice.py
     Simple webservice to directly retrieve metadata from artwork module
-'''
+"""
 
 import cherrypy
 import threading
@@ -28,13 +28,13 @@ class Root:
 
     @cherrypy.expose
     def default(self, path):
-        '''all other requests go here'''
+        """all other requests go here"""
         log_msg("Webservice: Unknown method called ! (%s)" % path, xbmc.LOGWARNING)
         raise cherrypy.HTTPError(404, "Unknown method called")
 
     @cherrypy.expose
     def getartwork(self, **kwargs):
-        '''get video artwork and metadata'''
+        """get video artwork and metadata"""
         log_msg("webservice.getartwork called with args: %s" % kwargs)
         title = kwargs.get("title", "")
         year = kwargs.get("year", "")
@@ -48,13 +48,13 @@ class Root:
             if omdb_details:
                 imdb_id = omdb_details.get("imdbnumber")
                 if not media_type:
-                    media_type = omdb_details.get("media_type","")
+                    media_type = omdb_details.get("media_type", "")
         if imdb_id:
             artwork = self.__mutils.get_extended_artwork(imdb_id, "", "", media_type)
         return self.handle_artwork(artwork, kwargs)
 
     def genreimages(self, params):
-        '''get images for given genre'''
+        """get images for given genre"""
         log_msg("webservice.genreimages called with args: %s" % params)
         genre = params.get("title", "")
         arttype = params.get("type", "").split(".")[0]
@@ -93,7 +93,7 @@ class Root:
 
     @cherrypy.expose
     def getpvrthumb(self, **kwargs):
-        '''get pvr images'''
+        """get pvr images"""
         log_msg("webservice.getpvrthumb called with args: %s" % kwargs)
         title = kwargs.get("title", "")
         channel = kwargs.get("channel", "")
@@ -103,13 +103,13 @@ class Root:
 
     @cherrypy.expose
     def getallpvrthumb(self, **kwargs):
-        '''get all pvr images'''
+        """get all pvr images"""
         kwargs["json"] = "true"
         return self.getpvrthumb(**kwargs)
 
     @cherrypy.expose
     def getmusicart(self, **kwargs):
-        '''get pvr images'''
+        """get pvr images"""
         log_msg("webservice.getmusicart called with args: %s" % kwargs)
         artist = kwargs.get("artist", "")
         album = kwargs.get("album", "")
@@ -119,7 +119,7 @@ class Root:
 
     @cherrypy.expose
     def getthumb(self, **kwargs):
-        '''get generic thumb image from google/youtube'''
+        """get generic thumb image from google/youtube"""
         log_msg("webservice.getthumb called with args: %s" % kwargs)
         title = kwargs.get("title", "")
         preferred_types, is_json_request, fallback = self.get_common_params(kwargs)
@@ -130,7 +130,7 @@ class Root:
 
     @cherrypy.expose
     def getvarimage(self, **kwargs):
-        '''get image from kodi variable/resource addon'''
+        """get image from kodi variable/resource addon"""
         log_msg("webservice.getvarimage called with args: %s" % kwargs)
         preferred_types, is_json_request, fallback = self.get_common_params(kwargs)
         title = kwargs.get("title", "")
@@ -147,7 +147,7 @@ class Root:
         return self.handle_image(image)
 
     def handle_artwork(self, artwork, params):
-        '''handle the requested images'''
+        """handle the requested images"""
         preferred_types, is_json_request, fallback = self.get_common_params(params)
         if is_json_request:
             return self.handle_json(artwork)
@@ -155,8 +155,9 @@ class Root:
             image = self.get_image(artwork, preferred_types, fallback)
             return self.handle_image(image)
 
-    def handle_image(self, image):
-        '''serve image'''
+    @staticmethod
+    def handle_image(image):
+        """serve image"""
         if image:
             # send single image
             try:
@@ -177,8 +178,9 @@ class Root:
         else:
             raise cherrypy.HTTPError(404, "No image found matching the criteria")
 
-    def handle_json(self, artwork):
-        '''send the complete details as json object'''
+    @staticmethod
+    def handle_json(artwork):
+        """send the complete details as json object"""
         artwork = json.dumps(artwork)
         cherrypy.response.headers['Content-Type'] = 'application/json'
         cherrypy.response.headers['Content-Length'] = len(artwork)
@@ -187,7 +189,7 @@ class Root:
 
     @staticmethod
     def get_common_params(params):
-        '''parse the common parameters from the arguments'''
+        """parse the common parameters from the arguments"""
         preferred_types = params.get("type")
         if preferred_types:
             preferred_types = preferred_types.split(",")
@@ -207,7 +209,7 @@ class Root:
 
     @staticmethod
     def get_image(artwork, preferred_types, fallback):
-        '''get the preferred image from the results'''
+        """get the preferred image from the results"""
         image = ""
         if artwork and artwork.get("art"):
             artwork = artwork["art"]
@@ -235,10 +237,8 @@ class WebService(threading.Thread):
     def __init__(self, metadatautils):
         self.__root = Root(metadatautils)
         cherrypy.config.update({
-            'engine.autoreload.on' : False,
-            'log.screen': False,
-            'engine.timeout_monitor.frequency': 5,
-            'server.shutdown_timeout': 1,
+            'engine.autoreload.on': False,
+            'log.screen': False
         })
         threading.Thread.__init__(self)
 
@@ -256,4 +256,3 @@ class WebService(threading.Thread):
         cherrypy.engine.exit()
         self.join(0)
         del self.__root
- 

@@ -1,12 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-'''
+"""
     script.skin.helper.service
     Helper service and scripts for Kodi skins
     skinshortcuts.py
     Methods to connect skinhelper to skinshortcuts for smartshortcuts, widgets and backgrounds
-'''
+"""
 
 from utils import kodi_json, log_msg, urlencode, ADDON_ID, getCondVisibility
 from metadatautils import MetadataUtils
@@ -27,7 +27,7 @@ if getCondVisibility("System.Hasaddon(script.extendedinfo)"):
 
 
 def add_directoryitem(entry, is_folder=True, widget=None, widget2=None):
-    '''helper to create a listitem for our smartshortcut node'''
+    """helper to create a listitem for our smartshortcut node"""
     label = "$INFO[Window(Home).Property(%s.title)]" % entry
     path = "$INFO[Window(Home).Property(%s.path)]" % entry
     content = "$INFO[Window(Home).Property(%s.content)]" % entry
@@ -92,7 +92,8 @@ def add_directoryitem(entry, is_folder=True, widget=None, widget2=None):
 
 
 def smartshortcuts_sublevel(entry):
-    '''get subnodes for smartshortcut node'''
+    """get subnodes for smartshortcut node"""
+    content_strings = []
     if "emby" in entry:
         content_strings = [
             "",
@@ -144,13 +145,11 @@ def smartshortcuts_sublevel(entry):
 
 
 def get_smartshortcuts(sublevel=None):
-    '''called from skinshortcuts to retrieve listing of all smart shortcuts'''
+    """called from skinshortcuts to retrieve listing of all smart shortcuts"""
     xbmcplugin.setContent(int(sys.argv[1]), 'files')
     if sublevel:
         smartshortcuts_sublevel(sublevel)
     else:
-
-        all_smartshortcuts = xbmc.getInfoLabel("Window(Home).Property(all_smartshortcuts)")
         win = xbmcgui.Window(10000)
         all_smartshortcuts = win.getProperty("all_smartshortcuts")
 
@@ -166,7 +165,7 @@ def get_smartshortcuts(sublevel=None):
 
 
 def smartshortcuts_widgets():
-    '''get the widget nods for smartshortcuts'''
+    """get the widget nods for smartshortcuts"""
     widgets = []
     all_smartshortcuts = xbmc.getInfoLabel("Window(Home).Property(all_smartshortcuts)")
     if all_smartshortcuts:
@@ -184,7 +183,7 @@ def smartshortcuts_widgets():
 
 
 def item_filter_mapping():
-    '''map label to each filtertype'''
+    """map label to each filtertype"""
     mappings = []
     mappings.append(("scriptwidgets", xbmc.getInfoLabel("System.AddonTitle(script.skin.helper.widgets)")))
     mappings.append(("librarydataprovider", xbmc.getInfoLabel("System.AddonTitle(service.library.data.provider)")))
@@ -197,7 +196,7 @@ def item_filter_mapping():
 
 
 def get_item_filter_label(filterkey):
-    '''gets the label for the fiven filterkey'''
+    """gets the label for the fiven filterkey"""
     label = ""
     for item in item_filter_mapping():
         if item[0] == filterkey:
@@ -206,7 +205,7 @@ def get_item_filter_label(filterkey):
 
 
 def get_widgets(item_filter="", sublevel=""):
-    '''get all widgets provider by several plugins and listings'''
+    """get all widgets provider by several plugins and listings"""
     xbmcplugin.setContent(int(sys.argv[1]), 'files')
     if item_filter:
         # skinner has provided a comma seperated list of widgetitems to include in the listing
@@ -324,7 +323,7 @@ def get_widgets(item_filter="", sublevel=""):
 
 
 def get_skinhelper_backgrounds():
-    '''retrieve listing of all backgrounds as provided by skinhelper backgrounds addon'''
+    """retrieve listing of all backgrounds as provided by skinhelper backgrounds addon"""
     result = []
     backgrounds = xbmc.getInfoLabel("Window(Home).Property(SkinHelper.AllBackgrounds)")
     if backgrounds:
@@ -355,7 +354,7 @@ def get_skinhelper_backgrounds():
 
 
 def get_backgrounds():
-    '''called from skinshortcuts to retrieve listing of all backgrounds'''
+    """called from skinshortcuts to retrieve listing of all backgrounds"""
     xbmcplugin.setContent(int(sys.argv[1]), 'files')
     for label, image in get_skinhelper_backgrounds():
         listitem = xbmcgui.ListItem(label, path=image)
@@ -366,7 +365,7 @@ def get_backgrounds():
 
 
 def playlists_widgets():
-    '''skin provided playlists'''
+    """skin provided playlists"""
     widgets = []
     import xml.etree.ElementTree as xmltree
     for playlist_path in ["special://skin/playlists/",
@@ -402,7 +401,7 @@ def playlists_widgets():
 
 
 def plugin_widgetlisting(pluginpath, sublevel=""):
-    '''get all nodes in a plugin listing'''
+    """get all nodes in a plugin listing"""
     widgets = []
     if sublevel:
         media_array = kodi_json('Files.GetDirectory', {"directory": pluginpath, "media": "files"})
@@ -453,7 +452,7 @@ def plugin_widgetlisting(pluginpath, sublevel=""):
 
 
 def favourites_widgets():
-    '''widgets from favourites'''
+    """widgets from favourites"""
     favourites = kodi_json('Favourites.GetFavourites',
                            {"type": None, "properties": ["path", "thumbnail", "window", "windowparameter"]})
     widgets = []
@@ -475,7 +474,7 @@ def favourites_widgets():
 
 
 def static_widgets():
-    '''static widget nodes which are hardcoded in a skin'''
+    """static widget nodes which are hardcoded in a skin"""
     widgets = []
     addon = xbmcaddon.Addon(ADDON_ID)
     widgets.append([xbmc.getLocalizedString(8), "$INCLUDE[WeatherWidget]", "static"])
@@ -488,7 +487,7 @@ def static_widgets():
 
 
 def extendedinfo_youtube_widgets():
-    '''the youtube nodes from extendedinfo addon'''
+    """the youtube nodes from extendedinfo addon"""
     # some additional entrypoints for extendedinfo...
     widgets = []
     entrypoints = [
@@ -503,7 +502,7 @@ def extendedinfo_youtube_widgets():
 
 
 def set_skinshortcuts_property(property_name="", value="", label=""):
-    '''set custom property in skinshortcuts menu editor'''
+    """set custom property in skinshortcuts menu editor"""
     if value or label:
         wait_for_skinshortcuts_window()
         xbmc.sleep(250)
@@ -521,7 +520,7 @@ def set_skinshortcuts_property(property_name="", value="", label=""):
 
 
 def wait_for_skinshortcuts_window():
-    '''wait untill skinshortcuts is active window (because of any animations that may have been applied)'''
+    """wait untill skinshortcuts is active window (because of any animations that may have been applied)"""
     for i in range(40):
         if not (getCondVisibility(
                 "Window.IsActive(DialogSelect.xml) | "

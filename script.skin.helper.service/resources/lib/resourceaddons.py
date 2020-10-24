@@ -1,18 +1,18 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-'''
+"""
     script.skin.helper.service
     Helper service and scripts for Kodi skins
     resourceaddons.py
     several helpers to get data/images from kodi image resource addons
-'''
+"""
 
 import xbmc
 import xbmcvfs
 import xbmcgui
 import xbmcaddon
-from utils import KODI_VERSION, ADDON_ID, log_exception, kodi_json, getCondVisibility
+from utils import KODI_VERSION, ADDON_ID, log_exception, kodi_json, getCondVisibility, busyDialog
 from dialogselect import DialogSelect
 import urllib2
 import re
@@ -20,8 +20,8 @@ from simplecache import SimpleCache
 
 
 def setresourceaddon(addontype, skinstring="", header=""):
-    '''helper to let the user choose a resource addon and set that as skin string'''
-    xbmc.executebuiltin("ActivateWindow(busydialog)")
+    """helper to let the user choose a resource addon and set that as skin string"""
+    busyDialog("activate")
     cur_value = xbmc.getInfoLabel("Skin.String(%s.name)" % skinstring).decode("utf-8")
     listing = []
     addon = xbmcaddon.Addon(ADDON_ID)
@@ -102,8 +102,8 @@ def setresourceaddon(addontype, skinstring="", header=""):
 
 
 def downloadresourceaddons(addontype):
-    '''show dialog with all available resource addons on the repo so the user can install one'''
-    xbmc.executebuiltin("ActivateWindow(busydialog)")
+    """show dialog with all available resource addons on the repo so the user can install one"""
+    busyDialog("activate")
     listitems = []
     addon = xbmcaddon.Addon(ADDON_ID)
     for item in get_repo_resourceaddons(addontype):
@@ -148,7 +148,7 @@ def downloadresourceaddons(addontype):
 
 
 def checkresourceaddons(addonslist):
-    '''allow the skinner to perform a basic check if some required resource addons are available'''
+    """allow the skinner to perform a basic check if some required resource addons are available"""
     addon = xbmcaddon.Addon(ADDON_ID)
     for item in addonslist:
         setting = item.split(";")[0]
@@ -157,7 +157,7 @@ def checkresourceaddons(addonslist):
         skinsetting = xbmc.getInfoLabel("Skin.String(%s.path)" % setting).decode("utf-8")
         if not skinsetting or (skinsetting and
                                getCondVisibility("!System.HasAddon(%s)" %
-                                                      skinsetting.replace("resource://", "").replace("/", ""))):
+                                                 skinsetting.replace("resource://", "").replace("/", ""))):
             # skin setting is empty or filled with non existing addon...
             if not checkresourceaddon(setting, addontype):
                 ret = xbmcgui.Dialog().yesno(
@@ -171,7 +171,7 @@ def checkresourceaddons(addonslist):
 
 
 def checkresourceaddon(skinstring="", addontype=""):
-    ''' check for existing resource addons of specified type and set first one found'''
+    """ check for existing resource addons of specified type and set first one found"""
     if not addontype:
         addontype = params.get("addontype")
     if not skinstring:
@@ -184,14 +184,14 @@ def checkresourceaddon(skinstring="", addontype=""):
             xbmc.executebuiltin("Skin.SetString(%s.label,%s)" % (skinstring, item['name']))
             is_multi, extension = get_multi_extension(item["path"])
             if is_multi:
-                xbmc.executebuiltin("Skin.SetBool(%s.multi)" % (skinstring))
+                xbmc.executebuiltin("Skin.SetBool(%s.multi)" % skinstring)
             xbmc.executebuiltin("Skin.SetString(%s.ext,%s)" % (skinstring, extension))
             return True
     return False
 
 
 def get_resourceaddons(filterstr=""):
-    '''helper to retrieve all installed resource addons'''
+    """helper to retrieve all installed resource addons"""
     result = []
     params = {"type": "kodi.resource.images",
               "properties": ["name", "thumbnail", "path", "author"]}
@@ -204,7 +204,7 @@ def get_resourceaddons(filterstr=""):
 
 
 def get_multi_extension(filepath):
-    '''check if resource addon or custom path has subfolders (multiimage)'''
+    """check if resource addon or custom path has subfolders (multiimage)"""
     is_multi = False
     extension = ""
     dirs, files = xbmcvfs.listdir(filepath)
@@ -214,11 +214,11 @@ def get_multi_extension(filepath):
         for item in files:
             extension = "." + item.split(".")[-1]
             break
-    return (is_multi, extension)
+    return is_multi, extension
 
 
 def get_repo_resourceaddons(filterstr=""):
-    '''helper to retrieve all available resource addons on the kodi repo'''
+    """helper to retrieve all available resource addons on the kodi repo"""
     result = []
     simplecache = SimpleCache()
     for item in xbmcvfs.listdir("addons://all/kodi.resource.images/")[1]:
@@ -234,7 +234,7 @@ def get_repo_resourceaddons(filterstr=""):
 
 
 def get_repo_addoninfo(addonid, simplecache=None):
-    '''tries to grab info about the addon from kodi repo addons listing'''
+    """tries to grab info about the addon from kodi repo addons listing"""
     if simplecache:
         cache = simplecache
         cachestr = "skinhelper.addoninfo.%s" % addonid
@@ -273,7 +273,7 @@ def get_repo_addoninfo(addonid, simplecache=None):
 
 
 def get_resourceimages(addontype, recursive=False):
-    '''retrieve listing of specific resource addon images'''
+    """retrieve listing of specific resource addon images"""
     images = []
     for addon in get_resourceaddons(addontype):
         addonpath = addon["path"]
@@ -284,7 +284,7 @@ def get_resourceimages(addontype, recursive=False):
 
 
 def walk_directory(browsedir, recursive=False, label2=""):
-    '''list all images in a directory'''
+    """list all images in a directory"""
     images = []
     if xbmcvfs.exists(browsedir):
         dirs = xbmcvfs.listdir(browsedir)[0]

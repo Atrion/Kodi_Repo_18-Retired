@@ -1,26 +1,26 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-'''
+"""
     script.skin.helper.service
     Helper service and scripts for Kodi skins
     main_service.py
     Background service running the various threads
-'''
+"""
 
 from utils import log_msg, ADDON_ID, log_exception
 from skinsettings import SkinSettings
 from listitem_monitor import ListItemMonitor
 from kodi_monitor import KodiMonitor
-from webservice import WebService
 from metadatautils import MetadataUtils
 import xbmc
 import xbmcaddon
 import xbmcgui
+from webservice import WebService
 
 
 class MainService:
-    '''our main background service running the various threads'''
+    """our main background service running the various threads"""
     last_skin = ""
 
     def __init__(self):
@@ -54,7 +54,7 @@ class MainService:
         self.close()
 
     def close(self):
-        '''Cleanup Kodi Cpython instances'''
+        """Cleanup Kodi Cpython instances"""
         self.webservice.stop()
         self.win.setProperty("SkinHelperShutdownRequested", "shutdown")
         log_msg('Shutdown requested !', xbmc.LOGNOTICE)
@@ -62,12 +62,12 @@ class MainService:
         self.metadatautils.close()
         del self.win
         del self.kodimonitor
-        #del self.metadatautils
-        #del self.webservice
+        # del self.metadatautils
+        # del self.webservice
         log_msg('%s version %s stopped' % (self.addonname, self.addonversion), xbmc.LOGNOTICE)
 
     def check_skin_version(self):
-        '''check if skin changed'''
+        """check if skin changed"""
         try:
             skin = xbmc.getSkinDir()
             skin_addon = xbmcaddon.Addon(id=skin)

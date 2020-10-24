@@ -1,12 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-'''
+"""
     script.skin.helper.service
     Helper service and scripts for Kodi skins
     utils.py
     Various helper methods
-'''
+"""
 
 import xbmc
 import xbmcvfs
@@ -26,20 +26,20 @@ KODILANGUAGE = xbmc.getLanguage(xbmc.ISO_639_1)
 
 
 def log_msg(msg, loglevel=xbmc.LOGDEBUG):
-    '''log message to kodi log'''
+    """log message to kodi log"""
     if isinstance(msg, unicode):
         msg = msg.encode('utf-8')
     xbmc.log("Skin Helper Service --> %s" % msg, level=loglevel)
 
 
 def log_exception(modulename, exceptiondetails):
-    '''helper to properly log an exception'''
+    """helper to properly log an exception"""
     log_msg(format_exc(sys.exc_info()), xbmc.LOGWARNING)
     log_msg("Exception in %s ! --> %s" % (modulename, exceptiondetails), xbmc.LOGERROR)
 
 
 def kodi_json(jsonmethod, params=None, returntype=None):
-    '''get info from the kodi json api'''
+    """get info from the kodi json api"""
     kodi_json = {}
     kodi_json["jsonrpc"] = "2.0"
     kodi_json["method"] = jsonmethod
@@ -74,7 +74,7 @@ def kodi_json(jsonmethod, params=None, returntype=None):
 
 
 def try_encode(text, encoding="utf-8"):
-    '''helper to encode a string to utf-8'''
+    """helper to encode a string to utf-8"""
     try:
         return text.encode(encoding, "ignore")
     except Exception:
@@ -82,7 +82,7 @@ def try_encode(text, encoding="utf-8"):
 
 
 def try_decode(text, encoding="utf-8"):
-    '''helper to decode a string into unicode'''
+    """helper to decode a string into unicode"""
     try:
         return text.decode(encoding, "ignore")
     except Exception:
@@ -90,14 +90,14 @@ def try_decode(text, encoding="utf-8"):
 
 
 def urlencode(text):
-    '''urlencode a string'''
+    """urlencode a string"""
     blah = urllib.urlencode({'blahblahblah': try_encode(text)})
     blah = blah[13:]
     return blah
 
 
 def get_current_content_type(containerprefix=""):
-    '''tries to determine the mediatype for the current listitem'''
+    """tries to determine the mediatype for the current listitem"""
     content_type = ""
     if not containerprefix:
         if getCondVisibility("Container.Content(episodes)"):
@@ -105,8 +105,8 @@ def get_current_content_type(containerprefix=""):
         elif getCondVisibility("Container.Content(movies) + !String.Contains(Container.FolderPath,setid=)"):
             content_type = "movies"
         elif getCondVisibility("[Container.Content(sets) | "
-                                    "String.IsEqual(Container.Folderpath,videodb://movies/sets/)] + "
-                                    "!String.Contains(Container.FolderPath,setid=)"):
+                               "String.IsEqual(Container.Folderpath,videodb://movies/sets/)] + "
+                               "!String.Contains(Container.FolderPath,setid=)"):
             content_type = "sets"
         elif getCondVisibility("String.Contains(Container.FolderPath,setid=)"):
             content_type = "setmovies"
@@ -119,17 +119,17 @@ def get_current_content_type(containerprefix=""):
         elif getCondVisibility("Container.Content(musicvideos)"):
             content_type = "musicvideos"
         elif getCondVisibility("Container.Content(songs) | "
-                                    "String.IsEqual(Container.FolderPath,musicdb://singles/)"):
+                               "String.IsEqual(Container.FolderPath,musicdb://singles/)"):
             content_type = "songs"
         elif getCondVisibility("Container.Content(artists)"):
             content_type = "artists"
         elif getCondVisibility("Container.Content(albums)"):
             content_type = "albums"
         elif getCondVisibility("Window.IsActive(MyPVRChannels.xml) | Window.IsActive(MyPVRGuide.xml) | "
-                                    "Window.IsActive(MyPVRSearch.xml) | Window.IsActive(pvrguideinfo)"):
+                               "Window.IsActive(MyPVRSearch.xml) | Window.IsActive(pvrguideinfo)"):
             content_type = "tvchannels"
         elif getCondVisibility("Window.IsActive(MyPVRRecordings.xml) | Window.IsActive(MyPVRTimers.xml) | "
-                                    "Window.IsActive(pvrrecordinginfo)"):
+                               "Window.IsActive(pvrrecordinginfo)"):
             content_type = "tvrecordings"
         elif getCondVisibility("Window.IsActive(programs) | Window.IsActive(addonbrowser)"):
             content_type = "addons"
@@ -146,38 +146,39 @@ def get_current_content_type(containerprefix=""):
         elif getCondVisibility("!String.IsEmpty(%sListItem.Property(DBTYPE))" % containerprefix):
             content_type = xbmc.getInfoLabel("%sListItem.Property(DBTYPE)" % containerprefix) + "s"
         elif getCondVisibility("String.Contains(%sListItem.FileNameAndPath,playrecording) | "
-                                    "String.Contains(%sListItem.FileNameAndPath,tvtimer)"
-                                    % (containerprefix, containerprefix)):
+                               "String.Contains(%sListItem.FileNameAndPath,tvtimer)"
+                               % (containerprefix, containerprefix)):
             content_type = "tvrecordings"
-        elif getCondVisibility("String.Contains(%sListItem.FileNameAndPath,launchpvr)" % (containerprefix)):
+        elif getCondVisibility("String.Contains(%sListItem.FileNameAndPath,launchpvr)" % containerprefix):
             content_type = "tvchannels"
         elif getCondVisibility("String.Contains(%sListItem.FolderPath,pvr://channels)" % containerprefix):
             content_type = "tvchannels"
-        elif getCondVisibility("String.Contains(%sListItem.FolderPath,flix2kodi) + String.Contains(%sListItem.Genre,Series)"
-                                    % (containerprefix, containerprefix)):
+        elif getCondVisibility(
+                "String.Contains(%sListItem.FolderPath,flix2kodi) + String.Contains(%sListItem.Genre,Series)"
+                % (containerprefix, containerprefix)):
             content_type = "tvshows"
-        elif getCondVisibility("String.Contains(%sListItem.FolderPath,flix2kodi)" % (containerprefix)):
+        elif getCondVisibility("String.Contains(%sListItem.FolderPath,flix2kodi)" % containerprefix):
             content_type = "movies"
         elif getCondVisibility("!String.IsEmpty(%sListItem.Artist) + String.IsEqual(%sListItem.Label,%sListItem.Artist)"
-                                    % (containerprefix, containerprefix, containerprefix)):
+                               % (containerprefix, containerprefix, containerprefix)):
             content_type = "artists"
         elif getCondVisibility("!String.IsEmpty(%sListItem.Album) + String.IsEqual(%sListItem.Label,%sListItem.Album)"
-                                    % (containerprefix, containerprefix, containerprefix)):
+                               % (containerprefix, containerprefix, containerprefix)):
             content_type = "albums"
         elif getCondVisibility("!String.IsEmpty(%sListItem.Artist) + !String.IsEmpty(%sListItem.Album)"
-                                    % (containerprefix, containerprefix)):
+                               % (containerprefix, containerprefix)):
             content_type = "songs"
         elif getCondVisibility("!String.IsEmpty(%sListItem.TvShowTitle) + "
-                                    "String.IsEqual(%sListItem.Title,%sListItem.TvShowTitle)"
-                                    % (containerprefix, containerprefix, containerprefix)):
+                               "String.IsEqual(%sListItem.Title,%sListItem.TvShowTitle)"
+                               % (containerprefix, containerprefix, containerprefix)):
             content_type = "tvshows"
-        elif getCondVisibility("!String.IsEmpty(%sListItem.Property(TotalEpisodes))" % (containerprefix)):
+        elif getCondVisibility("!String.IsEmpty(%sListItem.Property(TotalEpisodes))" % containerprefix):
             content_type = "tvshows"
         elif getCondVisibility("!String.IsEmpty(%sListItem.TvshowTitle) + !String.IsEmpty(%sListItem.Season)"
-                                    % (containerprefix, containerprefix)):
+                               % (containerprefix, containerprefix)):
             content_type = "episodes"
         elif getCondVisibility("String.IsEmpty(%sListItem.TvshowTitle) + !String.IsEmpty(%sListItem.Year)"
-                                    % (containerprefix, containerprefix)):
+                               % (containerprefix, containerprefix)):
             content_type = "movies"
         elif getCondVisibility("String.Contains(%sListItem.FolderPath,movies)" % containerprefix):
             content_type = "movies"
@@ -185,13 +186,13 @@ def get_current_content_type(containerprefix=""):
             content_type = "tvshows"
         elif getCondVisibility("String.Contains(%sListItem.FolderPath,episodes)" % containerprefix):
             content_type = "episodes"
-        elif getCondVisibility("!String.IsEmpty(%sListItem.Property(ChannelLogo))" % (containerprefix)):
+        elif getCondVisibility("!String.IsEmpty(%sListItem.Property(ChannelLogo))" % containerprefix):
             content_type = "tvchannels"
     return content_type
 
 
 def recursive_delete_dir(path):
-    '''helper to recursively delete a directory'''
+    """helper to recursively delete a directory"""
     success = True
     path = try_encode(path)
     dirs, files = xbmcvfs.listdir(path)
@@ -204,7 +205,7 @@ def recursive_delete_dir(path):
 
 
 def prepare_win_props(details, prefix=u"SkinHelper.ListItem."):
-    '''helper to pretty string-format a dict with details to key/value pairs so it can be used as window props'''
+    """helper to pretty string-format a dict with details to key/value pairs so it can be used as window props"""
     items = []
     if details:
         for key, value in details.iteritems():
@@ -234,30 +235,44 @@ def prepare_win_props(details, prefix=u"SkinHelper.ListItem."):
 
 
 def merge_dict(dict_a, dict_b, allow_overwrite=False):
-    '''append values to a dict without overwriting any existing values'''
+    """append values to a dict without overwriting any existing values"""
     if not dict_a and dict_b:
         return dict_b
     if not dict_b:
         return dict_a
     result = dict_a.copy()
     for key, value in dict_b.iteritems():
-        if (allow_overwrite or not key in dict_a or not dict_a[key]) and value:
+        if (allow_overwrite or key not in dict_a or not dict_a[key]) and value:
             result[key] = value
     return result
 
 
 def clean_string(text):
-    '''strip quotes and spaces from begin and end of a string'''
+    """strip quotes and spaces from begin and end of a string"""
     text = text.strip("'\"")
     text = text.strip()
     return text
-    
-    
+
+
 def getCondVisibility(text):
-    '''executes the builtin getCondVisibility'''
+    """executes the builtin getCondVisibility"""
     # temporary solution: check if strings needs to be adjusted for backwards compatability
     if KODI_VERSION < 17:
         text = text.replace("Integer.IsGreater", "IntegerGreaterThan")
         text = text.replace("String.Contains", "SubString")
         text = text.replace("String.IsEqual", "StringCompare")
     return xbmc.getCondVisibility(text)
+
+
+def busyDialog(text):
+    """executes builtin busydialog with backward compatibility"""
+    if text == 'activate':
+        if KODI_VERSION < 18:
+            xbmc.executebuiltin("ActivateWindow(busydialog)")
+        else:
+            xbmc.executebuiltin('ActivateWindow(busydialognocancel)')
+    elif text == 'close':
+        if KODI_VERSION < 18:
+            xbmc.executebuiltin("Dialog.Close(busydialog)")
+        else:
+            xbmc.executebuiltin('Dialog.Close(busydialognocancel)')

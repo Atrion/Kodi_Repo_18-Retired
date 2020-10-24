@@ -39,10 +39,10 @@ For example:
 
 ```
 <override action="globaloverride" group="mainmenu">
-	<condition>![Skin.HasSetting(OpenSubMenuOnClick) + IntegerGreaterThan(Container(9001).NumItems,0)]</condition>
+	<condition>![Skin.HasSetting(OpenSubMenuOnClick) + Integer.IsGreater(Container(9001).NumItems,0)]</condition>
 </override>
 <override action="globaloverride" group="mainmenu">
-	<condition>[Skin.HasSetting(OpenSubMenuOnClick) + IntegerGreaterThan(Container(9001).NumItems,0)]</condition>
+	<condition>[Skin.HasSetting(OpenSubMenuOnClick) + Integer.IsGreater(Container(9001).NumItems,0)]</condition>
 	<action>SetFocus(4444)</action>
 </override>
 ```

@@ -1,11 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-'''
+"""
     script.skin.helper.service
     listitem_monitor.py
     monitor the kodi listitems and providing additional information
-'''
+"""
 
 import threading
 import thread
@@ -15,7 +15,7 @@ from simplecache import SimpleCache
 
 
 class ListItemMonitor(threading.Thread):
-    '''Our main class monitoring the kodi listitems and providing additional information'''
+    """Our main class monitoring the kodi listitems and providing additional information"""
     event = None
     exit = False
     delayed_task_interval = 1795
@@ -45,7 +45,7 @@ class ListItemMonitor(threading.Thread):
         threading.Thread.__init__(self, *args)
 
     def stop(self):
-        '''called when the thread has to stop working'''
+        """called when the thread has to stop working"""
         log_msg("ListItemMonitor - stop called")
         self.exit = True
         self.cache.close()
@@ -54,7 +54,7 @@ class ListItemMonitor(threading.Thread):
         self.join(1)
 
     def run(self):
-        '''our main loop monitoring the listitem and folderpath changes'''
+        """our main loop monitoring the listitem and folderpath changes"""
         log_msg("ListItemMonitor - started")
         self.get_settings()
 
@@ -80,7 +80,7 @@ class ListItemMonitor(threading.Thread):
             # skip when modal dialogs are opened (e.g. textviewer in musicinfo dialog)
             elif getCondVisibility(
                     "Window.IsActive(DialogSelect.xml) | Window.IsActive(progressdialog) | "
-                    "Window.IsActive(contextmenu) | Window.IsActive(busydialog)"):
+                    "Window.IsActive(contextmenu) | Window.IsActive(busydialognocancel)"):
                 self.kodimonitor.waitForAbort(2)
                 self.delayed_task_interval += 2
                 self.last_listitem = ""
@@ -94,7 +94,7 @@ class ListItemMonitor(threading.Thread):
 
             # media window is opened or widgetcontainer set - start listitem monitoring!
             elif getCondVisibility("Window.IsMedia | "
-                                        "!IsEmpty(Window(Home).Property(SkinHelper.WidgetContainer))"):
+                                        "!String.IsEmpty(Window(Home).Property(SkinHelper.WidgetContainer))"):
                 self.monitor_listitem()
                 self.kodimonitor.waitForAbort(0.15)
                 self.delayed_task_interval += 0.15
@@ -113,7 +113,7 @@ class ListItemMonitor(threading.Thread):
                 self.delayed_task_interval += 1
 
     def get_settings(self):
-        '''collect our skin settings that control the monitoring'''
+        """collect our skin settings that control the monitoring"""
         self.enable_extendedart = getCondVisibility("Skin.HasSetting(SkinHelper.EnableExtendedArt)") == 1
         self.enable_musicart = getCondVisibility("Skin.HasSetting(SkinHelper.EnableMusicArt)") == 1
         self.enable_animatedart = getCondVisibility("Skin.HasSetting(SkinHelper.EnableAnimatedPosters)") == 1
@@ -134,7 +134,7 @@ class ListItemMonitor(threading.Thread):
                 self.win.clearProperty("SkinHelper.%s" % skinsetting)
 
     def monitor_listitem(self):
-        '''Monitor listitem details'''
+        """Monitor listitem details"""
 
         cur_folder, cont_prefix = self.get_folderandprefix()
         # identify current listitem - prefer parent folder (tvshows, music)
@@ -177,7 +177,7 @@ class ListItemMonitor(threading.Thread):
                     self.set_listitem_details, (cur_listitem, content_type, cont_prefix))
 
     def get_folderandprefix(self):
-        '''get the current folder and prefix'''
+        """get the current folder and prefix"""
         cur_folder = ""
         cont_prefix = ""
         try:
@@ -204,7 +204,7 @@ class ListItemMonitor(threading.Thread):
         return (cur_folder, cont_prefix)
 
     def get_content_type(self, cur_folder, cur_listitem, cont_prefix):
-        '''get contenttype for current folder'''
+        """get contenttype for current folder"""
         content_type = ""
         if cur_folder in self.foldercontent:
             content_type = self.foldercontent[cur_folder]
@@ -223,7 +223,7 @@ class ListItemMonitor(threading.Thread):
         return content_type
 
     def check_screensaver(self):
-        '''Allow user to disable screensaver on fullscreen music playback'''
+        """Allow user to disable screensaver on fullscreen music playback"""
         if getCondVisibility(
                 "Window.IsActive(visualisation) + Skin.HasSetting(SkinHelper.DisableScreenSaverOnFullScreenMusic)"):
             if not self.screensaver_disabled:
@@ -247,7 +247,7 @@ class ListItemMonitor(threading.Thread):
 
     @staticmethod
     def check_osd():
-        '''Allow user to set a default close timeout for the OSD panels'''
+        """Allow user to set a default close timeout for the OSD panels"""
         if getCondVisibility("[Window.IsActive(videoosd) + Skin.String(SkinHelper.AutoCloseVideoOSD)] | "
                                   "[Window.IsActive(musicosd) + Skin.String(SkinHelper.AutoCloseMusicOSD)]"):
             if getCondVisibility("Window.IsActive(videoosd)"):
@@ -258,7 +258,8 @@ class ListItemMonitor(threading.Thread):
                 window = "musicosd"
             else:
                 seconds = ""
-            if seconds and seconds != "0":
+                window = ""
+            if window and seconds and seconds != "0":
                 while getCondVisibility("Window.IsActive(%s)" % window):
                     if getCondVisibility("System.IdleTime(%s)" % seconds):
                         if getCondVisibility("Window.IsActive(%s)" % window):
@@ -267,7 +268,7 @@ class ListItemMonitor(threading.Thread):
                         xbmc.sleep(500)
 
     def set_listitem_details(self, cur_listitem, content_type, prefix):
-        '''set the window properties based on the current listitem'''
+        """set the window properties based on the current listitem"""
         try:
             if cur_listitem in self.listitem_details:
                 # data already in memory
@@ -324,7 +325,7 @@ class ListItemMonitor(threading.Thread):
 
                     # generic video properties (studio, streamdetails, omdb, top250)
                     details = merge_dict(details,
-                                         self.get_directors_writers(details["director"], details["writer"]))
+                                         self.get_directors_writers_cast(details["director"], details["writer"], details["cast"]))
                     if self.enable_extrafanart:
                         if not details["filenameandpath"]:
                             details["filenameandpath"] = details["path"]
@@ -396,13 +397,13 @@ class ListItemMonitor(threading.Thread):
             self.lookup_busy.pop(cur_listitem, None)
 
     def delayed_flush(self, cur_listitem):
-        '''flushes existing properties when it takes too long to grab the new ones'''
+        """flushes existing properties when it takes too long to grab the new ones"""
         xbmc.sleep(500)
         if cur_listitem == self.last_listitem and cur_listitem in self.lookup_busy:
             self.reset_win_props()
 
     def do_background_work(self):
-        '''stuff that's processed in the background'''
+        """stuff that's processed in the background"""
         try:
             if self.exit:
                 return
@@ -417,7 +418,7 @@ class ListItemMonitor(threading.Thread):
             log_exception(__name__, exc)
 
     def set_generic_props(self):
-        '''set some generic window props with item counts'''
+        """set some generic window props with item counts"""
         # GET TOTAL ADDONS COUNT
         addons_count = len(kodi_json('Addons.GetAddons'))
         self.win.setProperty("SkinHelper.TotalAddons", "%s" % addons_count)
@@ -451,7 +452,7 @@ class ListItemMonitor(threading.Thread):
         movieset_movies_count = 0
         moviesets = kodi_json('VideoLibrary.GetMovieSets')
         for item in moviesets:
-            for item in kodi_json('VideoLibrary.GetMovieSetDetails', {"setid": item["setid"]}):
+            for movie in kodi_json('VideoLibrary.GetMovieSetDetails', {"setid": item["setid"]}):
                 movieset_movies_count += 1
         self.win.setProperty("SkinHelper.TotalMovieSets", "%s" % len(moviesets))
         self.win.setProperty("SkinHelper.TotalMoviesInSets", "%s" % movieset_movies_count)
@@ -465,12 +466,12 @@ class ListItemMonitor(threading.Thread):
             self.win.setProperty("SkinHelper.TotalRadioChannels", "%s" % len(radio_channels))
 
     def reset_win_props(self):
-        '''reset all window props set by the script...'''
+        """reset all window props set by the script..."""
         self.metadatautils.process_method_on_list(self.win.clearProperty, self.all_window_props.iterkeys())
         self.all_window_props = {}
 
     def set_win_prop(self, prop_tuple):
-        '''sets a window property based on the given key-value'''
+        """sets a window property based on the given key-value"""
         key = prop_tuple[0]
         value = prop_tuple[1]
         if (key not in self.all_window_props) or (key in self.all_window_props and self.all_window_props[key] != value):
@@ -478,7 +479,7 @@ class ListItemMonitor(threading.Thread):
             self.win.setProperty(key, value)
 
     def set_win_props(self, prop_tuples):
-        '''set multiple window properties from list of tuples'''
+        """set multiple window properties from list of tuples"""
         self.metadatautils.process_method_on_list(self.set_win_prop, prop_tuples)
         # cleanup remaining properties
         new_keys = [item[0] for item in prop_tuples]
@@ -488,7 +489,7 @@ class ListItemMonitor(threading.Thread):
                 self.win.clearProperty(key)
 
     def set_content_header(self, content_type):
-        '''sets a window propery which can be used as headertitle'''
+        """sets a window propery which can be used as headertitle"""
         self.win.clearProperty("SkinHelper.ContentHeader")
         itemscount = xbmc.getInfoLabel("Container.NumItems")
         if itemscount:
@@ -517,7 +518,7 @@ class ListItemMonitor(threading.Thread):
 
     @staticmethod
     def get_genres(genres):
-        '''get formatted genre string from actual genre'''
+        """get formatted genre string from actual genre"""
         details = {}
         if not isinstance(genres, list):
             genres = genres.split(" / ")
@@ -527,16 +528,18 @@ class ListItemMonitor(threading.Thread):
         return details
 
     @staticmethod
-    def get_directors_writers(director, writer):
-        '''get a formatted string with directors/writers from the actual string'''
+    def get_directors_writers_cast(director, writer, cast):
+        """get a formatted string with directors/writers/cast from the actual string"""
         directors = director.split(" / ")
         writers = writer.split(" / ")
+        cast_list = cast.replace("\n", ", ")
         return {
             'Directors': "[CR]".join(directors),
-            'Writers': "[CR]".join(writers)}
+            'Writers': "[CR]".join(writers),
+            'CastListing': cast_list}
 
     def get_listitem_details(self, content_type, prefix):
-        '''collect all listitem properties/values we need'''
+        """collect all listitem properties/values we need"""
         listitem_details = {"art": {}}
 
         # basic properties
@@ -552,7 +555,7 @@ class ListItemMonitor(threading.Thread):
         # properties for media items
         if content_type in ["movies", "tvshows", "seasons", "episodes", "musicvideos", "setmovies"]:
             props += ["studio", "tvshowtitle", "premiered", "director", "writer",
-                      "firstaired", "tagline", "rating", "season", "episode"]
+                      "firstaired", "tagline", "rating", "season", "episode", "cast"]
         # properties for music items
         elif content_type in ["musicvideos", "artists", "albums", "songs"]:
             props += ["artist", "album", "rating", "albumartist", "discnumber"]
@@ -589,7 +592,7 @@ class ListItemMonitor(threading.Thread):
         return listitem_details
 
     def get_streamdetails(self, li_dbid, li_path, content_type):
-        '''get the streamdetails for the current video'''
+        """get the streamdetails for the current video"""
         details = {}
         if li_dbid and content_type in ["movies", "episodes",
                                         "musicvideos"] and not li_path.startswith("videodb://movies/sets/"):
@@ -597,11 +600,11 @@ class ListItemMonitor(threading.Thread):
         return details
 
     def set_forcedview(self, content_type):
-        '''helper to force the view in certain conditions'''
+        """helper to force the view in certain conditions"""
         if self.enable_forcedviews:
             cur_forced_view = xbmc.getInfoLabel("Skin.String(SkinHelper.ForcedViews.%s)" % content_type)
             if getCondVisibility(
-                    "Control.IsVisible(%s) | IsEmpty(Container.Viewmode) | System.HasModalDialog | System.HasVisibleModalDialog" % cur_forced_view):
+                    "Control.IsVisible(%s) | String.IsEmpty(Container.Viewmode) | System.HasActiveModalDialog | System.HasVisibleModalDialog" % cur_forced_view):
                 # skip if the view is already visible or if we're not in an actual media window
                 return
             if (content_type and cur_forced_view and cur_forced_view != "None" and not
@@ -621,7 +624,7 @@ class ListItemMonitor(threading.Thread):
             self.win.clearProperty("SkinHelper.ForcedView")
 
     def get_pvr_artwork(self, listitem, prefix):
-        '''get pvr artwork from artwork module'''
+        """get pvr artwork from artwork module"""
         if self.enable_pvrart:
             if getCondVisibility("%sListItem.IsFolder" % prefix) and not listitem[
                     "channelname"] and not listitem["title"]:

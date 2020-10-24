@@ -1,36 +1,36 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-'''
+"""
     script.skin.helper.service
     searchdialog.py
     Special window to search the Kodi video database
-'''
+"""
 
 import threading
 import thread
 import xbmc
 import xbmcgui
-from metadatautils import MetaDataUtils
-from utils import getCondVisibility
+from metadatautils import MetadataUtils
+from utils import getCondVisibility, busyDialog
 
 class SearchDialog(xbmcgui.WindowXMLDialog):
-    ''' Special window to search the Kodi video database'''
+    """ Special window to search the Kodi video database"""
     search_thread = None
     search_string = ""
 
     def __init__(self, *args, **kwargs):
-        self.mutils = MetaDataUtils()
+        self.mutils = MetadataUtils()
         xbmcgui.WindowXMLDialog.__init__(self, *args, **kwargs)
 
     def onInit(self):
-        '''triggers on initialization of the dialog'''
+        """triggers on initialization of the dialog"""
         self.search_thread = SearchBackgroundThread()
         self.search_thread.set_dialog(self)
         self.search_thread.start()
 
     def onAction(self, action):
-        '''triggers on kodi navigation events'''
+        """triggers on kodi navigation events"""
         if self.getFocusId() in [3110, 3111, 3112]:
             # one of the media lists is focused
             if action.getId() in (11, ):
@@ -48,13 +48,13 @@ class SearchDialog(xbmcgui.WindowXMLDialog):
                 self.action_textbox(action)
 
     def close_dialog(self):
-        '''stop background thread and close the dialog'''
+        """stop background thread and close the dialog"""
         self.search_thread.stop_running()
         self.mutils.close()
         self.close()
 
     def remove_char(self):
-        '''remove character from query string'''
+        """remove character from query string"""
         if len(self.search_string) == 0 or self.search_string == " ":
             self.close_dialog()
         else:
@@ -68,22 +68,22 @@ class SearchDialog(xbmcgui.WindowXMLDialog):
             self.search_thread.set_search(search_term)
 
     def action_textbox(self, act):
-        '''special handler to allow direct typing to search'''
+        """special handler to allow direct typing to search"""
         action_number_0 = 58
         action_number_9 = 67
         action = act.getId()
         button = act.getButtonCode()
 
         # Upper-case values
-        if button >= 0x2f041 and button <= 0x2f05b:
+        if 0x2f041 <= button <= 0x2f05b:
             self.add_character(chr(button - 0x2F000))
 
         # Lower-case values
-        if button >= 0xf041 and button <= 0xf05b:
+        if 0xf041 <= button <= 0xf05b:
             self.add_character(chr(button - 0xEFE0))
 
         # Numbers
-        if action >= action_number_0 and action <= action_number_9:
+        if action_number_0 <= action <= action_number_9:
             self.add_character(chr(action - action_number_0 + 48))
 
         # Backspace
@@ -104,14 +104,14 @@ class SearchDialog(xbmcgui.WindowXMLDialog):
             xbmc.executebuiltin("Dialog.close(10111)")
 
     def focus_char(self, char):
-        '''focus specified character'''
+        """focus specified character"""
         alphanum = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N',
                     'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3',
                     '4', '5', '6', '7', '8', '9', '', ' '].index(str(char).upper())
         self.setFocusId(3020 + alphanum)
 
     def onClick(self, control_id):
-        '''Kodi builtin: triggers if window is clicked'''
+        """Kodi builtin: triggers if window is clicked"""
         if control_id == 3020:
             self.add_character("A")
         elif control_id == 3021:
@@ -199,14 +199,14 @@ class SearchDialog(xbmcgui.WindowXMLDialog):
             self.open_item()
 
     def clear_search(self):
-        '''clears the search textbox'''
+        """clears the search textbox"""
         self.setFocusId(3058)
         self.getControl(3010).setLabel(" ")
         self.search_string = ""
         self.search_thread.set_search("")
 
     def add_character(self, char):
-        '''add character to our search textbox'''
+        """add character to our search textbox"""
         self.focus_char(char)
         search_term = self.search_string + char
         self.getControl(3010).setLabel(search_term)
@@ -214,31 +214,29 @@ class SearchDialog(xbmcgui.WindowXMLDialog):
         self.search_thread.set_search(search_term)
 
     def show_info(self):
-        '''show info dialog for selected item'''
+        """show info dialog for selected item"""
         control_id = self.getFocusId()
         listitem = self.getControl(control_id).getSelectedItem()
         if "actor" in listitem.getProperty("DBTYPE"):
             xbmc.executebuiltin("RunScript(script.extendedinfo,info=extendedactorinfo,name=%s)" % listitem.getLabel())
         else:
-            from infodialog import DialogVideoInfo
-            win = DialogVideoInfo("DialogVideoInfo.xml", "", listitem=listitem)
-            win.doModal()
-            result = win.result
-            del win
-            if result:
-                self.close_dialog()
+            xbmc.executebuiltin('Dialog.Close(all,true)')
+            xbmcgui.Dialog().info(listitem)
+            self.close_dialog()
 
     def open_item(self):
-        '''open selected item'''
+        """open selected item"""
         control_id = self.getFocusId()
         listitem = self.getControl(control_id).getSelectedItem()
-        if "videodb:" in listitem.getfilename():
+        filename = listitem.getfilename()
+        if "videodb:" in filename:
             # tvshow: open path
-            xbmc.executebuiltin('ReplaceWindow(Videos,"%s")' % self.listitem.getfilename())
+            xbmc.executebuiltin('Dialog.Close(all,true)')
+            xbmc.executebuiltin('ReplaceWindow(Videos,%s/-2/)' % filename)
             self.close_dialog()
         elif "actor" in listitem.getProperty("DBTYPE"):
             # cast dialog
-            xbmc.executebuiltin("ActivateWindow(busydialog)")
+            busyDialog("activate")
             from dialogselect import DialogSelect
             results = []
             name = listitem.getLabel().decode("utf-8")
@@ -251,7 +249,7 @@ class SearchDialog(xbmcgui.WindowXMLDialog):
                     item["file"] = 'PlayMedia("%s")' % item["file"]
                 results.append(self.mutils.kodidb.create_listitem(item, False))
             # finished lookup - display listing with results
-            xbmc.executebuiltin("dialog.Close(busydialog)")
+            busyDialog("close")
             dialog = DialogSelect("DialogSelect.xml", "", listing=results, windowtitle=name, richlayout=True)
             dialog.doModal()
             result = dialog.result
@@ -261,13 +259,13 @@ class SearchDialog(xbmcgui.WindowXMLDialog):
                 self.close_dialog()
         else:
             # video file: start playback
-            xbmc.executebuiltin('PlayMedia("%s")' % listitem.getfilename())
+            xbmc.executebuiltin('PlayMedia("%s")' % filename)
             self.close_dialog()
 
 
 class SearchBackgroundThread(threading.Thread):
-    '''Background thread to complement our search dialog,
-    fills the listing while UI keeps responsive'''
+    """Background thread to complement our search dialog,
+    fills the listing while UI keeps responsive"""
     active = True
     dialog = None
     search_string = ""
@@ -279,23 +277,23 @@ class SearchBackgroundThread(threading.Thread):
         thread.start_new_thread(self.set_actors, ())
 
     def set_search(self, searchstr):
-        '''set search query'''
+        """set search query"""
         self.search_string = searchstr
 
     def stop_running(self):
-        '''stop thread end exit'''
+        """stop thread end exit"""
         self.active = False
 
     def set_dialog(self, dialog):
-        '''set the active dialog to perform actions'''
+        """set the active dialog to perform actions"""
         self.dialog = dialog
 
     def set_actors(self):
-        '''fill list with all actors'''
+        """fill list with all actors"""
         self.actors = self.dialog.mutils.kodidb.actors()
 
     def run(self):
-        '''Main run loop for the background thread'''
+        """Main run loop for the background thread"""
         last_searchstring = ""
         monitor = xbmc.Monitor()
         while not monitor.abortRequested() and self.active:
@@ -306,7 +304,7 @@ class SearchBackgroundThread(threading.Thread):
         del monitor
 
     def do_search(self, search_term):
-        '''scrape results for search query'''
+        """scrape results for search query"""
 
         movies_list = self.dialog.getControl(3110)
         series_list = self.dialog.getControl(3111)
@@ -324,7 +322,7 @@ class SearchBackgroundThread(threading.Thread):
 
         # Process movies
         items = self.dialog.mutils.kodidb.movies(filters=filters)
-        items = process_method_on_list(self.dialog.mutils.kodidb.prepare_listitem, items)
+        items = self.dialog.mutils.process_method_on_list(self.dialog.mutils.kodidb.prepare_listitem, items)
         result = []
         for item in items:
             result.append(self.dialog.mutils.kodidb.create_listitem(item, False))
@@ -332,7 +330,7 @@ class SearchBackgroundThread(threading.Thread):
 
         # Process tvshows
         items = self.dialog.mutils.kodidb.tvshows(filters=filters)
-        items = process_method_on_list(self.dialog.mutils.kodidb.prepare_listitem, items)
+        items = self.dialog.mutils.process_method_on_list(self.dialog.mutils.kodidb.prepare_listitem, items)
         result = []
         for item in items:
             item["file"] = 'videodb://tvshows/titles/%s' % item['tvshowid']

@@ -1,43 +1,44 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-'''
+"""
     script.skin.helper.service
     Helper service and scripts for Kodi skins
     skinsettings.py
     several helpers that allows skinners to have custom dialogs for their skin settings and constants
-'''
+"""
 
 import xbmc
 import xbmcvfs
 import xbmcgui
 import xbmcaddon
-from utils import ADDON_ID, try_decode, getCondVisibility
+from utils import ADDON_ID, try_decode, getCondVisibility, busyDialog
 from dialogselect import DialogSelect
 from xml.dom.minidom import parse
 import xml.etree.ElementTree as xmltree
 import os
 import time
 
+
 class SkinSettings:
-    '''several helpers that allows skinners to have custom dialogs for their skin settings and constants'''
+    """several helpers that allows skinners to have custom dialogs for their skin settings and constants"""
     params = {}
     skinsettings = {}
 
     def __init__(self):
-        '''Initialization'''
+        """Initialization"""
         self.win = xbmcgui.Window(10000)
         self.addon = xbmcaddon.Addon(ADDON_ID)
         self.skinsettings = self.get_skin_settings()
         self.skin_constants, self.skin_variables = self.get_skin_constants()
 
     def __del__(self):
-        '''Cleanup Kodi Cpython instances'''
+        """Cleanup Kodi Cpython instances"""
         del self.win
         del self.addon
 
     def write_skin_constants(self, constants=None, variables=None):
-        '''writes the list of all skin constants'''
+        """writes the list of all skin constants"""
         addonpath = xbmc.translatePath(os.path.join("special://skin/", 'addon.xml').encode("utf-8")).decode("utf-8")
         addon = xmltree.parse(addonpath)
         extensionpoints = addon.findall("extension")
@@ -79,7 +80,7 @@ class SkinSettings:
 
     @staticmethod
     def get_skin_constants():
-        '''gets a list of all skin constants as set in the special xml file'''
+        """gets a list of all skin constants as set in the special xml file"""
         all_constants = {}
         all_variables = {}
         addonpath = xbmc.translatePath(os.path.join("special://skin/", 'addon.xml').encode("utf-8")).decode("utf-8")
@@ -113,7 +114,7 @@ class SkinSettings:
         return all_constants, all_variables
 
     def update_skin_constants(self, new_constants):
-        '''update skin constants if needed'''
+        """update skin constants if needed"""
         update_needed = False
         if new_constants:
             for key, value in new_constants.iteritems():
@@ -128,7 +129,7 @@ class SkinSettings:
             self.write_skin_constants(self.skin_constants, self.skin_variables)
 
     def set_skin_constant(self, setting="", window_header="", value=""):
-        '''set a skin constant'''
+        """set a skin constant"""
         cur_values = self.skin_constants
         if not value:
             cur_value = cur_values.get(setting, "emptyconstant")
@@ -137,21 +138,21 @@ class SkinSettings:
         self.update_skin_constants(result)
 
     def set_skin_constants(self, settings, values):
-        '''set multiple constants at once'''
+        """set multiple constants at once"""
         result = {}
         for count, setting in enumerate(settings):
             result[setting] = values[count]
         self.update_skin_constants(result)
 
     def set_skin_variable(self, key, value):
-        '''set skin variable in constants file'''
+        """set skin variable in constants file"""
         if self.skin_variables.get(key, "") != value:
             self.skin_variables[key] = value
             self.write_skin_constants(self.skin_constants, self.skin_variables)
 
     @staticmethod
     def get_skin_settings():
-        '''get the complete list of all settings defined in the special skinsettings file'''
+        """get the complete list of all settings defined in the special skinsettings file"""
         all_skinsettings = {}
         settings_file = xbmc.translatePath('special://skin/extras/skinsettings.xml').decode("utf-8")
         if xbmcvfs.exists(settings_file):
@@ -218,7 +219,7 @@ class SkinSettings:
 
     def set_skin_setting(self, setting="", window_header="", sublevel="",
                          cur_value_label="", skip_skin_string=False, original_id="", cur_value=""):
-        '''allows the skinner to use a select dialog to set all kind of skin settings'''
+        """allows the skinner to use a select dialog to set all kind of skin settings"""
         if not cur_value_label:
             cur_value_label = xbmc.getInfoLabel("Skin.String(%s.label)" % setting).decode("utf-8")
         if not cur_value:
@@ -302,12 +303,12 @@ class SkinSettings:
                     for action in eval(onselectactions):
                         if not action["condition"] or getCondVisibility(action["condition"]):
                             xbmc.executebuiltin(action["command"])
-                return (value, label)
+                return value, label
         else:
-            return (None, None)
+            return None, None
 
     def correct_skin_settings(self):
-        '''correct any special skin settings'''
+        """correct any special skin settings"""
         skinconstants = {}
         for settingid, settingvalues in self.skinsettings.iteritems():
             curvalue = xbmc.getInfoLabel("Skin.String(%s)" % settingid).decode("utf-8")
@@ -363,7 +364,7 @@ class SkinSettings:
             self.update_skin_constants(skinconstants)
 
     def save_skin_image(self, skinstring="", multi_image=False, header=""):
-        '''let the user select an image and save it to addon_data for easy backup'''
+        """let the user select an image and save it to addon_data for easy backup"""
         cur_value = xbmc.getInfoLabel("Skin.String(%s)" % skinstring).decode("utf-8")
         cur_value_org = xbmc.getInfoLabel("Skin.String(%s.org)" % skinstring).decode("utf-8")
 
@@ -391,7 +392,7 @@ class SkinSettings:
         return value
 
     def set_skinshortcuts_property(self, setting="", window_header="", property_name=""):
-        '''allows the user to make a setting for skinshortcuts using the special skinsettings dialogs'''
+        """allows the user to make a setting for skinshortcuts using the special skinsettings dialogs"""
         cur_value = xbmc.getInfoLabel(
             "$INFO[Container(211).ListItem.Property(%s)]" %
             property_name).decode("utf-8")
@@ -418,8 +419,8 @@ class SkinSettings:
 
     def select_image(self, skinstring, allow_multi=True, windowheader="",
                      resource_addon="", skinhelper_backgrounds=False, current_value=""):
-        '''helper which lets the user select an image or imagepath from resourceaddons or custom path'''
-        xbmc.executebuiltin("ActivateWindow(busydialog)")
+        """helper which lets the user select an image or imagepath from resourceaddons or custom path"""
+        busyDialog("activate")
         images = []
         if not windowheader:
             windowheader = self.addon.getLocalizedString(32020)
@@ -462,7 +463,7 @@ class SkinSettings:
         # show select dialog with choices
         dialog = DialogSelect("DialogSelect.xml", "", listing=listitems, windowtitle=windowheader, richlayout=True,
                               getmorebutton=resource_addon, autofocuslabel=current_value)
-        xbmc.executebuiltin("Dialog.Close(busydialog)")
+        busyDialog("close")
         dialog.doModal()
         result = dialog.result
         del dialog
@@ -488,13 +489,13 @@ class SkinSettings:
                 else:
                     return self.selectimage()
             # return values
-            return (result.getLabel().decode("utf-8"), result.getfilename().decode("utf-8"))
+            return result.getLabel().decode("utf-8"), result.getfilename().decode("utf-8")
         # return empty values
-        return ("", "")
+        return "", ""
 
     @staticmethod
     def multi_select(options, window_header=""):
-        '''allows the user to choose from multiple options'''
+        """allows the user to choose from multiple options"""
         listitems = []
         for option in options:
             if not option["condition"] or getCondVisibility(option["condition"]):
@@ -521,7 +522,7 @@ class SkinSettings:
         del dialog
 
     def indent_xml(self, elem, level=0):
-        '''helper to properly indent xml strings to file'''
+        """helper to properly indent xml strings to file"""
         text_i = "\n" + level * "\t"
         if len(elem):
             if not elem.text or not elem.text.strip():
